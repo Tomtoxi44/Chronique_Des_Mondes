@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-Cdm.MigrationsManager-7e56ef43-69cd-4ef1-b3c6-b6861c0e5601</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-rc.1.25451.107">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.1.25451.107" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cdm.Migrations\Cdm.Migrations.csproj" />
+    <ProjectReference Include="..\Cdm.ServiceDefaults\Cdm.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

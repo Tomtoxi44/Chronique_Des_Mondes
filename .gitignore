@@ -1,0 +1,56 @@
+# Dossiers de build
+bin/
+obj/
+appsettings.json
+appsettings.Development.json
+# Fichiers de logs et diagnostics
+*.log
+
+# Fichiers de configuration utilisateurs
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Dossier de cache de Visual Studio
+.vs/
+
+# Fichiers de débogage
+*.pdb
+
+# Dossiers de test coverage
+TestResults/
+*.coverage
+*.coveragexml
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*.old
+*.swp
+
+# Paramètres de VS Code (si utilisé)
+.vscode/
+
+# Fichiers de publication
+publish/
+out/
+
+# Configuration de secrets (exemple pour .NET user secrets)
+secrets.json
+
+# Dossier de dépendances NuGet restaurées
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# Fichiers de base de données locales
+*.mdf
+*.ldf
+
+# Fichiers de l'IDE JetBrains Rider (si utilisé)
+.idea/
+
+# ASP.NET Aspire (si tu utilises Aspire Dashboard ou services cloud locaux)
+.aspire/
+
+wwwroot/lib/

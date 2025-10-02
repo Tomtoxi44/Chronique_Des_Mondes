@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/Aspire/">
+    <Project Path="Cdm.AppHost/Cdm.AppHost.csproj" />
+    <Project Path="Cdm.ServiceDefaults/Cdm.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/Back/" />
+  <Folder Name="/Back/Api/">
+    <Project Path="Cdm.ApiService/Cdm.ApiService.csproj" />
+  </Folder>
+  <Folder Name="/Back/Api/Service/">
+    <Project Path="Cdm.Business.Common/Cdm.Business.Common.csproj" Id="6e0fb419-0bee-4ab1-9b25-768f7a7179f2" />
+  </Folder>
+  <Folder Name="/Back/Api/Service/Abstraction/">
+    <Project Path="Cdm.Abstraction/Cdm.Abstraction.csproj" Id="be1d2496-e637-4018-a395-deadd2aa5e70" />
+  </Folder>
+  <Folder Name="/Back/Api/Service/Data/">
+    <Project Path="Cdm.Data.Common/Cdm.Data.Common.csproj" Id="39efcad8-3eb7-4d4f-aa86-540b97b03bfd" />
+  </Folder>
+  <Folder Name="/Back/Migrations/">
+    <Project Path="Cdm.Migrations/Cdm.Migrations.csproj" />
+    <Project Path="Cdm.MigrationsManager/Cdm.MigrationsManager.csproj" />
+  </Folder>
+  <Folder Name="/Front/">
+    <Project Path="Cdm.Web/Cdm.Web.csproj" />
+  </Folder>
+</Solution>

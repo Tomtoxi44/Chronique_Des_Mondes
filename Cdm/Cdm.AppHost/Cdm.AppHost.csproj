@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>e6872ca3-498e-4bb1-afaf-a2744f020ca4</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cdm.ApiService\Cdm.ApiService.csproj" />
+    <ProjectReference Include="..\Cdm.MigrationsManager\Cdm.MigrationsManager.csproj" />
+    <ProjectReference Include="..\Cdm.Web\Cdm.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.0" />
+    <PackageReference Include="Scalar.Aspire" Version="0.5.1" />
+  </ItemGroup>
+
+</Project>
