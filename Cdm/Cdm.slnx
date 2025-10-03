@@ -20,6 +20,9 @@
     <Project Path="Cdm.Migrations/Cdm.Migrations.csproj" />
     <Project Path="Cdm.MigrationsManager/Cdm.MigrationsManager.csproj" />
   </Folder>
+  <Folder Name="/Common/">
+    <Project Path="Cdm.Common/Cdm.Common.csproj" Id="7525bfc4-883c-4b95-9acd-a87dd434cf84" />
+  </Folder>
   <Folder Name="/Front/">
     <Project Path="Cdm.Web/Cdm.Web.csproj" />
   </Folder>
