@@ -1,13 +1,36 @@
-# {PROJECT_NAME} - Instructions for AI Agents
+# Chronique des Mondes - Instructions for AI Agents
+
+## 📋 Project Overview
+
+**Chronique des Mondes** is a tabletop role-playing game management platform built with **.NET 10 + Aspire** that follows a **multi-type architecture** supporting Generic, D&D 5e, and Skyrim game systems.
+
+### Technical Documentation
+For detailed technical information, refer to the comprehensive documentation in `.github/instructions/technique/`:
+
+- **[ARCHITECTURE_TECHNIQUE.md](technique/ARCHITECTURE_TECHNIQUE.md)** - Complete architecture overview with 6 phases
+- **[MODELE_DONNEES.md](technique/MODELE_DONNEES.md)** - Database schema (17 tables, TPH inheritance, JSON attributes)
+- **[API_ENDPOINTS.md](technique/API_ENDPOINTS.md)** - 45+ REST endpoints with authorization
+- **[SIGNALR_TEMPS_REEL.md](technique/SIGNALR_TEMPS_REEL.md)** - 3 SignalR hubs (Session, Combat, Notification)
+- **[SECURITE.md](technique/SECURITE.md)** - Multi-layer security (JWT, BCrypt, policies, query filters)
+- **[FRONTEND_BLAZOR.md](technique/FRONTEND_BLAZOR.md)** - Blazor Server with Component-Handler-Service pattern
+- **[STANDARDS_CODE.md](technique/STANDARDS_CODE.md)** - Coding conventions and best practices
+
+## 🎯 Project Vision
+
+**Chronique des Mondes** enables game masters and players to manage RPG campaigns, characters, sessions, and real-time combat with support for multiple game systems (Generic, D&D 5e, Skyrim).
 
 ## 📋 Project Configuration
-Before using these instructions, configure the following variables according to your project:
 
-### ## 📅 Observability & Monitoring
+### Core Information
+- **Project Name**: Chronique des Mondes
+- **Tech Stack**: .NET 10, Aspire, Blazor Server, SignalR, Entity Framework Core 10
+- **Architecture**: Multi-type monolith with split database contexts
+- **Database**: SQL Server with TPH inheritance
+- **Authentication**: JWT with BCrypt password hashing (work factor 12)
 
 ### Development Environment
-- **Dashboard**: {DASHBOA### 📀 Coding S### 📀 Coding Standards
-**Language-Specific Conventions for {TECH_STACK}**
+- **Dashboard**: Aspire Dashboard (development only)
+- **Main Port**: Configured via Aspire orchestration
 
 #### 📏 Spacing and Formatting
 ```
@@ -71,330 +94,577 @@ Before using these instructions, configure the following variables according to 
 - `{ARCHITECTURE_TYPE}` : Architecture type (ex: Microservices, Monolith, Serverless, SPA, etc.)
 
 ### 🏗️ Architecture & Infrastructure
-- `{SOLUTION_FILE}` : Main solution/project file (ex: TanusHub.sln, package.json, pom.xml)
-- `{BUILD_COMMAND}` : Build command (ex: dotnet build, npm run build, mvn compile)
-- `{TEST_COMMAND}` : Test command (ex: dotnet test, npm test, pytest)
-- `{RUN_COMMAND}` : Run command (ex: dotnet run, npm start, python main.py)
-- `{MAIN_PORT}` : Main application port
-- `{DASHBOARD_URL}` : Development dashboard URL (if applicable)
+- **Solution File**: `Cdm/Cdm.slnx`
+- **Build Command**: `dotnet build`
+- **Test Command**: `dotnet test`
+- **Run Command**: `dotnet run --project Cdm/Cdm.AppHost` (Aspire orchestration)
+- **Main Projects**:
+  - `Cdm.AppHost` - Aspire orchestration
+  - `Cdm.ApiService` - REST API + SignalR hubs
+  - `Cdm.Web` - Blazor Server frontend
+  - `Cdm.Data.Common` - EF Core (AppDbContext with query filters)
+  - `Cdm.Migrations` - EF Core (MigrationsContext for migrations)
+  - `Cdm.Business.Common` - Business logic
+  - `Cdm.Common` - Shared utilities (EmailService, JwtService, PasswordService)
 
 ### 🔐 Authentication & Security
-- `{AUTH_PROVIDER}` : Authentication provider (ex: Azure AD, Auth0, JWT, OAuth2)
-- `{AUTH_TENANT}` : Tenant/domain for authentication
-- `{USER_ROLES}` : List of user roles in the system
-- `{ADMIN_ROLES}` : List of admin roles in the system
+- **Authentication**: JWT tokens (7-day expiry)
+- **Password Hashing**: BCrypt (work factor 12)
+- **Authorization**: 4 custom policies
+  - `IsCharacterOwner` - User owns the character
+  - `IsGameMaster` - User is GM of the campaign
+  - `IsSessionParticipant` - User participates in session
+  - `IsCampaignParticipant` - User is part of campaign
+- **Query Filters**: EF Core global filters for data isolation
+- **Anti-cheat**: Server-side dice rolling with anomaly detection
 
 ### 🗄️ Data Storage
-- `{DATABASE_TYPE}` : Database type (ex: SQLite, PostgreSQL, MongoDB, MySQL)
-- `{MAIN_CONTEXT}` : Main database context/connection name
-- `{ENTITY_EXAMPLES}` : Main entities/models in the system
+- **Database**: SQL Server
+- **Main Context**: `AppDbContext` (runtime with query filters)
+- **Migration Context**: `MigrationsContext` (migrations without filters)
+- **Pattern**: Split context (see MODELE_DONNEES.md)
+- **Main Entities** (17 tables):
+  - `Users` - User accounts
+  - `Characters` (TPH) - Generic, DndCharacter, SkyrimCharacter
+  - `Campaigns` - Campaign management
+  - `Sessions` - Game sessions
+  - `Combats` - Combat encounters
+  - `CombatTurns` - Initiative tracking
+  - `Spells` - Spell library + character spells
+  - `Equipments` - Equipment library + character inventory
+  - `DiceRolls` - Server-validated dice rolls
+  - `Notifications` - User notifications
 
 ### 🌐 Deployment & Infrastructure
-- `{DEPLOYMENT_TARGETS}` : Deployment targets (ex: Azure, AWS, Docker, Kubernetes)
-- `{SERVER_ENVIRONMENTS}` : List of environments (ex: Development, Staging, Production)
-- `{PROXY_TYPE}` : Proxy/gateway type if applicable (ex: YARP, nginx, API Gateway)
+- **Deployment**: Docker containers (Phase 6)
+- **Environments**: Development, Production
+- **Orchestration**: .NET Aspire
+- **Communication**: SignalR with MessagePack protocol
 
 ### 📁 Project Structure
-- `{SOURCE_FOLDER}` : Source code folder structure
-- `{COMPONENT_STRUCTURE}` : UI component structure (if applicable)
-- `{MODULE_STRUCTURE}` : Business module organization
-
-### 🎨 UI Technology (if applicable)
-- `{UI_FRAMEWORK}` : UI framework (ex: Blazor Server, React, Vue.js, Angular, Flutter)
-- `{UI_COMPONENT_LIB}` : UI component library used
-- `{STYLING_APPROACH}` : Styling approach (ex: CSS, SCSS, Tailwind, MUI)
-
-## 🎯 Project Vision
-
-**{PROJECT_NAME}** is a {PROJECT_DESCRIPTION} built with {TECH_STACK} that follows a {ARCHITECTURE_TYPE} architecture.
-
-## 🏗️ Architecture Overview
-
-### Project Structure
 ```
-{SOLUTION_FILE}
-{SOURCE_FOLDER}
-# Example structures by technology:
-# .NET: src/{PROJECT_NAME}.Api/, src/{PROJECT_NAME}.Core/, src/{PROJECT_NAME}.Infrastructure/
-# Node.js: src/, lib/, routes/, models/, middleware/
-# Python: app/, models/, views/, services/, tests/
-# Java: src/main/java/, src/main/resources/, src/test/
-# React: src/, components/, pages/, hooks/, utils/
+Cdm/
+├── Cdm.slnx                    # Solution file
+├── Cdm.AppHost/                # Aspire orchestration
+├── Cdm.ApiService/             # REST API + SignalR
+│   ├── Endpoints/              # Minimal API endpoints
+│   └── Hubs/                   # SignalR hubs (Session, Combat, Notification)
+├── Cdm.Web/                    # Blazor Server frontend
+│   ├── Components/             # Razor components
+│   │   ├── Layout/
+│   │   ├── Pages/
+│   │   └── Shared/
+│   ├── Handlers/               # Component handlers (business logic)
+│   └── Services/               # API clients, SignalR services
+├── Cdm.Data.Common/            # EF Core (AppDbContext)
+│   └── Models/                 # Entity models
+├── Cdm.Migrations/             # EF Core (MigrationsContext)
+├── Cdm.Business.Common/        # Business services
+├── Cdm.Common/                 # Shared utilities
+│   ├── Enums/                  # GameType enum
+│   └── Services/               # EmailService, JwtService, PasswordService
+├── Cdm.Abstraction/            # Interfaces
+└── Cdm.ServiceDefaults/        # Aspire defaults
 ```
+
+### 🎨 UI Technology
+- **Framework**: Blazor Server (.NET 10)
+- **Pattern**: Component-Handler-Service separation
+  - `.razor` files - UI markup only
+  - `.razor.cs` files - Component state management
+  - `.handler.cs` files - Business logic
+  - API clients - HTTP communication
+- **Real-time**: SignalR integration in components
+- **Styling**: CSS Isolation per component
+- **Authentication**: AuthStateProvider with JWT
+- **Authorization**: `<AuthorizeView>` with policies
+
+## �️ Architecture Overview
 
 ### Critical Architectural Patterns
 
-**{ARCHITECTURE_TYPE} Pattern**: The application follows {ARCHITECTURE_TYPE} principles:
-- Development: {DEV_ENVIRONMENT_DESC}
-- Production: {PROD_ENVIRONMENT_DESC}
+**Multi-Type Architecture**: The application supports 3 game types through polymorphism:
+- **Generic** - Custom game systems
+- **Dnd5e** - D&D 5th Edition with D20 mechanics
+- **Skyrim** - Elder Scrolls with specific attributes
 
-**Service/Component Organization**: Key architectural components:
-- {SERVICE_PATTERN_1}
-- {SERVICE_PATTERN_2} 
-- {SERVICE_PATTERN_3}
+**TPH Inheritance (Table Per Hierarchy)**:
+- Base `Characters` table with `GameType` discriminator
+- `GenericCharacter`, `DndCharacter`, `SkyrimCharacter` inherit from `Character`
+- JSON columns for type-specific attributes (see MODELE_DONNEES.md)
 
-**Development Services**: {DEV_SERVICES_DESC}
+**Split Context Pattern**:
+- `MigrationsContext` - Clean schema for migrations
+- `AppDbContext` - Runtime with query filters and configuration
+- Prevents circular dependencies and enables global filters
+
+**Component-Handler-Service Pattern** (Blazor):
+- **Component (.razor)** - UI markup, no logic
+- **Component Code-Behind (.razor.cs)** - State management
+- **Handler (.handler.cs)** - Business logic, validation
+- **API Client** - HTTP communication with API
+
+**Real-time Communication**:
+- **SessionHub** - Chat, dice rolling, equipment trades
+- **CombatHub** - Turn management, damage tracking
+- **NotificationHub** - User notifications
+- Group isolation: `session_{id}`, `combat_{id}`, `user_{id}`
+
+**Security Layers** (see SECURITE.md):
+1. JWT authentication (7-day tokens)
+2. Authorization policies (4 handlers)
+3. EF Core query filters (data isolation)
+4. Server-side validation (FluentValidation)
+5. Anti-cheat (server dice rolling)
 
 ## 🔑 Essential Development Commands
 
 ```bash
-# Start development environment
-{RUN_COMMAND}
-# Dashboard/UI: {DASHBOARD_URL}
+# Start Aspire orchestration (runs all services)
+dotnet run --project Cdm/Cdm.AppHost
 
-# Build the project
-{BUILD_COMMAND}
+# Aspire Dashboard (auto-opens)
+# URL: https://localhost:17223 (development only)
+# Shows: Logs, Traces, Metrics, Health checks
+
+# Build the solution
+dotnet build Cdm/Cdm.slnx
 
 # Run tests
-{TEST_COMMAND}
+dotnet test
 
-# Additional commands based on technology:
-# .NET: dotnet ef database update, dotnet user-secrets set
-# Node.js: npm install, npm run dev, npm run lint
-# Python: pip install -r requirements.txt, python manage.py migrate
-# Java: mvn install, mvn spring-boot:run
-# Docker: docker-compose up, docker build
+# Database migrations (using MigrationsContext)
+cd Cdm/Cdm.Migrations
+dotnet ef migrations add MigrationName --context MigrationsContext
+dotnet ef database update --context MigrationsContext
+
+# Run migration worker (automated)
+dotnet run --project Cdm/Cdm.MigrationsManager
+
+# User secrets (JWT configuration)
+dotnet user-secrets set "Jwt:SecretKey" "your-secret-key" --project Cdm/Cdm.Common
+dotnet user-secrets set "Jwt:Issuer" "Cdm.ApiService" --project Cdm/Cdm.Common
+dotnet user-secrets set "Jwt:Audience" "Cdm.Web" --project Cdm/Cdm.Common
+
+# Azure Communication Services (email invitations)
+dotnet user-secrets set "AzureCommunication:ConnectionString" "endpoint=..." --project Cdm/Cdm.Common
 ```
 
 ## 🌐 Deployment Architecture
 
-### {SERVER_ENVIRONMENTS}
-- **{ENVIRONMENT_1}**: {ENVIRONMENT_1_DESC}
-- **{ENVIRONMENT_2}**: {ENVIRONMENT_2_DESC}
-- **{ENVIRONMENT_N}**: {ENVIRONMENT_N_DESC}
+### Environments
+- **Development**: Aspire orchestration, in-memory config, detailed logging
+- **Production**: Docker containers, persistent storage, minimal logging
 
-### {PROXY_TYPE} Configuration (if applicable)
-- Development: {DEV_PROXY_CONFIG}
-- Production: {PROD_PROXY_CONFIG}
-- Configuration management: {PROXY_CONFIG_METHOD}
+### Phase 6 Production (Future)
+- Docker deployment
+- HTTPS with Let's Encrypt
+- Rate limiting (10 requests/second per user)
+- Log aggregation
+- Automated backups
 
 ## 🔐 Authentication & Authorization
 
-### {AUTH_PROVIDER} Configuration
-```
-// Authentication roles
-{USER_ROLES}          // Standard user access
-{ADMIN_ROLES}         // Administrative access
-{CUSTOM_ROLES}        // Custom role definitions
+### JWT Configuration
+```csharp
+// JWT Service (Cdm.Common/Services/JwtService.cs)
+// Tokens expire after 7 days
+// Includes claims: UserId, Email, Name
+
+// Example token generation
+var token = _jwtService.GenerateToken(user.Id, user.Email, user.Name);
 ```
 
-### Technology-Specific Configuration
-- **Authentication Method**: {AUTH_METHOD}
-- **Session Management**: {SESSION_CONFIG}
-- **Role Resolution**: {ROLE_RESOLUTION_METHOD}
-- **Security Policies**: {SECURITY_POLICIES}
+### Authorization Policies (4 handlers)
+```csharp
+// IsCharacterOwner - User must own the character
+[Authorize(Policy = "IsCharacterOwner")]
+
+// IsGameMaster - User must be GM of the campaign
+[Authorize(Policy = "IsGameMaster")]
+
+// IsSessionParticipant - User must participate in session
+[Authorize(Policy = "IsSessionParticipant")]
+
+// IsCampaignParticipant - User must be part of campaign
+[Authorize(Policy = "IsCampaignParticipant")]
+```
+
+### EF Core Query Filters (Data Isolation)
+```csharp
+// AppDbContext automatically filters data by UserId
+modelBuilder.Entity<Character>()
+    .HasQueryFilter(c => c.UserId == _currentUserId);
+
+modelBuilder.Entity<Campaign>()
+    .HasQueryFilter(c => c.Participants.Any(p => p.UserId == _currentUserId));
+```
+
+### Password Security
+- **Hashing**: BCrypt with work factor 12
+- **Service**: `Cdm.Common/Services/PasswordService.cs`
+- **Validation**: Minimum 8 characters, complexity rules
 
 ## 🗄️ Database Configuration
 
-### {DATABASE_TYPE} - Context: `{MAIN_CONTEXT}`
-```
-{ENTITY_EXAMPLES}
-// Example entities based on database type:
-// SQL: Users, Products, Orders, AuditLogs
-// NoSQL: UserDocuments, ProductCatalogs, OrderHistories
-// Key-Value: CacheEntries, Sessions, Configurations
+### SQL Server - Split Context Pattern
+
+**MigrationsContext** (`Cdm.Migrations/MigrationsContext.cs`):
+- Used ONLY for migrations
+- Clean schema without query filters
+- No navigation properties configured
+
+**AppDbContext** (`Cdm.Data.Common/AppDbContext.cs`):
+- Used at runtime
+- Global query filters for data isolation
+- Full relationship configuration
+- Configured via `OnModelCreating`
+
+### 17 Entity Tables (see MODELE_DONNEES.md)
+
+```csharp
+// Core entities
+Users                    // User accounts with BCrypt passwords
+Characters               // TPH: Generic, DndCharacter, SkyrimCharacter
+  - GenericAttributes    // JSON column {Strength, Dexterity, ...}
+  - DndAttributes        // JSON column {STR, DEX, CON, INT, WIS, CHA}
+  - SkyrimAttributes     // JSON column {Health, Magicka, Stamina, ...}
+
+// Campaign management
+Campaigns               // Campaign metadata (GameType, GameMasterUserId)
+CampaignParticipants    // Many-to-many: Users ↔ Campaigns
+Sessions                // Game sessions with InvitationToken
+SessionParticipants     // Many-to-many: Users ↔ Sessions
+
+// Combat system
+Combats                 // Combat encounters
+CombatTurns             // Initiative order with Initiative value
+CombatParticipants      // Many-to-many: Characters ↔ Combats
+
+// Game mechanics
+Spells                  // Spell library (generic + character-specific)
+Equipments              // Equipment library (generic + character inventory)
+DiceRolls               // Server-validated rolls (anti-cheat)
+Notifications           // User notifications
 ```
 
-### Database Management Commands
+### Migration Commands
 ```bash
-# Examples by technology:
-# .NET EF Core: dotnet ef migrations add [Name], dotnet ef database update
-# Node.js Prisma: npx prisma migrate dev, npx prisma generate
-# Python Django: python manage.py makemigrations, python manage.py migrate
-# Java Flyway: mvn flyway:migrate, mvn flyway:info
-{DATABASE_MIGRATION_COMMANDS}
+# Generate new migration (using MigrationsContext)
+cd Cdm/Cdm.Migrations
+dotnet ef migrations add MigrationName --context MigrationsContext
+
+# Apply migrations (using MigrationsContext)
+dotnet ef database update --context MigrationsContext
+
+# Automated worker (runs on startup)
+dotnet run --project Cdm/Cdm.MigrationsManager
 ```
 
-## 🎨 User Interface ({UI_FRAMEWORK})
+## 🎨 User Interface (Blazor Server)
 
-### Component Structure
+### Component-Handler-Service Pattern
+
+**Structure** (see FRONTEND_BLAZOR.md):
 ```
-{COMPONENT_STRUCTURE}
-# Examples by UI framework:
-# React: src/components/, src/pages/, src/hooks/, src/utils/
-# Vue.js: src/components/, src/views/, src/composables/, src/stores/
-# Angular: src/app/components/, src/app/pages/, src/app/services/
-# Blazor: Components/Layout/, Components/Pages/, Components/Shared/
-# Flutter: lib/widgets/, lib/screens/, lib/services/, lib/models/
+Cdm.Web/
+├── Components/
+│   ├── Layout/
+│   │   └── MainLayout.razor           # App shell
+│   ├── Pages/
+│   │   ├── CharacterList.razor        # UI markup only
+│   │   ├── CharacterList.razor.cs     # State management
+│   │   └── CharacterList.handler.cs   # Business logic
+│   └── Shared/
+│       ├── CharacterCard.razor        # Reusable card component
+│       ├── HealthBar.razor            # Visual health display
+│       └── DiceRoller.razor           # Interactive dice rolling
+├── Services/
+│   ├── ApiClients/
+│   │   ├── CharacterApiClient.cs      # HTTP calls to API
+│   │   └── CampaignApiClient.cs
+│   ├── SignalR/
+│   │   ├── SessionHubService.cs       # SignalR client for sessions
+│   │   ├── CombatHubService.cs        # SignalR client for combat
+│   │   └── NotificationHubService.cs  # SignalR client for notifications
+│   └── AuthStateProvider.cs           # JWT token management
+└── wwwroot/
+    └── css/                            # CSS isolation per component
 ```
 
-### {UI_FRAMEWORK}-Specific Patterns
-- **Rendering**: {RENDERING_PATTERN}
-- **State Management**: {STATE_MANAGEMENT}
-- **Authorization**: {UI_AUTHORIZATION_PATTERN}
-- **Real-time Updates**: {REALTIME_PATTERN}
+### Blazor-Specific Patterns
+- **Rendering**: Server-side rendering with SignalR
+- **State Management**: Component state + CascadingValue for global state
+- **Authorization**: `<AuthorizeView Policy="IsCharacterOwner">`
+- **Real-time Updates**: SignalR integration in components
+- **CSS Isolation**: `ComponentName.razor.css` per component
+- **Performance**: `@key` directives, `ShouldRender()` optimization
+
+### Example Component Pattern
+```csharp
+// CharacterList.razor (UI only)
+@page "/characters"
+@attribute [Authorize]
+
+<div class="character-list">
+    @foreach (var character in Characters)
+    {
+        <CharacterCard Character="@character" 
+                      OnDelete="@(() => Handler.DeleteCharacter(character.Id))" />
+    }
+</div>
+
+// CharacterList.razor.cs (State)
+public partial class CharacterList
+{
+    [Inject] private CharacterListHandler Handler { get; set; }
+    private List<Character> Characters { get; set; } = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Characters = await Handler.LoadCharactersAsync();
+    }
+}
+
+// CharacterList.handler.cs (Business logic)
+public class CharacterListHandler
+{
+    private readonly CharacterApiClient _apiClient;
+    private readonly ILogger<CharacterListHandler> _logger;
+    
+    public async Task<List<Character>> LoadCharactersAsync()
+    {
+        var result = await _apiClient.GetAllAsync();
+        if (!result.IsSuccess)
+        {
+            _logger.LogError("Failed to load characters: {Error}", result.Error);
+            return new List<Character>();
+        }
+        return result.Data;
+    }
+}
+```
 
 ## 🔧 Business Modules
 
-### {MODULE_STRUCTURE}
+### Module Organization
 ```
-{BUSINESS_MODULE_1}
-{BUSINESS_MODULE_2}
-{BUSINESS_MODULE_3}
-# Examples by domain:
-# E-commerce: ProductCatalog, OrderManagement, PaymentProcessing
-# CRM: ContactManagement, SalesTracking, ReportGeneration
-# Content: UserGenerated, ContentModeration, SearchIndexing
-# IoT: DeviceManagement, DataCollection, AlertSystem
+Cdm.Business.Common/
+├── Services/
+│   ├── CharacterService.cs       # Character CRUD
+│   ├── CampaignService.cs        # Campaign management
+│   ├── SessionService.cs         # Session lifecycle
+│   ├── CombatService.cs          # Combat mechanics
+│   ├── DiceService.cs            # Server-side rolling
+│   └── NotificationService.cs    # User notifications
+└── Validators/
+    ├── CharacterValidator.cs     # FluentValidation
+    ├── CampaignValidator.cs
+    └── SessionValidator.cs
 ```
 
-### Module Implementation Patterns
-- **Security**: Role-based access control per module
-- **Integration**: {MODULE_INTEGRATION_PATTERN}
-- **Configuration**: {MODULE_CONFIG_PATTERN}
+### Module Security
+- **Authorization**: Policies enforced at endpoint level
+- **Data Isolation**: Query filters in AppDbContext
+- **Validation**: FluentValidation + server-side checks
+- **Audit**: Structured logging for sensitive operations
 
 ## 📊 Aspire Observability
 
 ### Development Dashboard
-- URL: `https://localhost:17223` (development only).
-- Structured ILogger logs with business context.
-- Business metrics in the `TanusHub.*` namespace.
-- Distributed traces: YARP → mock services.
+- **URL**: Auto-opens at `https://localhost:17223` (development only)
+- **Features**:
+  - Structured logs with business context (UserId, Action, Resource)
+  - Distributed traces: API → Database, SignalR connections
+  - Service health checks (ApiService, Web, Database)
+  - Resource monitoring (CPU, memory, connections)
+- **Metrics Namespace**: `Cdm.*`
 
-### Production
-- Dashboard automatically disabled.
-- OTLP export via `OTEL_EXPORTER_OTLP_ENDPOINT` variables.
-- Public health checks with caching.
+### Production (Phase 6)
+- Dashboard automatically disabled
+- OTLP export for external monitoring
+- Health endpoints: `/health`, `/alive`
+- Log aggregation for debugging
 
 ## 🛠️ Essential Coding Conventions
 
-### Multi-Environment Configuration
+### Configuration Management
 ```csharp
 // Pattern: environment-specific appsettings
 appsettings.json                 // Base configuration
-appsettings.Development.json     // Development + mock services
-appsettings.Server1.json         // server.tanus.eu
-appsettings.Server2.json         // le-pallet.avonde.eu
+appsettings.Development.json     // Development environment
+appsettings.Production.json      // Production environment
 ```
 
-### Custom Service Defaults
+### Aspire Service Defaults
 ```csharp
-// All projects call:
+// All projects use Cdm.ServiceDefaults
 builder.AddServiceDefaults();
 
 // Automatically maps:
-app.MapDefaultEndpoints();  // /health, /alive
-app.UseSecurityHeaders();   // Security headers based on environment
+app.MapDefaultEndpoints();  // /health, /alive endpoints
 ```
 
-### Security Patterns
-- Mandatory HTTPS with automatic redirections.
-- Strict CSP tailored for Blazor Server + Azure AD.
-- Automatic security headers (production only).
-- Audit middleware for sensitive actions.
+### Security Patterns (see SECURITE.md)
+- **JWT tokens**: 7-day expiry, issued by API, validated by Web
+- **BCrypt passwords**: Work factor 12 for hashing
+- **Authorization**: 4 custom policies enforced at endpoint level
+- **Query filters**: EF Core global filters for data isolation
+- **Server-side validation**: FluentValidation + manual checks
+- **Anti-cheat**: All dice rolls validated server-side
 
-## 📋 Backlog and Roadmap
+### Result<T> Pattern
+```csharp
+// All service methods return Result<T> for consistent error handling
+public class Result<T>
+{
+    public bool IsSuccess { get; set; }
+    public T? Data { get; set; }
+    public string? Error { get; set; }
+    
+    public static Result<T> Success(T data) => new() { IsSuccess = true, Data = data };
+    public static Result<T> Failure(string error) => new() { IsSuccess = false, Error = error };
+}
 
-### Epic-Driven Structure
-Nine epics organized across MVP → Interface → Production phases with detailed user stories in `/backlog/`.
+// Usage in endpoints
+app.MapGet("/api/characters/{id}", async (int id, ICharacterService service) =>
+{
+    var result = await service.GetByIdAsync(id);
+    return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(result.Error);
+});
+```
 
-### MVP Priority (2–3 weeks)
-1. Epic 01: Foundation Aspire
-2. Epic 02: Mock Services
-3. Epic 03: Azure AD Auth
-4. Epic 04: YARP Proxy
+## 📋 Development Phases (6 phases)
+
+### Current Focus
+**Phase 1-3**: Foundation (complete)
+- ✅ Database schema with TPH inheritance
+- ✅ JWT authentication with BCrypt
+- ✅ REST API with 45+ endpoints
+- ✅ SignalR hubs (Session, Combat, Notification)
+- ✅ Blazor Server frontend with Component-Handler-Service pattern
+
+**Phase 4-5**: In Progress
+- � Advanced game mechanics (spells, equipment, trades)
+- 🔄 Combat system with initiative tracking
+- 🔄 Notification system
+
+**Phase 6**: Future
+- ⏳ Docker deployment
+- ⏳ Production security hardening
+- ⏳ Performance optimization
+- ⏳ Monitoring and alerting
 
 ## 🔍 Development Watchpoints
 
-### Aspire-specific
-- Mock services are .NET projects, not containers.
-- Dashboard visible in development only.
-- Automatic service discovery between services.
-- Configuration hot-reload via `IOptionsMonitor`.
+### Aspire-Specific
+- Dashboard visible in development only
+- Automatic service discovery between ApiService and Web
+- Health checks: `/health` (detailed), `/alive` (simple)
+- Structured logging with business context
 
-### Multi-server
-- Same application deployed on two servers with different configuration.
-- Modules enabled per server via configuration.
-- Automated Let's Encrypt SSL in production.
+### Multi-Type Architecture
+- Always validate `GameType` in middleware
+- Use TPH inheritance correctly (discriminator on `Characters` table)
+- JSON attributes must match game type (Generic/Dnd5e/Skyrim)
+- Type-specific validation per game system
+
+### Security
+- **Never** bypass authorization policies
+- **Always** use `Result<T>` for service methods
+- **Always** log sensitive operations (delete, update)
+- **Never** expose internal errors to client
 
 ### Performance
-- Local SQLite optimized for personal usage.
-- Long sessions (8h) for home usage.
-- In-memory metrics with 30-day retention.
+- Use `@key` directive in Blazor lists
+- Implement `ShouldRender()` for expensive components
+- SignalR reconnection logic in all hub services
+- Query filters add WHERE clauses automatically
 
-This codebase favors simplicity for personal use on a distributed infrastructure with modern .NET Aspire observability built in.
+This codebase is designed for multi-user tabletop RPG management with real-time collaboration, supporting multiple game systems through polymorphic design.
 
 ## 📝 Development Best Practices
 
-### 📐 Coding Standards (.editorconfig + StyleCop)
-**Based on StyleCop Analyzers and Microsoft C# conventions**
+### 📐 Coding Standards (.NET 10 + C# 13)
+**Based on STANDARDS_CODE.md - Microsoft conventions for Chronique des Mondes**
 
-#### 📏 Spacing and Formatting (SA1000–SA1028)
-- **Indentation**: 4 spaces, no tabs (SA1027).
-- **Line length**: 65 characters max for mobile-friendly documentation.
-- **Operator spacing**: Spaces around operators (SA1003).
-- **Parenthesis spacing**: No space after `(` or before `)` (SA1008, SA1009).
-- **Comma spacing**: Space after commas, never before (SA1001).
-- **Comments**: Single space after `//` (SA1005).
-- **No multiple spaces**: Avoid consecutive spaces (SA1025).
+#### 📏 Spacing and Formatting
+- **Indentation**: 4 spaces, no tabs
+- **Line length**: 120 characters max (configurable via .editorconfig)
+- **Operator spacing**: Spaces around operators (`x + y`)
+- **Parenthesis spacing**: No space after `(` or before `)`
+- **Comma spacing**: Space after commas, never before
+- **Comments**: Single space after `//`
+- **Braces**: Allman style (braces on new line)
 
-#### 🏷️ Naming Conventions
-```
-# Naming by language:
-# C#: PascalCase classes, camelCase fields, IPascalCase interfaces
-# Java: PascalCase classes, camelCase methods, UPPER_CASE constants
-# JavaScript: camelCase variables/functions, PascalCase classes
-# Python: snake_case functions/variables, PascalCase classes
-# Go: PascalCase exported, camelCase private
-# Rust: snake_case functions/variables, PascalCase types
-```
-- **Classes/Types**: {CLASS_NAMING_CONVENTION}
-- **Methods/Functions**: {METHOD_NAMING_CONVENTION}
-- **Variables/Fields**: {VARIABLE_NAMING_CONVENTION}
-- **Constants**: {CONSTANT_NAMING_CONVENTION}
-- **Interface naming**: {INTERFACE_NAMING_CONVENTION}
+#### 🏷️ Naming Conventions (C#)
+- **Classes**: PascalCase (`CharacterService`, `DndCharacter`)
+- **Interfaces**: PascalCase with `I` prefix (`ICharacterService`)
+- **Methods**: PascalCase with `Async` suffix (`GetByIdAsync`)
+- **Properties**: PascalCase (`CurrentHealth`, `IsActive`)
+- **Local variables**: camelCase (`characterId`, `userId`)
+- **Parameters**: camelCase (`id`, `request`)
+- **Private fields**: camelCase with `_` prefix (`_repository`, `_logger`)
+- **Constants**: PascalCase or UPPER_CASE (`MaxHealth` or `MAX_HEALTH`)
+- **Enums**: PascalCase type and values (`GameType.Dnd5e`)
 
-#### 📋 Organization and Ordering (SA1200–SA1217)
-- **Using directives**: At the top of the file, inside the namespace (SA1200).
-- **System usings**: Before others (SA1208).
-- **Member order**: Constants → Fields → Constructors → Properties → Methods (SA1201).
-- **Access modifiers**: Public → Internal → Protected → Private (SA1202).
-- **Static before instance** (SA1204).
-- **Readonly before non-readonly** (SA1214).
+#### 📋 File Organization
+- **Using directives**: Top of file, System usings first
+- **Namespace**: One namespace per file
+- **Member order**: Constants → Fields → Constructor → Properties → Public Methods → Private Methods
+- **Access modifiers**: Always explicit (public/private/internal)
+- **One class per file** (except nested classes/records)
 
-#### 🏗️ Layout and Braces (SA1500–SA1520)
-- **Allman style**: Braces on new lines (SA1500).
-- **No single-line statements** (SA1501, SA1502).
-- **Mandatory braces**: Even for single statements (SA1503).
-- **Blank lines**: Single blank line between members (SA1516).
-- **No blank lines**: After `{` or before `}` (SA1505, SA1508).
+#### 🏗️ Code Structure Example
 
 ```csharp
-// ✅ Style StyleCop + Microsoft
+// ✅ Chronique des Mondes style
 using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Cdm.Data.Common.Models;
 
-namespace TanusHub.Services
+namespace Cdm.Business.Common.Services;
+
+/// <summary>
+/// Service for managing character operations.
+/// </summary>
+public class CharacterService : ICharacterService
 {
-    /// <summary>
-    /// Service for handling user authentication operations.
-    /// </summary>
-    public class UserAuthenticationService : IUserAuthenticationService
+    private readonly ICharacterRepository _repository;
+    private readonly ILogger<CharacterService> _logger;
+    
+    public CharacterService(
+        ICharacterRepository repository,
+        ILogger<CharacterService> logger)
     {
-        private readonly ILogger<UserAuthenticationService> logger;
-        private readonly ServiceConfiguration configuration;
-        
-        public UserAuthenticationService(
-            ILogger<UserAuthenticationService> logger,
-            ServiceConfiguration configuration)
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+    
+    public async Task<Result<Character>> GetByIdAsync(int id, int userId)
+    {
+        if (id <= 0)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration;
+            return Result<Character>.Failure("Invalid character ID");
         }
         
-        public async Task<bool> AuthenticateAsync(string username, string password)
+        _logger.LogInformation("Retrieving character {CharacterId} for user {UserId}", id, userId);
+        
+        var character = await _repository.GetByIdAsync(id);
+        
+        if (character == null)
         {
-            if (string.IsNullOrEmpty(username))
-            {
-                throw new ArgumentException("Username cannot be null or empty.", nameof(username));
-            }
-            
-            this.logger.LogInformation("Authenticating user {Username}", username);
-            
-            // Authentication logic here
-            return await this.ProcessAuthenticationAsync(username, password);
+            return Result<Character>.Failure("Character not found");
         }
+        
+        if (character.UserId != userId)
+        {
+            _logger.LogWarning("Unauthorized access attempt to character {CharacterId} by user {UserId}", id, userId);
+            return Result<Character>.Failure("Access denied");
+        }
+        
+        return Result<Character>.Success(character);
     }
 }
 ```
@@ -446,470 +716,259 @@ internal interface IServiceHealthChecker
 }
 ```
 
-### 📊 Logging and OpenTelemetry Observability
-**Based on Microsoft OpenTelemetry and ILogger recommendations**
+### 📊 Logging and Observability
+**Structured logging with ILogger and Aspire Dashboard**
 
-- **Structured logging**: Always use named parameters.
-- **Business context**: Include UserId, Action, Resource in every log entry.
-- **Correct levels**: Debug/Information/Warning/Error/Critical.
-- **No sensitive data**: Never log passwords or tokens.
-- **OpenTelemetry first-class**: Use native .NET APIs (ILogger, Activity, Meter).
-
-```{TECH_STACK}
-// ✅ Structured logging examples by technology:
-
-// C#/.NET
-_logger.LogInformation("User {UserName} performed {Action}", userName, action);
-
-// JavaScript/Node.js
-logger.info('User performed action', { userName, action, userId });
-
-// Python
-logger.info('User %s performed %s', userName, action, extra={'userId': userId});
-
-// Java
-log.info("User {} performed {} on resource {}", userName, action, resourceId);
-
-// Go
-log.Info("User performed action", "userName", userName, "action", action);
-
-// ❌ Avoid unstructured logs in any language
-// logger.info(f"User {userName} did something") // Python bad example
-```
-
-### 🛡️ Blazor Server and Azure AD Security
-**Aligned with Microsoft Blazor security guidance**
-
-- **Secrets management**: {SECRET_MANAGEMENT_APPROACH}
-- **Security headers**: {SECURITY_HEADERS_IMPLEMENTATION}
-- **Authentication**: {AUTHENTICATION_METHOD}
-- **Authorization**: {AUTHORIZATION_PATTERN}
-- **Input validation**: {INPUT_VALIDATION_APPROACH}
-- **Session security**: {SESSION_SECURITY_MEASURES}
+- **Structured logging**: ALWAYS use named parameters
+- **Business context**: Include UserId, Action, Resource in every log
+- **Log levels**: Debug < Information < Warning < Error < Critical
+- **Sensitive data**: NEVER log passwords, tokens, or JWT secrets
+- **Aspire integration**: Logs visible in dashboard (development)
 
 ```csharp
-// ✅ Server-side input validation
-[Authorize(Policy = "TanusHub-FileManagers")]
-public async Task<IActionResult> ProcessFile(FileUploadModel model)
-{
-    // Mandatory server-side validation
-    if (!ModelState.IsValid)
-        return BadRequest(ModelState);
-    
-    // Permission checks
-    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    if (!await _authService.CanAccessFileAsync(userId, model.Path))
-        return Forbid();
-    
-    // Audit trail for sensitive actions
-    _logger.LogWarning("Sensitive action {Action} by user {UserId} on {Resource}",
-        nameof(ProcessFile), userId, model.Path);
-}
+// ✅ Structured logging examples
+_logger.LogInformation("User {UserId} created character {CharacterId}", userId, characterId);
+_logger.LogWarning("Failed login attempt for email {Email}", email);
+_logger.LogError(ex, "Failed to update character {CharacterId}", characterId);
 
-// ✅ XSS protection - never render raw HTML without encoding
-@if (!string.IsNullOrEmpty(userContent))
-{
-    <div>@Html.Raw(Html.Encode(userContent))</div>
-}
+// ❌ Bad: String interpolation
+_logger.LogInformation($"User {userId} created character {characterId}"); // DON'T DO THIS
 ```
 
-### ⚡ Performance and Optimization
-**Based on {PERFORMANCE_FRAMEWORK} best practices for {TECH_STACK}**
+### 🛡️ Security Best Practices
+**Multi-layer security for Chronique des Mondes (see SECURITE.md)**
 
-#### {DATABASE_TYPE} Optimization
-- **Connection management**: {CONNECTION_POOLING_APPROACH}
-- **Query optimization**: {QUERY_OPTIMIZATION_TECHNIQUES}
-- **Caching strategy**: {CACHING_IMPLEMENTATION}
-- **Data access patterns**: {DATA_ACCESS_PATTERNS}
-- **Index strategy**: {INDEXING_APPROACH}
-
-```{TECH_STACK}
-// ✅ Performance examples by technology:
-
-// .NET Entity Framework
-builder.Services.AddDbContextPool<AppDbContext>(options =>
-    options.UseSqlite(connectionString), poolSize: 128);
-
-// Node.js with MongoDB
-const users = await User.find({ isActive: true })
-  .select('id name lastLogin')
-  .lean(); // No Mongoose overhead
-
-// Python Django ORM
-users = User.objects.filter(is_active=True).only('id', 'name', 'last_login')
-
-// Java JPA with Spring
-@Query("SELECT new UserDto(u.id, u.name) FROM User u WHERE u.active = true")
-List<UserDto> findActiveUsersSummary();
-```
-
-#### Caching and I/O
-- **Memory caching**: For frequently accessed data.
-- **Response caching**: For static content.
-- **Compression**: Automatic Gzip/Brotli.
-- **Health checks**: Cache in production.
+- **JWT secrets**: NEVER hardcode, use user-secrets or environment variables
+- **Password hashing**: BCrypt work factor 12 (configured in PasswordService)
+- **Authorization**: Use policies at endpoint level (`[Authorize(Policy = "IsCharacterOwner")]`)
+- **Data isolation**: Query filters automatically filter by UserId
+- **Input validation**: FluentValidation + server-side checks
+- **Audit logging**: Log all sensitive operations (delete, update, admin actions)
 
 ```csharp
-// ✅ Smart caching
-public async Task<ServiceStatus> GetServiceStatusAsync(string serviceName)
+// ✅ Endpoint with authorization policy
+app.MapDelete("/api/characters/{id}", 
+    [Authorize(Policy = "IsCharacterOwner")] 
+    async (int id, ICharacterService service, ClaimsPrincipal user) =>
 {
-    var cacheKey = $"service-status:{serviceName}";
+    var userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
     
-    if (_memoryCache.TryGetValue(cacheKey, out ServiceStatus? cached))
-        return cached!;
+    var result = await service.DeleteAsync(id, userId);
     
-    var status = await _healthChecker.CheckServiceAsync(serviceName);
+    if (result.IsSuccess)
+    {
+        _logger.LogWarning("Character {CharacterId} deleted by user {UserId}", id, userId);
+        return Results.Ok();
+    }
     
-    _memoryCache.Set(cacheKey, status, TimeSpan.FromMinutes(5));
-    return status;
-}
-```
-
-### 🔧 {TECH_STACK} Specific Patterns
-**Official {FRAMEWORK_NAME} recommendations**
-
-- **Framework conventions**: {FRAMEWORK_CONVENTIONS}
-- **Component organization**: {COMPONENT_ORGANIZATION_PATTERN}
-- **Health/Status endpoints**: {HEALTH_ENDPOINTS_PATTERN}
-- **Configuration management**: {CONFIG_HOT_RELOAD_PATTERN}
-- **Monitoring integration**: {MONITORING_INTEGRATION}
-
-```{TECH_STACK}
-// ✅ Framework-specific patterns:
-
-// .NET Aspire
-builder.AddServiceDefaults();
-app.MapDefaultEndpoints();
-
-// Node.js Express
-app.use('/health', healthCheck);
-app.use(helmet()); // Security headers
-
-// Python FastAPI
-from fastapi import FastAPI
-app.add_middleware(CORSMiddleware)
-
-// Java Spring Boot
-@EnableConfigurationProperties
-@ConditionalOnProperty("feature.enabled")
-
-// React.js
-useEffect(() => {
-  // Component lifecycle
-}, [dependencies]);
-```
-
-### 📝 XML Documentation (SA1600–SA1652)
-**StyleCop-compliant full documentation**
-
-#### Mandatory Documentation Rules
-- **Language**: ALL COMMENTS IN ENGLISH.
-- **Public members**: XML documentation required (SA1600).
-- **`<summary>` tags**: Mandatory and non-empty (SA1604, SA1606).
-- **Parameters**: Document with `<param>` (SA1611, SA1614).
-- **Return values**: `<returns>` for non-void (SA1615, SA1616).
-- **Generic types**: `<typeparam>` required (SA1618, SA1622).
-- **Properties**: `<value>` tag (SA1609, SA1610).
-- **Formatting**: Capitalized sentences ending with a period (SA1628, SA1629).
-
-#### Documentation Examples by Language
-```{TECH_STACK}
-// C# XML Documentation
-/// <summary>
-/// Provides authentication services for user operations.
-/// </summary>
-/// <param name="username">The username for authentication.</param>
-/// <returns>True if authentication successful.</returns>
-Task<bool> AuthenticateAsync(string username);
-
-// JavaScript JSDoc
-/**
- * Authenticates a user with provided credentials
- * @param {string} username - The username for authentication
- * @param {string} password - The password for authentication  
- * @returns {Promise<boolean>} True if authentication successful
- * @throws {AuthenticationError} When credentials are invalid
- */
-async function authenticate(username, password) {}
-
-// Python Docstrings
-def authenticate(username: str, password: str) -> bool:
-    """Authenticate user with provided credentials.
-    
-    Args:
-        username: The username for authentication
-        password: The password for authentication
-        
-    Returns:
-        True if authentication successful, False otherwise
-        
-    Raises:
-        ValueError: When username or password is empty
-    """
-
-// Java Javadoc
-/**
- * Authenticates a user with provided credentials.
- * @param username the username for authentication
- * @param password the password for authentication
- * @return true if authentication successful
- * @throws AuthenticationException when credentials are invalid
- */
-public boolean authenticate(String username, String password) {}
-```
-
-#### File Headers (SA1633–SA1641)
-```csharp
-// <copyright file="UserAuthenticationService.cs" company="Tanuscorp">
-// Copyright (c) Tanuscorp. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root.
-// </copyright>
-
-using System;
-// ...other usings
-```
-
-### 🧪 Tests and Validation
-**{TESTING_FRAMEWORK} testing approach for {TECH_STACK}**
-
-- **Unit tests**: {UNIT_TESTING_FRAMEWORK} with {TESTING_PATTERN}
-- **Integration tests**: {INTEGRATION_TESTING_APPROACH}
-- **End-to-end tests**: {E2E_TESTING_FRAMEWORK}
-- **Health checks**: {HEALTH_CHECK_IMPLEMENTATION}
-- **CI/CD validation**: {CI_CD_VALIDATION_SCRIPTS}
-- **Analyzer conventions**:
-    - Test classes are `internal sealed` and inherit from utilities (`AIntegrationTestBase`, `IntegrationTestFixture`) when relevant.
-    - Async methods end with `Async` and return `Task` or `Task<T>`.
-    - FluentAssertions calls are assigned to a discard (`_ =`) to satisfy CA1806.
-    - Prefer `static` lambdas in `LoggerFactory.Create` or `Enumerable.Select` whenever there is no capture.
-    - Integration tests share the host via `[Collection("Integration Tests")]` to avoid concurrent parallelization.
-    - Create test hosts via `TestHostBuilder.CreateTestHostWithServiceDefaults()` to keep configuration aligned with the application.
-
-```{TECH_STACK}
-// ✅ Testing examples by technology:
-
-// C# xUnit
-[Fact]
-public async Task HealthCheck_ReturnsHealthy_WhenServicesUp()
-{
-    // Arrange, Act, Assert pattern
-    var response = await client.GetAsync("/health");
-    response.StatusCode.Should().Be(HttpStatusCode.OK);
-}
-
-// JavaScript Jest
-describe('Authentication Service', () => {
-  it('should authenticate valid user', async () => {
-    const result = await authService.authenticate('user', 'pass');
-    expect(result).toBe(true);
-  });
+    return Results.NotFound(result.Error);
 });
 
-// Python pytest
-def test_authenticate_valid_user():
-    """Test authentication with valid credentials."""
-    result = auth_service.authenticate('user', 'password')
-    assert result is True
+// ✅ Blazor XSS protection - Razor automatically encodes
+<div>@userContent</div>  <!-- Safe, automatically encoded -->
 
-// Java JUnit
-@Test
-public void testAuthenticateValidUser() {
-    Boolean result = authService.authenticate("user", "password");
-    assertTrue(result);
-}
+// ❌ NEVER render raw HTML from user input
+<div>@((MarkupString)userContent)</div>  <!-- DANGEROUS -->
 ```
 
-### 📈 Monitoring and Diagnostics
-**Azure Monitor and Application Insights integration**
+### ⚡ Performance Best Practices
 
-- **Custom metrics**: Use `System.Diagnostics.Metrics.Meter`.
-- **Distributed tracing**: `System.Diagnostics.ActivitySource`.
-- **Correlation**: Automatic TraceId/SpanId.
-- **Alerting**: Thresholds on critical business metrics.
+#### Database Optimization (EF Core + SQL Server)
+- **DbContext pooling**: Configured via Aspire
+- **Query optimization**: Use `.AsNoTracking()` for read-only queries
+- **Eager loading**: Use `.Include()` to avoid N+1 queries
+- **Indexes**: Defined in MODELE_DONNEES.md (UserId, GameType, etc.)
+- **Query filters**: Automatically add WHERE UserId = @userId
 
 ```csharp
-// ✅ Business metrics with OpenTelemetry
-public class OrderService
+// ✅ Optimized query with AsNoTracking
+public async Task<List<Character>> GetAllAsync(int userId)
 {
-    private static readonly Meter _meter = new("TanusHub.Orders");
-    private static readonly Counter<int> _ordersProcessed = 
-        _meter.CreateCounter<int>("orders_processed_total");
-    private static readonly Histogram<double> _processingDuration = 
-        _meter.CreateHistogram<double>("order_processing_duration_ms");
-    
-    public async Task ProcessOrderAsync(Order order)
-    {
-        using var activity = _activitySource.StartActivity();
-        var stopwatch = Stopwatch.StartNew();
-        
-        try
-        {
-            await ProcessOrderInternalAsync(order);
-            _ordersProcessed.Add(1, new TagList { ["status"] = "success" });
-        }
-        catch (Exception ex)
-        {
-            _ordersProcessed.Add(1, new TagList { ["status"] = "error" });
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            throw;
-        }
-        finally
-        {
-            _processingDuration.Record(stopwatch.ElapsedMilliseconds);
-        }
-    }
+    return await _context.Characters
+        .AsNoTracking()  // Read-only, no change tracking
+        .Where(c => c.UserId == userId)  // Already filtered by query filter
+        .OrderBy(c => c.Name)
+        .ToListAsync();
+}
+
+// ✅ Eager loading to avoid N+1
+public async Task<Campaign> GetCampaignWithParticipantsAsync(int id)
+{
+    return await _context.Campaigns
+        .Include(c => c.Participants)
+            .ThenInclude(p => p.User)
+        .FirstOrDefaultAsync(c => c.Id == id);
 }
 ```
 
-### 🧰 Maintainability and Readability (SA1100–SA1142, SA1400–SA1414)
-**StyleCop rules for maintainable code**
+#### Blazor Performance
+- **@key directive**: Use in lists to optimize rendering
+- **ShouldRender()**: Override to prevent unnecessary re-renders
+- **StateHasChanged()**: Call explicitly when needed
+- **CSS isolation**: Per-component stylesheets
+- **SignalR reconnection**: Automatic with exponential backoff
 
-#### Code Readability
-- **`this.` prefix**: Mandatory for instance members (SA1101).
-- **One statement per line** (SA1107).
-- **No regions inside members** (SA1123).
-- **Built-in types**: Use `string` instead of `String` (SA1121).
-- **`string.Empty`**: Instead of `""` (SA1122).
-- **Nullable syntax**: `int?` instead of `Nullable<int>` (SA1125).
-- **Lambda syntax**: Prefer lambdas over delegates (SA1130).
-- **Readable conditions**: Variable on the left (SA1131).
+```csharp
+// ✅ Optimized Blazor list with @key
+@foreach (var character in Characters)
+{
+    <CharacterCard @key="character.Id" Character="@character" />
+}
+
+// ✅ ShouldRender optimization
+protected override bool ShouldRender()
+{
+    // Only re-render if important state changed
+    return _importantStateChanged;
+}
+```
+
+### 📝 Documentation Standards
+**XML documentation for public APIs**
+
+#### Documentation Rules
+- **Language**: ALL COMMENTS AND DOCUMENTATION IN ENGLISH
+- **Public members**: Require XML documentation
+- **`<summary>`**: Brief description (1-2 sentences)
+- **`<param>`**: Document all parameters
+- **`<returns>`**: Document return value
+- **`<exception>`**: Document thrown exceptions
+
+#### C# XML Documentation Examples
+```csharp
+/// <summary>
+/// Retrieves a character by its unique identifier.
+/// </summary>
+/// <param name="characterId">The unique identifier of the character.</param>
+/// <param name="userId">The identifier of the authenticated user.</param>
+/// <returns>A Result containing the character if found, or a failure message.</returns>
+/// <exception cref="ArgumentException">Thrown when characterId is less than or equal to 0.</exception>
+public async Task<Result<Character>> GetByIdAsync(int characterId, int userId)
+{
+    if (characterId <= 0)
+    {
+        throw new ArgumentException("Character ID must be greater than 0", nameof(characterId));
+    }
+    
+    // Implementation
+}
+
+/// <summary>
+/// Generates a JWT token for the specified user.
+/// </summary>
+/// <param name="userId">The user's unique identifier.</param>
+/// <param name="email">The user's email address.</param>
+/// <param name="name">The user's display name.</param>
+/// <returns>A JWT token string valid for 7 days.</returns>
+public string GenerateToken(int userId, string email, string name)
+{
+    // Implementation
+}
+```
+
+### 🧪 Testing Standards
+**xUnit + FluentAssertions for .NET testing**
+
+- **Pattern**: AAA (Arrange, Act, Assert)
+- **Naming**: `MethodName_Scenario_ExpectedBehavior`
+- **Async methods**: End with `Async` and return `Task`
+- **Assertions**: FluentAssertions for readability
+
+```csharp
+// ✅ Unit test example (xUnit)
+[Fact]
+public async Task GetByIdAsync_WithValidId_ReturnsCharacter()
+{
+    // Arrange
+    var characterId = 1;
+    var userId = 10;
+    var expectedCharacter = new Character { Id = characterId, UserId = userId, Name = "Test" };
+    _repositoryMock.Setup(r => r.GetByIdAsync(characterId))
+        .ReturnsAsync(expectedCharacter);
+    
+    // Act
+    var result = await _service.GetByIdAsync(characterId, userId);
+    
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    result.Data.Should().NotBeNull();
+    result.Data!.Id.Should().Be(characterId);
+}
+
+[Fact]
+public async Task GetByIdAsync_WithInvalidId_ReturnsFailure()
+{
+    // Arrange
+    var characterId = 999;
+    var userId = 10;
+    _repositoryMock.Setup(r => r.GetByIdAsync(characterId))
+        .ReturnsAsync((Character?)null);
+    
+    // Act
+    var result = await _service.GetByIdAsync(characterId, userId);
+    
+    // Assert
+    result.IsSuccess.Should().BeFalse();
+    result.Error.Should().Be("Character not found");
+}
+```
+
+### 🧰 Code Quality Rules
 
 #### Maintainability
-- **Access modifiers**: Always explicit (SA1400).
-- **Private fields only** (SA1401).
-- **One type per file** (SA1402).
-- **One namespace per file** (SA1403).
-- **`SuppressMessage` justification** required (SA1404).
-- **Explicit precedence**: Parentheses in complex expressions (SA1407, SA1408).
-- **UTF-8 files with BOM** (SA1412).
-- **Trailing commas**: In multi-line initializers (SA1413).
+- **Access modifiers**: Always explicit (`public`, `private`, `internal`)
+- **One class per file** (except nested classes)
+- **Built-in types**: Use `string` instead of `String`
+- **Nullable syntax**: Use `int?` instead of `Nullable<int>`
+- **Prefer** `string.Empty` over `""`
 
+#### LINQ Best Practices
 ```csharp
-// ✅ Code maintenable StyleCop
-public sealed class UserService : IUserService
+// ✅ Good: Use Any() to check existence
+if (characters.Any(c => c.Level > 10))
 {
-    private readonly ILogger<UserService> logger;
-    private readonly IUserRepository repository;
-    
-    public UserService(ILogger<UserService> logger, IUserRepository repository)
-    {
-        this.logger = logger;
-        this.repository = repository;
-    }
-    
-    public async Task<User?> GetUserAsync(int userId)
-    {
-        if (userId <= 0)
-        {
-            throw new ArgumentException("User ID must be positive.", nameof(userId));
-        }
-        
-        this.logger.LogInformation("Retrieving user {UserId}", userId);
-        
-        var user = await this.repository.GetByIdAsync(userId);
-        
-        if (user is null)
-        {
-            this.logger.LogWarning("User {UserId} not found", userId);
-            return null;
-        }
-        
-        return user;
-    }
-    
-    // ✅ Explicit precedence in complex expressions
-    private static bool IsValidAge(int age, int minAge, int maxAge)
-    {
-        return (age >= minAge) && (age <= maxAge);
-    }
-    
-    // ✅ Initializer with trailing comma
-    private readonly Dictionary<string, string> defaultSettings = new()
-    {
-        ["timeout"] = "30000",
-        ["retries"] = "3",
-        ["enableLogging"] = "true", // Trailing comma
-    };
+    // Logic
 }
-```
 
-#### LINQ-Specific Rules
-- **Clauses on separate lines** (SA1102, SA1103).
-- **Consistent indentation** (SA1104, SA1105).
-
-```csharp
-// ✅ LINQ StyleCop
-var activeUsers = from user in this.repository.Users
-                  where user.IsActive
-                  where user.LastLoginDate > DateTime.Now.AddDays(-30)
-                  orderby user.LastLoginDate descending
-                  select new UserDto
-                  {
-                      Id = user.Id,
-                      Name = user.Name,
-                      Email = user.Email,
-                  };
-```
-
-### 🔄 Error Handling and Resilience
-**Microsoft resilience patterns**
-
-- **Retry policies**: Exponential backoff with jitter.
-- **Circuit breaker**: Protect downstream services.
-- **Timeout policies**: Appropriate timeouts per operation type.
-- **Fallback values**: Graceful degradation.
-
-```csharp
-// ✅ Resilience with Polly
-public class ResilientHttpService
+// ❌ Bad: Use Count() for existence check
+if (characters.Count(c => c.Level > 10) > 0)  // Inefficient
 {
-    private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
-    
-    public ResilientHttpService()
-    {
-        _retryPolicy = Policy
-            .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
-            .Or<HttpRequestException>()
-            .WaitAndRetryAsync(
-                retryCount: 3,
-                sleepDurationProvider: retryAttempt => 
-                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + 
-                    TimeSpan.FromMilliseconds(Random.Shared.Next(0, 100)),
-                onRetry: (outcome, duration, retryCount, context) =>
-                {
-                    _logger.LogWarning("Retry {RetryCount} after {Duration}ms for {Operation}",
-                        retryCount, duration.TotalMilliseconds, context.OperationKey);
-                });
-    }
+    // Logic
 }
+
+// ✅ Good: Materialize once
+var activeCharacters = characters.Where(c => c.IsActive).ToList();
+var count = activeCharacters.Count;
+var first = activeCharacters.FirstOrDefault();
+
+// ❌ Bad: Multiple enumerations
+var activeCharacters = characters.Where(c => c.IsActive);  // IEnumerable
+var count = activeCharacters.Count();  // Enumeration 1
+var first = activeCharacters.FirstOrDefault();  // Enumeration 2
 ```
 
 ---
 
-## 🚀 How to Use This Template
+## � Additional Resources
 
-1. **Replace all variables** in `{}` with values specific to your project
-2. **Remove irrelevant sections** that don't apply to your technology stack
-3. **Add technology-specific sections** as needed for your project
-4. **Customize coding standards** to match your team's preferences
-5. **Update examples** to reflect your actual codebase patterns
+### Technical Documentation
+All detailed technical documentation is in `.github/instructions/technique/`:
+- **ARCHITECTURE_TECHNIQUE.md** - 6-phase architecture overview
+- **MODELE_DONNEES.md** - Complete database schema with SQL DDL
+- **API_ENDPOINTS.md** - 45+ REST endpoints with examples
+- **SIGNALR_TEMPS_REEL.md** - Real-time hub implementations
+- **SECURITE.md** - Multi-layer security architecture
+- **FRONTEND_BLAZOR.md** - Blazor patterns and component examples
+- **STANDARDS_CODE.md** - Complete coding conventions and best practices
 
-### Example Configurations
+### Quick Links
+- **Aspire Dashboard**: https://localhost:17223 (development)
+- **Health Endpoints**: `/health` (detailed), `/alive` (simple)
+- **EF Core Migrations**: `Cdm.Migrations` project with MigrationsContext
+- **User Secrets**: JWT config, Azure Communication Services
 
-**For a React TypeScript SPA:**
-- `{TECH_STACK}` = "React TypeScript"
-- `{UI_FRAMEWORK}` = "React with TypeScript"
-- `{BUILD_COMMAND}` = "npm run build"
-- `{TESTING_FRAMEWORK}` = "Jest + React Testing Library"
+---
 
-**For a Java Spring Boot API:**
-- `{TECH_STACK}` = "Java Spring Boot"
-- `{ARCHITECTURE_TYPE}` = "REST API with Clean Architecture"  
-- `{BUILD_COMMAND}` = "mvn clean install"
-- `{TESTING_FRAMEWORK}` = "JUnit 5 + Mockito"
-
-**For a Python FastAPI:**
-- `{TECH_STACK}` = "Python FastAPI"
-- `{ARCHITECTURE_TYPE}` = "Microservices with Clean Architecture"
-- `{BUILD_COMMAND}` = "pip install -r requirements.txt"
-- `{TESTING_FRAMEWORK}` = "pytest + httpx"
+**Document updated**: October 15, 2025  
+**Project**: Chronique des Mondes  
+**Version**: 1.0

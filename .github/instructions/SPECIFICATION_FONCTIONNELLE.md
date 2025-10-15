@@ -108,19 +108,25 @@ Chaque comportement définit :
 - **Contexte** expliquant la situation
 - **Évolution possible** selon les actions des joueurs
 
-#### Caractéristiques des PNJ Génériques
-- Nom et surnom
-- Description physique et personnalité
-- Historique et motivations
+#### Caractéristiques des PNJ/Monstres Génériques
+- **Nom** et surnom
+- **Description** physique et personnalité
+- **Historique** et motivations
+- **Points de vie** (si applicable)
+- **Capacités** et compétences (définies librement par le MJ)
+- **Équipement** possédé
+- **Quantité** (pour les groupes, ex: 3 bandits)
 
-#### Caractéristiques des Monstres D&D
-- Statistiques de combat complètes (CA, PV, vitesse)
-- Caractéristiques (Force, Dextérité, etc.)
-- Attaques avec modificateurs et dégâts
-- Compétences spéciales
-- Sens et langues
-- Facteur de puissance (Challenge Rating)
-- **Quantité** (ex: groupe de 3 gobelins)
+#### Caractéristiques Spécifiques D&D
+En plus des caractéristiques génériques, les PNJ/Monstres D&D possèdent :
+- **Statistiques de combat** complètes (CA, PV, vitesse)
+- **Caractéristiques** (Force, Dextérité, Constitution, Intelligence, Sagesse, Charisme)
+- **Attaques** avec modificateurs et formules de dégâts
+- **Compétences spéciales** et capacités
+- **Jets de sauvegarde** et résistances
+- **Sens** (vision dans le noir, perception passive) et langues
+- **Facteur de puissance** (Challenge Rating) pour l'équilibrage des combats
+- **Calculs automatiques** basés sur les règles D&D 5e
 
 ### Invitations et Participation
 
@@ -309,10 +315,21 @@ Chaque comportement définit :
 5. Lancement du combat
 
 ### Calcul d'Initiative
-- Chaque participant lance un jet d'initiative
-- **Mode D&D** : 1d20 + modificateur de Dextérité
-- **Mode générique** : Gestion manuelle par le MJ
-- Ordre des tours établi du plus haut au plus bas
+
+#### Mode Générique
+- Le MJ définit l'ordre des tours selon sa méthode préférée :
+  - **Ordre manuel** : Le MJ décide de l'ordre des participants
+  - **Jets de dés libres** : Le MJ demande des jets (ex: 1d6, 1d10) et ordonne les résultats
+  - Le joueur peut lancer physiquement ou utiliser l'application
+  - Les résultats sont transmis au MJ qui établit l'ordre
+
+#### Mode D&D (et systèmes à règles automatisées)
+- Chaque participant lance automatiquement un **jet d'initiative**
+- **Formule D&D** : 1d20 + modificateur de Dextérité
+- Calcul automatique par l'application
+- Ordre des tours établi automatiquement du plus haut au plus bas
+
+**Note** : En mode D&D/Skyrim, le MJ peut désactiver les calculs automatiques pour gérer l'initiative manuellement (mode hybride).
 
 ### Déroulement des Tours
 
@@ -323,7 +340,9 @@ Chaque comportement définit :
    - Déplacement
    - Action spéciale
    - Passer son tour
-3. **Résolution** des actions avec calculs automatiques (D&D) ou manuels
+3. **Résolution** des actions :
+   - **Mode générique** : Gestion manuelle par le MJ
+   - **Mode D&D/Skyrim** : Calculs automatiques selon les règles
 4. **Passage** au participant suivant
 
 #### Notifications de Tour
@@ -333,24 +352,56 @@ Chaque comportement définit :
 - Signal sonore optionnel
 - Timer optionnel par tour (ex: 2 minutes)
 
-### Calculs Automatiques D&D
+### Résolution des Actions
 
-#### Jets d'Attaque
+#### Mode Générique - Gestion Manuelle
+
+**Principe** : Le MJ demande des jets de dés et interprète les résultats selon sa propre logique.
+
+**Déroulement d'une attaque** :
+1. Le MJ demande un jet (ex: "Lance 2d6 pour attaquer")
+2. Le joueur peut :
+   - Lancer physiquement et entrer la valeur
+   - Utiliser le lanceur de dés de l'application
+3. Le résultat est transmis au MJ
+4. Le MJ interprète et applique les conséquences :
+   - Détermine si l'attaque touche
+   - Calcule ou décide des dégâts
+   - Réduit les PV du monstre/PNJ manuellement
+
+**Flexibilité** :
+- Types de dés libres (d4, d6, d8, d10, d12, d20, d100)
+- Nombre de dés variable selon la situation
+- Interprétation narrative des résultats
+- Pas de formules fixes
+
+#### Mode D&D/Skyrim - Calculs Automatiques
+
+**Principe** : L'application connaît les règles et effectue les calculs automatiquement.
+
+**Jets d'Attaque D&D** :
 - **Attaque au corps à corps** : 1d20 + modificateur Force/Dextérité + bonus de maîtrise
 - **Attaque à distance** : 1d20 + modificateur Dextérité + bonus de maîtrise
 - **Attaque de sort** : 1d20 + modificateur d'incantation + bonus de maîtrise
-- Comparaison avec la Classe d'Armure (CA) de la cible
+- Comparaison automatique avec la Classe d'Armure (CA) de la cible
+- Résultat affiché : "Touché !" ou "Raté !"
 
-#### Calcul des Dégâts
-- Application de la formule de dégâts de l'arme/sort
-- Ajout des modificateurs appropriés
+**Calcul des Dégâts D&D** :
+- Application automatique de la formule de dégâts de l'arme/sort
+- Ajout des modificateurs appropriés selon les règles
 - Gestion des coups critiques (20 naturel = dégâts doublés)
-- Résistances et vulnérabilités des créatures
+- Application des résistances et vulnérabilités des créatures
+- Mise à jour automatique des PV de la cible
 
-#### Jets de Sauvegarde
+**Jets de Sauvegarde D&D** :
 - Jet 1d20 + modificateur de caractéristique appropriée
-- Comparaison avec le DD (Difficulté de Sauvegarde)
-- Demi-dégâts sur sauvegarde réussie (selon le sort)
+- Comparaison automatique avec le DD (Difficulté de Sauvegarde)
+- Application automatique des effets (demi-dégâts, immunité, etc.)
+
+**Mode Hybride** :
+- Le MJ peut désactiver les calculs automatiques même en mode D&D/Skyrim
+- Permet de gérer manuellement certaines situations spéciales
+- Utile pour des règles maison ou des scénarios narratifs
 
 ### Invitations Dynamiques en Combat
 
@@ -526,52 +577,70 @@ Un utilisateur peut lancer une session depuis :
 
 ### Statistiques de Dés
 
+**Organisation des statistiques** : Les données sont segmentées par système de jeu (Générique, D&D, Skyrim) et par campagne.
+
 #### Performance Globale
-- **Total de lancers** effectués
+- **Total de lancers** effectués (tous types de dés confondus)
 - **Moyenne générale** de tous les lancers
 - **Facteur de chance** : Comparaison avec la moyenne théorique
 - **Niveau de confiance** : Basé sur le nombre de lancers
+- **Par système de jeu** : Statistiques séparées pour Générique, D&D, Skyrim
+- **Par campagne** : "Dans cette campagne, vous avez lancé X dés avec une moyenne de Y"
 
 #### Analyse par Type de Dé
-**Pour chaque type (d20, d6, d8, d10, d12) :**
+**Pour chaque type (d4, d6, d8, d10, d12, d20, d100) :**
 - Nombre total de lancers
 - Moyenne obtenue
 - Distribution des résultats
 - Résultat le plus fréquent
 - Résultat le plus rare
+- Écart par rapport à la moyenne théorique
 
-#### Analyse Spécifique d20
-- Nombre de 20 naturels (coups critiques)
-- Nombre de 1 naturels (échecs critiques)
-- Taux de réussite critique
-- Plus longue série de jets chanceux
-- Plus longue série de jets malchanceux
+**Note** : En mode générique, les types de dés utilisés varient selon les campagnes. En D&D, le d20 est prépondérant.
+
+#### Analyse Spécifique d20 (principalement D&D)
+Cette section s'applique uniquement aux campagnes utilisant le système d20 (D&D principalement) :
+- **20 naturels** (coups critiques) : Nombre et taux
+- **1 naturels** (échecs critiques) : Nombre et taux
+- **Taux de réussite critique** vs échecs critiques
+- **Plus longue série** de jets chanceux
+- **Plus longue série** de jets malchanceux
+- **Comparaison** avec la probabilité théorique (5% pour chaque)
 
 #### Tendances Temporelles
 **Par mois :**
-- Moyenne du mois
+- Moyenne du mois (tous dés / par type de dé)
 - Évaluation de la chance (chanceux/normal/malchanceux)
 - Amélioration vs mois précédent
 - Meilleur mois de l'année
 - Pire mois de l'année
+- Détail par système de jeu utilisé
 
 #### Analyse par Contexte
-**Jets de combat :**
-- Jets d'attaque : taux de réussite, coups critiques
-- Jets de sauvegarde : taux de réussite
-- Jets de dégâts : moyenne
 
-**Tests de compétences :**
+**Jets de combat (tous systèmes)** :
+- Nombre total de jets en combat
+- Jets d'attaque : taux de réussite (si applicable en D&D)
+- Jets de dégâts : moyenne par type d'arme/sort
+- Jets de sauvegarde : taux de réussite (D&D)
+
+**Tests de compétences (D&D)** :
 - Taux de réussite global
 - Compétence la plus réussie
 - Compétence à améliorer
+- Jets d'initiative : moyenne
 
-#### Superstitions
-- Chiffres porte-bonheur identifiés
-- Chiffres porte-malheur
-- Meilleur jour de la semaine
-- Meilleure heure de la journée
-- Personnage le plus chanceux
+**Jets narratifs (Générique)** :
+- Distribution des types de dés utilisés
+- Contextes les plus fréquents (combat, exploration, social)
+
+#### Superstitions et Patterns
+- **Chiffres porte-bonheur** identifiés (par type de dé)
+- **Chiffres porte-malheur** (par type de dé)
+- **Meilleur jour** de la semaine pour lancer les dés
+- **Meilleure heure** de la journée
+- **Personnage le plus chanceux** (par système de jeu)
+- **Campagne la plus chanceuse** (statistiques par campagne)
 
 ### Statistiques de Combat
 
@@ -1020,39 +1089,55 @@ Défis plus ambitieux :
 
 ## 📚 Glossaire
 
+### Termes Généraux (tous systèmes)
+
 **MJ (Maître du Jeu)** : Utilisateur qui crée et anime une campagne, gère le scénario et contrôle les PNJ.
 
 **Joueur** : Utilisateur qui participe à une campagne en incarnant un personnage.
 
-**Campagne** : Histoire et monde de jeu créés par un MJ, composés de chapitres.
+**Campagne** : Histoire et monde de jeu créés par un MJ, composés de chapitres. Peut être en mode Générique, D&D, Skyrim, etc.
 
 **Chapitre** : Section d'une campagne avec son propre contenu narratif et ses PNJ.
 
-**Personnage** : Avatar qu'un joueur incarne dans une campagne.
+**Personnage** : Avatar qu'un joueur incarne dans une campagne. Ses caractéristiques dépendent du système de jeu.
 
 **PNJ (Personnage Non-Joueur)** : Personnage contrôlé par le MJ, peut être un allié ou un ennemi.
 
-**Session** : Séance de jeu active où MJ et joueurs progressent dans une campagne.
+**Session** : Séance de jeu active où MJ et joueurs se retrouvent pour faire progresser une campagne.
 
-**Sort** : Capacité magique qu'un personnage peut apprendre et utiliser.
+**Sort** : Capacité magique ou spéciale qu'un personnage peut apprendre et utiliser. En mode générique, défini librement. En D&D, suit les règles officielles.
 
-**Équipement** : Objet (arme, armure, item) qu'un personnage possède.
+**Équipement** : Objet (arme, armure, item) qu'un personnage possède dans son inventaire.
 
-**Initiative** : Ordre dans lequel les participants jouent pendant un combat.
+**Initiative** : Ordre dans lequel les participants jouent pendant un combat. Déterminé manuellement (générique) ou automatiquement (D&D).
 
-**Classe d'Armure (CA)** : Difficulté pour toucher un personnage/créature (D&D).
+**Points de Vie (PV/HP)** : Représentation de la santé du personnage. Gestion manuelle en générique, automatique en D&D.
 
-**Jet de Sauvegarde** : Jet de dé pour résister à un effet (D&D).
+**Succès** : Récompense (achievement) débloquée pour accomplissement d'un exploit dans le jeu.
 
-**Coup Critique** : Résultat de 20 naturel sur un d20, dégâts doublés (D&D).
+**Mode Hybride** : En mode D&D/Skyrim, possibilité pour le MJ de désactiver les calculs automatiques pour gérer manuellement certaines situations.
 
-**Échec Critique** : Résultat de 1 naturel sur un d20, échec automatique (D&D).
+### Termes Spécifiques D&D
 
-**Modificateur** : Bonus ou malus appliqué à un jet de dé selon les caractéristiques.
+**d20** : Dé à 20 faces, base du système D&D pour les tests d'action.
 
-**Bonus de Maîtrise** : Bonus basé sur le niveau du personnage (D&D).
+**Classe d'Armure (CA)** : Valeur représentant la difficulté pour toucher un personnage/créature. Plus elle est élevée, plus c'est difficile.
 
-**Succès** : Récompense débloquée pour accomplissement d'un exploit.
+**Jet de Sauvegarde** : Jet de dé pour résister à un effet (sort, poison, etc.). Formule : 1d20 + modificateur de caractéristique.
+
+**Coup Critique** : Résultat de 20 naturel sur un d20, entraîne le doublement des dégâts de l'attaque.
+
+**Échec Critique** : Résultat de 1 naturel sur un d20, entraîne un échec automatique de l'action.
+
+**Modificateur** : Bonus ou malus appliqué à un jet de dé selon une caractéristique (Force, Dextérité, etc.). Calculé comme : (Valeur - 10) / 2.
+
+**Bonus de Maîtrise** : Bonus basé sur le niveau du personnage, ajouté aux jets pour lesquels le personnage est compétent. Augmente tous les 4 niveaux.
+
+**Caractéristiques** : Six attributs principaux en D&D : Force, Dextérité, Constitution, Intelligence, Sagesse, Charisme.
+
+**DD (Difficulté de Sauvegarde)** : Valeur cible qu'un jet de sauvegarde doit atteindre pour réussir. Formule : 8 + modificateur + bonus de maîtrise.
+
+**Challenge Rating (CR)** : Indicateur de difficulté d'un monstre, utilisé pour équilibrer les combats.
 
 ---
 

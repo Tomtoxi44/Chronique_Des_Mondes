@@ -1,8 +1,12 @@
 # Dossiers de build
 bin/
 obj/
-appsettings.json
-appsettings.Development.json
+
+# ❌ NE PAS IGNORER appsettings.json (structure sans secrets)
+# ✅ Ignorer SEULEMENT les fichiers avec secrets réels
+appsettings.*.local.json
+*.user.secrets.json
+
 # Fichiers de logs et diagnostics
 *.log
 
@@ -46,11 +50,35 @@ project.fragment.lock.json
 # Fichiers de base de données locales
 *.mdf
 *.ldf
+*.db
+*.db-shm
+*.db-wal
 
 # Fichiers de l'IDE JetBrains Rider (si utilisé)
 .idea/
 
 # ASP.NET Aspire (si tu utilises Aspire Dashboard ou services cloud locaux)
+
+# ==========================================
+# 🔒 SECRETS ET VARIABLES D'ENVIRONNEMENT
+# ==========================================
+
+# User Secrets (générés par dotnet user-secrets)
+secrets.json
+
+# Variables d'environnement locales
+.env
+.env.local
+.env.*.local
+
+# Connection strings avec mots de passe
+*ConnectionStrings*.local.json
+
+# Certificats et clés privées
+*.pfx
+*.key
+*.pem
+*.crt
 .aspire/
 
 wwwroot/lib/
