@@ -1,12 +1,39 @@
-# Chronique des Mondes - Instructions for AI Agents# Chronique des Mondes - Instructions for AI Agents
+# Chronique des Mondes - Instructions for AI Agents
 
-
-
-## 📋 Project Overview## 📋 Project Configuration
-
-Project configuration for Chronique des Mondes RPG platform
+## 📋 Project Overview
 
 **Chronique des Mondes** is a platform for creating and managing tabletop RPG campaigns with real-time session management, combat system, and D&D 5e support built with .NET 10 + Aspire + Blazor Server.
+
+## � Documentation References
+
+**IMPORTANT**: Before implementing any feature, always consult these documentation folders:
+
+### � Specifications
+- **Location**: `.github/instructions/SPECIFICATION_FONCTIONNELLE.md`
+- **Contains**: Business requirements, user stories, functional specifications
+- **Use when**: Understanding feature requirements, acceptance criteria, business logic
+
+### 🔧 Technical Documentation
+- **Location**: `.github/instructions/technique/`
+- **Files**:
+  - `ARCHITECTURE_TECHNIQUE.md` - System architecture, project structure
+  - `API_ENDPOINTS.md` - REST API contracts, request/response formats
+  - `MODELE_DONNEES.md` - Database schema, entity relationships
+  - `FRONTEND_BLAZOR.md` - Blazor components, UI guidelines
+  - `SIGNALR_TEMPS_REEL.md` - Real-time communication patterns
+  - `SECURITE.md` - Security guidelines, authentication, authorization
+  - `STANDARDS_CODE.md` - Coding standards, conventions, best practices
+
+### 📋 Backlog
+- **Location**: `.github/backlog/`
+- **Contains**: All User Stories organized by Epic
+- **Use when**: Implementing features, understanding story details, checking acceptance criteria
+
+**Always read the relevant documentation before starting implementation to ensure alignment with project standards and requirements.**
+
+---
+
+## 📋 Project Configuration
 
 ### Development Environment
 
