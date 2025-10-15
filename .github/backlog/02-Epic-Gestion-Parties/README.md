@@ -42,9 +42,9 @@ Permettre aux Maîtres du Jeu (MJ) de créer et gérer des campagnes complètes,
 | [US-017](./US-017-selection-personnage.md) | Sélection personnage pour campagne | 📝 Planifié | 3 | P0 |
 | [US-018](./US-018-lancement-session.md) | Lancement de session | 📝 Planifié | 8 | P0 |
 | [US-019](./US-019-progression-chapitres.md) | Progression par chapitres | 📝 Planifié | 5 | P1 |
-| [US-020](./US-020-sauvegarde-session.md) | Sauvegarde automatique | 📝 Planifié | 3 | P1 |
+| [US-020](./US-020-auto-sauvegarde.md) | Auto-sauvegarde de session | 📝 Planifié | 3 | P1 |
 | [US-021](./US-021-historique-sessions.md) | Historique des sessions | 📝 Planifié | 3 | P2 |
-| [US-022](./US-022-gestion-joueurs.md) | Gestion des joueurs (retirer) | 📝 Planifié | 2 | P1 |
+| [US-022](./US-022-gestion-joueurs.md) | Gestion des joueurs | 📝 Planifié | 2 | P1 |
 
 ---
 
