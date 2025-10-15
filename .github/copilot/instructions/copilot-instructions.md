@@ -1,295 +1,585 @@
-# {PROJECT_NAME} - Instructions for AI Agents
+# Chronique des Mondes - Instructions for AI Agents# Chronique des Mondes - Instructions for AI Agents
 
-## 📋 Project Configuration
-Before using these instructions, configure the following variables according to your project:
 
-### ## 📅 Observability & Monitoring
+
+## 📋 Project Overview## 📋 Project Configuration
+
+Project configuration for Chronique des Mondes RPG platform
+
+**Chronique des Mondes** is a platform for creating and managing tabletop RPG campaigns with real-time session management, combat system, and D&D 5e support built with .NET 10 + Aspire + Blazor Server.
 
 ### Development Environment
-- **Dashboard**: {DASHBOA### 📀 Coding S### 📀 Coding Standards
-**Language-Specific Conventions for {TECH_STACK}**
 
-#### 📏 Spacing and Formatting
-```
-# Standards by language:
+### Project Configuration- **Dashboard**: https://localhost:17223 (Aspire Dashboard)
+
+### 📀 Coding Standards
+
+- **PROJECT_NAME**: Chronique des Mondes  **Language-Specific Conventions for .NET 10 + Blazor Server**
+
+- **TECH_STACK**: .NET 10, Aspire, Blazor Server, Entity Framework Core, SignalR  
+
+- **ARCHITECTURE**: Aspire Distributed Application  #### 📏 Spacing and Formatting
+
+- **DATABASE**: SQL Server (dev), PostgreSQL (prod planned)  ```
+
+- **AUTH**: JWT + BCrypt (MVP)  # Standards by language:
+
 # C#### 📉 Logging and Observability
-**Ba### 🛑 Security Best Practices
+
+### 🏗️ Architecture & Commands**Ba### 🛑 Security Best Practices
+
 **Aligned with {SECURITY_FRAMEWORK} guidance for {TECH_STACK}**d on {LOGGING_FRAMEWORK} and {OBS### 📋 Code Documentation
-**{DOCUMENTATION_STANDARD} for {TECH_STACK}**
 
-#### Documentation Rules
-- **Language**: ALL COMMENTS IN ENGLISH
-- **Public APIs**: {PUBLIC_API_DOC_REQUIREMENT}
-- **Function/Method documentation**: {METHOD_DOC_FORMAT}
-- **Parameter documentation**: {PARAMETER_DOC_FORMAT}
-- **Return values**: {RETURN_VALUE_DOC_FORMAT}
+**Solution**: `Cdm.slnx`**{DOCUMENTATION_STANDARD} for {TECH_STACK}**
+
+
+
+```bash#### Documentation Rules
+
+# Start development- **Language**: ALL COMMENTS IN ENGLISH
+
+dotnet run --project Cdm/Cdm.AppHost- **Public APIs**: {PUBLIC_API_DOC_REQUIREMENT}
+
+# Dashboard: https://localhost:17223- **Function/Method documentation**: {METHOD_DOC_FORMAT}
+
+# Web: https://localhost:5001- **Parameter documentation**: {PARAMETER_DOC_FORMAT}
+
+# API: https://localhost:5000- **Return values**: {RETURN_VALUE_DOC_FORMAT}
+
 - **Type documentation**: {TYPE_DOC_FORMAT}
-- **Formatting rules**: {DOC_FORMATTING_RULES}TACK}**
 
-- **Structured logging**: {STRUCTURED_LOGGING_APPROACH}
+# Build & Test- **Formatting rules**: {DOC_FORMATTING_RULES}TACK}**
+
+dotnet build
+
+dotnet test- **Structured logging**: {STRUCTURED_LOGGING_APPROACH}
+
 - **Business context**: Include {CONTEXT_FIELDS} in every log entry
-- **Log levels**: {LOG_LEVELS_HIERARCHY}
-- **Security**: Never log {SENSITIVE_DATA_TYPES}
-- **Observability tools**: {OBSERVABILITY_TOOLS_USED}es, PascalCase classes, camelCase variables, StyleCop rules
-# JavaScript/TypeScript: 2 spaces, camelCase, semicolons, ESLint/Prettier
-# Python: 4 spaces, snake_case, PEP 8 compliance, Black formatter
-# Java: 4 spaces, PascalCase classes, camelCase methods, Google Style
-# Go: tabs, PascalCase exported, camelCase private, gofmt
-# Rust: 4 spaces, snake_case, kebab-case packages, rustfmt
-```
-- **Indentation**: {INDENTATION_STANDARD}
-- **Line length**: {LINE_LENGTH_LIMIT} characters max
-- **Operator spacing**: {OPERATOR_SPACING_RULE}
-- **Comment formatting**: {COMMENT_FORMAT_RULE}
-- **Code formatter**: {CODE_FORMATTER_TOOL}*Language-Specific Conventions for {TECH_STACK}**
 
-#### 📏 Spacing and Formatting
-```
+# Migrations- **Log levels**: {LOG_LEVELS_HIERARCHY}
+
+dotnet ef migrations add [Name] --project Cdm/Cdm.Data.Common- **Security**: Never log {SENSITIVE_DATA_TYPES}
+
+dotnet ef database update --project Cdm/Cdm.Data.Common- **Observability tools**: {OBSERVABILITY_TOOLS_USED}es, PascalCase classes, camelCase variables, StyleCop rules
+
+```# JavaScript/TypeScript: 2 spaces, camelCase, semicolons, ESLint/Prettier
+
+# Python: 4 spaces, snake_case, PEP 8 compliance, Black formatter
+
+### 📁 Project Structure# Java: 4 spaces, PascalCase classes, camelCase methods, Google Style
+
+# Go: tabs, PascalCase exported, camelCase private, gofmt
+
+```# Rust: 4 spaces, snake_case, kebab-case packages, rustfmt
+
+Cdm/```
+
+├── Cdm.AppHost/               # Aspire orchestration- **Indentation**: {INDENTATION_STANDARD}
+
+├── Cdm.ApiService/            # REST API- **Line length**: {LINE_LENGTH_LIMIT} characters max
+
+├── Cdm.Web/                   # Blazor Server UI- **Operator spacing**: {OPERATOR_SPACING_RULE}
+
+├── Cdm.Data.Common/           # Data layer + Models- **Comment formatting**: {COMMENT_FORMAT_RULE}
+
+├── Cdm.Business.Common/       # Business services- **Code formatter**: {CODE_FORMATTER_TOOL}*Language-Specific Conventions for {TECH_STACK}**
+
+├── Cdm.Common/                # DTOs + Enums
+
+└── Cdm.Migrations/            # EF migrations#### 📏 Spacing and Formatting
+
+``````
+
 # Standards by language:
-# C#: 4 spaces, PascalCase classes, camelCase variables
+
+---# C#: 4 spaces, PascalCase classes, camelCase variables
+
 # JavaScript/TypeScript: 2 spaces, camelCase, semicolons
-# Python: 4 spaces, snake_case, PEP 8 compliance
+
+## 📝 Coding Standards (.NET + StyleCop)# Python: 4 spaces, snake_case, PEP 8 compliance
+
 # Java: 4 spaces, PascalCase classes, camelCase methods
-# Go: tabs, PascalCase exported, camelCase private
+
+### 📏 Formatting# Go: tabs, PascalCase exported, camelCase private
+
 # Rust: 4 spaces, snake_case, kebab-case packages
-```
-- **Indentation**: {INDENTATION_STANDARD}
-- **Line length**: {LINE_LENGTH_LIMIT} characters max
-- **Operator spacing**: {OPERATOR_SPACING_RULE}
+
+- **Indentation**: 4 spaces, no tabs```
+
+- **Line length**: 120 characters max- **Indentation**: {INDENTATION_STANDARD}
+
+- **Braces**: Allman style (new lines)- **Line length**: {LINE_LENGTH_LIMIT} characters max
+
+- **Access modifiers**: Always explicit- **Operator spacing**: {OPERATOR_SPACING_RULE}
+
 - **Comment formatting**: {COMMENT_FORMAT_RULE}**Logging**: {LOGGING_FRAMEWORK} with structured logs
-- **Metrics**: Business metrics in `{PROJECT_NAME}.*` namespace
+
+### 🏷️ Naming- **Metrics**: Business metrics in `{PROJECT_NAME}.*` namespace
+
 - **Tracing**: {TRACING_IMPLEMENTATION}
 
-### Production Environment
-- **Monitoring**: {PRODUCTION_MONITORING}
-- **Log Aggregation**: {LOG_AGGREGATION_SERVICE}
-- **Metrics Export**: {METRICS_EXPORT_METHOD}
+- **Classes**: PascalCase (`UserService`)
+
+- **Methods**: PascalCase (`RegisterAsync`)### Production Environment
+
+- **Fields**: `_camelCase` with underscore- **Monitoring**: {PRODUCTION_MONITORING}
+
+- **Properties**: PascalCase (`Email`)- **Log Aggregation**: {LOG_AGGREGATION_SERVICE}
+
+- **Interfaces**: `IPascalCase` with I prefix- **Metrics Export**: {METRICS_EXPORT_METHOD}
+
 - **Health Checks**: {HEALTH_CHECK_ENDPOINTS}ect Information
-- `{PROJECT_NAME}` : Name of your project
+
+### 📝 Documentation (MANDATORY - ENGLISH ONLY)- `{PROJECT_NAME}` : Name of your project
+
 - `{PROJECT_DESCRIPTION}` : Brief description of what the project does
-- `{TECH_STACK}` : Main technology stack (ex: .NET, Node.js, Python, Java, React, etc.)
-- `{ARCHITECTURE_TYPE}` : Architecture type (ex: Microservices, Monolith, Serverless, SPA, etc.)
 
-### 🏗️ Architecture & Infrastructure
-- `{SOLUTION_FILE}` : Main solution/project file (ex: TanusHub.sln, package.json, pom.xml)
-- `{BUILD_COMMAND}` : Build command (ex: dotnet build, npm run build, mvn compile)
-- `{TEST_COMMAND}` : Test command (ex: dotnet test, npm test, pytest)
-- `{RUN_COMMAND}` : Run command (ex: dotnet run, npm start, python main.py)
-- `{MAIN_PORT}` : Main application port
-- `{DASHBOARD_URL}` : Development dashboard URL (if applicable)
+```csharp- `{TECH_STACK}` : Main technology stack (ex: .NET, Node.js, Python, Java, React, etc.)
 
-### 🔐 Authentication & Security
+/// <summary>- `{ARCHITECTURE_TYPE}` : Architecture type (ex: Microservices, Monolith, Serverless, SPA, etc.)
+
+/// Registers a new user in the system.
+
+/// </summary>### 🏗️ Architecture & Infrastructure
+
+/// <param name="request">Registration details.</param>- `{SOLUTION_FILE}` : Main solution/project file (ex: TanusHub.sln, package.json, pom.xml)
+
+/// <returns>Registration response with user ID.</returns>- `{BUILD_COMMAND}` : Build command (ex: dotnet build, npm run build, mvn compile)
+
+/// <exception cref="InvalidOperationException">Email already in use.</exception>- `{TEST_COMMAND}` : Test command (ex: dotnet test, npm test, pytest)
+
+public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)- `{RUN_COMMAND}` : Run command (ex: dotnet run, npm start, python main.py)
+
+{- `{MAIN_PORT}` : Main application port
+
+    // Implementation- `{DASHBOARD_URL}` : Development dashboard URL (if applicable)
+
+}
+
+```### 🔐 Authentication & Security
+
 - `{AUTH_PROVIDER}` : Authentication provider (ex: Azure AD, Auth0, JWT, OAuth2)
-- `{AUTH_TENANT}` : Tenant/domain for authentication
+
+### 🏗️ File Organization- `{AUTH_TENANT}` : Tenant/domain for authentication
+
 - `{USER_ROLES}` : List of user roles in the system
-- `{ADMIN_ROLES}` : List of admin roles in the system
+
+```csharp- `{ADMIN_ROLES}` : List of admin roles in the system
+
+namespace Cdm.Business.Common.Services;
 
 ### 🗄️ Data Storage
-- `{DATABASE_TYPE}` : Database type (ex: SQLite, PostgreSQL, MongoDB, MySQL)
-- `{MAIN_CONTEXT}` : Main database context/connection name
-- `{ENTITY_EXAMPLES}` : Main entities/models in the system
 
-### 🌐 Deployment & Infrastructure
-- `{DEPLOYMENT_TARGETS}` : Deployment targets (ex: Azure, AWS, Docker, Kubernetes)
-- `{SERVER_ENVIRONMENTS}` : List of environments (ex: Development, Staging, Production)
-- `{PROXY_TYPE}` : Proxy/gateway type if applicable (ex: YARP, nginx, API Gateway)
+using System;- `{DATABASE_TYPE}` : Database type (ex: SQLite, PostgreSQL, MongoDB, MySQL)
 
-### 📁 Project Structure
-- `{SOURCE_FOLDER}` : Source code folder structure
-- `{COMPONENT_STRUCTURE}` : UI component structure (if applicable)
-- `{MODULE_STRUCTURE}` : Business module organization
+using Cdm.Common.DTOs;- `{MAIN_CONTEXT}` : Main database context/connection name
 
-### 🎨 UI Technology (if applicable)
-- `{UI_FRAMEWORK}` : UI framework (ex: Blazor Server, React, Vue.js, Angular, Flutter)
-- `{UI_COMPONENT_LIB}` : UI component library used
-- `{STYLING_APPROACH}` : Styling approach (ex: CSS, SCSS, Tailwind, MUI)
+using Microsoft.Extensions.Logging;- `{ENTITY_EXAMPLES}` : Main entities/models in the system
 
-## 🎯 Project Vision
 
-**{PROJECT_NAME}** is a {PROJECT_DESCRIPTION} built with {TECH_STACK} that follows a {ARCHITECTURE_TYPE} architecture.
 
-## 🏗️ Architecture Overview
+/// <summary>### 🌐 Deployment & Infrastructure
 
-### Project Structure
+/// Service description.- `{DEPLOYMENT_TARGETS}` : Deployment targets (ex: Azure, AWS, Docker, Kubernetes)
+
+/// </summary>- `{SERVER_ENVIRONMENTS}` : List of environments (ex: Development, Staging, Production)
+
+public class ServiceName- `{PROXY_TYPE}` : Proxy/gateway type if applicable (ex: YARP, nginx, API Gateway)
+
+{
+
+    private const int ConstantValue = 10;### 📁 Project Structure
+
+    - `{SOURCE_FOLDER}` : Source code folder structure
+
+    private readonly ILogger<ServiceName> _logger;- `{COMPONENT_STRUCTURE}` : UI component structure (if applicable)
+
+    - `{MODULE_STRUCTURE}` : Business module organization
+
+    public ServiceName(ILogger<ServiceName> logger)
+
+    {### 🎨 UI Technology (if applicable)
+
+        _logger = logger;- `{UI_FRAMEWORK}` : UI framework (ex: Blazor Server, React, Vue.js, Angular, Flutter)
+
+    }- `{UI_COMPONENT_LIB}` : UI component library used
+
+    - `{STYLING_APPROACH}` : Styling approach (ex: CSS, SCSS, Tailwind, MUI)
+
+    public async Task MethodAsync()
+
+    {## 🎯 Project Vision
+
+        // Implementation
+
+    }**{PROJECT_NAME}** is a {PROJECT_DESCRIPTION} built with {TECH_STACK} that follows a {ARCHITECTURE_TYPE} architecture.
+
+}
+
+```## 🏗️ Architecture Overview
+
+
+
+---### Project Structure
+
 ```
-{SOLUTION_FILE}
+
+## 🔐 Security{SOLUTION_FILE}
+
 {SOURCE_FOLDER}
-# Example structures by technology:
+
+### Password Handling# Example structures by technology:
+
 # .NET: src/{PROJECT_NAME}.Api/, src/{PROJECT_NAME}.Core/, src/{PROJECT_NAME}.Infrastructure/
-# Node.js: src/, lib/, routes/, models/, middleware/
-# Python: app/, models/, views/, services/, tests/
-# Java: src/main/java/, src/main/resources/, src/test/
-# React: src/, components/, pages/, hooks/, utils/
-```
 
-### Critical Architectural Patterns
+```csharp# Node.js: src/, lib/, routes/, models/, middleware/
 
-**{ARCHITECTURE_TYPE} Pattern**: The application follows {ARCHITECTURE_TYPE} principles:
-- Development: {DEV_ENVIRONMENT_DESC}
-- Production: {PROD_ENVIRONMENT_DESC}
+// BCrypt with work factor 12# Python: app/, models/, views/, services/, tests/
 
-**Service/Component Organization**: Key architectural components:
-- {SERVICE_PATTERN_1}
-- {SERVICE_PATTERN_2} 
+var hash = BCrypt.Net.BCrypt.HashPassword(password, 12);# Java: src/main/java/, src/main/resources/, src/test/
+
+var isValid = BCrypt.Net.BCrypt.Verify(password, hash);# React: src/, components/, pages/, hooks/, utils/
+
+``````
+
+
+
+### Input Validation### Critical Architectural Patterns
+
+
+
+```csharp**{ARCHITECTURE_TYPE} Pattern**: The application follows {ARCHITECTURE_TYPE} principles:
+
+public class RegisterRequest- Development: {DEV_ENVIRONMENT_DESC}
+
+{- Production: {PROD_ENVIRONMENT_DESC}
+
+    [Required(ErrorMessage = "Email is required")]
+
+    [EmailAddress(ErrorMessage = "Invalid email format")]**Service/Component Organization**: Key architectural components:
+
+    [MaxLength(255)]- {SERVICE_PATTERN_1}
+
+    public string Email { get; set; } = string.Empty;- {SERVICE_PATTERN_2} 
+
 - {SERVICE_PATTERN_3}
 
-**Development Services**: {DEV_SERVICES_DESC}
+    [Required]
 
-## 🔑 Essential Development Commands
+    [MinLength(8)]**Development Services**: {DEV_SERVICES_DESC}
 
-```bash
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")]
+
+    public string Password { get; set; } = string.Empty;## 🔑 Essential Development Commands
+
+}
+
+``````bash
+
 # Start development environment
-{RUN_COMMAND}
+
+---{RUN_COMMAND}
+
 # Dashboard/UI: {DASHBOARD_URL}
 
-# Build the project
-{BUILD_COMMAND}
+## 📊 Logging
 
-# Run tests
-{TEST_COMMAND}
+# Build the project
+
+### Structured Logging{BUILD_COMMAND}
+
+
+
+```csharp# Run tests
+
+// ✅ Correct{TEST_COMMAND}
+
+_logger.LogInformation("User {UserId} created {Resource}", userId, resource);
 
 # Additional commands based on technology:
-# .NET: dotnet ef database update, dotnet user-secrets set
-# Node.js: npm install, npm run dev, npm run lint
-# Python: pip install -r requirements.txt, python manage.py migrate
+
+// ❌ Incorrect  # .NET: dotnet ef database update, dotnet user-secrets set
+
+_logger.LogInformation($"User {userId} created {resource}");# Node.js: npm install, npm run dev, npm run lint
+
+```# Python: pip install -r requirements.txt, python manage.py migrate
+
 # Java: mvn install, mvn spring-boot:run
-# Docker: docker-compose up, docker build
+
+### Log Levels# Docker: docker-compose up, docker build
+
 ```
 
-## 🌐 Deployment Architecture
+- **Debug**: Diagnostic details
 
-### {SERVER_ENVIRONMENTS}
-- **{ENVIRONMENT_1}**: {ENVIRONMENT_1_DESC}
+- **Information**: Normal flow## 🌐 Deployment Architecture
+
+- **Warning**: Unexpected but handled
+
+- **Error**: Operation failures### {SERVER_ENVIRONMENTS}
+
+- **Critical**: System failures- **{ENVIRONMENT_1}**: {ENVIRONMENT_1_DESC}
+
 - **{ENVIRONMENT_2}**: {ENVIRONMENT_2_DESC}
-- **{ENVIRONMENT_N}**: {ENVIRONMENT_N_DESC}
 
-### {PROXY_TYPE} Configuration (if applicable)
+**Never log**: Passwords, tokens, sensitive personal data- **{ENVIRONMENT_N}**: {ENVIRONMENT_N_DESC}
+
+
+
+---### {PROXY_TYPE} Configuration (if applicable)
+
 - Development: {DEV_PROXY_CONFIG}
-- Production: {PROD_PROXY_CONFIG}
+
+## 🚀 API Patterns- Production: {PROD_PROXY_CONFIG}
+
 - Configuration management: {PROXY_CONFIG_METHOD}
+
+### Minimal API Endpoints
 
 ## 🔐 Authentication & Authorization
 
-### {AUTH_PROVIDER} Configuration
-```
-// Authentication roles
-{USER_ROLES}          // Standard user access
-{ADMIN_ROLES}         // Administrative access
-{CUSTOM_ROLES}        // Custom role definitions
+```csharp
+
+namespace Cdm.ApiService.Endpoints;### {AUTH_PROVIDER} Configuration
+
 ```
 
-### Technology-Specific Configuration
-- **Authentication Method**: {AUTH_METHOD}
-- **Session Management**: {SESSION_CONFIG}
-- **Role Resolution**: {ROLE_RESOLUTION_METHOD}
-- **Security Policies**: {SECURITY_POLICIES}
+public static class AuthEndpoints// Authentication roles
 
-## 🗄️ Database Configuration
+{{USER_ROLES}          // Standard user access
 
-### {DATABASE_TYPE} - Context: `{MAIN_CONTEXT}`
-```
-{ENTITY_EXAMPLES}
-// Example entities based on database type:
-// SQL: Users, Products, Orders, AuditLogs
-// NoSQL: UserDocuments, ProductCatalogs, OrderHistories
-// Key-Value: CacheEntries, Sessions, Configurations
-```
+    public static void MapAuthEndpoints(this IEndpointRouteBuilder app){ADMIN_ROLES}         // Administrative access
 
-### Database Management Commands
-```bash
-# Examples by technology:
-# .NET EF Core: dotnet ef migrations add [Name], dotnet ef database update
-# Node.js Prisma: npx prisma migrate dev, npx prisma generate
+    {{CUSTOM_ROLES}        // Custom role definitions
+
+        var group = app.MapGroup("/api/auth").WithTags("Authentication");```
+
+
+
+        group.MapPost("/register", RegisterAsync)### Technology-Specific Configuration
+
+            .WithName("Register")- **Authentication Method**: {AUTH_METHOD}
+
+            .Produces<RegisterResponse>(201)- **Session Management**: {SESSION_CONFIG}
+
+            .Produces<ProblemDetails>(400);- **Role Resolution**: {ROLE_RESOLUTION_METHOD}
+
+    }- **Security Policies**: {SECURITY_POLICIES}
+
+
+
+    private static async Task<IResult> RegisterAsync(## 🗄️ Database Configuration
+
+        RegisterRequest request,
+
+        AuthService service)### {DATABASE_TYPE} - Context: `{MAIN_CONTEXT}`
+
+    {```
+
+        try{ENTITY_EXAMPLES}
+
+        {// Example entities based on database type:
+
+            var response = await service.RegisterAsync(request);// SQL: Users, Products, Orders, AuditLogs
+
+            return Results.Created($"/api/users/{response.UserId}", response);// NoSQL: UserDocuments, ProductCatalogs, OrderHistories
+
+        }// Key-Value: CacheEntries, Sessions, Configurations
+
+        catch (InvalidOperationException ex)```
+
+        {
+
+            return Results.BadRequest(new ProblemDetails { Detail = ex.Message });### Database Management Commands
+
+        }```bash
+
+    }# Examples by technology:
+
+}# .NET EF Core: dotnet ef migrations add [Name], dotnet ef database update
+
+```# Node.js Prisma: npx prisma migrate dev, npx prisma generate
+
 # Python Django: python manage.py makemigrations, python manage.py migrate
-# Java Flyway: mvn flyway:migrate, mvn flyway:info
+
+---# Java Flyway: mvn flyway:migrate, mvn flyway:info
+
 {DATABASE_MIGRATION_COMMANDS}
-```
 
-## 🎨 User Interface ({UI_FRAMEWORK})
+## 🧪 Testing```
 
-### Component Structure
-```
-{COMPONENT_STRUCTURE}
-# Examples by UI framework:
-# React: src/components/, src/pages/, src/hooks/, src/utils/
-# Vue.js: src/components/, src/views/, src/composables/, src/stores/
-# Angular: src/app/components/, src/app/pages/, src/app/services/
-# Blazor: Components/Layout/, Components/Pages/, Components/Shared/
-# Flutter: lib/widgets/, lib/screens/, lib/services/, lib/models/
-```
 
-### {UI_FRAMEWORK}-Specific Patterns
-- **Rendering**: {RENDERING_PATTERN}
-- **State Management**: {STATE_MANAGEMENT}
-- **Authorization**: {UI_AUTHORIZATION_PATTERN}
-- **Real-time Updates**: {REALTIME_PATTERN}
 
-## 🔧 Business Modules
+### xUnit + FluentAssertions## 🎨 User Interface ({UI_FRAMEWORK})
 
-### {MODULE_STRUCTURE}
-```
-{BUSINESS_MODULE_1}
-{BUSINESS_MODULE_2}
+
+
+```csharp### Component Structure
+
+public sealed class AuthServiceTests```
+
+{{COMPONENT_STRUCTURE}
+
+    [Fact]# Examples by UI framework:
+
+    public async Task RegisterAsync_WithValidData_CreatesUser()# React: src/components/, src/pages/, src/hooks/, src/utils/
+
+    {# Vue.js: src/components/, src/views/, src/composables/, src/stores/
+
+        // Arrange# Angular: src/app/components/, src/app/pages/, src/app/services/
+
+        var service = CreateService();# Blazor: Components/Layout/, Components/Pages/, Components/Shared/
+
+        var request = new RegisterRequest # Flutter: lib/widgets/, lib/screens/, lib/services/, lib/models/
+
+        { ```
+
+            Email = "test@example.com",
+
+            Password = "SecurePass123!"### {UI_FRAMEWORK}-Specific Patterns
+
+        };- **Rendering**: {RENDERING_PATTERN}
+
+        - **State Management**: {STATE_MANAGEMENT}
+
+        // Act- **Authorization**: {UI_AUTHORIZATION_PATTERN}
+
+        var result = await service.RegisterAsync(request);- **Real-time Updates**: {REALTIME_PATTERN}
+
+        
+
+        // Assert## 🔧 Business Modules
+
+        result.Should().NotBeNull();
+
+        result.Email.Should().Be("test@example.com");### {MODULE_STRUCTURE}
+
+    }```
+
+}{BUSINESS_MODULE_1}
+
+```{BUSINESS_MODULE_2}
+
 {BUSINESS_MODULE_3}
-# Examples by domain:
+
+---# Examples by domain:
+
 # E-commerce: ProductCatalog, OrderManagement, PaymentProcessing
-# CRM: ContactManagement, SalesTracking, ReportGeneration
+
+## 🎯 Git Workflow# CRM: ContactManagement, SalesTracking, ReportGeneration
+
 # Content: UserGenerated, ContentModeration, SearchIndexing
-# IoT: DeviceManagement, DataCollection, AlertSystem
+
+### Branch Strategy# IoT: DeviceManagement, DataCollection, AlertSystem
+
 ```
 
-### Module Implementation Patterns
-- **Security**: Role-based access control per module
+```
+
+main → dev → feature/US-XXX-description### Module Implementation Patterns
+
+```- **Security**: Role-based access control per module
+
 - **Integration**: {MODULE_INTEGRATION_PATTERN}
-- **Configuration**: {MODULE_CONFIG_PATTERN}
 
-## 📊 Aspire Observability
+### Commit Messages- **Configuration**: {MODULE_CONFIG_PATTERN}
 
-### Development Dashboard
-- URL: `https://localhost:17223` (development only).
-- Structured ILogger logs with business context.
-- Business metrics in the `TanusHub.*` namespace.
+
+
+```## 📊 Aspire Observability
+
+feat(auth): implement user registration (US-001)
+
+fix(combat): resolve turn calculation bug### Development Dashboard
+
+docs(backlog): add Epic 4 user stories- URL: `https://localhost:17223` (development only).
+
+test(auth): add integration tests- Structured ILogger logs with business context.
+
+```- Business metrics in the `TanusHub.*` namespace.
+
 - Distributed traces: YARP → mock services.
 
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+
 ### Production
-- Dashboard automatically disabled.
+
+---- Dashboard automatically disabled.
+
 - OTLP export via `OTEL_EXPORTER_OTLP_ENDPOINT` variables.
-- Public health checks with caching.
 
-## 🛠️ Essential Coding Conventions
+## 🏃 Quick Start- Public health checks with caching.
 
-### Multi-Environment Configuration
+
+
+```bash## 🛠️ Essential Coding Conventions
+
+# Clone
+
+git clone https://github.com/Tomtoxi44/Chronique_Des_Mondes.git### Multi-Environment Configuration
+
 ```csharp
-// Pattern: environment-specific appsettings
-appsettings.json                 // Base configuration
-appsettings.Development.json     // Development + mock services
+
+# Run// Pattern: environment-specific appsettings
+
+cd Chronique_Des_Mondesappsettings.json                 // Base configuration
+
+dotnet run --project Cdm/Cdm.AppHostappsettings.Development.json     // Development + mock services
+
 appsettings.Server1.json         // server.tanus.eu
-appsettings.Server2.json         // le-pallet.avonde.eu
-```
 
-### Custom Service Defaults
+# Create feature branchappsettings.Server2.json         // le-pallet.avonde.eu
+
+git checkout dev```
+
+git checkout -b feature/US-XXX-feature-name
+
+```### Custom Service Defaults
+
 ```csharp
-// All projects call:
+
+---// All projects call:
+
 builder.AddServiceDefaults();
 
-// Automatically maps:
-app.MapDefaultEndpoints();  // /health, /alive
-app.UseSecurityHeaders();   // Security headers based on environment
-```
+## ✅ Checklist
 
-### Security Patterns
-- Mandatory HTTPS with automatic redirections.
-- Strict CSP tailored for Blazor Server + Azure AD.
-- Automatic security headers (production only).
-- Audit middleware for sensitive actions.
+// Automatically maps:
+
+Before committing code, verify:app.MapDefaultEndpoints();  // /health, /alive
+
+app.UseSecurityHeaders();   // Security headers based on environment
+
+- [ ] All comments in ENGLISH```
+
+- [ ] XML documentation on public members
+
+- [ ] Structured logging (no string interpolation)### Security Patterns
+
+- [ ] Server-side validation on all inputs- Mandatory HTTPS with automatic redirections.
+
+- [ ] No sensitive data in logs- Strict CSP tailored for Blazor Server + Azure AD.
+
+- [ ] Tests passing (`dotnet test`)- Automatic security headers (production only).
+
+- [ ] StyleCop rules followed (4 spaces, PascalCase, etc.)- Audit middleware for sensitive actions.
+
+- [ ] BCrypt for passwords (work factor 12)
 
 ## 📋 Backlog and Roadmap
 
-### Epic-Driven Structure
-Nine epics organized across MVP → Interface → Production phases with detailed user stories in `/backlog/`.
+---
 
-### MVP Priority (2–3 weeks)
-1. Epic 01: Foundation Aspire
+### Epic-Driven Structure
+
+**Resources**:Nine epics organized across MVP → Interface → Production phases with detailed user stories in `/backlog/`.
+
+- Backlog: `.github/backlog/` (57 User Stories, 6 Epics)
+
+- StyleCop: Microsoft C# conventions### MVP Priority (2–3 weeks)
+
+- Aspire: https://learn.microsoft.com/dotnet/aspire1. Epic 01: Foundation Aspire
+
 2. Epic 02: Mock Services
 3. Epic 03: Azure AD Auth
 4. Epic 04: YARP Proxy
