@@ -27,7 +27,19 @@ public class LocalStorageService : ILocalStorageService
     {
         try
         {
+            // Check if JSRuntime is available (not during pre-rendering)
+            if (_jsRuntime is IJSInProcessRuntime)
+            {
+                return await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+            }
+            
             return await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop calls cannot be issued"))
+        {
+            // JS Interop not available during pre-rendering
+            _logger.LogDebug("JavaScript interop not available for localStorage.getItem during pre-rendering");
+            return null;
         }
         catch (Exception ex)
         {
@@ -43,6 +55,11 @@ public class LocalStorageService : ILocalStorageService
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
             _logger.LogDebug("Item set in localStorage: {Key}", key);
         }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop calls cannot be issued"))
+        {
+            // JS Interop not available during pre-rendering
+            _logger.LogDebug("JavaScript interop not available for localStorage.setItem during pre-rendering");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting item in localStorage: {Key}", key);
@@ -55,6 +72,11 @@ public class LocalStorageService : ILocalStorageService
         {
             await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
             _logger.LogDebug("Item removed from localStorage: {Key}", key);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop calls cannot be issued"))
+        {
+            // JS Interop not available during pre-rendering
+            _logger.LogDebug("JavaScript interop not available for localStorage.removeItem during pre-rendering");
         }
         catch (Exception ex)
         {

@@ -1,0 +1,100 @@
+@page "/settings"
+@using Cdm.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@layout AppLayout
+@rendermode InteractiveServer
+
+<PageTitle>Paramètres - Chronique des Mondes</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="settings-container">
+            <h1>Paramètres</h1>
+            <p class="text-muted">Gérez vos préférences et paramètres de compte</p>
+
+            <div class="settings-sections">
+                <!-- General Settings -->
+                <section class="settings-section">
+                    <h2>Général</h2>
+                    <div class="settings-card">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Thème</strong>
+                                <small>Choisissez votre thème préféré</small>
+                            </div>
+                            <select class="form-select" style="width: auto;">
+                                <option value="dark" selected>Sombre</option>
+                                <option value="light">Clair</option>
+                                <option value="auto">Automatique</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Langue</strong>
+                                <small>Langue de l'interface</small>
+                            </div>
+                            <select class="form-select" style="width: auto;">
+                                <option value="fr" selected>Français</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notifications -->
+                <section class="settings-section">
+                    <h2>Notifications</h2>
+                    <div class="settings-card">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Notifications par email</strong>
+                                <small>Recevoir des notifications par email</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="emailNotif" checked>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Notifications in-app</strong>
+                                <small>Recevoir des notifications dans l'application</small>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="inAppNotif" checked>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Account Info (Read-only for now) -->
+                <section class="settings-section">
+                    <h2>Compte</h2>
+                    <div class="settings-card">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Email</strong>
+                                <small>@context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value</small>
+                            </div>
+                            <span class="badge bg-secondary">Non modifiable</span>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Identifiant</strong>
+                                <small>@context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value</small>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="settings-actions">
+                <button class="btn btn-primary" disabled>Sauvegarder les modifications</button>
+                <small class="text-muted">Fonctionnalité à venir avec US-004</small>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>

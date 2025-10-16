@@ -1,5 +1,6 @@
 using Cdm.Web;
 using Cdm.Web.Components;
+using Cdm.Web.Components.Pages.Auth;
 using Cdm.Web.Services.Storage;
 using Cdm.Web.Services.State;
 using Cdm.Web.Services.ApiClients;
@@ -17,17 +18,30 @@ builder.Services.AddRazorComponents()
 builder.Services.AddOutputCache();
 
 // Authentication & Authorization
+// We need AddAuthentication for the middleware, but we disable automatic redirects
+// The CustomAuthStateProvider handles authentication state based on localStorage JWT
 builder.Services.AddAuthentication(options =>
 {
-    // We use a custom AuthenticationStateProvider, but we still need to register
-    // authentication services for the middleware to work
     options.DefaultScheme = "Cookies";
 })
 .AddCookie("Cookies", options =>
 {
-    options.LoginPath = "/login";
-    options.LogoutPath = "/logout";
-    options.AccessDeniedPath = "/access-denied";
+    // Disable automatic redirects - let Blazor handle navigation
+    options.LoginPath = null;
+    options.LogoutPath = null;
+    options.AccessDeniedPath = null;
+    options.Events.OnRedirectToLogin = context =>
+    {
+        // Don't redirect, just return 401
+        context.Response.StatusCode = 401;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        // Don't redirect, just return 403
+        context.Response.StatusCode = 403;
+        return Task.CompletedTask;
+    };
 });
 
 builder.Services.AddAuthorizationCore();
@@ -36,6 +50,10 @@ builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => 
     sp.GetRequiredService<CustomAuthStateProvider>());
+
+// Handlers - Component-Handler-Service pattern
+builder.Services.AddScoped<LoginHandler>();
+builder.Services.AddScoped<RegisterHandler>();
 
 // HTTP Clients - Using Aspire Service Discovery
 builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
@@ -67,6 +85,8 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 // Enable authentication and authorization middleware
+// Authentication is handled by CustomAuthStateProvider (client-side JWT)
+// but middleware is required for UseAuthorization to work
 app.UseAuthentication();
 app.UseAuthorization();
 

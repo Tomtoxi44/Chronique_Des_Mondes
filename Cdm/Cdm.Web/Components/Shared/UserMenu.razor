@@ -1,0 +1,55 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Cdm.Web.Services.State
+@rendermode InteractiveServer
+
+<div class="user-menu">
+    <AuthorizeView>
+        <Authorized>
+            <div class="user-menu-trigger" @onclick="ToggleDropdown">
+                <i class="bi bi-person-circle"></i>
+                <span class="user-menu-name">@context.User.Identity?.Name</span>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            
+            @if (isDropdownOpen)
+            {
+                <div class="user-menu-dropdown">
+                    <div class="user-menu-header">
+                        <strong>@context.User.Identity?.Name</strong>
+                        <small>@GetUserEmail(context)</small>
+                    </div>
+                    
+                    <div class="user-menu-divider"></div>
+                    
+                    <a href="/profile" class="user-menu-item" @onclick="CloseDropdown">
+                        <i class="bi bi-person"></i>
+                        <span>Mon Profil</span>
+                    </a>
+                    
+                    <a href="/settings" class="user-menu-item" @onclick="CloseDropdown">
+                        <i class="bi bi-gear"></i>
+                        <span>Paramètres</span>
+                    </a>
+                    
+                    <div class="user-menu-divider"></div>
+                    
+                    <button class="user-menu-item user-menu-logout" @onclick="HandleLogout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Déconnexion</span>
+                    </button>
+                </div>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <div class="user-menu-auth-buttons">
+                <a href="/login" class="btn btn-outline-primary btn-sm">Connexion</a>
+                <a href="/register" class="btn btn-primary btn-sm">Inscription</a>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@if (isDropdownOpen)
+{
+    <div class="user-menu-overlay" @onclick="CloseDropdown"></div>
+}

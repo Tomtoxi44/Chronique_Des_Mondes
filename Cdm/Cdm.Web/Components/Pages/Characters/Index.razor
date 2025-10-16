@@ -1,19 +1,28 @@
 @page "/characters"
 @using Cdm.Web.Components.Layout
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Microsoft.AspNetCore.Components.Authorization
 @layout AppLayout
 @rendermode InteractiveServer
 
-<div class="container" style="padding-top: var(--spacing-xl);">
-    <h1>Mes Personnages</h1>
-    <p>Page temporaire - Liste des personnages à venir</p>
-    
-    <AuthorizeView>
-        <Authorized>
+<AuthorizeView>
+    <Authorized>
+        <div class="container" style="padding-top: var(--spacing-xl);">
+            <h1>Mes Personnages</h1>
+            <p>Page temporaire - Liste des personnages à venir</p>
+            
             <div class="alert alert-success">
                 <i class="bi bi-check-circle"></i>
                 Vous êtes connecté en tant que : <strong>@context.User.Identity?.Name</strong>
             </div>
-        </Authorized>
-    </AuthorizeView>
-</div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="container" style="padding-top: var(--spacing-xl);">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Vous devez être connecté pour accéder à cette page.</p>
+                <a href="/login" class="btn btn-primary">Se connecter</a>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

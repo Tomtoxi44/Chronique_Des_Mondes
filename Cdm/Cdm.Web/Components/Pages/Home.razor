@@ -1,8 +1,102 @@
 ﻿@page "/"
-@inject NavigationManager NavigationManager
-@code {
-    protected override void OnInitialized()
-    {
-        NavigationManager.NavigateTo("/register");
-    }
-}
+@using Cdm.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@layout AppLayout
+@rendermode InteractiveServer
+
+<PageTitle>Accueil - Chronique des Mondes</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="home-container">
+            <!-- Welcome Section -->
+            <section class="home-hero">
+                <h1>Bienvenue, @context.User.Identity?.Name !</h1>
+                <p class="hero-subtitle">Prêt pour votre prochaine aventure ?</p>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="home-quick-actions">
+                <h2>Actions Rapides</h2>
+                <div class="quick-actions-grid">
+                    <a href="/characters" class="quick-action-card">
+                        <i class="bi bi-person"></i>
+                        <h3>Mes Personnages</h3>
+                        <p>Créez et gérez vos personnages</p>
+                    </a>
+                    
+                    <a href="/campaigns" class="quick-action-card">
+                        <i class="bi bi-book"></i>
+                        <h3>Mes Campagnes</h3>
+                        <p>Explorez vos campagnes en cours</p>
+                    </a>
+                    
+                    <a href="/dice" class="quick-action-card">
+                        <i class="bi bi-dice-6"></i>
+                        <h3>Lanceur de Dés</h3>
+                        <p>Lancez les dés pour vos actions</p>
+                    </a>
+                    
+                    <a href="/profile" class="quick-action-card">
+                        <i class="bi bi-gear"></i>
+                        <h3>Paramètres</h3>
+                        <p>Personnalisez votre expérience</p>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="home-recent-activity">
+                <h2>Activité Récente</h2>
+                <div class="activity-placeholder">
+                    <i class="bi bi-clock-history"></i>
+                    <p>Aucune activité récente pour le moment.</p>
+                    <p class="text-muted">Commencez par créer votre premier personnage !</p>
+                </div>
+            </section>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="home-container home-landing">
+            <!-- Landing Hero -->
+            <section class="landing-hero">
+                <h1 class="landing-title">Chronique des Mondes</h1>
+                <p class="landing-subtitle">Votre plateforme pour vivre des aventures épiques en ligne</p>
+                <div class="landing-actions">
+                    <a href="/register" class="btn btn-primary btn-lg">Commencer l'Aventure</a>
+                    <a href="/login" class="btn btn-outline-primary btn-lg">Se Connecter</a>
+                </div>
+            </section>
+
+            <!-- Features -->
+            <section class="landing-features">
+                <h2>Fonctionnalités</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i class="bi bi-person-badge"></i>
+                        <h3>Création de Personnages</h3>
+                        <p>Créez des personnages détaillés pour vos aventures</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="bi bi-map"></i>
+                        <h3>Gestion de Campagnes</h3>
+                        <p>Organisez vos parties et suivez votre progression</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="bi bi-dice-5"></i>
+                        <h3>Lanceur de Dés</h3>
+                        <p>Système de dés intégré pour toutes vos actions</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <i class="bi bi-people"></i>
+                        <h3>Jeu en Temps Réel</h3>
+                        <p>Jouez avec vos amis en temps réel grâce à SignalR</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

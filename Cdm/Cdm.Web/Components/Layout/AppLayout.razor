@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Authorization
+@using Cdm.Web.Components.Shared
 
 <div class="app-layout">
     <!-- Sidebar -->
@@ -53,22 +54,10 @@
             <div class="topbar-right">
                 <button class="topbar-icon-btn" title="Notifications">
                     <i class="bi bi-bell"></i>
+                    <span class="notification-badge">3</span>
                 </button>
                 
-                <div class="topbar-user">
-                    <AuthorizeView>
-                        <Authorized>
-                            <button class="topbar-user-btn">
-                                <i class="bi bi-person-circle"></i>
-                                <span>@context.User.Identity?.Name</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </Authorized>
-                        <NotAuthorized>
-                            <a href="/login" class="btn btn-primary btn-sm">Connexion</a>
-                        </NotAuthorized>
-                    </AuthorizeView>
-                </div>
+                <UserMenu />
             </div>
         </header>
 

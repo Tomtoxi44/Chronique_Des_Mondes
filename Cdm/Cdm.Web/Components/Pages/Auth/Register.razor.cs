@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Components;
-using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.ApiClients.Base;
-using Cdm.Web.Services.State;
 using Cdm.Web.Shared.DTOs.Auth;
 
 namespace Cdm.Web.Components.Pages.Auth;
 
+/// <summary>
+/// Registration component for new user accounts.
+/// </summary>
 public partial class Register
 {
-    [Inject] private IAuthApiClient AuthApiClient { get; set; } = default!;
-    [Inject] private CustomAuthStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] private RegisterHandler Handler { get; set; } = default!;
     [Inject] private ILogger<Register> Logger { get; set; } = default!;
     
     private RegisterRequest RegisterModel { get; set; } = new();
@@ -17,11 +17,17 @@ public partial class Register
     private bool IsLoading { get; set; }
     private bool ShowPassword { get; set; }
     
+    /// <summary>
+    /// Toggles password visibility.
+    /// </summary>
     private void TogglePasswordVisibility()
     {
         ShowPassword = !ShowPassword;
     }
     
+    /// <summary>
+    /// Handles the registration form submission.
+    /// </summary>
     private async Task HandleRegisterAsync()
     {
         try
@@ -29,25 +35,13 @@ public partial class Register
             IsLoading = true;
             ErrorMessage = null;
             
-            Logger.LogInformation("Attempting to register user: {Email}", RegisterModel.Email);
-            
-            var response = await AuthApiClient.RegisterAsync(RegisterModel);
+            var response = await Handler.HandleRegisterAsync(RegisterModel);
             
             if (response != null)
             {
-                Logger.LogInformation("Registration successful for: {Email}", response.Email);
-                
-                // Marquer l'utilisateur comme authentifié
-                await AuthStateProvider.MarkUserAsAuthenticatedAsync(
-                    response.UserId,
-                    response.Email,
-                    response.Token);
-                
-                // Petit délai pour s'assurer que le localStorage est synchronisé
-                await Task.Delay(100);
-                
-                // Rediriger vers le dashboard avec forceLoad pour rafraîchir le contexte d'authentification
-                NavigationManager.NavigateTo("/characters", forceLoad: true);
+                // Wait a bit longer to ensure auth state is fully propagated
+                await Task.Delay(300);
+                NavigationManager.NavigateTo("/characters", forceLoad: false);
             }
         }
         catch (ApiException ex)
@@ -56,7 +50,6 @@ public partial class Register
             
             if (ex.ValidationErrors != null && ex.ValidationErrors.Any())
             {
-                // Afficher la première erreur de validation
                 var firstError = ex.ValidationErrors.First();
                 ErrorMessage = $"{firstError.Key}: {string.Join(", ", firstError.Value)}";
             }
@@ -68,7 +61,7 @@ public partial class Register
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error during registration");
-            ErrorMessage = "Une erreur inattendue s'est produite. Veuillez réessayer.";
+            ErrorMessage = "An unexpected error occurred. Please try again.";
         }
         finally
         {
