@@ -8,6 +8,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cdm.ServiceDefaults\Cdm.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Cdm.Business.Abstraction\Cdm.Business.Abstraction.csproj" />
+    <ProjectReference Include="..\Cdm.Business.Common\Cdm.Business.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Data.Common\Cdm.Data.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Migrations\Cdm.Migrations.csproj" />
   </ItemGroup>
 
   <ItemGroup>
