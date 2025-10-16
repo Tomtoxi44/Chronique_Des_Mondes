@@ -43,6 +43,9 @@ public partial class Register
                     response.Email,
                     response.Token);
                 
+                // Petit délai pour s'assurer que le localStorage est synchronisé
+                await Task.Delay(100);
+                
                 // Rediriger vers le dashboard avec forceLoad pour rafraîchir le contexte d'authentification
                 NavigationManager.NavigateTo("/characters", forceLoad: true);
             }
