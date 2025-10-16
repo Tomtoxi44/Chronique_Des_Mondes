@@ -17,6 +17,19 @@ builder.Services.AddRazorComponents()
 builder.Services.AddOutputCache();
 
 // Authentication & Authorization
+builder.Services.AddAuthentication(options =>
+{
+    // We use a custom AuthenticationStateProvider, but we still need to register
+    // authentication services for the middleware to work
+    options.DefaultScheme = "Cookies";
+})
+.AddCookie("Cookies", options =>
+{
+    options.LoginPath = "/login";
+    options.LogoutPath = "/logout";
+    options.AccessDeniedPath = "/access-denied";
+});
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
@@ -52,6 +65,10 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
+
+// Enable authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseOutputCache();
 
