@@ -27,12 +27,6 @@ public class LocalStorageService : ILocalStorageService
     {
         try
         {
-            // Check if JSRuntime is available (not during pre-rendering)
-            if (_jsRuntime is IJSInProcessRuntime)
-            {
-                return await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
-            }
-            
             return await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop calls cannot be issued"))

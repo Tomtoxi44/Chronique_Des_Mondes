@@ -53,7 +53,7 @@ public class JwtService : IJwtService
         
         // Get configuration from appsettings or User Secrets
         _secretKey = configuration["Jwt:SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
-        _issuer = configuration["Jwt:Issuer"] ?? "ChroniqueDesmonds";
+        _issuer = configuration["Jwt:Issuer"] ?? "ChroniqueDesMondes";
         _audience = configuration["Jwt:Audience"] ?? "ChroniqueDesMondesWeb";
         _expirationDays = int.TryParse(configuration["Jwt:ExpirationDays"], out var days) ? days : 7;
 
