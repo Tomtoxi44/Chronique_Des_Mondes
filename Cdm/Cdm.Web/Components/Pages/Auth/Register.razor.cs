@@ -43,8 +43,8 @@ public partial class Register
                     response.Email,
                     response.Token);
                 
-                // Rediriger vers le dashboard
-                NavigationManager.NavigateTo("/characters");
+                // Rediriger vers le dashboard avec forceLoad pour rafraîchir le contexte d'authentification
+                NavigationManager.NavigateTo("/characters", forceLoad: true);
             }
         }
         catch (ApiException ex)
