@@ -1,0 +1,18 @@
+@inherits LayoutComponentBase
+
+<div class="auth-layout">
+    <div class="auth-container">
+        <div class="auth-logo">
+            <h1 class="auth-logo-text">Chronique des Mondes</h1>
+            <p class="auth-logo-subtitle">Système de gestion de campagnes JDR</p>
+        </div>
+        
+        <main class="auth-content">
+            @Body
+        </main>
+        
+        <footer class="auth-footer">
+            <p>&copy; @DateTime.Now.Year Chronique des Mondes. Tous droits réservés.</p>
+        </footer>
+    </div>
+</div>

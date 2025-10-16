@@ -114,6 +114,11 @@
   --border-radius-lg: 1rem;      /* 16px */
   --border-radius-xl: 1.5rem;    /* 24px */
   --border-radius-full: 9999px;
+  
+  /* Alias pour composants */
+  --radius-sm: var(--border-radius-sm);
+  --radius-md: var(--border-radius-md);
+  --radius-lg: var(--border-radius-lg);
 
   --border-width-thin: 1px;
   --border-width-medium: 2px;

@@ -1,0 +1,113 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar @(isCollapsed ? "collapsed" : "")">
+        <div class="sidebar-header">
+            @if (!isCollapsed)
+            {
+                <h2 class="sidebar-logo">CDM</h2>
+            }
+            else
+            {
+                <span class="sidebar-logo-icon">C</span>
+            }
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")">
+                <i class="bi bi-house-door"></i>
+                @if (!isCollapsed) { <span>Accueil</span> }
+            </a>
+            <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")">
+                <i class="bi bi-person"></i>
+                @if (!isCollapsed) { <span>Personnages</span> }
+            </a>
+            <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")">
+                <i class="bi bi-book"></i>
+                @if (!isCollapsed) { <span>Campagnes</span> }
+            </a>
+            <a href="/dice" class="sidebar-nav-item @(IsActive("/dice") ? "active" : "")">
+                <i class="bi bi-dice-6"></i>
+                @if (!isCollapsed) { <span>Lanceur de dés</span> }
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="sidebar-toggle" @onclick="ToggleSidebar">
+                <i class="bi bi-@(isCollapsed ? "chevron-right" : "chevron-left")"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content avec Topbar -->
+    <div class="app-main">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <h1 class="topbar-title">@GetPageTitle()</h1>
+            </div>
+            
+            <div class="topbar-right">
+                <button class="topbar-icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                </button>
+                
+                <div class="topbar-user">
+                    <AuthorizeView>
+                        <Authorized>
+                            <button class="topbar-user-btn">
+                                <i class="bi bi-person-circle"></i>
+                                <span>@context.User.Identity?.Name</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </Authorized>
+                        <NotAuthorized>
+                            <a href="/login" class="btn btn-primary btn-sm">Connexion</a>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="app-content">
+            @Body
+        </main>
+    </div>
+</div>
+
+<!-- Overlay pour mobile -->
+@if (!isCollapsed)
+{
+    <div class="sidebar-overlay" @onclick="ToggleSidebar"></div>
+}
+
+@code {
+    private bool isCollapsed = false;
+
+    private void ToggleSidebar()
+    {
+        isCollapsed = !isCollapsed;
+    }
+
+    private bool IsActive(string path)
+    {
+        return Navigation.Uri.EndsWith(path, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string GetPageTitle()
+    {
+        var path = new Uri(Navigation.Uri).AbsolutePath;
+        return path switch
+        {
+            "/" => "Accueil",
+            "/characters" => "Mes Personnages",
+            "/campaigns" => "Mes Campagnes",
+            "/dice" => "Lanceur de Dés",
+            _ => "Chronique des Mondes"
+        };
+    }
+}
