@@ -1,11 +1,11 @@
 /* Auth Layout - Page centré sans navigation */
 .auth-layout {
-    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--color-background-primary);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+    min-height: auto;
 }
 
 .auth-container {
@@ -13,7 +13,7 @@
     max-width: 480px;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-lg);
 }
 
 .auth-logo {
@@ -22,18 +22,20 @@
 
 .auth-logo-text {
     font-family: 'Poppins', sans-serif;
-    font-size: var(--font-size-h1);
+    font-size: var(--font-size-h2);
     font-weight: 700;
     color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm) 0;
+    margin: 0 0 var(--spacing-xs) 0;
     background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-300) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    outline: none; /* Retire le focus outline */
+    user-select: none; /* Non sélectionnable */
 }
 
 .auth-logo-subtitle {
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-xs);
     color: var(--color-text-tertiary);
     margin: 0;
 }

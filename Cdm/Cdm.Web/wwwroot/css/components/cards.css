@@ -83,27 +83,28 @@
   margin: 0 auto;
   background: var(--color-background-elevated);
   border: 1px solid rgba(139, 92, 246, 0.2);
+  padding: var(--spacing-xl);
 }
 
 .auth-card-header {
   text-align: center;
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
 }
 
 .auth-card-title {
-  font-size: var(--font-size-h2);
-  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-h3);
+  margin-bottom: var(--spacing-xs);
 }
 
 .auth-card-subtitle {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-small);
   color: var(--color-text-tertiary);
 }
 
 .auth-card-footer {
   text-align: center;
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   font-size: var(--font-size-small);
 }
