@@ -1,3 +1,4 @@
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Cdm.Migrations.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate_Users : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -29,6 +30,11 @@ namespace Cdm.Migrations.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Users_CreatedAt",
+                table: "Users",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
                 column: "Email",
@@ -38,11 +44,6 @@ namespace Cdm.Migrations.Migrations
                 name: "IX_Users_IsActive",
                 table: "Users",
                 column: "IsActive");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_CreatedAt",
-                table: "Users",
-                column: "CreatedAt");
         }
 
         /// <inheritdoc />
