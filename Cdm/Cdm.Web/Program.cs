@@ -24,12 +24,11 @@ builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => 
     sp.GetRequiredService<CustomAuthStateProvider>());
 
-// HTTP Clients
-var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https+http://apiservice";
-
+// HTTP Clients - Using Aspire Service Discovery
 builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
 {
-    client.BaseAddress = new Uri(apiBaseUrl);
+    // Aspire Service Discovery will resolve "https+http://apiservice" automatically
+    client.BaseAddress = new Uri("https+http://apiservice");
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });

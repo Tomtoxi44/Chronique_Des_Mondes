@@ -151,6 +151,8 @@ public abstract class BaseApiClient
         var statusCode = (int)response.StatusCode;
         var content = await response.Content.ReadAsStringAsync();
         
+        _logger.LogError("API Error {StatusCode}: {Content}", statusCode, content);
+        
         try
         {
             var options = new JsonSerializerOptions
@@ -167,8 +169,9 @@ public abstract class BaseApiClient
                 errorResponse?.ValidationErrors
             );
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            _logger.LogError(ex, "Failed to deserialize error response, raw content: {Content}", content);
             throw new ApiException(statusCode, content);
         }
     }
