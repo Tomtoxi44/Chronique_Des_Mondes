@@ -1,0 +1,98 @@
+@page "/register"
+@using Cdm.Web.Shared.DTOs.Auth
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<div class="auth-layout">
+    <div class="auth-container">
+        <div class="card auth-card">
+            <div class="auth-card-header">
+                <h1 class="auth-card-title">Créer un compte</h1>
+                <p class="auth-card-subtitle">Rejoignez Chronique des Mondes</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    @ErrorMessage
+                </div>
+            }
+
+            <EditForm Model="@RegisterModel" OnValidSubmit="@HandleRegisterAsync">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label for="email" class="required">Email</label>
+                    <div class="input-group">
+                        <i class="bi bi-envelope input-icon"></i>
+                        <InputText 
+                            id="email" 
+                            @bind-Value="RegisterModel.Email" 
+                            class="input" 
+                            placeholder="votre@email.com"
+                            disabled="@IsLoading" />
+                    </div>
+                    <ValidationMessage For="@(() => RegisterModel.Email)" class="error-message" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="required">Mot de passe</label>
+                    <div class="input-group">
+                        <i class="bi bi-lock input-icon"></i>
+                        <InputText 
+                            id="password" 
+                            type="@(ShowPassword ? "text" : "password")"
+                            @bind-Value="RegisterModel.Password" 
+                            class="input" 
+                            placeholder="••••••••"
+                            disabled="@IsLoading" />
+                        <i class="bi @(ShowPassword ? "bi-eye-slash" : "bi-eye") input-icon-right clickable" 
+                           @onclick="TogglePasswordVisibility"></i>
+                    </div>
+                    <ValidationMessage For="@(() => RegisterModel.Password)" class="error-message" />
+                    <span class="help-text">
+                        Min. 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" class="required">Confirmer le mot de passe</label>
+                    <div class="input-group">
+                        <i class="bi bi-lock-fill input-icon"></i>
+                        <InputText 
+                            id="confirmPassword" 
+                            type="@(ShowPassword ? "text" : "password")"
+                            @bind-Value="RegisterModel.ConfirmPassword" 
+                            class="input" 
+                            placeholder="••••••••"
+                            disabled="@IsLoading" />
+                    </div>
+                    <ValidationMessage For="@(() => RegisterModel.ConfirmPassword)" class="error-message" />
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" disabled="@IsLoading" style="width: 100%;">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner spinner-sm"></span>
+                            <span>Inscription en cours...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-person-plus"></i>
+                            <span>S'inscrire</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+
+            <div class="auth-card-footer">
+                <p>
+                    Vous avez déjà un compte ? 
+                    <a href="/login">Se connecter</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,17 @@
+@page "/characters"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@rendermode InteractiveServer
+
+<div class="container" style="padding-top: var(--spacing-xl);">
+    <h1>Mes Personnages</h1>
+    <p>Page temporaire - Liste des personnages à venir</p>
+    
+    <AuthorizeView>
+        <Authorized>
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i>
+                Vous êtes connecté en tant que : <strong>@context.User.Identity?.Name</strong>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</div>

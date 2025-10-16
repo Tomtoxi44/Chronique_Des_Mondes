@@ -1,5 +1,9 @@
 using Cdm.Web;
 using Cdm.Web.Components;
+using Cdm.Web.Services.Storage;
+using Cdm.Web.Services.State;
+using Cdm.Web.Services.ApiClients;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +15,24 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddOutputCache();
+
+// Authentication & Authorization
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+builder.Services.AddScoped<CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => 
+    sp.GetRequiredService<CustomAuthStateProvider>());
+
+// HTTP Clients
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https+http://apiservice";
+
+builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 builder.Services.AddHttpClient<WeatherApiClient>(client =>
     {

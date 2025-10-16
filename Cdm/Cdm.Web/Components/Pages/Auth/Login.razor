@@ -1,0 +1,80 @@
+@page "/login"
+@using Cdm.Web.Shared.DTOs.Auth
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<div class="auth-layout">
+    <div class="auth-container">
+        <div class="card auth-card">
+            <div class="auth-card-header">
+                <h1 class="auth-card-title">Connexion</h1>
+                <p class="auth-card-subtitle">Bon retour parmi nous !</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    @ErrorMessage
+                </div>
+            }
+
+            <EditForm Model="@LoginModel" OnValidSubmit="@HandleLoginAsync">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label for="email" class="required">Email</label>
+                    <div class="input-group">
+                        <i class="bi bi-envelope input-icon"></i>
+                        <InputText 
+                            id="email" 
+                            @bind-Value="LoginModel.Email" 
+                            class="input" 
+                            placeholder="votre@email.com"
+                            disabled="@IsLoading" />
+                    </div>
+                    <ValidationMessage For="@(() => LoginModel.Email)" class="error-message" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="required">Mot de passe</label>
+                    <div class="input-group">
+                        <i class="bi bi-lock input-icon"></i>
+                        <InputText 
+                            id="password" 
+                            type="@(ShowPassword ? "text" : "password")"
+                            @bind-Value="LoginModel.Password" 
+                            class="input" 
+                            placeholder="••••••••"
+                            disabled="@IsLoading" />
+                        <i class="bi @(ShowPassword ? "bi-eye-slash" : "bi-eye") input-icon-right clickable" 
+                           @onclick="TogglePasswordVisibility"></i>
+                    </div>
+                    <ValidationMessage For="@(() => LoginModel.Password)" class="error-message" />
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" disabled="@IsLoading" style="width: 100%;">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner spinner-sm"></span>
+                            <span>Connexion en cours...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>Se connecter</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+
+            <div class="auth-card-footer">
+                <p>
+                    Pas encore de compte ? 
+                    <a href="/register">S'inscrire</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
