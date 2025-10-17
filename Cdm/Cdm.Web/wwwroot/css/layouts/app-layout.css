@@ -1,0 +1,41 @@
+/* App Layout - Layout avec sidebar et topbar */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--color-background-primary);
+}
+
+.app-main {
+    flex: 1;
+    margin-left: 250px;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s var(--ease-in-out);
+}
+
+.sidebar.collapsed + .app-main {
+    margin-left: 80px;
+}
+
+.app-content {
+    flex: 1;
+    padding: var(--spacing-xl);
+    overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .app-main {
+        margin-left: 0;
+    }
+    
+    .sidebar.collapsed + .app-main {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-content {
+        padding: var(--spacing-md);
+    }
+}

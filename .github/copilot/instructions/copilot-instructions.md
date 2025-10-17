@@ -119,245 +119,523 @@ Cdm/```
 
 # Standards by language:
 
----# C#: 4 spaces, PascalCase classes, camelCase variables
+---
 
-# JavaScript/TypeScript: 2 spaces, camelCase, semicolons
+## 📝 Coding Standards (.NET 10 + StyleCop)
 
-## 📝 Coding Standards (.NET + StyleCop)# Python: 4 spaces, snake_case, PEP 8 compliance
+### 📏 Formatting Rules
 
-# Java: 4 spaces, PascalCase classes, camelCase methods
+**Based on StyleCop and .NET Coding Standards**
 
-### 📏 Formatting# Go: tabs, PascalCase exported, camelCase private
+- **Indentation**: 4 spaces, no tabs (SA1027)
+- **Line length**: 120 characters max
+- **Braces**: Allman style - braces on new lines (SA1500)
+- **Access modifiers**: Always explicit (SA1400)
+- **Operator spacing**: Spaces around operators (SA1003)
+- **this. prefix**: Mandatory for instance members (SA1101)
+- **No single-line statements**: Use braces even for single statements (SA1503)
 
-# Rust: 4 spaces, snake_case, kebab-case packages
+**Example**:
+```csharp
+public class UserAccount
+{
+    private string userId;
+    private bool isActive;
 
-- **Indentation**: 4 spaces, no tabs```
+    public string DisplayName { get; set; }
 
-- **Line length**: 120 characters max- **Indentation**: {INDENTATION_STANDARD}
+    public UserAccount(string userId, string displayName)
+    {
+        this.userId = userId ?? throw new ArgumentNullException(nameof(userId));
+        this.DisplayName = displayName;
+        this.isActive = true;
+    }
 
-- **Braces**: Allman style (new lines)- **Line length**: {LINE_LENGTH_LIMIT} characters max
-
-- **Access modifiers**: Always explicit- **Operator spacing**: {OPERATOR_SPACING_RULE}
-
-- **Comment formatting**: {COMMENT_FORMAT_RULE}**Logging**: {LOGGING_FRAMEWORK} with structured logs
-
-### 🏷️ Naming- **Metrics**: Business metrics in `{PROJECT_NAME}.*` namespace
-
-- **Tracing**: {TRACING_IMPLEMENTATION}
-
-- **Classes**: PascalCase (`UserService`)
-
-- **Methods**: PascalCase (`RegisterAsync`)### Production Environment
-
-- **Fields**: `_camelCase` with underscore- **Monitoring**: {PRODUCTION_MONITORING}
-
-- **Properties**: PascalCase (`Email`)- **Log Aggregation**: {LOG_AGGREGATION_SERVICE}
-
-- **Interfaces**: `IPascalCase` with I prefix- **Metrics Export**: {METRICS_EXPORT_METHOD}
-
-- **Health Checks**: {HEALTH_CHECK_ENDPOINTS}ect Information
-
-### 📝 Documentation (MANDATORY - ENGLISH ONLY)- `{PROJECT_NAME}` : Name of your project
-
-- `{PROJECT_DESCRIPTION}` : Brief description of what the project does
-
-```csharp- `{TECH_STACK}` : Main technology stack (ex: .NET, Node.js, Python, Java, React, etc.)
-
-/// <summary>- `{ARCHITECTURE_TYPE}` : Architecture type (ex: Microservices, Monolith, Serverless, SPA, etc.)
-
-/// Registers a new user in the system.
-
-/// </summary>### 🏗️ Architecture & Infrastructure
-
-/// <param name="request">Registration details.</param>- `{SOLUTION_FILE}` : Main solution/project file (ex: TanusHub.sln, package.json, pom.xml)
-
-/// <returns>Registration response with user ID.</returns>- `{BUILD_COMMAND}` : Build command (ex: dotnet build, npm run build, mvn compile)
-
-/// <exception cref="InvalidOperationException">Email already in use.</exception>- `{TEST_COMMAND}` : Test command (ex: dotnet test, npm test, pytest)
-
-public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)- `{RUN_COMMAND}` : Run command (ex: dotnet run, npm start, python main.py)
-
-{- `{MAIN_PORT}` : Main application port
-
-    // Implementation- `{DASHBOARD_URL}` : Development dashboard URL (if applicable)
-
+    public void DeactivateAccount()
+    {
+        this.isActive = false;
+    }
 }
+```
 
-```### 🔐 Authentication & Security
+### 🏷️ Naming Conventions
+
+**IMPORTANT**: All naming conventions follow StyleCop and Microsoft C# standards.
+
+- **Classes**: PascalCase (`UserAccount`, `UserService`)
+- **Methods**: PascalCase (`RegisterAsync`, `Login`, `UpdateEmail`)
+- **Private Fields**: camelCase with `this.` prefix (`this.userId`, `this.emailAddress`, `this.loginAttempts`)
+- **Properties**: PascalCase (`DisplayName`, `CreatedAt`, `AccountStatus`)
+- **Interfaces**: `IPascalCase` with I prefix (`IUserService`, `IAuthService`)
+- **Parameters**: camelCase (`userId`, `password`, `newEmail`)
+- **Local Variables**: camelCase (`isPasswordValid`, `maskedLocal`)
+- **Constants**: PascalCase (`ConstantValue`)
+
+**Key Rules**:
+- Always use `this.` prefix for instance members (StyleCop SA1101)
+- Private fields use camelCase WITHOUT underscore prefix when using `this.`
+- Use descriptive names in English
+- Avoid abbreviations except for well-known terms (DTO, API, etc.)
+
+### 📝 Documentation (MANDATORY - ENGLISH ONLY)
+
+**All XML documentation must be in English and follow StyleCop rules (SA1600-SA1652)**
+
+```csharp
+/// <summary>
+/// Attempts to authenticate the user with the provided credentials.
+/// Increments login attempts on failure.
+/// </summary>
+/// <param name="password">The password to verify.</param>
+/// <returns>True if authentication succeeds; otherwise, false.</returns>
+public bool Login(string password)
+{
+    if (string.IsNullOrWhiteSpace(password))
+    {
+        return false;
+    }
+
+    // Check if account is locked due to too many attempts
+    if (this.loginAttempts >= 3)
+    {
+        this.DeactivateAccount();
+        return false;
+    }
+
+    // Verify password and handle login logic
+    bool isPasswordValid = this.VerifyPassword(password);
+
+    if (isPasswordValid)
+    {
+        this.ResetLoginAttempts();
+        return true;
+    }
+
+    this.IncrementLoginAttempts();
+    return false;
+}
+```
+
+**Documentation Rules**:
+- `<summary>`: Required for all public members, must be non-empty (SA1604, SA1606)
+- `<param>`: Document all parameters (SA1611, SA1614)
+- `<returns>`: Required for non-void methods (SA1615, SA1616)
+- `<exception>`: Document thrown exceptions when applicable
+- Comments must start with capital letter and end with period (SA1628, SA1629)
+- Use `this.` prefix when calling instance members (SA1101)### 🔐 Authentication & Security
 
 - `{AUTH_PROVIDER}` : Authentication provider (ex: Azure AD, Auth0, JWT, OAuth2)
 
-### 🏗️ File Organization- `{AUTH_TENANT}` : Tenant/domain for authentication
+### 🏗️ File Organization
 
-- `{USER_ROLES}` : List of user roles in the system
+**StyleCop-compliant file organization (SA1200-SA1217)**
 
-```csharp- `{ADMIN_ROLES}` : List of admin roles in the system
-
+```csharp
+// File header (optional but recommended)
 namespace Cdm.Business.Common.Services;
 
-### 🗄️ Data Storage
+using System;
+using System.Threading.Tasks;
+using Cdm.Common.DTOs;
+using Microsoft.Extensions.Logging;
 
-using System;- `{DATABASE_TYPE}` : Database type (ex: SQLite, PostgreSQL, MongoDB, MySQL)
-
-using Cdm.Common.DTOs;- `{MAIN_CONTEXT}` : Main database context/connection name
-
-using Microsoft.Extensions.Logging;- `{ENTITY_EXAMPLES}` : Main entities/models in the system
-
-
-
-/// <summary>### 🌐 Deployment & Infrastructure
-
-/// Service description.- `{DEPLOYMENT_TARGETS}` : Deployment targets (ex: Azure, AWS, Docker, Kubernetes)
-
-/// </summary>- `{SERVER_ENVIRONMENTS}` : List of environments (ex: Development, Staging, Production)
-
-public class ServiceName- `{PROXY_TYPE}` : Proxy/gateway type if applicable (ex: YARP, nginx, API Gateway)
-
+/// <summary>
+/// Provides user account management services.
+/// This service handles user authentication and account operations.
+/// </summary>
+public class UserAccountService
 {
+    // Constants first
+    private const int MaxLoginAttempts = 3;
+    private const int PasswordMinLength = 8;
 
-    private const int ConstantValue = 10;### 📁 Project Structure
+    // Private fields
+    private readonly ILogger<UserAccountService> logger;
+    private readonly string connectionString;
 
-    - `{SOURCE_FOLDER}` : Source code folder structure
+    // Constructor
+    public UserAccountService(ILogger<UserAccountService> logger, string connectionString)
+    {
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+    }
 
-    private readonly ILogger<ServiceName> _logger;- `{COMPONENT_STRUCTURE}` : UI component structure (if applicable)
+    // Public properties
+    public int TotalAttempts { get; private set; }
 
-    - `{MODULE_STRUCTURE}` : Business module organization
-
-    public ServiceName(ILogger<ServiceName> logger)
-
-    {### 🎨 UI Technology (if applicable)
-
-        _logger = logger;- `{UI_FRAMEWORK}` : UI framework (ex: Blazor Server, React, Vue.js, Angular, Flutter)
-
-    }- `{UI_COMPONENT_LIB}` : UI component library used
-
-    - `{STYLING_APPROACH}` : Styling approach (ex: CSS, SCSS, Tailwind, MUI)
-
-    public async Task MethodAsync()
-
-    {## 🎯 Project Vision
-
+    // Public methods
+    public async Task<bool> AuthenticateAsync(string username, string password)
+    {
         // Implementation
+        this.logger.LogInformation("User {Username} authentication attempt", username);
+        return await Task.FromResult(true);
+    }
 
-    }**{PROJECT_NAME}** is a {PROJECT_DESCRIPTION} built with {TECH_STACK} that follows a {ARCHITECTURE_TYPE} architecture.
-
+    // Private helper methods
+    private bool ValidatePassword(string password)
+    {
+        return !string.IsNullOrEmpty(password) && password.Length >= PasswordMinLength;
+    }
 }
-
-```## 🏗️ Architecture Overview
-
-
-
----### Project Structure
-
 ```
 
-## 🔐 Security{SOLUTION_FILE}
+**Organization Rules**:
+- Using directives inside namespace (SA1200)
+- System usings before others (SA1208)
+- Member order: Constants → Fields → Constructors → Properties → Methods (SA1201)
+- Access modifiers order: Public → Internal → Protected → Private (SA1202)
+- Static members before instance members (SA1204)
+- Readonly fields before non-readonly (SA1214)
 
-{SOURCE_FOLDER}
+---
 
-### Password Handling# Example structures by technology:
+### 📦 DTO Organization
 
-# .NET: src/{PROJECT_NAME}.Api/, src/{PROJECT_NAME}.Core/, src/{PROJECT_NAME}.Infrastructure/
+**IMPORTANT**: All DTOs (Data Transfer Objects) must follow these strict organization rules:
 
-```csharp# Node.js: src/, lib/, routes/, models/, middleware/
+#### File Structure
+- **One class per file** - Never group multiple DTOs in a single file
+- **Separate folders** for request (incoming) vs response (outgoing) DTOs
 
-// BCrypt with work factor 12# Python: app/, models/, views/, services/, tests/
+#### Folder Naming Conventions
+```
+DTOs/
+├── Models/              # Incoming data (API requests, user inputs)
+│   ├── RegisterRequest.cs
+│   ├── LoginRequest.cs
+│   ├── UpdateUserRequest.cs
+│   └── CreateCharacterRequest.cs
+└── ViewModels/          # Outgoing data (API responses, view data)
+    ├── LoginResponse.cs
+    ├── UserProfileResponse.cs
+    ├── CharacterDetailsResponse.cs
+    └── ErrorResponse.cs
+```
 
-var hash = BCrypt.Net.BCrypt.HashPassword(password, 12);# Java: src/main/java/, src/main/resources/, src/test/
+#### Examples
 
-var isValid = BCrypt.Net.BCrypt.Verify(password, hash);# React: src/, components/, pages/, hooks/, utils/
+**RegisterRequest.cs** (in `DTOs/Models/`):
+```csharp
+namespace Cdm.Business.Abstraction.DTOs.Models;
 
-``````
+using System.ComponentModel.DataAnnotations;
 
-
-
-### Input Validation### Critical Architectural Patterns
-
-
-
-```csharp**{ARCHITECTURE_TYPE} Pattern**: The application follows {ARCHITECTURE_TYPE} principles:
-
-public class RegisterRequest- Development: {DEV_ENVIRONMENT_DESC}
-
-{- Production: {PROD_ENVIRONMENT_DESC}
-
+/// <summary>
+/// Represents a user registration request.
+/// </summary>
+public class RegisterRequest
+{
+    /// <summary>
+    /// Gets or sets the user's email address.
+    /// </summary>
     [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
+    [MaxLength(255)]
+    public string Email { get; set; } = string.Empty;
 
-    [EmailAddress(ErrorMessage = "Invalid email format")]**Service/Component Organization**: Key architectural components:
+    /// <summary>
+    /// Gets or sets the user's password.
+    /// </summary>
+    [Required]
+    [MinLength(8)]
+    public string Password { get; set; } = string.Empty;
 
-    [MaxLength(255)]- {SERVICE_PATTERN_1}
+    /// <summary>
+    /// Gets or sets the user's display nickname.
+    /// </summary>
+    [Required]
+    [MaxLength(50)]
+    public string Nickname { get; set; } = string.Empty;
+}
+```
 
-    public string Email { get; set; } = string.Empty;- {SERVICE_PATTERN_2} 
+**LoginResponse.cs** (in `DTOs/ViewModels/`):
+```csharp
+namespace Cdm.Business.Abstraction.DTOs.ViewModels;
 
-- {SERVICE_PATTERN_3}
+/// <summary>
+/// Represents a successful login response.
+/// </summary>
+public class LoginResponse
+{
+    /// <summary>
+    /// Gets or sets the JWT authentication token.
+    /// </summary>
+    public string Token { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the user's identifier.
+    /// </summary>
+    public int UserId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user's display name.
+    /// </summary>
+    public string DisplayName { get; set; } = string.Empty;
+}
+```
+
+**Key Rules**:
+- Use `Request` suffix for incoming DTOs (Models folder)
+- Use `Response` suffix for outgoing DTOs (ViewModels folder)
+- Always include XML documentation for each property
+- Use Data Annotations for validation on Request DTOs
+- Never mix multiple DTOs in one file
+
+---
+
+## 🔐 Security Best Practices
+
+### Password Handling
+
+**Use BCrypt with work factor 12 for all password operations**
+
+```csharp
+// Hash password on registration
+var hash = BCrypt.Net.BCrypt.HashPassword(password, 12);
+
+// Verify password on login
+var isValid = BCrypt.Net.BCrypt.Verify(password, hash);
+```
+
+### Input Validation
+
+**Always validate inputs with Data Annotations and server-side checks**
+
+```csharp
+public class RegisterRequest
+{
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
+    [MaxLength(255)]
+    public string Email { get; set; } = string.Empty;
 
     [Required]
-
-    [MinLength(8)]**Development Services**: {DEV_SERVICES_DESC}
-
+    [MinLength(8)]
     [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")]
-
-    public string Password { get; set; } = string.Empty;## 🔑 Essential Development Commands
-
+    public string Password { get; set; } = string.Empty;
 }
 
-``````bash
+// Additional server-side validation in methods
+public bool UpdateEmail(string newEmail)
+{
+    if (string.IsNullOrWhiteSpace(newEmail) || !this.IsValidEmail(newEmail))
+    {
+        return false;
+    }
 
-# Start development environment
+    this.emailAddress = newEmail;
+    return true;
+}
 
----{RUN_COMMAND}
-
-# Dashboard/UI: {DASHBOARD_URL}
-
-## 📊 Logging
-
-# Build the project
-
-### Structured Logging{BUILD_COMMAND}
-
-
-
-```csharp# Run tests
-
-// ✅ Correct{TEST_COMMAND}
-
-_logger.LogInformation("User {UserId} created {Resource}", userId, resource);
-
-# Additional commands based on technology:
-
-// ❌ Incorrect  # .NET: dotnet ef database update, dotnet user-secrets set
-
-_logger.LogInformation($"User {userId} created {resource}");# Node.js: npm install, npm run dev, npm run lint
-
-```# Python: pip install -r requirements.txt, python manage.py migrate
-
-# Java: mvn install, mvn spring-boot:run
-
-### Log Levels# Docker: docker-compose up, docker build
-
+private bool IsValidEmail(string email)
+{
+    return !string.IsNullOrEmpty(email) && email.Contains('@') && email.Contains('.');
+}
 ```
 
-- **Debug**: Diagnostic details
+**Validation Rules**:
+- Never trust client-side validation alone
+- Use Data Annotations for DTOs/requests
+- Add custom validation logic in service methods
+- Check for null, empty, and whitespace with `string.IsNullOrWhiteSpace()`
+- Use `ArgumentNullException` for constructor parameters
 
-- **Information**: Normal flow## 🌐 Deployment Architecture
+---
 
-- **Warning**: Unexpected but handled
+## 📊 Logging Best Practices
 
-- **Error**: Operation failures### {SERVER_ENVIRONMENTS}
+### Structured Logging
 
-- **Critical**: System failures- **{ENVIRONMENT_1}**: {ENVIRONMENT_1_DESC}
+**Always use structured logging with named parameters, never string interpolation**
 
-- **{ENVIRONMENT_2}**: {ENVIRONMENT_2_DESC}
+```csharp
+// ✅ CORRECT - Structured logging
+this.logger.LogInformation("User {UserId} attempted login", userId);
+this.logger.LogWarning("Failed login attempt for {Username} - Attempts: {AttemptCount}", username, attemptCount);
+this.logger.LogError("Email update failed for user {UserId} - Invalid format: {Email}", userId, email);
 
-**Never log**: Passwords, tokens, sensitive personal data- **{ENVIRONMENT_N}**: {ENVIRONMENT_N_DESC}
+// ❌ INCORRECT - String interpolation
+this.logger.LogInformation($"User {userId} attempted login");
+this.logger.LogWarning($"Failed login attempt for {username}");
+```
 
+### Log Levels
 
+**Use appropriate log levels for different scenarios**
 
----### {PROXY_TYPE} Configuration (if applicable)
+- **Debug**: Diagnostic details for development
+- **Information**: Normal application flow (login attempts, successful operations)
+- **Warning**: Unexpected but handled situations (failed validation, retry attempts)
+- **Error**: Operation failures that need attention
+- **Critical**: System failures requiring immediate action
 
-- Development: {DEV_PROXY_CONFIG}
+**Security Rules**:
+- **NEVER log**: Passwords, tokens, API keys, personal sensitive data
+- **DO log**: UserIds, action types, resource names, timestamps
+- **Mask sensitive data**: Use masked emails or partial data when needed
 
-## 🚀 API Patterns- Production: {PROD_PROXY_CONFIG}
+```csharp
+// ✅ CORRECT - Safe logging
+public string GetMaskedEmail()
+{
+    if (string.IsNullOrEmpty(this.emailAddress))
+    {
+        return string.Empty;
+    }
+
+    var parts = this.emailAddress.Split('@');
+    if (parts.Length != 2)
+    {
+        return "***";
+    }
+
+    var localPart = parts[0];
+    var maskedLocal = localPart.Length > 2 
+        ? $"{localPart[0]}***{localPart[^1]}" 
+        : "***";
+
+    return $"{maskedLocal}@{parts[1]}";
+}
+
+this.logger.LogInformation("Email updated for user {UserId} - Masked: {MaskedEmail}", 
+    userId, this.GetMaskedEmail());
+```
+
+---
+
+## 💡 Code Quality Best Practices
+
+### Method Design Principles
+
+**Based on examples from the codebase**
+
+1. **Single Responsibility**: Each method should do one thing well
+2. **Early Returns**: Validate inputs and return early on failure
+3. **Guard Clauses**: Check preconditions at the start of methods
+4. **Private Helper Methods**: Extract complex logic into private methods
+
+```csharp
+/// <summary>
+/// Updates the user's email address.
+/// </summary>
+/// <param name="newEmail">The new email address.</param>
+/// <returns>True if the update succeeds; otherwise, false.</returns>
+public bool UpdateEmail(string newEmail)
+{
+    // Guard clause - early return on invalid input
+    if (string.IsNullOrWhiteSpace(newEmail) || !this.IsValidEmail(newEmail))
+    {
+        return false;
+    }
+
+    // Main logic
+    this.emailAddress = newEmail;
+    return true;
+}
+
+// Private helper method for validation logic
+private bool IsValidEmail(string email)
+{
+    return !string.IsNullOrEmpty(email) && email.Contains('@') && email.Contains('.');
+}
+```
+
+### Property Design
+
+**Use appropriate property patterns**
+
+```csharp
+// Auto-properties for simple get/set
+public string DisplayName { get; set; }
+
+// Read-only auto-property
+public DateTime CreatedAt { get; set; }
+
+// Computed property (expression-bodied)
+public string AccountStatus => this.isActive ? "Active" : "Inactive";
+
+// Property with private setter
+public int TotalAttempts { get; private set; }
+```
+
+### Constructor Best Practices
+
+```csharp
+/// <summary>
+/// Initializes a new instance of the UserAccount class.
+/// </summary>
+/// <param name="userId">The unique identifier for the user.</param>
+/// <param name="emailAddress">The user's email address.</param>
+/// <param name="displayName">The user's display name.</param>
+public UserAccount(string userId, string emailAddress, string displayName)
+{
+    // Validate all required parameters with null checks
+    this.userId = userId ?? throw new ArgumentNullException(nameof(userId));
+    this.emailAddress = emailAddress ?? throw new ArgumentNullException(nameof(emailAddress));
+    this.DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+    
+    // Initialize default values
+    this.loginAttempts = 0;
+    this.isActive = true;
+    this.CreatedAt = DateTime.UtcNow;
+}
+```
+
+**Constructor Rules**:
+- Validate all parameters with `ArgumentNullException`
+- Use `nameof()` for parameter names in exceptions
+- Initialize all fields to valid default states
+- Use `this.` prefix for all member assignments
+
+### String Manipulation Best Practices
+
+```csharp
+// ✅ Use string.IsNullOrWhiteSpace for validation
+if (string.IsNullOrWhiteSpace(password))
+{
+    return false;
+}
+
+// ✅ Use string.IsNullOrEmpty for simple checks
+if (string.IsNullOrEmpty(this.emailAddress))
+{
+    return string.Empty;
+}
+
+// ✅ Use string.Empty instead of ""
+public string Email { get; set; } = string.Empty;
+
+// ✅ Use modern C# string features
+var maskedLocal = localPart.Length > 2 
+    ? $"{localPart[0]}***{localPart[^1]}"  // Index from end with ^
+    : "***";
+```
+
+### Boolean Logic and Control Flow
+
+```csharp
+// ✅ Clear boolean variable names
+bool isPasswordValid = this.VerifyPassword(password);
+
+// ✅ Use boolean variables for readability
+if (isPasswordValid)
+{
+    this.ResetLoginAttempts();
+    return true;
+}
+
+// ✅ Explicit comparisons for state checks
+if (this.loginAttempts >= 3)
+{
+    this.DeactivateAccount();
+    return false;
+}
+```
+
+---
+
+## 🚀 API Patterns
 
 - Configuration management: {PROXY_CONFIG_METHOD}
 

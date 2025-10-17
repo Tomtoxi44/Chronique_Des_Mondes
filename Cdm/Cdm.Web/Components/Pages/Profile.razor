@@ -1,0 +1,88 @@
+@page "/profile"
+@using Cdm.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@layout AppLayout
+@rendermode InteractiveServer
+
+<PageTitle>Mon Profil - Chronique des Mondes</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="profile-info">
+                    <h1>@context.User.Identity?.Name</h1>
+                    <p class="profile-email">@GetUserEmail(context)</p>
+                </div>
+            </div>
+
+            <div class="profile-stats">
+                <div class="stat-card">
+                    <i class="bi bi-person"></i>
+                    <div>
+                        <strong>0</strong>
+                        <span>Personnages</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <i class="bi bi-book"></i>
+                    <div>
+                        <strong>0</strong>
+                        <span>Campagnes</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <i class="bi bi-dice-5"></i>
+                    <div>
+                        <strong>0</strong>
+                        <span>Dés lancés</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-sections">
+                <section class="profile-section">
+                    <h2>Informations du Profil</h2>
+                    <div class="profile-card">
+                        <div class="profile-field">
+                            <label>Nom d'utilisateur</label>
+                            <input type="text" class="form-control" value="@context.User.Identity?.Name" disabled>
+                        </div>
+
+                        <div class="profile-field">
+                            <label>Email</label>
+                            <input type="email" class="form-control" value="@GetUserEmail(context)" disabled>
+                        </div>
+
+                        <div class="profile-field">
+                            <label>Membre depuis</label>
+                            <input type="text" class="form-control" value="@DateTime.UtcNow.ToString("dd MMMM yyyy")" disabled>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="profile-notice">
+                    <i class="bi bi-info-circle"></i>
+                    <div>
+                        <strong>Fonctionnalité à venir</strong>
+                        <p>La modification du profil sera disponible avec l'US-004 (Gestion du Profil Utilisateur)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="container">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>Vous devez être connecté pour accéder à votre profil.</p>
+                <a href="/login" class="btn btn-primary">Se connecter</a>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
