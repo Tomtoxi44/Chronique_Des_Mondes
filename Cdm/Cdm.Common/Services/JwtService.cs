@@ -41,25 +41,26 @@ public interface IJwtService
 /// </summary>
 public class JwtService : IJwtService
 {
-    private readonly string _secretKey;
-    private readonly string _issuer;
-    private readonly string _audience;
-    private readonly int _expirationDays;
-    private readonly ILogger<JwtService> _logger;
+    private readonly string secretKey;
+    private readonly string issuer;
+    private readonly string audience;
+    private readonly int expirationDays;
+    private readonly ILogger<JwtService> logger;
 
     public JwtService(IConfiguration configuration, ILogger<JwtService> logger)
     {
-        _logger = logger;
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
-        // Get configuration from appsettings or User Secrets
-        _secretKey = configuration["Jwt:SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
-        _issuer = configuration["Jwt:Issuer"] ?? "ChroniqueDesMondes";
-        _audience = configuration["Jwt:Audience"] ?? "ChroniqueDesMondesWeb";
-        _expirationDays = int.TryParse(configuration["Jwt:ExpirationDays"], out var days) ? days : 7;
+        // Get configuration from appsettings or User Secrets - fail-fast if missing
+        this.secretKey = configuration["Jwt:SecretKey"] 
+            ?? throw new InvalidOperationException("JWT secret key configuration ('Jwt:SecretKey') is missing. Please set a secure value in your configuration.");
+        this.issuer = configuration["Jwt:Issuer"] ?? "ChroniqueDesMondes";
+        this.audience = configuration["Jwt:Audience"] ?? "ChroniqueDesMondesWeb";
+        this.expirationDays = int.TryParse(configuration["Jwt:ExpirationDays"], out var days) ? days : 7;
 
-        if (_secretKey.Length < 32)
+        if (this.secretKey.Length < 32)
         {
-            _logger.LogWarning("JWT secret key is less than 32 characters, which is not secure for production");
+            this.logger.LogWarning("JWT secret key is less than 32 characters, which is not secure for production");
         }
     }
 
@@ -68,7 +69,7 @@ public class JwtService : IJwtService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
+            var key = Encoding.ASCII.GetBytes(this.secretKey);
             
             var claims = new[]
             {
@@ -81,9 +82,9 @@ public class JwtService : IJwtService
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(_expirationDays),
-                Issuer = _issuer,
-                Audience = _audience,
+                Expires = DateTime.UtcNow.AddDays(this.expirationDays),
+                Issuer = this.issuer,
+                Audience = this.audience,
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
@@ -92,13 +93,13 @@ public class JwtService : IJwtService
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
             
-            _logger.LogInformation("JWT token generated for user {UserId}", userId);
+            this.logger.LogInformation("JWT token generated for user {UserId}", userId);
             
             return tokenString;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to generate JWT token for user {UserId}", userId);
+            this.logger.LogError(ex, "Failed to generate JWT token for user {UserId}", userId);
             throw;
         }
     }
@@ -108,36 +109,36 @@ public class JwtService : IJwtService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
+            var key = Encoding.ASCII.GetBytes(this.secretKey);
             
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _issuer,
+                ValidIssuer = this.issuer,
                 ValidateAudience = true,
-                ValidAudience = _audience,
+                ValidAudience = this.audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out SecurityToken validatedToken);
             
-            _logger.LogDebug("Token validated successfully");
+            this.logger.LogDebug("Token validated successfully");
             return true;
         }
         catch (SecurityTokenExpiredException)
         {
-            _logger.LogWarning("Token expired");
+            this.logger.LogWarning("Token expired");
             return false;
         }
         catch (SecurityTokenInvalidSignatureException)
         {
-            _logger.LogError("Invalid token signature");
+            this.logger.LogError("Invalid token signature");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Token validation failed");
+            this.logger.LogError(ex, "Token validation failed");
             return false;
         }
     }
@@ -147,16 +148,16 @@ public class JwtService : IJwtService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
+            var key = Encoding.ASCII.GetBytes(this.secretKey);
             
             var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _issuer,
+                ValidIssuer = this.issuer,
                 ValidateAudience = true,
-                ValidAudience = _audience,
+                ValidAudience = this.audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out SecurityToken validatedToken);
@@ -166,16 +167,16 @@ public class JwtService : IJwtService
 
             if (int.TryParse(userIdClaim, out var userId) && !string.IsNullOrEmpty(userEmail))
             {
-                _logger.LogDebug("Successfully extracted user info from token: UserId={UserId}", userId);
+                this.logger.LogDebug("Successfully extracted user info from token: UserId={UserId}", userId);
                 return (userId, userEmail);
             }
             
-            _logger.LogWarning("Failed to extract complete user info from token");
+            this.logger.LogWarning("Failed to extract complete user info from token");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to extract user info from token");
+            this.logger.LogError(ex, "Failed to extract user info from token");
             return null;
         }
     }

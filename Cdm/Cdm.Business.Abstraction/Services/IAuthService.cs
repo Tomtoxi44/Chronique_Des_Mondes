@@ -1,6 +1,7 @@
 namespace Cdm.Business.Abstraction.Services;
 
-using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.DTOs.Models;
+using Cdm.Business.Abstraction.DTOs.ViewModels;
 
 /// <summary>
 /// Authentication service interface

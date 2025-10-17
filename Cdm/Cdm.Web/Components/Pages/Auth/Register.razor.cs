@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Cdm.Web.Services.ApiClients.Base;
-using Cdm.Web.Shared.DTOs.Auth;
+using Cdm.Web.Shared.DTOs.Models;
+using Cdm.Web.Shared.DTOs.ViewModels;
 
 namespace Cdm.Web.Components.Pages.Auth;
 

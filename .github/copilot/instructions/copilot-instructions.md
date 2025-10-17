@@ -289,6 +289,101 @@ public class UserAccountService
 
 ---
 
+### 📦 DTO Organization
+
+**IMPORTANT**: All DTOs (Data Transfer Objects) must follow these strict organization rules:
+
+#### File Structure
+- **One class per file** - Never group multiple DTOs in a single file
+- **Separate folders** for request (incoming) vs response (outgoing) DTOs
+
+#### Folder Naming Conventions
+```
+DTOs/
+├── Models/              # Incoming data (API requests, user inputs)
+│   ├── RegisterRequest.cs
+│   ├── LoginRequest.cs
+│   ├── UpdateUserRequest.cs
+│   └── CreateCharacterRequest.cs
+└── ViewModels/          # Outgoing data (API responses, view data)
+    ├── LoginResponse.cs
+    ├── UserProfileResponse.cs
+    ├── CharacterDetailsResponse.cs
+    └── ErrorResponse.cs
+```
+
+#### Examples
+
+**RegisterRequest.cs** (in `DTOs/Models/`):
+```csharp
+namespace Cdm.Business.Abstraction.DTOs.Models;
+
+using System.ComponentModel.DataAnnotations;
+
+/// <summary>
+/// Represents a user registration request.
+/// </summary>
+public class RegisterRequest
+{
+    /// <summary>
+    /// Gets or sets the user's email address.
+    /// </summary>
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
+    [MaxLength(255)]
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the user's password.
+    /// </summary>
+    [Required]
+    [MinLength(8)]
+    public string Password { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the user's display nickname.
+    /// </summary>
+    [Required]
+    [MaxLength(50)]
+    public string Nickname { get; set; } = string.Empty;
+}
+```
+
+**LoginResponse.cs** (in `DTOs/ViewModels/`):
+```csharp
+namespace Cdm.Business.Abstraction.DTOs.ViewModels;
+
+/// <summary>
+/// Represents a successful login response.
+/// </summary>
+public class LoginResponse
+{
+    /// <summary>
+    /// Gets or sets the JWT authentication token.
+    /// </summary>
+    public string Token { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the user's identifier.
+    /// </summary>
+    public int UserId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user's display name.
+    /// </summary>
+    public string DisplayName { get; set; } = string.Empty;
+}
+```
+
+**Key Rules**:
+- Use `Request` suffix for incoming DTOs (Models folder)
+- Use `Response` suffix for outgoing DTOs (ViewModels folder)
+- Always include XML documentation for each property
+- Use Data Annotations for validation on Request DTOs
+- Never mix multiple DTOs in one file
+
+---
+
 ## 🔐 Security Best Practices
 
 ### Password Handling

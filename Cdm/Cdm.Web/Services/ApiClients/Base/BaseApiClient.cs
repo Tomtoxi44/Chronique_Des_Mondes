@@ -6,26 +6,26 @@ namespace Cdm.Web.Services.ApiClients.Base;
 
 public abstract class BaseApiClient
 {
-    protected readonly HttpClient _httpClient;
-    protected readonly ILogger _logger;
-    protected readonly ILocalStorageService _localStorage;
+    protected readonly HttpClient httpClient;
+    protected readonly ILogger logger;
+    protected readonly ILocalStorageService localStorage;
     
     protected BaseApiClient(
         HttpClient httpClient,
         ILogger logger,
         ILocalStorageService localStorage)
     {
-        _httpClient = httpClient;
-        _logger = logger;
-        _localStorage = localStorage;
+        this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.localStorage = localStorage ?? throw new ArgumentNullException(nameof(localStorage));
     }
     
     protected async Task AddAuthorizationHeaderAsync()
     {
-        var token = await _localStorage.GetItemAsync("auth_token");
+        var token = await this.localStorage.GetItemAsync("auth_token");
         if (!string.IsNullOrEmpty(token))
         {
-            _httpClient.DefaultRequestHeaders.Authorization = 
+            this.httpClient.DefaultRequestHeaders.Authorization = 
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         }
     }
@@ -36,9 +36,9 @@ public abstract class BaseApiClient
         {
             await AddAuthorizationHeaderAsync();
             
-            _logger.LogDebug("GET {Endpoint}", endpoint);
+            this.logger.LogDebug("GET {Endpoint}", endpoint);
             
-            var response = await _httpClient.GetAsync(endpoint);
+            var response = await this.httpClient.GetAsync(endpoint);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -53,7 +53,7 @@ public abstract class BaseApiClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error for GET {Endpoint}", endpoint);
+            this.logger.LogError(ex, "Unexpected error for GET {Endpoint}", endpoint);
             throw new ApiException(500, "Une erreur inattendue s'est produite");
         }
     }
@@ -66,9 +66,9 @@ public abstract class BaseApiClient
         {
             await AddAuthorizationHeaderAsync();
             
-            _logger.LogDebug("POST {Endpoint}", endpoint);
+            this.logger.LogDebug("POST {Endpoint}", endpoint);
             
-            var response = await _httpClient.PostAsJsonAsync(endpoint, data);
+            var response = await this.httpClient.PostAsJsonAsync(endpoint, data);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -83,7 +83,7 @@ public abstract class BaseApiClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error for POST {Endpoint}", endpoint);
+            this.logger.LogError(ex, "Unexpected error for POST {Endpoint}", endpoint);
             throw new ApiException(500, "Une erreur inattendue s'est produite");
         }
     }
@@ -96,9 +96,9 @@ public abstract class BaseApiClient
         {
             await AddAuthorizationHeaderAsync();
             
-            _logger.LogDebug("PUT {Endpoint}", endpoint);
+            this.logger.LogDebug("PUT {Endpoint}", endpoint);
             
-            var response = await _httpClient.PutAsJsonAsync(endpoint, data);
+            var response = await this.httpClient.PutAsJsonAsync(endpoint, data);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -113,7 +113,7 @@ public abstract class BaseApiClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error for PUT {Endpoint}", endpoint);
+            this.logger.LogError(ex, "Unexpected error for PUT {Endpoint}", endpoint);
             throw new ApiException(500, "Une erreur inattendue s'est produite");
         }
     }
@@ -124,9 +124,9 @@ public abstract class BaseApiClient
         {
             await AddAuthorizationHeaderAsync();
             
-            _logger.LogDebug("DELETE {Endpoint}", endpoint);
+            this.logger.LogDebug("DELETE {Endpoint}", endpoint);
             
-            var response = await _httpClient.DeleteAsync(endpoint);
+            var response = await this.httpClient.DeleteAsync(endpoint);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -141,7 +141,7 @@ public abstract class BaseApiClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error for DELETE {Endpoint}", endpoint);
+            this.logger.LogError(ex, "Unexpected error for DELETE {Endpoint}", endpoint);
             return false;
         }
     }
@@ -151,7 +151,7 @@ public abstract class BaseApiClient
         var statusCode = (int)response.StatusCode;
         var content = await response.Content.ReadAsStringAsync();
         
-        _logger.LogError("API Error {StatusCode}: {Content}", statusCode, content);
+        this.logger.LogError("API Error {StatusCode}: {Content}", statusCode, content);
         
         try
         {
@@ -171,7 +171,7 @@ public abstract class BaseApiClient
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to deserialize error response, raw content: {Content}", content);
+            this.logger.LogError(ex, "Failed to deserialize error response, raw content: {Content}", content);
             throw new ApiException(statusCode, content);
         }
     }
@@ -183,3 +183,4 @@ public class ErrorResponse
     public string? ErrorCode { get; set; }
     public Dictionary<string, string[]>? ValidationErrors { get; set; }
 }
+

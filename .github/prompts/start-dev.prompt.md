@@ -1,5 +1,6 @@
 ---
 mode: agent
+tools: ['githubRepo']
 ---
 
 # Agent de Développement US (User Story) - Chronique des Mondes

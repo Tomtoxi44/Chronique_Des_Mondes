@@ -1,6 +1,7 @@
 ﻿namespace Cdm.ApiService.Endpoints;
 
-using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.DTOs.Models;
+using Cdm.Business.Abstraction.DTOs.ViewModels;
 using Cdm.Business.Abstraction.Services;
 using Microsoft.AspNetCore.Mvc;
 

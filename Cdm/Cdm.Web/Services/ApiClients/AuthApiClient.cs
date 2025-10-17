@@ -1,6 +1,7 @@
 using Cdm.Web.Services.ApiClients.Base;
 using Cdm.Web.Services.Storage;
-using Cdm.Web.Shared.DTOs.Auth;
+using Cdm.Web.Shared.DTOs.Models;
+using Cdm.Web.Shared.DTOs.ViewModels;
 
 namespace Cdm.Web.Services.ApiClients;
 
@@ -22,7 +23,7 @@ public class AuthApiClient : BaseApiClient, IAuthApiClient
     
     public async Task<RegisterResponse?> RegisterAsync(RegisterRequest request)
     {
-        _logger.LogInformation("Attempting to register user: {Email}", request.Email);
+        this.logger.LogInformation("Attempting to register user: {Email}", request.Email);
         
         var response = await PostAsync<RegisterRequest, RegisterResponse>(
             "/api/auth/register", 
@@ -30,7 +31,7 @@ public class AuthApiClient : BaseApiClient, IAuthApiClient
         
         if (response != null)
         {
-            _logger.LogInformation("User registered successfully: {Email}", response.Email);
+            this.logger.LogInformation("User registered successfully: {Email}", response.Email);
         }
         
         return response;
@@ -38,7 +39,7 @@ public class AuthApiClient : BaseApiClient, IAuthApiClient
     
     public async Task<LoginResponse?> LoginAsync(LoginRequest request)
     {
-        _logger.LogInformation("Attempting to login user: {Email}", request.Email);
+        this.logger.LogInformation("Attempting to login user: {Email}", request.Email);
         
         var response = await PostAsync<LoginRequest, LoginResponse>(
             "/api/auth/login", 
@@ -46,9 +47,10 @@ public class AuthApiClient : BaseApiClient, IAuthApiClient
         
         if (response != null)
         {
-            _logger.LogInformation("User logged in successfully: {Email}", response.Email);
+            this.logger.LogInformation("User logged in successfully: {Email}", response.Email);
         }
         
         return response;
     }
 }
+

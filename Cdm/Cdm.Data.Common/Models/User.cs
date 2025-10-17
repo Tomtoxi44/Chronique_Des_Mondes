@@ -25,6 +25,13 @@ public class User
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
+    /// User display nickname
+    /// </summary>
+    [Required]
+    [MaxLength(50)]
+    public string Nickname { get; set; } = string.Empty;
+
+    /// <summary>
     /// BCrypt hashed password (work factor 12)
     /// </summary>
     [Required]

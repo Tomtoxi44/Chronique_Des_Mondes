@@ -1,5 +1,4 @@
 @inherits LayoutComponentBase
-@inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Authorization
 @using Cdm.Web.Components.Shared
 
@@ -72,31 +71,4 @@
 @if (!isCollapsed)
 {
     <div class="sidebar-overlay" @onclick="ToggleSidebar"></div>
-}
-
-@code {
-    private bool isCollapsed = false;
-
-    private void ToggleSidebar()
-    {
-        isCollapsed = !isCollapsed;
-    }
-
-    private bool IsActive(string path)
-    {
-        return Navigation.Uri.EndsWith(path, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private string GetPageTitle()
-    {
-        var path = new Uri(Navigation.Uri).AbsolutePath;
-        return path switch
-        {
-            "/" => "Accueil",
-            "/characters" => "Mes Personnages",
-            "/campaigns" => "Mes Campagnes",
-            "/dice" => "Lanceur de Dés",
-            _ => "Chronique des Mondes"
-        };
-    }
 }

@@ -12,32 +12,32 @@ public interface ILocalStorageService
 
 public class LocalStorageService : ILocalStorageService
 {
-    private readonly IJSRuntime _jsRuntime;
-    private readonly ILogger<LocalStorageService> _logger;
+    private readonly IJSRuntime jsRuntime;
+    private readonly ILogger<LocalStorageService> logger;
     
     public LocalStorageService(
         IJSRuntime jsRuntime,
         ILogger<LocalStorageService> logger)
     {
-        _jsRuntime = jsRuntime;
-        _logger = logger;
+        this.jsRuntime = jsRuntime ?? throw new ArgumentNullException(nameof(jsRuntime));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     
     public async Task<string?> GetItemAsync(string key)
     {
         try
         {
-            return await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+            return await this.jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop calls cannot be issued"))
         {
             // JS Interop not available during pre-rendering
-            _logger.LogDebug("JavaScript interop not available for localStorage.getItem during pre-rendering");
+            this.logger.LogDebug("JavaScript interop not available for localStorage.getItem during pre-rendering");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting item from localStorage: {Key}", key);
+            this.logger.LogError(ex, "Error getting item from localStorage: {Key}", key);
             return null;
         }
     }
@@ -46,17 +46,17 @@ public class LocalStorageService : ILocalStorageService
     {
         try
         {
-            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
-            _logger.LogDebug("Item set in localStorage: {Key}", key);
+            await this.jsRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
+            this.logger.LogDebug("Item set in localStorage: {Key}", key);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop calls cannot be issued"))
         {
             // JS Interop not available during pre-rendering
-            _logger.LogDebug("JavaScript interop not available for localStorage.setItem during pre-rendering");
+            this.logger.LogDebug("JavaScript interop not available for localStorage.setItem during pre-rendering");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error setting item in localStorage: {Key}", key);
+            this.logger.LogError(ex, "Error setting item in localStorage: {Key}", key);
         }
     }
     
@@ -64,17 +64,17 @@ public class LocalStorageService : ILocalStorageService
     {
         try
         {
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
-            _logger.LogDebug("Item removed from localStorage: {Key}", key);
+            await this.jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
+            this.logger.LogDebug("Item removed from localStorage: {Key}", key);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop calls cannot be issued"))
         {
             // JS Interop not available during pre-rendering
-            _logger.LogDebug("JavaScript interop not available for localStorage.removeItem during pre-rendering");
+            this.logger.LogDebug("JavaScript interop not available for localStorage.removeItem during pre-rendering");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing item from localStorage: {Key}", key);
+            this.logger.LogError(ex, "Error removing item from localStorage: {Key}", key);
         }
     }
     
@@ -82,12 +82,12 @@ public class LocalStorageService : ILocalStorageService
     {
         try
         {
-            await _jsRuntime.InvokeVoidAsync("localStorage.clear");
-            _logger.LogInformation("localStorage cleared");
+            await this.jsRuntime.InvokeVoidAsync("localStorage.clear");
+            this.logger.LogInformation("localStorage cleared");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error clearing localStorage");
+            this.logger.LogError(ex, "Error clearing localStorage");
         }
     }
 }

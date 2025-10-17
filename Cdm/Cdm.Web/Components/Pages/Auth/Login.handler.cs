@@ -1,7 +1,8 @@
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.ApiClients.Base;
 using Cdm.Web.Services.State;
-using Cdm.Web.Shared.DTOs.Auth;
+using Cdm.Web.Shared.DTOs.Models;
+using Cdm.Web.Shared.DTOs.ViewModels;
 using Microsoft.Extensions.Logging;
 
 namespace Cdm.Web.Components.Pages.Auth;
@@ -11,18 +12,18 @@ namespace Cdm.Web.Components.Pages.Auth;
 /// </summary>
 public class LoginHandler
 {
-    private readonly IAuthApiClient _authApiClient;
-    private readonly CustomAuthStateProvider _authStateProvider;
-    private readonly ILogger<LoginHandler> _logger;
+    private readonly IAuthApiClient authApiClient;
+    private readonly CustomAuthStateProvider authStateProvider;
+    private readonly ILogger<LoginHandler> logger;
     
     public LoginHandler(
         IAuthApiClient authApiClient,
         CustomAuthStateProvider authStateProvider,
         ILogger<LoginHandler> logger)
     {
-        _authApiClient = authApiClient ?? throw new ArgumentNullException(nameof(authApiClient));
-        _authStateProvider = authStateProvider ?? throw new ArgumentNullException(nameof(authStateProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.authApiClient = authApiClient ?? throw new ArgumentNullException(nameof(authApiClient));
+        this.authStateProvider = authStateProvider ?? throw new ArgumentNullException(nameof(authStateProvider));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     
     /// <summary>
@@ -38,15 +39,15 @@ public class LoginHandler
             throw new ArgumentNullException(nameof(request));
         }
         
-        _logger.LogInformation("Attempting to login user: {Email}", request.Email);
+        this.logger.LogInformation("Attempting to login user: {Email}", request.Email);
         
-        var response = await _authApiClient.LoginAsync(request);
+        var response = await this.authApiClient.LoginAsync(request);
         
         if (response != null)
         {
-            _logger.LogInformation("Login successful for: {Email}", response.Email);
+            this.logger.LogInformation("Login successful for: {Email}", response.Email);
             
-            await _authStateProvider.MarkUserAsAuthenticatedAsync(
+            await this.authStateProvider.MarkUserAsAuthenticatedAsync(
                 response.UserId,
                 response.Email,
                 response.Token);
@@ -58,3 +59,4 @@ public class LoginHandler
         return response;
     }
 }
+

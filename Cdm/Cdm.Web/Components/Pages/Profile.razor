@@ -86,10 +86,3 @@
         </div>
     </NotAuthorized>
 </AuthorizeView>
-
-@code {
-    private string GetUserEmail(AuthenticationState context)
-    {
-        return context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value ?? "email@example.com";
-    }
-}
