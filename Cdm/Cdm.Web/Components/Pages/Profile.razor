@@ -1,6 +1,7 @@
 @page "/profile"
 @using Cdm.Business.Abstraction.DTOs.ViewModels
 @using Cdm.Business.Abstraction.DTOs.Models
+@using Cdm.Web.Services
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Authorization
@@ -56,7 +57,7 @@
 </div>
 
 @code {
-    [Inject] private HttpClient Http { get; set; } = default!;
+    [Inject] private ProfileApiClient ProfileClient { get; set; } = default!;
     [Inject] private ILogger<Profile> Logger { get; set; } = default!;
 
     private ProfileResponse? profile;
@@ -72,7 +73,11 @@
     {
         try
         {
-            profile = await Http.GetFromJsonAsync<ProfileResponse>("api/users/profile");
+            profile = await ProfileClient.GetProfileAsync();
+            if (profile == null)
+            {
+                errorMessage = "Erreur lors du chargement du profil";
+            }
         }
         catch (Exception ex)
         {
@@ -88,17 +93,16 @@
 
         try
         {
-            var response = await Http.PutAsJsonAsync("api/users/profile", request);
+            var updatedProfile = await ProfileClient.UpdateProfileAsync(request);
             
-            if (response.IsSuccessStatusCode)
+            if (updatedProfile != null)
             {
-                profile = await response.Content.ReadFromJsonAsync<ProfileResponse>();
+                profile = updatedProfile;
                 successMessage = "Profil mis à jour avec succès !";
             }
             else
             {
-                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                errorMessage = error?["error"] ?? "Erreur lors de la mise à jour du profil";
+                errorMessage = "Erreur lors de la mise à jour du profil";
             }
         }
         catch (Exception ex)
@@ -115,31 +119,20 @@
 
         try
         {
-            const long maxFileSize = 2 * 1024 * 1024; // 2MB
+            var avatarUrl = await ProfileClient.UploadAvatarAsync(file);
             
-            using var content = new MultipartFormDataContent();
-            var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
-            content.Add(fileContent, "file", file.Name);
-
-            var response = await Http.PostAsync("api/users/profile/avatar", content);
-            
-            if (response.IsSuccessStatusCode)
+            if (avatarUrl != null)
             {
-                var result = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                if (result != null && result.TryGetValue("avatarUrl", out var avatarUrl))
+                if (profile != null)
                 {
-                    if (profile != null)
-                    {
-                        profile.AvatarUrl = avatarUrl;
-                    }
-                    successMessage = "Avatar mis à jour avec succès !";
+                    profile.AvatarUrl = avatarUrl;
                 }
+                successMessage = "Avatar mis à jour avec succès !";
+                await LoadProfileAsync(); // Reload full profile
             }
             else
             {
-                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                errorMessage = error?["error"] ?? "Erreur lors de l'upload de l'avatar";
+                errorMessage = "Erreur lors de l'upload de l'avatar";
             }
         }
         catch (Exception ex)
