@@ -1,6 +1,7 @@
 using Cdm.Web;
 using Cdm.Web.Components;
 using Cdm.Web.Components.Pages.Auth;
+using Cdm.Web.Services;
 using Cdm.Web.Services.Storage;
 using Cdm.Web.Services.State;
 using Cdm.Web.Services.ApiClients;
@@ -64,12 +65,12 @@ builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-builder.Services.AddHttpClient<WeatherApiClient>(client =>
-    {
-        // This URL uses "https+http://" to indicate HTTPS is preferred over HTTP.
-        // Learn more about service discovery scheme resolution at https://aka.ms/dotnet/sdschemes.
-        client.BaseAddress = new("https+http://apiservice");
-    });
+builder.Services.AddHttpClient<ProfileApiClient>(client =>
+{
+    client.BaseAddress = new Uri("https+http://apiservice");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 var app = builder.Build();
 

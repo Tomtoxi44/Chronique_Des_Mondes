@@ -16,6 +16,7 @@ var migrations = builder.AddProject<Projects.Cdm_MigrationsManager>("migrations"
 
 var apiService = builder
     .AddProject<Projects.Cdm_ApiService>("apiservice")
+    .WithExternalHttpEndpoints()
     .WithReference(migrations)
     .WaitForCompletion(migrations);
 

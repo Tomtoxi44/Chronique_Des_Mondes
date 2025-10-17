@@ -159,7 +159,187 @@ Rafraîchissement du token JWT.
 
 ---
 
-## 2. Personnages (Characters)
+## 2. Profil Utilisateur
+
+### 2.1 GET /api/users/profile
+
+Récupération du profil de l'utilisateur connecté.
+
+**Endpoint :** `GET /api/users/profile`  
+**Authorization :** Bearer token (requis)
+
+**Response 200 OK :**
+```json
+{
+  "id": 123,
+  "email": "player@example.com",
+  "nickname": "DragonMaster42",
+  "username": "dragonmaster",
+  "avatarUrl": "/uploads/avatars/123_avatar.jpg",
+  "preferences": "{\"theme\":\"dark\",\"notifications\":{\"email\":true,\"inApp\":true}}",
+  "createdAt": "2025-01-15T10:00:00Z"
+}
+```
+
+**Response 401 Unauthorized :**
+```json
+{
+  "error": "Unauthorized",
+  "details": "Token JWT invalide ou expiré"
+}
+```
+
+**Response 404 Not Found :**
+```json
+{
+  "error": "Profile not found",
+  "details": "Aucun profil trouvé pour cet utilisateur"
+}
+```
+
+**Implémentation :**
+```csharp
+group.MapGet("/profile", async (
+    ClaimsPrincipal user,
+    IUserProfileService profileService) =>
+{
+    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+        return Results.Unauthorized();
+    
+    var profile = await profileService.GetProfileAsync(userId);
+    if (profile == null)
+        return Results.NotFound(new { error = "Profile not found" });
+    
+    return Results.Ok(profile);
+})
+.RequireAuthorization()
+.WithName("GetUserProfile")
+.WithOpenApi();
+```
+
+---
+
+### 2.2 PUT /api/users/profile
+
+Mise à jour du profil de l'utilisateur connecté.
+
+**Endpoint :** `PUT /api/users/profile`  
+**Authorization :** Bearer token (requis)
+
+**Request Body :**
+```json
+{
+  "username": "newusername",
+  "preferences": "{\"theme\":\"light\",\"notifications\":{\"email\":false,\"inApp\":true}}"
+}
+```
+
+**Response 200 OK :**
+```json
+{
+  "id": 123,
+  "email": "player@example.com",
+  "nickname": "DragonMaster42",
+  "username": "newusername",
+  "avatarUrl": "/uploads/avatars/123_avatar.jpg",
+  "preferences": "{\"theme\":\"light\",\"notifications\":{\"email\":false,\"inApp\":true}}",
+  "createdAt": "2025-01-15T10:00:00Z"
+}
+```
+
+**Response 400 Bad Request :**
+```json
+{
+  "error": "Username already taken",
+  "details": "Ce nom d'utilisateur est déjà utilisé par un autre compte"
+}
+```
+
+**Response 401 Unauthorized :** (voir section 2.1)
+
+**Validation :**
+- `username` : 3-30 caractères, optionnel, unique
+- `preferences` : JSON valide, optionnel
+
+---
+
+### 2.3 POST /api/users/avatar
+
+Upload d'un avatar pour l'utilisateur connecté.
+
+**Endpoint :** `POST /api/users/avatar`  
+**Authorization :** Bearer token (requis)  
+**Content-Type :** `multipart/form-data`
+
+**Request Body (Form Data) :**
+- `avatar` : Fichier image (JPG, JPEG, PNG)
+
+**Response 200 OK :**
+```json
+{
+  "avatarUrl": "/uploads/avatars/123_avatar.jpg",
+  "message": "Avatar uploaded successfully"
+}
+```
+
+**Response 400 Bad Request :**
+```json
+{
+  "error": "Invalid file format",
+  "details": "Formats acceptés: JPG, PNG. Taille maximale: 2 MB"
+}
+```
+
+**Response 401 Unauthorized :** (voir section 2.1)
+
+**Validation :**
+- Formats acceptés : `.jpg`, `.jpeg`, `.png`
+- Taille maximale : 2 MB
+- Stockage : `/wwwroot/uploads/avatars/{userId}_avatar.{ext}`
+
+**Implémentation :**
+```csharp
+group.MapPost("/avatar", async (
+    HttpContext httpContext,
+    ClaimsPrincipal user,
+    IAvatarService avatarService,
+    AppDbContext dbContext) =>
+{
+    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+        return Results.Unauthorized();
+
+    var form = await httpContext.Request.ReadFormAsync();
+    var file = form.Files.FirstOrDefault();
+    
+    if (file == null)
+        return Results.BadRequest(new { error = "No file provided" });
+
+    if (!avatarService.ValidateAvatarFile(file, out var errorMessage))
+        return Results.BadRequest(new { error = errorMessage });
+
+    var avatarUrl = await avatarService.UploadAvatarAsync(userId, file);
+    if (avatarUrl == null)
+        return Results.BadRequest(new { error = "Failed to upload avatar" });
+
+    var userEntity = await dbContext.Users.FindAsync(userId);
+    if (userEntity != null)
+    {
+        userEntity.AvatarUrl = avatarUrl;
+        await dbContext.SaveChangesAsync();
+    }
+
+    return Results.Ok(new { avatarUrl, message = "Avatar uploaded successfully" });
+})
+.RequireAuthorization()
+.WithName("UploadUserAvatar")
+.WithOpenApi();
+```
+
+---
+
+## 3. Personnages (Characters)
 
 ### 2.1 GET /api/characters
 
@@ -403,9 +583,9 @@ Suppression logique d'un personnage (soft delete).
 
 ---
 
-## 3. Campagnes (Campaigns)
+## 4. Campagnes (Campaigns)
 
-### 3.1 GET /api/campaigns
+### 4.1 GET /api/campaigns
 
 Liste les campagnes accessibles (créées ou participant).
 
