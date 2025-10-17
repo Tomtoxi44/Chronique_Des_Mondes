@@ -3,6 +3,7 @@ namespace Cdm.Business.Common.Services;
 using Cdm.Business.Abstraction.DTOs.Models;
 using Cdm.Business.Abstraction.DTOs.ViewModels;
 using Cdm.Business.Abstraction.Services;
+using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public class UserProfileService : IUserProfileService
 {
-    private readonly DbContext dbContext;
+    private readonly AppDbContext dbContext;
     private readonly ILogger<UserProfileService> logger;
 
     /// <summary>
@@ -20,7 +21,7 @@ public class UserProfileService : IUserProfileService
     /// </summary>
     /// <param name="dbContext">Database context</param>
     /// <param name="logger">Logger instance</param>
-    public UserProfileService(DbContext dbContext, ILogger<UserProfileService> logger)
+    public UserProfileService(AppDbContext dbContext, ILogger<UserProfileService> logger)
     {
         this.dbContext = dbContext;
         this.logger = logger;
