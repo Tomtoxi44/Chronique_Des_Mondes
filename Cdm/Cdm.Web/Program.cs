@@ -65,7 +65,17 @@ builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-builder.Services.AddHttpClient<ProfileApiClient>(client =>
+// Register ProfileApiClient with scoped lifetime
+builder.Services.AddScoped<ProfileApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("ProfileApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<ProfileApiClient>>();
+    return new ProfileApiClient(httpClient, localStorage, logger);
+});
+
+builder.Services.AddHttpClient("ProfileApiClient", client =>
 {
     client.BaseAddress = new Uri("https+http://apiservice");
     client.Timeout = TimeSpan.FromSeconds(30);

@@ -39,4 +39,9 @@ public class ProfileResponse
     /// Account creation timestamp (UTC)
     /// </summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Last login timestamp (UTC)
+    /// </summary>
+    public DateTime? LastLoginAt { get; set; }
 }

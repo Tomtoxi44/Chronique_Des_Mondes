@@ -42,7 +42,8 @@ public class UserProfileService : IUserProfileService
                 Username = u.Username,
                 AvatarUrl = u.AvatarUrl,
                 Preferences = u.Preferences,
-                CreatedAt = u.CreatedAt
+                CreatedAt = u.CreatedAt,
+                LastLoginAt = u.LastLoginAt
             })
             .FirstOrDefaultAsync();
 
