@@ -481,7 +481,285 @@ public class CharacterApiClient
 
 ---
 
-## 3. Composants partagés
+## 3. Profil Utilisateur
+
+### 3.1 Profile.razor
+
+Page de gestion du profil utilisateur avec édition des informations et upload d'avatar.
+
+```razor
+@page "/profile"
+@using Cdm.Business.Abstraction.DTOs.ViewModels
+@using Cdm.Business.Abstraction.DTOs.Models
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+<PageTitle>Mon Profil</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3><i class="bi bi-person-circle"></i> Mon Profil</h3>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    }
+                    else if (profile != null)
+                    {
+                        <ProfileEditor Profile="profile" 
+                                     OnSave="HandleSaveAsync" 
+                                     OnAvatarUpload="HandleAvatarUploadAsync" />
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show mt-3">
+                            <i class="bi bi-check-circle"></i> @successMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3">
+                            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private HttpClient Http { get; set; } = default!;
+    
+    private ProfileResponse? profile;
+    private bool isLoading = true;
+    private string? successMessage;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfileAsync();
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        isLoading = true;
+        profile = await Http.GetFromJsonAsync<ProfileResponse>("/api/users/profile");
+        isLoading = false;
+    }
+
+    private async Task HandleSaveAsync(UpdateProfileRequest request)
+    {
+        var response = await Http.PutAsJsonAsync("/api/users/profile", request);
+        if (response.IsSuccessStatusCode)
+        {
+            profile = await response.Content.ReadFromJsonAsync<ProfileResponse>();
+            successMessage = "Profil mis à jour avec succès";
+            errorMessage = null;
+        }
+        else
+        {
+            successMessage = null;
+            errorMessage = "Erreur lors de la mise à jour du profil";
+        }
+    }
+
+    private async Task HandleAvatarUploadAsync(IBrowserFile file)
+    {
+        using var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024));
+        content.Add(fileContent, "avatar", file.Name);
+
+        var response = await Http.PostAsync("/api/users/avatar", content);
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadProfileAsync();
+            successMessage = "Avatar mis à jour avec succès";
+            errorMessage = null;
+        }
+        else
+        {
+            successMessage = null;
+            errorMessage = "Erreur lors de l'upload de l'avatar";
+        }
+    }
+}
+```
+
+---
+
+### 3.2 ProfileEditor.razor
+
+Composant d'édition du profil avec formulaire de validation.
+
+```razor
+@using Cdm.Business.Abstraction.DTOs.ViewModels
+@using Cdm.Business.Abstraction.DTOs.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
+
+<div class="profile-editor">
+    <!-- Avatar Section -->
+    <div class="avatar-section mb-4 text-center">
+        @if (!string.IsNullOrEmpty(Profile.AvatarUrl))
+        {
+            <img src="@Profile.AvatarUrl" alt="Avatar" class="rounded-circle" 
+                 style="width: 150px; height: 150px; object-fit: cover;" />
+        }
+        else
+        {
+            <div class="avatar-placeholder rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" 
+                 style="width: 150px; height: 150px;">
+                <i class="bi bi-person-circle" style="font-size: 80px; color: white;"></i>
+            </div>
+        }
+        
+        <div class="mt-3">
+            <AvatarUploader OnFileSelected="HandleAvatarSelectedAsync" />
+        </div>
+    </div>
+
+    <!-- Profile Form -->
+    <EditForm Model="@editModel" OnValidSubmit="HandleSubmitAsync">
+        <DataAnnotationsValidator />
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-at"></i> Nom d'utilisateur</label>
+            <InputText @bind-Value="editModel.Username" class="form-control" />
+            <ValidationMessage For="@(() => editModel.Username)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-palette"></i> Thème</label>
+            <select class="form-select" @bind="selectedTheme">
+                <option value="light">Clair</option>
+                <option value="dark">Sombre</option>
+            </select>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                <i class="bi bi-save"></i> Enregistrer
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public ProfileResponse Profile { get; set; } = default!;
+    [Parameter] public EventCallback<UpdateProfileRequest> OnSave { get; set; }
+    [Parameter] public EventCallback<IBrowserFile> OnAvatarUpload { get; set; }
+
+    private UpdateProfileRequest editModel = new();
+    private bool isSubmitting = false;
+    private string selectedTheme = "dark";
+
+    protected override void OnParametersSet()
+    {
+        editModel.Username = Profile.Username;
+        
+        if (!string.IsNullOrEmpty(Profile.Preferences))
+        {
+            var prefs = JsonSerializer.Deserialize<JsonElement>(Profile.Preferences);
+            if (prefs.TryGetProperty("theme", out var theme))
+            {
+                selectedTheme = theme.GetString() ?? "dark";
+            }
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        isSubmitting = true;
+        editModel.Preferences = JsonSerializer.Serialize(new { theme = selectedTheme });
+        await OnSave.InvokeAsync(editModel);
+        isSubmitting = false;
+    }
+
+    private async Task HandleAvatarSelectedAsync(IBrowserFile file)
+    {
+        await OnAvatarUpload.InvokeAsync(file);
+    }
+}
+```
+
+---
+
+### 3.3 AvatarUploader.razor
+
+Composant d'upload d'avatar avec validation client.
+
+```razor
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="avatar-uploader">
+    <InputFile OnChange="HandleFileSelectedAsync" 
+               accept=".jpg,.jpeg,.png" 
+               class="d-none" 
+               id="avatarInput" />
+    
+    <label for="avatarInput" class="btn btn-outline-primary">
+        <i class="bi bi-upload"></i> Choisir un avatar
+    </label>
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-2">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+    }
+    
+    <div class="form-text mt-2">
+        Formats acceptés: JPG, PNG. Taille maximale: 2 MB
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IBrowserFile> OnFileSelected { get; set; }
+
+    private string? errorMessage;
+
+    private async Task HandleFileSelectedAsync(InputFileChangeEventArgs e)
+    {
+        errorMessage = null;
+        var file = e.File;
+
+        // Validate file type
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png" };
+        if (!allowedTypes.Contains(file.ContentType.ToLowerInvariant()))
+        {
+            errorMessage = "Format de fichier non valide. Utilisez JPG ou PNG.";
+            return;
+        }
+
+        // Validate file size (2 MB max)
+        if (file.Size > 2 * 1024 * 1024)
+        {
+            errorMessage = "Le fichier est trop volumineux. Taille maximale: 2 MB.";
+            return;
+        }
+
+        await OnFileSelected.InvokeAsync(file);
+    }
+}
+```
+
+---
+
+## 4. Composants partagés
 
 ### 3.1 CharacterCard.razor
 

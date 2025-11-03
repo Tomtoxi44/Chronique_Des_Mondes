@@ -32,6 +32,24 @@ public class User
     public string Nickname { get; set; } = string.Empty;
 
     /// <summary>
+    /// User unique username (3-30 characters, optional)
+    /// </summary>
+    [MaxLength(30)]
+    public string? Username { get; set; }
+
+    /// <summary>
+    /// Avatar image URL or path
+    /// </summary>
+    [MaxLength(500)]
+    public string? AvatarUrl { get; set; }
+
+    /// <summary>
+    /// User preferences stored as JSON (theme, notifications, etc.)
+    /// </summary>
+    [Column(TypeName = "nvarchar(max)")]
+    public string? Preferences { get; set; }
+
+    /// <summary>
     /// BCrypt hashed password (work factor 12)
     /// </summary>
     [Required]

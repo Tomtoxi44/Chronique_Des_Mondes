@@ -15,7 +15,7 @@ public partial class Profile
     /// <returns>The user's email address or a default value.</returns>
     private string GetUserEmail(AuthenticationState context)
     {
-        return context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value 
+        return context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value
             ?? "email@example.com";
     }
 }

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cdm.ServiceDefaults\Cdm.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Cdm.Business.Abstraction\Cdm.Business.Abstraction.csproj" />
   </ItemGroup>
 
 </Project>

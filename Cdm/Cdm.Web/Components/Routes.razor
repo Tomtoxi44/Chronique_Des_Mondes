@@ -1,10 +1,32 @@
-﻿<CascadingAuthenticationState>
+﻿@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<CascadingAuthenticationState>
     <Router AppAssembly="typeof(Program).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
                 <NotAuthorized>
-                    <p>Vous devez être connecté pour accéder à cette page.</p>
-                    <a href="/login">Se connecter</a>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <div class="container" style="padding-top: var(--spacing-xl);">
+                            <div class="card" style="max-width: 500px; margin: 0 auto;">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-lock" style="font-size: 3rem; color: #f59e0b;"></i>
+                                    <h2 style="margin-top: var(--spacing-md);">Accès restreint</h2>
+                                    <p class="text-muted">Vous devez être connecté pour accéder à cette page.</p>
+                                    <div style="margin-top: var(--spacing-lg);">
+                                        <a href="/login" class="btn btn-primary">
+                                            <i class="bi bi-box-arrow-in-right"></i>
+                                            Se connecter
+                                        </a>
+                                        <a href="/register" class="btn btn-secondary" style="margin-left: var(--spacing-sm);">
+                                            <i class="bi bi-person-plus"></i>
+                                            Créer un compte
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="routeData" Selector="h1" />

@@ -60,6 +60,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddScoped<IAvatarService, AvatarService>();
 // Email service is optional for MVP
 // builder.Services.AddScoped<IEmailService, AzureEmailService>();
 
@@ -79,6 +81,7 @@ app.UseAuthorization();
 
 // Map endpoints
 app.MapAuthEndpoints();
+app.MapProfileEndpoints();
 
 app.MapDefaultEndpoints();
 

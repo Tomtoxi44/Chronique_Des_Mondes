@@ -17,20 +17,23 @@ La base de données est conçue pour supporter **plusieurs systèmes de jeu** (g
 
 ### 1.1 Users (Utilisateurs)
 
-Gère l'authentification et les informations utilisateur.
+Gère l'authentification et les informations utilisateur, ainsi que le profil utilisateur.
 
 ```sql
 CREATE TABLE Users (
     Id INT PRIMARY KEY IDENTITY(1,1),
-    Username NVARCHAR(50) NOT NULL UNIQUE,
     Email NVARCHAR(255) NOT NULL UNIQUE,
+    Nickname NVARCHAR(50) NOT NULL,
     PasswordHash NVARCHAR(500) NOT NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     LastLoginAt DATETIME2 NULL,
     IsActive BIT NOT NULL DEFAULT 1,
+    Username NVARCHAR(30) NULL UNIQUE,
+    AvatarUrl NVARCHAR(500) NULL,
+    Preferences NVARCHAR(MAX) NULL,
     
     INDEX IX_Users_Email (Email),
-    INDEX IX_Users_Username (Username),
+    INDEX IX_Users_Username (Username) WHERE Username IS NOT NULL,
     INDEX IX_Users_IsActive (IsActive)
 );
 ```
@@ -39,6 +42,9 @@ CREATE TABLE Users (
 - `PasswordHash` : Hash BCrypt du mot de passe
 - `IsActive` : Permet de désactiver un compte sans le supprimer
 - `LastLoginAt` : Suivi des connexions pour statistiques
+- `Username` : Nom d'utilisateur optionnel (3-30 caractères), unique, visible par les autres joueurs
+- `AvatarUrl` : Chemin relatif vers l'avatar de l'utilisateur (`/uploads/avatars/{userId}_avatar.{ext}`)
+- `Preferences` : Stockage JSON des préférences utilisateur (thème, notifications, etc.)
 
 ---
 
