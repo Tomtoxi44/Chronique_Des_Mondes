@@ -1,19 +1,19 @@
 namespace Cdm.ApiService.Endpoints;
 
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Cdm.Business.Abstraction.Services;
 using System.Security.Claims;
+using Cdm.ApiService.Endpoints.Models;
+using Cdm.Business.Abstraction.Services;
+using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
-/// Endpoints for managing user roles
+/// Endpoints for managing user roles.
 /// </summary>
 public static class RoleEndpoints
 {
     /// <summary>
-    /// Maps role-related endpoints
+    /// Maps role-related endpoints.
     /// </summary>
-    /// <param name="app">The web application</param>
+    /// <param name="app">The web application.</param>
     public static void MapRoleEndpoints(this WebApplication app)
     {
         var roleGroup = app.MapGroup("/api/users")
@@ -39,8 +39,11 @@ public static class RoleEndpoints
     }
 
     /// <summary>
-    /// Get all roles assigned to the current user
+    /// Get all roles assigned to the current user.
     /// </summary>
+    /// <param name="user">Current authenticated user.</param>
+    /// <param name="roleService">Role service.</param>
+    /// <returns>Response with user roles.</returns>
     private static async Task<IResult> GetMyRoles(
         ClaimsPrincipal user,
         [FromServices] IRoleService roleService)
@@ -66,8 +69,11 @@ public static class RoleEndpoints
     }
 
     /// <summary>
-    /// Request GameMaster role for the current user
+    /// Request GameMaster role for the current user.
     /// </summary>
+    /// <param name="user">Current authenticated user.</param>
+    /// <param name="roleService">Role service.</param>
+    /// <returns>Response indicating success or conflict.</returns>
     private static async Task<IResult> RequestGameMasterRole(
         ClaimsPrincipal user,
         [FromServices] IRoleService roleService)
@@ -95,57 +101,4 @@ public static class RoleEndpoints
             Message = "GameMaster role successfully assigned"
         });
     }
-}
-
-/// <summary>
-/// Response for GetMyRoles endpoint
-/// </summary>
-public class GetMyRolesResponse
-{
-    /// <summary>
-    /// User identifier
-    /// </summary>
-    public int UserId { get; set; }
-
-    /// <summary>
-    /// List of roles assigned to the user
-    /// </summary>
-    public List<RoleInfo> Roles { get; set; } = new();
-}
-
-/// <summary>
-/// Role information
-/// </summary>
-public class RoleInfo
-{
-    /// <summary>
-    /// Role identifier
-    /// </summary>
-    public int RoleId { get; set; }
-
-    /// <summary>
-    /// Role name (Player, GameMaster, Admin)
-    /// </summary>
-    public string RoleName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Date and time when the role was assigned
-    /// </summary>
-    public DateTime AssignedAt { get; set; }
-}
-
-/// <summary>
-/// Response for RequestGameMasterRole endpoint
-/// </summary>
-public class RequestGameMasterRoleResponse
-{
-    /// <summary>
-    /// Indicates if the request was successful
-    /// </summary>
-    public bool Success { get; set; }
-
-    /// <summary>
-    /// Response message
-    /// </summary>
-    public string Message { get; set; } = string.Empty;
 }
