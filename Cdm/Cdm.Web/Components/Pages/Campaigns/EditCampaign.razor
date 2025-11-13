@@ -114,8 +114,8 @@
                 {
                     Name = this.campaign.Name,
                     Description = this.campaign.Description,
-                    GameType = this.campaign.GameType,
-                    Visibility = this.campaign.Visibility,
+                    GameType = (Cdm.Common.Enums.GameType)this.campaign.GameType,
+                    Visibility = (Cdm.Common.Enums.Visibility)this.campaign.Visibility,
                     MaxPlayers = this.campaign.MaxPlayers,
                     CoverImageBase64 = null // Don't pre-fill image (keep existing)
                 };
