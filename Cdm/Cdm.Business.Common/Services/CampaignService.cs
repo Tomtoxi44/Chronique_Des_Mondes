@@ -19,14 +19,17 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 /// <param name="dbContext">Database context for campaign data access.</param>
 /// <param name="imageStorageService">Service for image storage operations.</param>
+/// <param name="roleService">Service for managing user roles.</param>
 /// <param name="logger">Logger instance for structured logging.</param>
 public class CampaignService(
     AppDbContext dbContext,
     IImageStorageService imageStorageService,
+    IRoleService roleService,
     ILogger<CampaignService> logger) : ICampaignService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly IImageStorageService imageStorageService = imageStorageService;
+    private readonly IRoleService roleService = roleService;
     private readonly ILogger<CampaignService> logger = logger;
 
     /// <inheritdoc/>
@@ -40,6 +43,30 @@ public class CampaignService(
                 "Creating campaign '{CampaignName}' for user {UserId}",
                 dto.Name,
                 userId);
+
+            // Auto-assign GameMaster role if user doesn't have it
+            var hasGameMasterRole = await this.roleService.HasRoleAsync(userId, "GameMaster");
+            if (!hasGameMasterRole)
+            {
+                this.logger.LogInformation(
+                    "User {UserId} doesn't have GameMaster role, assigning it automatically",
+                    userId);
+
+                var roleAssigned = await this.roleService.RequestGameMasterRoleAsync(userId);
+
+                if (roleAssigned)
+                {
+                    this.logger.LogInformation(
+                        "GameMaster role successfully assigned to user {UserId}",
+                        userId);
+                }
+                else
+                {
+                    this.logger.LogWarning(
+                        "Failed to assign GameMaster role to user {UserId}",
+                        userId);
+                }
+            }
 
             // Handle image upload if provided
             string? coverImageUrl = null;

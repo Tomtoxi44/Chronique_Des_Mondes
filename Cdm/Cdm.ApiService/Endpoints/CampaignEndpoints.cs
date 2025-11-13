@@ -30,7 +30,6 @@ public static class CampaignEndpoints
 
         // POST /api/campaigns
         group.MapPost("/", CreateCampaignAsync)
-            .RequireAuthorization(policy => policy.RequireRole("GameMaster"))
             .WithName("CreateCampaign")
             .WithOpenApi();
 
