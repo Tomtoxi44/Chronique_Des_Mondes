@@ -4,7 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -18,8 +20,9 @@ public interface IJwtService
     /// </summary>
     /// <param name="userId">User ID</param>
     /// <param name="email">User email</param>
+    /// <param name="roles">List of role names assigned to the user</param>
     /// <returns>JWT token string</returns>
-    string GenerateToken(int userId, string email);
+    string GenerateToken(int userId, string email, List<string> roles);
 
     /// <summary>
     /// Validate a JWT token
@@ -32,8 +35,8 @@ public interface IJwtService
     /// Extract user information from a JWT token
     /// </summary>
     /// <param name="token">JWT token string</param>
-    /// <returns>User information if valid, null otherwise</returns>
-    (int UserId, string Email)? GetUserInfoFromToken(string token);
+    /// <returns>User information with roles if valid, null otherwise</returns>
+    (int UserId, string Email, List<string> Roles)? GetUserInfoFromToken(string token);
 }
 
 /// <summary>
@@ -64,24 +67,31 @@ public class JwtService : IJwtService
         }
     }
 
-    public string GenerateToken(int userId, string email)
+    public string GenerateToken(int userId, string email, List<string> roles)
     {
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(this.secretKey);
             
-            var claims = new[]
+            // Build claims list with user info
+            var claimsList = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
             };
+
+            // Add role claims
+            foreach (var role in roles)
+            {
+                claimsList.Add(new Claim(ClaimTypes.Role, role));
+            }
             
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(claims),
+                Subject = new ClaimsIdentity(claimsList),
                 Expires = DateTime.UtcNow.AddDays(this.expirationDays),
                 Issuer = this.issuer,
                 Audience = this.audience,
@@ -93,7 +103,7 @@ public class JwtService : IJwtService
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
             
-            this.logger.LogInformation("JWT token generated for user {UserId}", userId);
+            this.logger.LogInformation("JWT token generated for user {UserId} with roles: {Roles}", userId, string.Join(", ", roles));
             
             return tokenString;
         }
@@ -143,7 +153,7 @@ public class JwtService : IJwtService
         }
     }
 
-    public (int UserId, string Email)? GetUserInfoFromToken(string token)
+    public (int UserId, string Email, List<string> Roles)? GetUserInfoFromToken(string token)
     {
         try
         {
@@ -164,11 +174,12 @@ public class JwtService : IJwtService
 
             var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userEmail = principal.FindFirst(ClaimTypes.Email)?.Value;
+            var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
 
             if (int.TryParse(userIdClaim, out var userId) && !string.IsNullOrEmpty(userEmail))
             {
-                this.logger.LogDebug("Successfully extracted user info from token: UserId={UserId}", userId);
-                return (userId, userEmail);
+                this.logger.LogDebug("Successfully extracted user info from token: UserId={UserId}, Roles={Roles}", userId, string.Join(", ", roles));
+                return (userId, userEmail, roles);
             }
             
             this.logger.LogWarning("Failed to extract complete user info from token");

@@ -78,4 +78,9 @@ public class User
     /// </summary>
     [Required]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets or sets the collection of global roles assigned to this user
+    /// </summary>
+    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }

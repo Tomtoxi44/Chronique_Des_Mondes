@@ -17,6 +17,16 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<User> Users { get; set; } = null!;
 
+    /// <summary>
+    /// Roles table
+    /// </summary>
+    public DbSet<Role> Roles { get; set; } = null!;
+
+    /// <summary>
+    /// UserRoles junction table
+    /// </summary>
+    public DbSet<UserRole> UserRoles { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -46,6 +56,25 @@ public class AppDbContext : DbContext
 
             entity.Property(u => u.IsActive)
                 .HasDefaultValue(true);
+        });
+
+        // Configure UserRole entity (composite key)
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            // Composite primary key
+            entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            // User relationship
+            entity.HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Role relationship
+            entity.HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

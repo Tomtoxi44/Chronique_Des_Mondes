@@ -71,8 +71,30 @@ public class AuthService : IAuthService
 
             this.logger.LogInformation("User registered successfully with ID: {UserId}", user.Id);
 
-            // Generate JWT token
-            var token = this.jwtService.GenerateToken(user.Id, user.Email);
+            // Assign default "Player" role
+            var playerRole = await this.context.Roles.FirstOrDefaultAsync(r => r.Name == "Player");
+            if (playerRole != null)
+            {
+                var userRole = new UserRole
+                {
+                    UserId = user.Id,
+                    RoleId = playerRole.Id,
+                    AssignedAt = DateTime.UtcNow
+                };
+                this.context.UserRoles.Add(userRole);
+                await this.context.SaveChangesAsync();
+                this.logger.LogInformation("Player role assigned to user {UserId}", user.Id);
+            }
+
+            // Get user roles for JWT token
+            var roles = await this.context.UserRoles
+                .Where(ur => ur.UserId == user.Id)
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+
+            // Generate JWT token with roles
+            var token = this.jwtService.GenerateToken(user.Id, user.Email, roles);
 
             // Send welcome email (optional)
             if (this.emailService != null)
@@ -148,8 +170,15 @@ public class AuthService : IAuthService
 
             this.logger.LogInformation("User logged in successfully: {UserId}", user.Id);
 
-            // Generate JWT token
-            var token = this.jwtService.GenerateToken(user.Id, user.Email);
+            // Get user roles for JWT token
+            var roles = await this.context.UserRoles
+                .Where(ur => ur.UserId == user.Id)
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+
+            // Generate JWT token with roles
+            var token = this.jwtService.GenerateToken(user.Id, user.Email, roles);
 
             // Return success response
             var response = new LoginResponse

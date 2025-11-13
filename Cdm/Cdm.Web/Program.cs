@@ -82,6 +82,23 @@ builder.Services.AddHttpClient("ProfileApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register RoleService with scoped lifetime
+builder.Services.AddScoped<IRoleService, RoleService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("RoleApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<RoleService>>();
+    return new RoleService(httpClient, localStorage, logger);
+});
+
+builder.Services.AddHttpClient("RoleApiClient", client =>
+{
+    client.BaseAddress = new Uri("https+http://apiservice");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

@@ -1,0 +1,156 @@
+@using Cdm.Web.Services
+@using Cdm.Web.Components.Shared
+@inject IRoleService RoleService
+@inject ILogger<RoleManager> Logger
+
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <div class="card-header">
+        <h2 style="margin: 0; font-size: 1.25rem;">
+            <i class="bi bi-shield-check"></i> Mes Rôles
+        </h2>
+    </div>
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center" style="padding: var(--spacing-md);">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <span style="margin-left: var(--spacing-sm);">Chargement des rôles...</span>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i>
+                @errorMessage
+            </div>
+        }
+        else
+        {
+            <!-- Current Roles -->
+            <div style="margin-bottom: var(--spacing-lg);">
+                <label style="display: block; font-weight: 600; margin-bottom: var(--spacing-sm); color: var(--text-muted);">
+                    Rôles actuels
+                </label>
+                <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+                    @if (userRoles != null && userRoles.Any())
+                    {
+                        @foreach (var role in userRoles)
+                        {
+                            <RoleBadge RoleName="@role.RoleName" ShowIcon="true" />
+                        }
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Aucun rôle</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Request GameMaster Role -->
+            @if (!hasGameMasterRole)
+            {
+                <div style="padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
+                    <p style="margin-bottom: var(--spacing-md); color: var(--text-muted);">
+                        <i class="bi bi-info-circle"></i>
+                        Vous souhaitez créer et gérer des campagnes ? Devenez Maître du Jeu !
+                    </p>
+                    <button 
+                        class="btn btn-danger" 
+                        @onclick="RequestGameMasterRoleAsync"
+                        disabled="@isRequestingRole">
+                        @if (isRequestingRole)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span style="margin-left: var(--spacing-xs);">Demande en cours...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-dice-6"></i>
+                            <span style="margin-left: var(--spacing-xs);">Devenir Maître du Jeu</span>
+                        }
+                    </button>
+                </div>
+            }
+
+            <!-- Success Message -->
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="alert alert-success" style="margin-top: var(--spacing-md);">
+                    <i class="bi bi-check-circle"></i>
+                    @successMessage
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<UserRoleInfo>? userRoles;
+    private bool hasGameMasterRole;
+    private bool isLoading = true;
+    private bool isRequestingRole = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRolesAsync();
+    }
+
+    private async Task LoadRolesAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            userRoles = await RoleService.GetMyRolesAsync();
+            hasGameMasterRole = await RoleService.HasRoleAsync("GameMaster");
+
+            Logger.LogInformation("Loaded {Count} roles for user", userRoles?.Count ?? 0);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading user roles");
+            errorMessage = "Erreur lors du chargement des rôles";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RequestGameMasterRoleAsync()
+    {
+        try
+        {
+            isRequestingRole = true;
+            errorMessage = string.Empty;
+            successMessage = string.Empty;
+
+            var (success, message) = await RoleService.RequestGameMasterRoleAsync();
+
+            if (success)
+            {
+                successMessage = message;
+                // Reload roles to update the UI
+                await LoadRolesAsync();
+            }
+            else
+            {
+                errorMessage = message;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error requesting GameMaster role");
+            errorMessage = "Erreur lors de la demande du rôle";
+        }
+        finally
+        {
+            isRequestingRole = false;
+        }
+    }
+}
