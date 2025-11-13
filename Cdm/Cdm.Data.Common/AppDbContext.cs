@@ -1,5 +1,6 @@
 ﻿namespace Cdm.Data.Common;
 
+using Cdm.Common.Enums;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,11 @@ public class AppDbContext : DbContext
     /// UserRoles junction table
     /// </summary>
     public DbSet<UserRole> UserRoles { get; set; } = null!;
+
+    /// <summary>
+    /// Campaigns table
+    /// </summary>
+    public DbSet<Campaign> Campaigns { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,6 +82,51 @@ public class AppDbContext : DbContext
                 .HasForeignKey(ur => ur.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // Configure Campaign entity
+        modelBuilder.Entity<Campaign>(entity =>
+        {
+            // CreatedBy index for performance on "My Campaigns" queries
+            entity.HasIndex(c => c.CreatedBy)
+                .HasDatabaseName("IX_Campaigns_CreatedBy");
+
+            // GameType index for filtering by game system
+            entity.HasIndex(c => c.GameType)
+                .HasDatabaseName("IX_Campaigns_GameType");
+
+            // Composite index for public campaigns listing
+            entity.HasIndex(c => new { c.Visibility, c.IsActive })
+                .HasDatabaseName("IX_Campaigns_Visibility_IsActive");
+
+            // Name index for search
+            entity.HasIndex(c => c.Name)
+                .HasDatabaseName("IX_Campaigns_Name");
+
+            // User relationship (CreatedBy)
+            entity.HasOne(c => c.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(c => c.CreatedBy)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Set default values
+            entity.Property(c => c.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(c => c.IsActive)
+                .HasDefaultValue(true);
+
+            entity.Property(c => c.IsDeleted)
+                .HasDefaultValue(false);
+
+            entity.Property(c => c.Visibility)
+                .HasDefaultValue(Visibility.Private);
+
+            entity.Property(c => c.MaxPlayers)
+                .HasDefaultValue(6);
+
+            entity.Property(c => c.GameType)
+                .HasDefaultValue(GameType.Generic);
+        });
     }
 
     /// <summary>
@@ -99,7 +150,7 @@ public class AppDbContext : DbContext
     private void UpdateTimestamps()
     {
         var entries = ChangeTracker.Entries()
-            .Where(e => e.Entity is User && (e.State == EntityState.Added || e.State == EntityState.Modified));
+            .Where(e => (e.Entity is User || e.Entity is Campaign) && (e.State == EntityState.Added || e.State == EntityState.Modified));
 
         foreach (var entry in entries)
         {
@@ -110,6 +161,17 @@ public class AppDbContext : DbContext
                     user.CreatedAt = DateTime.UtcNow;
                 }
                 user.UpdatedAt = DateTime.UtcNow;
+            }
+            else if (entry.Entity is Campaign campaign)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    campaign.CreatedAt = DateTime.UtcNow;
+                }
+                if (entry.State == EntityState.Modified)
+                {
+                    campaign.UpdatedAt = DateTime.UtcNow;
+                }
             }
         }
     }

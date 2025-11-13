@@ -1,0 +1,190 @@
+@* -----------------------------------------------------------------------
+    <copyright file="CampaignForm.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@using Cdm.Common.Enums
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+
+<EditForm Model="@this.Model" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="alert alert-danger" />
+
+    <!-- Campaign Name -->
+    <div class="mb-3">
+        <label for="campaignName" class="form-label fw-bold">
+            <i class="bi bi-bookmark"></i> Nom de la campagne <span class="text-danger">*</span>
+        </label>
+        <InputText id="campaignName" 
+                  @bind-Value="this.Model.Name" 
+                  class="form-control" 
+                  placeholder="Ex: La Quête du Dragon Pourpre" />
+        <ValidationMessage For="@(() => this.Model.Name)" />
+        <div class="form-text">Entre 3 et 100 caractères</div>
+    </div>
+
+    <!-- Campaign Description -->
+    <div class="mb-3">
+        <label for="campaignDescription" class="form-label fw-bold">
+            <i class="bi bi-text-paragraph"></i> Description
+        </label>
+        <InputTextArea id="campaignDescription" 
+                      @bind-Value="this.Model.Description" 
+                      class="form-control" 
+                      rows="5"
+                      placeholder="Décrivez l'univers, les objectifs et l'ambiance de votre campagne..." />
+        <ValidationMessage For="@(() => this.Model.Description)" />
+        <div class="form-text">Maximum 5000 caractères</div>
+    </div>
+
+    <!-- Game Type -->
+    <div class="mb-3">
+        <label for="gameType" class="form-label fw-bold">
+            <i class="bi bi-controller"></i> Système de jeu <span class="text-danger">*</span>
+        </label>
+        <InputSelect id="gameType" 
+                    @bind-Value="this.Model.GameType" 
+                    class="form-select">
+            <option value="@GameType.Generic">Générique</option>
+            <option value="@GameType.DnD5e">Dungeons & Dragons 5e</option>
+            <option value="@GameType.Pathfinder">Pathfinder</option>
+            <option value="@GameType.CallOfCthulhu">L'Appel de Cthulhu</option>
+            <option value="@GameType.Warhammer">Warhammer</option>
+            <option value="@GameType.Skyrim">Skyrim</option>
+            <option value="@GameType.Custom">Personnalisé</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => this.Model.GameType)" />
+    </div>
+
+    <!-- Visibility -->
+    <div class="mb-3">
+        <label for="visibility" class="form-label fw-bold">
+            <i class="bi bi-eye"></i> Visibilité
+        </label>
+        <InputSelect id="visibility" 
+                    @bind-Value="this.Model.Visibility" 
+                    class="form-select">
+            <option value="@Visibility.Private">Privée (sur invitation uniquement)</option>
+            <option value="@Visibility.Public">Publique (recherche possible)</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => this.Model.Visibility)" />
+    </div>
+
+    <!-- Max Players -->
+    <div class="mb-3">
+        <label for="maxPlayers" class="form-label fw-bold">
+            <i class="bi bi-people"></i> Nombre maximum de joueurs
+        </label>
+        <InputNumber id="maxPlayers" 
+                    @bind-Value="this.Model.MaxPlayers" 
+                    class="form-control" 
+                    min="1"
+                    max="20" />
+        <ValidationMessage For="@(() => this.Model.MaxPlayers)" />
+        <div class="form-text">Entre 1 et 20 joueurs</div>
+    </div>
+
+    <!-- Cover Image -->
+    <div class="mb-3">
+        <label class="form-label fw-bold">
+            <i class="bi bi-image"></i> Image de couverture
+        </label>
+        <ImageUploader OnImageSelected="HandleImageSelected" InputId="campaignCoverInput" />
+    </div>
+
+    <!-- Submit Button -->
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary btn-lg" disabled="@this.IsSubmitting">
+            @if (this.IsSubmitting)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span>Création en cours...</span>
+            }
+            else
+            {
+                <i class="bi bi-plus-circle me-2"></i>
+                <span>Créer la campagne</span>
+            }
+        </button>
+    </div>
+</EditForm>
+
+@code {
+    /// <summary>
+    /// Gets or sets the campaign creation model.
+    /// </summary>
+    [Parameter]
+    public CreateCampaignModel Model { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the form is currently submitting.
+    /// </summary>
+    [Parameter]
+    public bool IsSubmitting { get; set; }
+
+    /// <summary>
+    /// Event callback when the form is submitted with valid data.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+    /// <summary>
+    /// Handles image selection from the uploader component.
+    /// </summary>
+    /// <param name="base64Image">The Base64-encoded image string.</param>
+    private void HandleImageSelected(string? base64Image)
+    {
+        this.Model.CoverImageBase64 = base64Image;
+    }
+
+    /// <summary>
+    /// Handles form submission when validation succeeds.
+    /// </summary>
+    private async Task HandleValidSubmit()
+    {
+        await this.OnSubmit.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Model for campaign creation form.
+    /// </summary>
+    public class CreateCampaignModel
+    {
+        /// <summary>
+        /// Gets or sets the campaign name.
+        /// </summary>
+        [Required(ErrorMessage = "Le nom de la campagne est requis")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Le nom doit contenir entre 3 et 100 caractères")]
+        public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the campaign description.
+        /// </summary>
+        [MaxLength(5000, ErrorMessage = "La description ne peut pas dépasser 5000 caractères")]
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Gets or sets the game type.
+        /// </summary>
+        [Required(ErrorMessage = "Le système de jeu est requis")]
+        public GameType GameType { get; set; } = GameType.Generic;
+
+        /// <summary>
+        /// Gets or sets the visibility level.
+        /// </summary>
+        public Visibility Visibility { get; set; } = Visibility.Private;
+
+        /// <summary>
+        /// Gets or sets the maximum number of players.
+        /// </summary>
+        [Range(1, 20, ErrorMessage = "Le nombre de joueurs doit être entre 1 et 20")]
+        public int MaxPlayers { get; set; } = 6;
+
+        /// <summary>
+        /// Gets or sets the cover image as Base64.
+        /// </summary>
+        public string? CoverImageBase64 { get; set; }
+    }
+}

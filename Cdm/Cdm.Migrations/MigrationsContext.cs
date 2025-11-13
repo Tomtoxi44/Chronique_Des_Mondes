@@ -1,5 +1,6 @@
 ﻿namespace Cdm.Migrations;
 
+using Cdm.Common.Enums;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,11 @@ public class MigrationsContext : DbContext
     /// UserRoles junction table
     /// </summary>
     public DbSet<UserRole> UserRoles { get; set; } = null!;
+
+    /// <summary>
+    /// Campaigns table
+    /// </summary>
+    public DbSet<Campaign> Campaigns { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -79,6 +85,51 @@ public class MigrationsContext : DbContext
             // Default value for AssignedAt
             entity.Property(ur => ur.AssignedAt)
                 .HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        // Configure Campaign entity
+        modelBuilder.Entity<Campaign>(entity =>
+        {
+            // CreatedBy index for performance on "My Campaigns" queries
+            entity.HasIndex(c => c.CreatedBy)
+                .HasDatabaseName("IX_Campaigns_CreatedBy");
+
+            // GameType index for filtering by game system
+            entity.HasIndex(c => c.GameType)
+                .HasDatabaseName("IX_Campaigns_GameType");
+
+            // Composite index for public campaigns listing
+            entity.HasIndex(c => new { c.Visibility, c.IsActive })
+                .HasDatabaseName("IX_Campaigns_Visibility_IsActive");
+
+            // Name index for search
+            entity.HasIndex(c => c.Name)
+                .HasDatabaseName("IX_Campaigns_Name");
+
+            // User relationship (CreatedBy)
+            entity.HasOne(c => c.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(c => c.CreatedBy)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Set default values
+            entity.Property(c => c.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(c => c.IsActive)
+                .HasDefaultValue(true);
+
+            entity.Property(c => c.IsDeleted)
+                .HasDefaultValue(false);
+
+            entity.Property(c => c.Visibility)
+                .HasDefaultValue(Visibility.Private);
+
+            entity.Property(c => c.MaxPlayers)
+                .HasDefaultValue(6);
+
+            entity.Property(c => c.GameType)
+                .HasDefaultValue(GameType.Generic);
         });
 
         // Seed global roles: Player, GameMaster, Admin
