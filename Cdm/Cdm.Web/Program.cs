@@ -99,6 +99,23 @@ builder.Services.AddHttpClient("RoleApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register CampaignService with scoped lifetime
+builder.Services.AddScoped<ICampaignService, CampaignService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("CampaignApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<CampaignService>>();
+    return new CampaignService(httpClient, localStorage, logger);
+});
+
+builder.Services.AddHttpClient("CampaignApiClient", client =>
+{
+    client.BaseAddress = new Uri("https+http://apiservice");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

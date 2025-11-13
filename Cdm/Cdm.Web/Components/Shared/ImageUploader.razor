@@ -1,0 +1,118 @@
+@* -----------------------------------------------------------------------
+    <copyright file="ImageUploader.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="image-uploader">
+    <InputFile OnChange="HandleFileSelectedAsync" 
+               accept=".jpg,.jpeg,.png,.webp" 
+               class="d-none" 
+               id="@inputId" />
+    
+    <label for="@inputId" class="btn btn-outline-primary">
+        <i class="bi bi-upload"></i> Choisir une image
+    </label>
+    
+    @if (!string.IsNullOrEmpty(this.errorMessage))
+    {
+        <div class="alert alert-danger mt-2" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @this.errorMessage
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(this.previewUrl))
+    {
+        <div class="mt-3">
+            <img src="@this.previewUrl" alt="Preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px;" />
+            <button type="button" class="btn btn-sm btn-danger ms-2" @onclick="ClearImage">
+                <i class="bi bi-x-circle"></i> Supprimer
+            </button>
+        </div>
+    }
+    
+    <div class="form-text mt-2">
+        Formats acceptés: JPG, PNG, WebP. Taille maximale: 5 MB
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// Event callback when an image is selected and converted to Base64.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> OnImageSelected { get; set; }
+
+    /// <summary>
+    /// Optional unique ID for the input element.
+    /// </summary>
+    [Parameter]
+    public string InputId { get; set; } = "imageInput";
+
+    private string? errorMessage;
+    private string? previewUrl;
+    private string? base64Image;
+    private string inputId => this.InputId;
+
+    /// <summary>
+    /// Handles file selection and converts to Base64.
+    /// </summary>
+    /// <param name="e">The input file change event arguments.</param>
+    private async Task HandleFileSelectedAsync(InputFileChangeEventArgs e)
+    {
+        this.errorMessage = null;
+        this.previewUrl = null;
+        this.base64Image = null;
+
+        var file = e.File;
+
+        // Validate file type
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+        if (!allowedTypes.Contains(file.ContentType.ToLowerInvariant()))
+        {
+            this.errorMessage = "Format de fichier non valide. Utilisez JPG, PNG ou WebP.";
+            return;
+        }
+
+        // Validate file size (5 MB max)
+        const long maxFileSize = 5 * 1024 * 1024; // 5 MB
+        if (file.Size > maxFileSize)
+        {
+            this.errorMessage = "Le fichier est trop volumineux. Taille maximale: 5 MB.";
+            return;
+        }
+
+        try
+        {
+            // Read file as Base64
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var imageBytes = memoryStream.ToArray();
+            this.base64Image = Convert.ToBase64String(imageBytes);
+
+            // Create preview URL
+            this.previewUrl = $"data:{file.ContentType};base64,{this.base64Image}";
+
+            // Notify parent component
+            await this.OnImageSelected.InvokeAsync(this.base64Image);
+        }
+        catch (Exception ex)
+        {
+            this.errorMessage = $"Erreur lors du chargement de l'image: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Clears the selected image.
+    /// </summary>
+    private async Task ClearImage()
+    {
+        this.previewUrl = null;
+        this.base64Image = null;
+        this.errorMessage = null;
+        await this.OnImageSelected.InvokeAsync(null);
+    }
+}

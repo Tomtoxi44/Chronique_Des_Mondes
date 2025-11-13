@@ -13,10 +13,30 @@ public enum GameType
     /// <summary>
     /// Dungeons & Dragons 5th edition
     /// </summary>
-    DnD = 1,
+    DnD5e = 1,
+
+    /// <summary>
+    /// Pathfinder role-playing game
+    /// </summary>
+    Pathfinder = 2,
+
+    /// <summary>
+    /// Call of Cthulhu horror role-playing game
+    /// </summary>
+    CallOfCthulhu = 3,
+
+    /// <summary>
+    /// Warhammer Fantasy Roleplay
+    /// </summary>
+    Warhammer = 4,
 
     /// <summary>
     /// The Elder Scrolls V: Skyrim
     /// </summary>
-    Skyrim = 2
+    Skyrim = 10,
+
+    /// <summary>
+    /// Custom game type defined by the game master
+    /// </summary>
+    Custom = 99
 }

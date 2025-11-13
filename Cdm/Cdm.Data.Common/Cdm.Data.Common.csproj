@@ -15,5 +15,9 @@
 		<PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="9.5.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
+	</ItemGroup>
 	
 </Project>

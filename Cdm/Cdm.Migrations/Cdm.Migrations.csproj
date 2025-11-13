@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cdm.Data.Common\Cdm.Data.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
   </ItemGroup>
 
 </Project>
