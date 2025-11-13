@@ -33,6 +33,16 @@ public static class CampaignEndpoints
             .RequireAuthorization(policy => policy.RequireRole("GameMaster"))
             .WithName("CreateCampaign")
             .WithOpenApi();
+
+        // GET /api/campaigns/{id}
+        group.MapGet("/{id:int}", GetCampaignByIdAsync)
+            .WithName("GetCampaignById")
+            .WithOpenApi();
+
+        // PUT /api/campaigns/{id}
+        group.MapPut("/{id:int}", UpdateCampaignAsync)
+            .WithName("UpdateCampaign")
+            .WithOpenApi();
     }
 
     /// <summary>
@@ -106,6 +116,143 @@ public static class CampaignEndpoints
             logger.LogError(ex, "Error creating campaign");
             return Results.Problem(
                 title: "An error occurred while creating the campaign",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Gets a campaign by ID.
+    /// </summary>
+    /// <param name="id">The campaign ID.</param>
+    /// <param name="campaignService">The campaign service.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="httpContext">The HTTP context.</param>
+    /// <returns>The campaign response.</returns>
+    private static async Task<IResult> GetCampaignByIdAsync(
+        int id,
+        [FromServices] ICampaignService campaignService,
+        ILogger<CampaignResponse> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            // Get user ID from claims
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                logger.LogWarning("User ID not found in claims");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation("Retrieving campaign {CampaignId} for user {UserId}", id, userId);
+
+            var campaignDto = await campaignService.GetCampaignByIdAsync(id, userId);
+
+            if (campaignDto == null)
+            {
+                logger.LogWarning("Campaign {CampaignId} not found or not authorized for user {UserId}", id, userId);
+                return Results.NotFound(new { Error = "Campaign not found or you are not authorized to access it." });
+            }
+
+            // Map DTO to response
+            var response = new CampaignResponse
+            {
+                Id = campaignDto.Id,
+                Name = campaignDto.Name,
+                Description = campaignDto.Description,
+                GameType = campaignDto.GameType,
+                Visibility = campaignDto.Visibility,
+                MaxPlayers = campaignDto.MaxPlayers,
+                CoverImageUrl = campaignDto.CoverImageUrl,
+                CreatedBy = campaignDto.CreatedBy,
+                CreatedAt = campaignDto.CreatedAt,
+                UpdatedAt = campaignDto.UpdatedAt,
+                IsActive = campaignDto.IsActive
+            };
+
+            return Results.Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving campaign {CampaignId}", id);
+            return Results.Problem(
+                title: "An error occurred while retrieving the campaign",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Updates a campaign.
+    /// </summary>
+    /// <param name="id">The campaign ID.</param>
+    /// <param name="request">The update request.</param>
+    /// <param name="campaignService">The campaign service.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="httpContext">The HTTP context.</param>
+    /// <returns>The updated campaign response.</returns>
+    private static async Task<IResult> UpdateCampaignAsync(
+        int id,
+        [FromBody] UpdateCampaignRequest request,
+        [FromServices] ICampaignService campaignService,
+        ILogger<UpdateCampaignRequest> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            // Get user ID from claims
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                logger.LogWarning("User ID not found in claims");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation("Updating campaign {CampaignId} for user {UserId}", id, userId);
+
+            // Map request to DTO
+            var updateDto = new UpdateCampaignDto
+            {
+                Name = request.Name,
+                Description = request.Description,
+                Visibility = request.Visibility,
+                MaxPlayers = request.MaxPlayers,
+                CoverImageBase64 = request.CoverImageBase64
+            };
+
+            // Update campaign
+            var campaignDto = await campaignService.UpdateCampaignAsync(id, updateDto, userId);
+
+            if (campaignDto == null)
+            {
+                logger.LogWarning("Failed to update campaign {CampaignId} for user {UserId}", id, userId);
+                return Results.NotFound(new { Error = "Campaign not found or you are not authorized to update it." });
+            }
+
+            logger.LogInformation("Successfully updated campaign {CampaignId} for user {UserId}", id, userId);
+
+            // Map DTO to response
+            var response = new CampaignResponse
+            {
+                Id = campaignDto.Id,
+                Name = campaignDto.Name,
+                Description = campaignDto.Description,
+                GameType = campaignDto.GameType,
+                Visibility = campaignDto.Visibility,
+                MaxPlayers = campaignDto.MaxPlayers,
+                CoverImageUrl = campaignDto.CoverImageUrl,
+                CreatedBy = campaignDto.CreatedBy,
+                CreatedAt = campaignDto.CreatedAt,
+                UpdatedAt = campaignDto.UpdatedAt,
+                IsActive = campaignDto.IsActive
+            };
+
+            return Results.Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating campaign {CampaignId}", id);
+            return Results.Problem(
+                title: "An error occurred while updating the campaign",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }

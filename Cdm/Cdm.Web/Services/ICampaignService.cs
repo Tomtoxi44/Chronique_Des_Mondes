@@ -19,6 +19,21 @@ public interface ICampaignService
     /// <param name="model">The campaign creation model.</param>
     /// <returns>The created campaign response, or null if creation failed.</returns>
     Task<CampaignResponse?> CreateCampaignAsync(CampaignForm.CreateCampaignModel model);
+
+    /// <summary>
+    /// Gets a campaign by ID.
+    /// </summary>
+    /// <param name="campaignId">The campaign ID.</param>
+    /// <returns>The campaign response, or null if not found.</returns>
+    Task<CampaignResponse?> GetCampaignByIdAsync(int campaignId);
+
+    /// <summary>
+    /// Updates an existing campaign.
+    /// </summary>
+    /// <param name="campaignId">The campaign ID to update.</param>
+    /// <param name="model">The campaign data to update.</param>
+    /// <returns>The updated campaign response, or null if failed.</returns>
+    Task<CampaignResponse?> UpdateCampaignAsync(int campaignId, CampaignForm.CreateCampaignModel model);
 }
 
 /// <summary>
