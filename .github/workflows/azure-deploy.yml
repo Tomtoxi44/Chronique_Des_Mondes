@@ -60,6 +60,35 @@ jobs:
           name: api-app
           path: ${{env.DOTNET_ROOT}}/api
 
+  run-migrations:
+    runs-on: ubuntu-latest
+    needs: build-api
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Restore dependencies
+        run: dotnet restore Cdm/Cdm.Migrations/Cdm.Migrations.csproj
+
+      - name: Run database migrations
+        run: |
+          dotnet ef database update \
+            --project Cdm/Cdm.Migrations/Cdm.Migrations.csproj \
+            --startup-project Cdm/Cdm.Migrations/Cdm.Migrations.csproj \
+            --connection "Server=79.137.75.13,1433;Database=ChroniqueDesMondes;User Id=sa;Password=${{ secrets.SQL_PASSWORD }};TrustServerCertificate=True;Encrypt=False;"
+        env:
+          DOTNET_ENVIRONMENT: Production
+
   deploy-web:
     runs-on: ubuntu-latest
     needs: build-web
@@ -89,7 +118,7 @@ jobs:
 
   deploy-api:
     runs-on: ubuntu-latest
-    needs: build-api
+    needs: run-migrations
     permissions:
       id-token: write
       contents: read
