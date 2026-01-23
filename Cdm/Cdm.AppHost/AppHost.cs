@@ -22,7 +22,6 @@ var apiService = builder
 
 builder.AddProject<Projects.Cdm_Web>("webfrontend")
     .WithExternalHttpEndpoints()
-    .WithHttpHealthCheck("/health")
     .WithReference(apiService)
     .WaitFor(apiService);
 

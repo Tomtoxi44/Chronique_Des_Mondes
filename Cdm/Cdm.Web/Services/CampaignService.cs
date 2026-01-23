@@ -1,13 +1,8 @@
-// -----------------------------------------------------------------------
-// <copyright file="CampaignService.cs" company="ANGIBAUD Tommy">
-// Copyright (c) ANGIBAUD Tommy. All rights reserved.
-// </copyright>
-// -----------------------------------------------------------------------
-
 namespace Cdm.Web.Services;
 
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Cdm.Common.Enums;
 using Cdm.Web.Components.Campaigns;
 using Cdm.Web.Services.Storage;
 
@@ -104,12 +99,12 @@ public class CampaignService(
         /// <summary>
         /// Gets or sets the game type.
         /// </summary>
-        public Common.Enums.GameType GameType { get; set; }
+        public GameType GameType { get; set; }
 
         /// <summary>
         /// Gets or sets the visibility level.
         /// </summary>
-        public Common.Enums.Visibility Visibility { get; set; }
+        public Visibility Visibility { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum number of players.
