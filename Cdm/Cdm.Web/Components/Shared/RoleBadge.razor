@@ -1,0 +1,58 @@
+@* Role badge component for displaying user roles *@
+
+@if (!string.IsNullOrEmpty(RoleName))
+{
+    <span class="badge @GetBadgeClass()">
+        <i class="bi @GetIconClass()"></i> @GetDisplayName()
+    </span>
+}
+
+@code {
+    /// <summary>
+    /// Role name to display (Player, GameMaster, Admin)
+    /// </summary>
+    [Parameter]
+    public string RoleName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the CSS class for the badge based on role
+    /// </summary>
+    private string GetBadgeClass()
+    {
+        return RoleName switch
+        {
+            "Player" => "bg-primary",
+            "GameMaster" => "bg-danger",
+            "Admin" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    /// <summary>
+    /// Gets the Bootstrap icon class for the role
+    /// </summary>
+    private string GetIconClass()
+    {
+        return RoleName switch
+        {
+            "Player" => "bi-person",
+            "GameMaster" => "bi-dice-6",
+            "Admin" => "bi-shield-check",
+            _ => "bi-question-circle"
+        };
+    }
+
+    /// <summary>
+    /// Gets the display name for the role (in French)
+    /// </summary>
+    private string GetDisplayName()
+    {
+        return RoleName switch
+        {
+            "Player" => "Joueur",
+            "GameMaster" => "Maître du Jeu",
+            "Admin" => "Administrateur",
+            _ => RoleName
+        };
+    }
+}

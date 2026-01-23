@@ -1,0 +1,65 @@
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="avatar-uploader">
+    <InputFile OnChange="HandleFileSelectedAsync" 
+               accept=".jpg,.jpeg,.png" 
+               class="d-none" 
+               id="avatarInput" />
+    
+    <label for="avatarInput" class="btn btn-outline-primary">
+        <i class="bi bi-upload"></i> Choisir un avatar
+    </label>
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-2" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success mt-2" role="alert">
+            <i class="bi bi-check-circle"></i> @successMessage
+        </div>
+    }
+    
+    <div class="form-text mt-2">
+        Formats acceptés: JPG, PNG. Taille maximale: 2 MB
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IBrowserFile> OnFileSelected { get; set; }
+
+    private string? errorMessage;
+    private string? successMessage;
+
+    private async Task HandleFileSelectedAsync(InputFileChangeEventArgs e)
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var file = e.File;
+
+        // Validate file type
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png" };
+        if (!allowedTypes.Contains(file.ContentType.ToLowerInvariant()))
+        {
+            errorMessage = "Format de fichier non valide. Utilisez JPG ou PNG.";
+            return;
+        }
+
+        // Validate file size (2 MB max)
+        const long maxFileSize = 2 * 1024 * 1024; // 2 MB
+        if (file.Size > maxFileSize)
+        {
+            errorMessage = "Le fichier est trop volumineux. Taille maximale: 2 MB.";
+            return;
+        }
+
+        // Notify parent component
+        successMessage = "Fichier sélectionné. Enregistrez pour uploader.";
+        await OnFileSelected.InvokeAsync(file);
+    }
+}

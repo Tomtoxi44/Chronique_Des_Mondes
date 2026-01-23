@@ -1,0 +1,203 @@
+/* Home Container */
+.home-container {
+    padding: var(--spacing-xl, 2rem);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Hero Section */
+.home-hero {
+    text-align: center;
+    padding: 3rem 0;
+    margin-bottom: 3rem;
+}
+
+.home-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #fff);
+    margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--color-text-secondary, #a0aec0);
+}
+
+/* Quick Actions */
+.home-quick-actions {
+    margin-bottom: 3rem;
+}
+
+.home-quick-actions h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #fff);
+    margin-bottom: 1.5rem;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.quick-action-card {
+    padding: 2rem;
+    background: var(--color-background-elevated, #2d3748);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-primary-500, #8b5cf6);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+.quick-action-card i {
+    font-size: 3rem;
+    color: var(--color-primary-500, #8b5cf6);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.quick-action-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #fff);
+    margin-bottom: 0.5rem;
+}
+
+.quick-action-card p {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary, #a0aec0);
+    margin: 0;
+}
+
+/* Recent Activity */
+.home-recent-activity h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #fff);
+    margin-bottom: 1.5rem;
+}
+
+.activity-placeholder {
+    text-align: center;
+    padding: 3rem;
+    background: var(--color-background-elevated, #2d3748);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+}
+
+.activity-placeholder i {
+    font-size: 3rem;
+    color: var(--color-text-secondary, #a0aec0);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.activity-placeholder p {
+    color: var(--color-text-secondary, #a0aec0);
+    margin: 0.5rem 0;
+}
+
+/* Landing Page */
+.home-landing {
+    padding: 4rem 2rem;
+}
+
+.landing-hero {
+    text-align: center;
+    padding: 5rem 0;
+    margin-bottom: 4rem;
+}
+
+.landing-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.landing-subtitle {
+    font-size: 1.5rem;
+    color: var(--color-text-secondary, #a0aec0);
+    margin-bottom: 2rem;
+}
+
+.landing-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Features */
+.landing-features {
+    margin-top: 4rem;
+}
+
+.landing-features h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #fff);
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    padding: 2rem;
+    background: var(--color-background-elevated, #2d3748);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    text-align: center;
+}
+
+.feature-card i {
+    font-size: 3rem;
+    color: var(--color-primary-500, #8b5cf6);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.feature-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #fff);
+    margin-bottom: 0.75rem;
+}
+
+.feature-card p {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary, #a0aec0);
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .landing-title {
+        font-size: 2.5rem;
+    }
+
+    .landing-subtitle {
+        font-size: 1.25rem;
+    }
+
+    .quick-actions-grid, .features-grid {
+        grid-template-columns: 1fr;
+    }
+}

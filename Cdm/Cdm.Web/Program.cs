@@ -1,5 +1,11 @@
 using Cdm.Web;
 using Cdm.Web.Components;
+using Cdm.Web.Components.Pages.Auth;
+using Cdm.Web.Services;
+using Cdm.Web.Services.Storage;
+using Cdm.Web.Services.State;
+using Cdm.Web.Services.ApiClients;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,12 +18,103 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddOutputCache();
 
-builder.Services.AddHttpClient<WeatherApiClient>(client =>
+// Authentication & Authorization
+// We need AddAuthentication for the middleware, but we disable automatic redirects
+// The CustomAuthStateProvider handles authentication state based on localStorage JWT
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "Cookies";
+})
+.AddCookie("Cookies", options =>
+{
+    // Disable automatic redirects - let Blazor handle navigation
+    options.LoginPath = null;
+    options.LogoutPath = null;
+    options.AccessDeniedPath = null;
+    options.Events.OnRedirectToLogin = context =>
     {
-        // This URL uses "https+http://" to indicate HTTPS is preferred over HTTP.
-        // Learn more about service discovery scheme resolution at https://aka.ms/dotnet/sdschemes.
-        client.BaseAddress = new("https+http://apiservice");
-    });
+        // Don't redirect, just return 401
+        context.Response.StatusCode = 401;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        // Don't redirect, just return 403
+        context.Response.StatusCode = 403;
+        return Task.CompletedTask;
+    };
+});
+
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+builder.Services.AddScoped<CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => 
+    sp.GetRequiredService<CustomAuthStateProvider>());
+
+// Handlers - Component-Handler-Service pattern
+builder.Services.AddScoped<LoginHandler>();
+builder.Services.AddScoped<RegisterHandler>();
+
+// HTTP Clients - Using Aspire Service Discovery
+builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
+{
+    // Aspire Service Discovery will resolve "https+http://apiservice" automatically
+    client.BaseAddress = new Uri("https+http://apiservice");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// Register ProfileApiClient with scoped lifetime
+builder.Services.AddScoped<ProfileApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("ProfileApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<ProfileApiClient>>();
+    return new ProfileApiClient(httpClient, localStorage, logger);
+});
+
+builder.Services.AddHttpClient("ProfileApiClient", client =>
+{
+    client.BaseAddress = new Uri("https+http://apiservice");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// Register RoleService with scoped lifetime
+builder.Services.AddScoped<IRoleService, RoleService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("RoleApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<RoleService>>();
+    return new RoleService(httpClient, localStorage, logger);
+});
+
+builder.Services.AddHttpClient("RoleApiClient", client =>
+{
+    client.BaseAddress = new Uri("https+http://apiservice");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// Register CampaignService with scoped lifetime
+builder.Services.AddScoped<ICampaignService, CampaignService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("CampaignApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<CampaignService>>();
+    return new CampaignService(httpClient, localStorage, logger);
+});
+
+builder.Services.AddHttpClient("CampaignApiClient", client =>
+{
+    client.BaseAddress = new Uri("https+http://apiservice");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 var app = builder.Build();
 
@@ -31,6 +128,12 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
+
+// Enable authentication and authorization middleware
+// Authentication is handled by CustomAuthStateProvider (client-side JWT)
+// but middleware is required for UseAuthorization to work
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseOutputCache();
 

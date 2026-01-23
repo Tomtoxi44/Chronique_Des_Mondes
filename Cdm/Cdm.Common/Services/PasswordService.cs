@@ -1,15 +1,69 @@
 ﻿namespace Cdm.Common.Services;
 
-public class PasswordService
+using BCrypt.Net;
+using Microsoft.Extensions.Logging;
+
+/// <summary>
+/// Password service interface for hashing and verification
+/// </summary>
+public interface IPasswordService
 {
-    public string HashPassword(string password)
+    /// <summary>
+    /// Hash a password using BCrypt with work factor 12
+    /// </summary>
+    /// <param name="password">Plain text password</param>
+    /// <returns>Hashed password</returns>
+    string HashPassword(string password);
+
+    /// <summary>
+    /// Verify a password against a hash
+    /// </summary>
+    /// <param name="password">Plain text password</param>
+    /// <param name="hash">Hashed password</param>
+    /// <returns>True if password matches hash</returns>
+    bool VerifyPassword(string password, string hash);
+}
+
+/// <summary>
+/// Password service implementation using BCrypt with work factor 12
+/// </summary>
+public class PasswordService : IPasswordService
+{
+    private const int WorkFactor = 12;
+    private readonly ILogger<PasswordService> _logger;
+
+    public PasswordService(ILogger<PasswordService> logger)
     {
-        // Pour l'instant, implémentation simple (à remplacer par bcrypt en production)
-        return BCrypt.Net.BCrypt.HashPassword(password);
+        _logger = logger;
     }
 
-    public bool VerifyPassword(string password, string hashedPassword)
+    public string HashPassword(string password)
     {
-        return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        try
+        {
+            var hash = BCrypt.HashPassword(password, WorkFactor);
+            _logger.LogDebug("Password hashed successfully with work factor {WorkFactor}", WorkFactor);
+            return hash;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to hash password");
+            throw;
+        }
+    }
+
+    public bool VerifyPassword(string password, string hash)
+    {
+        try
+        {
+            var isValid = BCrypt.Verify(password, hash);
+            _logger.LogDebug("Password verification result: {IsValid}", isValid);
+            return isValid;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to verify password");
+            return false;
+        }
     }
 }

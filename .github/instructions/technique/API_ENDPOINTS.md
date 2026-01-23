@@ -159,9 +159,317 @@ Rafraîchissement du token JWT.
 
 ---
 
-## 2. Personnages (Characters)
+## 2. Gestion des Rôles
 
-### 2.1 GET /api/characters
+### 2.1 GET /api/users/my-roles
+
+Récupération des rôles attribués à l'utilisateur connecté.
+
+**Endpoint :** `GET /api/users/my-roles`  
+**Authorization :** Bearer token (requis)
+
+**Response 200 OK :**
+```json
+{
+  "userId": 123,
+  "roles": [
+    {
+      "roleId": 1,
+      "roleName": "Player",
+      "assignedAt": "2025-11-04T08:00:00Z"
+    },
+    {
+      "roleId": 2,
+      "roleName": "GameMaster",
+      "assignedAt": "2025-11-04T10:30:00Z"
+    }
+  ]
+}
+```
+
+**Response 401 Unauthorized :**
+```json
+{
+  "error": "Unauthorized",
+  "details": "Token JWT invalide ou expiré"
+}
+```
+
+**Implémentation :**
+```csharp
+group.MapGet("/my-roles", async (
+    ClaimsPrincipal user,
+    IRoleService roleService) =>
+{
+    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+        return Results.Unauthorized();
+    
+    var roles = await roleService.GetUserRolesAsync(userId);
+    
+    return Results.Ok(new
+    {
+        userId,
+        roles
+    });
+})
+.RequireAuthorization()
+.WithName("GetMyRoles")
+.WithOpenApi();
+```
+
+---
+
+### 2.2 POST /api/users/request-gamemaster-role
+
+Demande du rôle GameMaster pour l'utilisateur connecté. L'attribution est automatique.
+
+**Endpoint :** `POST /api/users/request-gamemaster-role`  
+**Authorization :** Bearer token (requis)
+
+**Request Body :** Aucun (ou objet vide `{}`)
+
+**Response 200 OK :**
+```json
+{
+  "success": true,
+  "message": "Rôle GameMaster attribué avec succès"
+}
+```
+
+**Response 409 Conflict :**
+```json
+{
+  "success": false,
+  "message": "Vous possédez déjà le rôle GameMaster"
+}
+```
+
+**Response 401 Unauthorized :** (voir section 2.1)
+
+**Implémentation :**
+```csharp
+group.MapPost("/request-gamemaster-role", async (
+    ClaimsPrincipal user,
+    IRoleService roleService) =>
+{
+    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+        return Results.Unauthorized();
+    
+    var result = await roleService.RequestGameMasterRoleAsync(userId);
+    
+    if (!result)
+    {
+        return Results.Conflict(new
+        {
+            success = false,
+            message = "Vous possédez déjà le rôle GameMaster"
+        });
+    }
+    
+    return Results.Ok(new
+    {
+        success = true,
+        message = "Rôle GameMaster attribué avec succès"
+    });
+})
+.RequireAuthorization()
+.WithName("RequestGameMasterRole")
+.WithOpenApi();
+```
+
+**Logique métier :**
+- Vérification automatique : l'utilisateur possède-t-il déjà le rôle ?
+- Si non, attribution immédiate du rôle `GameMaster` (ID 2)
+- Mise à jour du JWT lors de la prochaine connexion pour inclure le nouveau rôle
+- Les rôles sont inclus dans les claims JWT sous `ClaimTypes.Role`
+
+---
+
+## 3. Profil Utilisateur
+
+### 3.1 GET /api/users/profile
+
+Récupération du profil de l'utilisateur connecté.
+
+**Endpoint :** `GET /api/users/profile`  
+**Authorization :** Bearer token (requis)
+
+**Response 200 OK :**
+```json
+{
+  "id": 123,
+  "email": "player@example.com",
+  "nickname": "DragonMaster42",
+  "username": "dragonmaster",
+  "avatarUrl": "/uploads/avatars/123_avatar.jpg",
+  "preferences": "{\"theme\":\"dark\",\"notifications\":{\"email\":true,\"inApp\":true}}",
+  "createdAt": "2025-01-15T10:00:00Z"
+}
+```
+
+**Response 401 Unauthorized :**
+```json
+{
+  "error": "Unauthorized",
+  "details": "Token JWT invalide ou expiré"
+}
+```
+
+**Response 404 Not Found :**
+```json
+{
+  "error": "Profile not found",
+  "details": "Aucun profil trouvé pour cet utilisateur"
+}
+```
+
+**Implémentation :**
+```csharp
+group.MapGet("/profile", async (
+    ClaimsPrincipal user,
+    IUserProfileService profileService) =>
+{
+    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+        return Results.Unauthorized();
+    
+    var profile = await profileService.GetProfileAsync(userId);
+    if (profile == null)
+        return Results.NotFound(new { error = "Profile not found" });
+    
+    return Results.Ok(profile);
+})
+.RequireAuthorization()
+.WithName("GetUserProfile")
+.WithOpenApi();
+```
+
+---
+
+### 2.2 PUT /api/users/profile
+
+Mise à jour du profil de l'utilisateur connecté.
+
+**Endpoint :** `PUT /api/users/profile`  
+**Authorization :** Bearer token (requis)
+
+**Request Body :**
+```json
+{
+  "username": "newusername",
+  "preferences": "{\"theme\":\"light\",\"notifications\":{\"email\":false,\"inApp\":true}}"
+}
+```
+
+**Response 200 OK :**
+```json
+{
+  "id": 123,
+  "email": "player@example.com",
+  "nickname": "DragonMaster42",
+  "username": "newusername",
+  "avatarUrl": "/uploads/avatars/123_avatar.jpg",
+  "preferences": "{\"theme\":\"light\",\"notifications\":{\"email\":false,\"inApp\":true}}",
+  "createdAt": "2025-01-15T10:00:00Z"
+}
+```
+
+**Response 400 Bad Request :**
+```json
+{
+  "error": "Username already taken",
+  "details": "Ce nom d'utilisateur est déjà utilisé par un autre compte"
+}
+```
+
+**Response 401 Unauthorized :** (voir section 3.1)
+
+**Validation :**
+- `username` : 3-30 caractères, optionnel, unique
+- `preferences` : JSON valide, optionnel
+
+---
+
+### 2.3 POST /api/users/avatar
+
+Upload d'un avatar pour l'utilisateur connecté.
+
+**Endpoint :** `POST /api/users/avatar`  
+**Authorization :** Bearer token (requis)  
+**Content-Type :** `multipart/form-data`
+
+**Request Body (Form Data) :**
+- `avatar` : Fichier image (JPG, JPEG, PNG)
+
+**Response 200 OK :**
+```json
+{
+  "avatarUrl": "/uploads/avatars/123_avatar.jpg",
+  "message": "Avatar uploaded successfully"
+}
+```
+
+**Response 400 Bad Request :**
+```json
+{
+  "error": "Invalid file format",
+  "details": "Formats acceptés: JPG, PNG. Taille maximale: 2 MB"
+}
+```
+
+**Response 401 Unauthorized :** (voir section 3.1)
+
+**Validation :**
+- Formats acceptés : `.jpg`, `.jpeg`, `.png`
+- Taille maximale : 2 MB
+- Stockage : `/wwwroot/uploads/avatars/{userId}_avatar.{ext}`
+
+**Implémentation :**
+```csharp
+group.MapPost("/avatar", async (
+    HttpContext httpContext,
+    ClaimsPrincipal user,
+    IAvatarService avatarService,
+    AppDbContext dbContext) =>
+{
+    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+        return Results.Unauthorized();
+
+    var form = await httpContext.Request.ReadFormAsync();
+    var file = form.Files.FirstOrDefault();
+    
+    if (file == null)
+        return Results.BadRequest(new { error = "No file provided" });
+
+    if (!avatarService.ValidateAvatarFile(file, out var errorMessage))
+        return Results.BadRequest(new { error = errorMessage });
+
+    var avatarUrl = await avatarService.UploadAvatarAsync(userId, file);
+    if (avatarUrl == null)
+        return Results.BadRequest(new { error = "Failed to upload avatar" });
+
+    var userEntity = await dbContext.Users.FindAsync(userId);
+    if (userEntity != null)
+    {
+        userEntity.AvatarUrl = avatarUrl;
+        await dbContext.SaveChangesAsync();
+    }
+
+    return Results.Ok(new { avatarUrl, message = "Avatar uploaded successfully" });
+})
+.RequireAuthorization()
+.WithName("UploadUserAvatar")
+.WithOpenApi();
+```
+
+---
+
+## 4. Personnages (Characters)
+
+### 4.1 GET /api/characters
 
 Liste les personnages de l'utilisateur connecté.
 
@@ -206,7 +514,7 @@ Liste les personnages de l'utilisateur connecté.
 
 ---
 
-### 2.2 GET /api/characters/{id}
+### 4.2 GET /api/characters/{id}
 
 Récupère un personnage spécifique.
 
@@ -260,7 +568,7 @@ Récupère un personnage spécifique.
 
 ---
 
-### 2.3 POST /api/characters
+### 4.3 POST /api/characters
 
 Création d'un nouveau personnage.
 
@@ -354,7 +662,7 @@ group.MapPost("/", async (
 
 ---
 
-### 2.4 PUT /api/characters/{id}
+### 4.4 PUT /api/characters/{id}
 
 Mise à jour d'un personnage.
 
@@ -392,7 +700,7 @@ Mise à jour d'un personnage.
 
 ---
 
-### 2.5 DELETE /api/characters/{id}
+### 4.5 DELETE /api/characters/{id}
 
 Suppression logique d'un personnage (soft delete).
 
@@ -403,9 +711,9 @@ Suppression logique d'un personnage (soft delete).
 
 ---
 
-## 3. Campagnes (Campaigns)
+## 5. Campagnes (Campaigns)
 
-### 3.1 GET /api/campaigns
+### 5.1 GET /api/campaigns
 
 Liste les campagnes accessibles (créées ou participant).
 
@@ -440,7 +748,7 @@ Liste les campagnes accessibles (créées ou participant).
 
 ---
 
-### 3.2 POST /api/campaigns
+### 5.2 POST /api/campaigns
 
 Création d'une nouvelle campagne.
 
@@ -472,7 +780,7 @@ Création d'une nouvelle campagne.
 
 ---
 
-### 3.3 POST /api/campaigns/{id}/characters
+### 5.3 POST /api/campaigns/{id}/characters
 
 Ajouter un personnage à une campagne.
 
@@ -520,9 +828,9 @@ if (campaign.GameType != character.GameType)
 
 ---
 
-## 4. Sessions
+## 6. Sessions
 
-### 4.1 POST /api/sessions
+### 6.1 POST /api/sessions
 
 Créer une session de jeu.
 

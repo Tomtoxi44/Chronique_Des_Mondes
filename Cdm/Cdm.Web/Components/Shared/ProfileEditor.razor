@@ -1,0 +1,184 @@
+@using Cdm.Business.Abstraction.DTOs.ViewModels
+@using Cdm.Business.Abstraction.DTOs.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
+
+<div class="profile-editor">
+    <!-- Avatar Section -->
+    <div class="avatar-section mb-4">
+        <div class="text-center">
+            @if (!string.IsNullOrEmpty(Profile.AvatarUrl))
+            {
+                <img src="@Profile.AvatarUrl" alt="Avatar" class="avatar-preview rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" />
+            }
+            else
+            {
+                <div class="avatar-placeholder rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                    <i class="bi bi-person-circle" style="font-size: 80px; color: white;"></i>
+                </div>
+            }
+        </div>
+        
+        <div class="text-center mt-3">
+            <AvatarUploader OnFileSelected="HandleAvatarSelectedAsync" />
+        </div>
+    </div>
+
+    <!-- Profile Form -->
+    <EditForm Model="@editModel" OnValidSubmit="HandleSubmitAsync">
+        <DataAnnotationsValidator />
+        
+        <!-- Email (read-only) -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                <i class="bi bi-envelope"></i> Email
+            </label>
+            <input type="email" class="form-control" value="@Profile.Email" disabled />
+            <div class="form-text">L'email ne peut pas être modifié</div>
+        </div>
+
+        <!-- Nickname (read-only) -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                <i class="bi bi-person"></i> Pseudo
+            </label>
+            <input type="text" class="form-control" value="@Profile.Nickname" disabled />
+            <div class="form-text">Le pseudo ne peut pas être modifié</div>
+        </div>
+
+        <!-- Username (editable) -->
+        <div class="mb-3">
+            <label for="username" class="form-label fw-bold">
+                <i class="bi bi-at"></i> Nom d'utilisateur
+            </label>
+            <InputText id="username" 
+                      @bind-Value="editModel.Username" 
+                      class="form-control" 
+                      placeholder="3-30 caractères" />
+            <ValidationMessage For="@(() => editModel.Username)" />
+            <div class="form-text">Identifiant unique visible par les autres joueurs</div>
+        </div>
+
+        <!-- Preferences: Theme -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                <i class="bi bi-palette"></i> Thème
+            </label>
+            <select class="form-select" @bind="selectedTheme">
+                <option value="light">Clair</option>
+                <option value="dark">Sombre</option>
+            </select>
+        </div>
+
+        <!-- Preferences: Notifications -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                <i class="bi bi-bell"></i> Notifications
+            </label>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="emailNotif" @bind="emailNotifications" />
+                <label class="form-check-label" for="emailNotif">
+                    Recevoir des notifications par email
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="inAppNotif" @bind="inAppNotifications" />
+                <label class="form-check-label" for="inAppNotif">
+                    Recevoir des notifications dans l'application
+                </label>
+            </div>
+        </div>
+
+        <!-- Created At (read-only) -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                <i class="bi bi-calendar"></i> Membre depuis
+            </label>
+            <input type="text" class="form-control" value="@Profile.CreatedAt.ToString("dd MMMM yyyy")" disabled />
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                @if (isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                <i class="bi bi-save"></i> Enregistrer les modifications
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public ProfileResponse Profile { get; set; } = default!;
+    [Parameter] public EventCallback<UpdateProfileRequest> OnSave { get; set; }
+    [Parameter] public EventCallback<IBrowserFile> OnAvatarUpload { get; set; }
+
+    private UpdateProfileRequest editModel = new();
+    private bool isSubmitting = false;
+    private string selectedTheme = "dark";
+    private bool emailNotifications = true;
+    private bool inAppNotifications = true;
+
+    protected override void OnParametersSet()
+    {
+        // Initialize edit model from profile
+        editModel.Username = Profile.Username;
+        
+        // Parse preferences if exists
+        if (!string.IsNullOrEmpty(Profile.Preferences))
+        {
+            try
+            {
+                var prefs = JsonSerializer.Deserialize<JsonElement>(Profile.Preferences);
+                if (prefs.TryGetProperty("theme", out var theme))
+                {
+                    selectedTheme = theme.GetString() ?? "dark";
+                }
+                if (prefs.TryGetProperty("notifications", out var notifs))
+                {
+                    if (notifs.TryGetProperty("email", out var email))
+                    {
+                        emailNotifications = email.GetBoolean();
+                    }
+                    if (notifs.TryGetProperty("inApp", out var inApp))
+                    {
+                        inAppNotifications = inApp.GetBoolean();
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore parsing errors, use defaults
+            }
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        isSubmitting = true;
+
+        // Build preferences JSON
+        var preferences = new
+        {
+            theme = selectedTheme,
+            notifications = new
+            {
+                email = emailNotifications,
+                inApp = inAppNotifications
+            }
+        };
+
+        editModel.Preferences = JsonSerializer.Serialize(preferences);
+
+        await OnSave.InvokeAsync(editModel);
+        
+        isSubmitting = false;
+    }
+
+    private async Task HandleAvatarSelectedAsync(IBrowserFile file)
+    {
+        await OnAvatarUpload.InvokeAsync(file);
+    }
+}

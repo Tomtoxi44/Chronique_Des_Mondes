@@ -8,12 +8,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cdm.ServiceDefaults\Cdm.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Cdm.Business.Abstraction\Cdm.Business.Abstraction.csproj" />
+    <ProjectReference Include="..\Cdm.Business.Common\Cdm.Business.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Data.Common\Cdm.Data.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Migrations\Cdm.Migrations.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rc.1.25451.107" />
-	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-rc.1.25451.107" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-rc.1.25451.107">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.8" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		  <PrivateAssets>all</PrivateAssets>
 	  </PackageReference>
