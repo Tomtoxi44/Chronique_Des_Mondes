@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using Cdm.Web.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @layout AppLayout
@@ -7,93 +7,235 @@
 
 <AuthorizeView>
     <Authorized>
-        <div class="home-container">
-            <!-- Welcome Section -->
-            <section class="home-hero">
-                <h1>Bienvenue, @context.User.Identity?.Name !</h1>
-                <p class="hero-subtitle">Prêt pour votre prochaine aventure ?</p>
+        <!-- Dashboard pour utilisateurs connectés -->
+        <div class="dashboard">
+            <!-- Hero Welcome -->
+            <section class="dashboard-hero">
+                <div class="dashboard-hero-content">
+                    <h1 class="dashboard-hero-title">
+                        Bienvenue, <span class="text-gold">@context.User.Identity?.Name</span> !
+                    </h1>
+                    <p class="dashboard-hero-subtitle">Prêt pour votre prochaine aventure épique ?</p>
+                </div>
+                <div class="dashboard-hero-actions">
+                    <a href="/campaigns/create" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-lg"></i>
+                        Nouvelle Campagne
+                    </a>
+                    <a href="/characters/create" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-person-plus"></i>
+                        Nouveau Personnage
+                    </a>
+                </div>
+            </section>
+
+            <!-- Stats Cards -->
+            <section class="dashboard-stats">
+                <div class="card card-stat">
+                    <div class="card-stat-icon text-gold">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="card-stat-content">
+                        <span class="card-stat-value">0</span>
+                        <span class="card-stat-label">Personnages</span>
+                    </div>
+                </div>
+                
+                <div class="card card-stat">
+                    <div class="card-stat-icon text-crimson">
+                        <i class="bi bi-map-fill"></i>
+                    </div>
+                    <div class="card-stat-content">
+                        <span class="card-stat-value">0</span>
+                        <span class="card-stat-label">Campagnes</span>
+                    </div>
+                </div>
+                
+                <div class="card card-stat">
+                    <div class="card-stat-icon text-bronze">
+                        <i class="bi bi-dice-6-fill"></i>
+                    </div>
+                    <div class="card-stat-content">
+                        <span class="card-stat-value">0</span>
+                        <span class="card-stat-label">Lancers de dés</span>
+                    </div>
+                </div>
+                
+                <div class="card card-stat">
+                    <div class="card-stat-icon text-success">
+                        <i class="bi bi-calendar-event-fill"></i>
+                    </div>
+                    <div class="card-stat-content">
+                        <span class="card-stat-value">0</span>
+                        <span class="card-stat-label">Sessions jouées</span>
+                    </div>
+                </div>
             </section>
 
             <!-- Quick Actions -->
-            <section class="home-quick-actions">
-                <h2>Actions Rapides</h2>
-                <div class="quick-actions-grid">
-                    <a href="/characters" class="quick-action-card">
-                        <i class="bi bi-person"></i>
-                        <h3>Mes Personnages</h3>
-                        <p>Créez et gérez vos personnages</p>
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="bi bi-lightning-fill"></i>
+                        Actions Rapides
+                    </h2>
+                </div>
+                
+                <div class="content-grid content-grid-4">
+                    <a href="/characters" class="card card-feature card-hover">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h3 class="card-feature-title">Mes Personnages</h3>
+                        <p class="card-feature-description">Créez et gérez vos héros</p>
                     </a>
                     
-                    <a href="/campaigns" class="quick-action-card">
-                        <i class="bi bi-book"></i>
-                        <h3>Mes Campagnes</h3>
-                        <p>Explorez vos campagnes en cours</p>
+                    <a href="/campaigns" class="card card-feature card-hover">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-book"></i>
+                        </div>
+                        <h3 class="card-feature-title">Mes Campagnes</h3>
+                        <p class="card-feature-description">Explorez vos aventures</p>
                     </a>
                     
-                    <a href="/dice" class="quick-action-card">
-                        <i class="bi bi-dice-6"></i>
-                        <h3>Lanceur de Dés</h3>
-                        <p>Lancez les dés pour vos actions</p>
+                    <a href="/dice" class="card card-feature card-hover">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-dice-5"></i>
+                        </div>
+                        <h3 class="card-feature-title">Lanceur de Dés</h3>
+                        <p class="card-feature-description">Lancez les dés du destin</p>
                     </a>
                     
-                    <a href="/profile" class="quick-action-card">
-                        <i class="bi bi-gear"></i>
-                        <h3>Paramètres</h3>
-                        <p>Personnalisez votre expérience</p>
+                    <a href="/profile" class="card card-feature card-hover">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                        <h3 class="card-feature-title">Mon Profil</h3>
+                        <p class="card-feature-description">Gérez votre compte</p>
                     </a>
                 </div>
             </section>
 
             <!-- Recent Activity -->
-            <section class="home-recent-activity">
-                <h2>Activité Récente</h2>
-                <div class="activity-placeholder">
-                    <i class="bi bi-clock-history"></i>
-                    <p>Aucune activité récente pour le moment.</p>
-                    <p class="text-muted">Commencez par créer votre premier personnage !</p>
+            <section class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="bi bi-clock-history"></i>
+                        Activité Récente
+                    </h2>
+                </div>
+                
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-hourglass"></i>
+                        </div>
+                        <h3 class="empty-state-title">Aucune activité récente</h3>
+                        <p class="empty-state-description">
+                            Commencez par créer votre premier personnage ou rejoignez une campagne !
+                        </p>
+                        <a href="/characters/create" class="btn btn-primary">
+                            <i class="bi bi-plus-lg"></i>
+                            Créer un personnage
+                        </a>
+                    </div>
                 </div>
             </section>
         </div>
     </Authorized>
+    
     <NotAuthorized>
-        <div class="home-container home-landing">
-            <!-- Landing Hero -->
+        <!-- Landing Page pour visiteurs -->
+        <div class="landing">
+            <!-- Hero Section -->
             <section class="landing-hero">
-                <h1 class="landing-title">Chronique des Mondes</h1>
-                <p class="landing-subtitle">Votre plateforme pour vivre des aventures épiques en ligne</p>
-                <div class="landing-actions">
-                    <a href="/register" class="btn btn-primary btn-lg">Commencer l'Aventure</a>
-                    <a href="/login" class="btn btn-outline-primary btn-lg">Se Connecter</a>
+                <div class="landing-hero-content">
+                    <h1 class="landing-hero-title">
+                        <span class="text-gold">Chronique</span> des <span class="text-gold">Mondes</span>
+                    </h1>
+                    <p class="landing-hero-subtitle">
+                        Votre plateforme pour vivre des aventures épiques en ligne.
+                        Créez vos personnages, gérez vos campagnes et lancez les dés du destin.
+                    </p>
+                    <div class="landing-hero-actions">
+                        <a href="/register" class="btn btn-cta btn-lg">
+                            <i class="bi bi-rocket-takeoff"></i>
+                            Commencer l'Aventure
+                        </a>
+                        <a href="/login" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Se Connecter
+                        </a>
+                    </div>
                 </div>
             </section>
 
-            <!-- Features -->
+            <!-- Features Section -->
             <section class="landing-features">
-                <h2>Fonctionnalités</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <i class="bi bi-person-badge"></i>
-                        <h3>Création de Personnages</h3>
-                        <p>Créez des personnages détaillés pour vos aventures</p>
+                <div class="section-header" style="text-align: center; margin-bottom: var(--spacing-2xl);">
+                    <h2 class="section-title" style="justify-content: center;">
+                        <i class="bi bi-stars"></i>
+                        Fonctionnalités
+                    </h2>
+                    <p class="section-subtitle">Tout ce dont vous avez besoin pour vos parties de JDR</p>
+                </div>
+                
+                <div class="content-grid content-grid-4">
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h3 class="card-feature-title">Création de Personnages</h3>
+                        <p class="card-feature-description">
+                            Créez des personnages détaillés avec inventaire, compétences et historique.
+                        </p>
                     </div>
                     
-                    <div class="feature-card">
-                        <i class="bi bi-map"></i>
-                        <h3>Gestion de Campagnes</h3>
-                        <p>Organisez vos parties et suivez votre progression</p>
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-map"></i>
+                        </div>
+                        <h3 class="card-feature-title">Gestion de Campagnes</h3>
+                        <p class="card-feature-description">
+                            Organisez vos parties, suivez votre progression et gérez vos joueurs.
+                        </p>
                     </div>
                     
-                    <div class="feature-card">
-                        <i class="bi bi-dice-5"></i>
-                        <h3>Lanceur de Dés</h3>
-                        <p>Système de dés intégré pour toutes vos actions</p>
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-dice-5"></i>
+                        </div>
+                        <h3 class="card-feature-title">Lanceur de Dés</h3>
+                        <p class="card-feature-description">
+                            Système de dés intégré avec historique et modificateurs personnalisés.
+                        </p>
                     </div>
                     
-                    <div class="feature-card">
-                        <i class="bi bi-people"></i>
-                        <h3>Jeu en Temps Réel</h3>
-                        <p>Jouez avec vos amis en temps réel grâce à SignalR</p>
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h3 class="card-feature-title">Jeu en Temps Réel</h3>
+                        <p class="card-feature-description">
+                            Jouez avec vos amis en temps réel grâce à notre technologie SignalR.
+                        </p>
                     </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="landing-cta">
+                <div class="card card-gold" style="text-align: center; padding: var(--spacing-2xl);">
+                    <h2 style="font-family: var(--font-display); margin-bottom: var(--spacing-md);">
+                        Prêt à forger votre légende ?
+                    </h2>
+                    <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-xl); max-width: 500px; margin-left: auto; margin-right: auto;">
+                        Rejoignez des milliers d'aventuriers et commencez votre épopée dès maintenant.
+                    </p>
+                    <a href="/register" class="btn btn-primary btn-lg">
+                        <i class="bi bi-person-plus"></i>
+                        Créer un compte gratuit
+                    </a>
                 </div>
             </section>
         </div>

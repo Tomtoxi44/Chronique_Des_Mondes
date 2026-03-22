@@ -3,16 +3,121 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @layout AppLayout
 
-<div class="container" style="padding-top: var(--spacing-xl);">
-    <h1>Mes Personnages</h1>
-    <p>Page temporaire - Liste des personnages à venir</p>
-    
+<PageTitle>Mes Personnages - Chronique des Mondes</PageTitle>
+
+<div class="characters-page">
+    <!-- Page Header -->
+    <div class="page-header page-header-flex">
+        <div>
+            <h1 class="page-title">Mes Personnages</h1>
+            <p class="page-subtitle">Gérez vos héros et leurs aventures</p>
+        </div>
+        <div class="page-actions">
+            <a href="/characters/create" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                Nouveau Personnage
+            </a>
+        </div>
+    </div>
+
     <AuthorizeView>
         <Authorized>
-            <div class="alert alert-success">
-                <i class="bi bi-check-circle"></i>
-                Vous êtes connecté en tant que : <strong>@context.User.Identity?.Name</strong>
+            <!-- Empty State (temporaire) -->
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <h3 class="empty-state-title">Aucun personnage</h3>
+                    <p class="empty-state-description">
+                        Vous n'avez pas encore créé de personnage. 
+                        Commencez votre aventure en créant votre premier héros !
+                    </p>
+                    <a href="/characters/create" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i>
+                        Créer mon premier personnage
+                    </a>
+                </div>
             </div>
+
+            <!-- Info Card -->
+            <div class="card card-gold" style="margin-top: var(--spacing-xl);">
+                <div class="card-body" style="display: flex; align-items: center; gap: var(--spacing-lg);">
+                    <div style="flex-shrink: 0;">
+                        <i class="bi bi-info-circle text-gold" style="font-size: 2rem;"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0 0 var(--spacing-xs) 0; font-family: var(--font-heading);">
+                            Fonctionnalité en développement
+                        </h4>
+                        <p style="margin: 0; color: var(--color-text-secondary);">
+                            La gestion complète des personnages arrive bientôt ! 
+                            Vous pourrez créer des fiches détaillées, gérer l'inventaire, 
+                            les compétences et l'historique de vos héros.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview of what's coming -->
+            <section class="content-section" style="margin-top: var(--spacing-2xl);">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="bi bi-stars"></i>
+                        À venir
+                    </h2>
+                </div>
+                
+                <div class="content-grid content-grid-3">
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-file-person"></i>
+                        </div>
+                        <h3 class="card-feature-title">Fiches détaillées</h3>
+                        <p class="card-feature-description">
+                            Caractéristiques, compétences, équipement et historique complet
+                        </p>
+                    </div>
+                    
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-backpack"></i>
+                        </div>
+                        <h3 class="card-feature-title">Gestion d'inventaire</h3>
+                        <p class="card-feature-description">
+                            Armes, armures, objets magiques et consommables
+                        </p>
+                    </div>
+                    
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3 class="card-feature-title">Progression</h3>
+                        <p class="card-feature-description">
+                            Suivi de l'expérience, des niveaux et des accomplissements
+                        </p>
+                    </div>
+                </div>
+            </section>
         </Authorized>
+        
+        <NotAuthorized>
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-lock text-crimson"></i>
+                    </div>
+                    <h3 class="empty-state-title">Connexion requise</h3>
+                    <p class="empty-state-description">
+                        Vous devez être connecté pour accéder à vos personnages.
+                    </p>
+                    <a href="/login" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Se connecter
+                    </a>
+                </div>
+            </div>
+        </NotAuthorized>
     </AuthorizeView>
 </div>
