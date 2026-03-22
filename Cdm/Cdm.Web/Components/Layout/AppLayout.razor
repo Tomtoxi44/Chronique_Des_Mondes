@@ -2,73 +2,113 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Cdm.Web.Components.Shared
 
-<div class="app-layout">
+<div class="app-layout @(isDarkTheme ? "dark-theme" : "light-theme")">
     <!-- Sidebar -->
-    <aside class="sidebar @(isCollapsed ? "collapsed" : "")">
+    <aside class="sidebar @(isCollapsed ? "collapsed" : "") @(isMobileOpen ? "open" : "")" id="sidebar">
         <div class="sidebar-header">
-            @if (!isCollapsed)
-            {
-                <h2 class="sidebar-logo">CDM</h2>
-            }
-            else
-            {
-                <span class="sidebar-logo-icon">C</span>
-            }
+            <a href="/" class="sidebar-logo">
+                <img src="/images/logo.png" alt="Chronique des Mondes" class="sidebar-logo-image" />
+                <div class="sidebar-logo-text">
+                    <span class="sidebar-logo-title">Chronique</span>
+                    <span class="sidebar-logo-subtitle">des Mondes</span>
+                </div>
+            </a>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")">
-                <i class="bi bi-house-door"></i>
-                @if (!isCollapsed) { <span>Accueil</span> }
-            </a>
-            <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")">
-                <i class="bi bi-person"></i>
-                @if (!isCollapsed) { <span>Personnages</span> }
-            </a>
-            <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")">
-                <i class="bi bi-book"></i>
-                @if (!isCollapsed) { <span>Campagnes</span> }
-            </a>
-            <a href="/dice" class="sidebar-nav-item @(IsActive("/dice") ? "active" : "")">
-                <i class="bi bi-dice-6"></i>
-                @if (!isCollapsed) { <span>Lanceur de dés</span> }
-            </a>
+            <div class="sidebar-nav-section">
+                <span class="sidebar-nav-section-title">Navigation</span>
+                
+                <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")" data-tooltip="Accueil">
+                    <i class="bi bi-house-door"></i>
+                    <span>Accueil</span>
+                </a>
+                
+                <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")" data-tooltip="Campagnes">
+                    <i class="bi bi-map"></i>
+                    <span>Campagnes</span>
+                </a>
+                
+                <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")" data-tooltip="Personnages">
+                    <i class="bi bi-people"></i>
+                    <span>Personnages</span>
+                </a>
+                
+                <a href="/dice" class="sidebar-nav-item @(IsActive("/dice") ? "active" : "")" data-tooltip="Lanceur de dés">
+                    <i class="bi bi-dice-6"></i>
+                    <span>Lanceur de dés</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-divider"></div>
+            
+            <div class="sidebar-nav-section">
+                <span class="sidebar-nav-section-title">Mon Compte</span>
+                
+                <a href="/profile" class="sidebar-nav-item @(IsActive("/profile") ? "active" : "")" data-tooltip="Profil">
+                    <i class="bi bi-person-circle"></i>
+                    <span>Mon Profil</span>
+                </a>
+                
+                <a href="/settings" class="sidebar-nav-item @(IsActive("/settings") ? "active" : "")" data-tooltip="Paramètres">
+                    <i class="bi bi-gear"></i>
+                    <span>Paramètres</span>
+                </a>
+            </div>
         </nav>
 
         <div class="sidebar-footer">
-            <button class="sidebar-toggle" @onclick="ToggleSidebar">
-                <i class="bi bi-@(isCollapsed ? "chevron-right" : "chevron-left")"></i>
+            <button class="sidebar-toggle" @onclick="ToggleSidebar" title="@(isCollapsed ? "Agrandir" : "Réduire")">
+                <i class="bi bi-chevron-@(isCollapsed ? "right" : "left")"></i>
+                @if (!isCollapsed)
+                {
+                    <span>Réduire</span>
+                }
             </button>
         </div>
     </aside>
 
-    <!-- Main Content avec Topbar -->
+    <!-- Mobile Overlay -->
+    @if (isMobileOpen)
+    {
+        <div class="sidebar-overlay visible" @onclick="CloseMobileSidebar"></div>
+    }
+
+    <!-- Main Content -->
     <div class="app-main">
         <!-- Topbar -->
         <header class="topbar">
             <div class="topbar-left">
+                <button class="topbar-menu-toggle" @onclick="ToggleMobileSidebar" aria-label="Menu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <h1 class="topbar-title">@GetPageTitle()</h1>
             </div>
             
             <div class="topbar-right">
+                @* Theme toggle *@
+                <div class="topbar-theme-toggle">
+                    <button class="topbar-icon-btn" @onclick="ToggleTheme" title="Changer de thème">
+                        <i class="bi bi-@(isDarkTheme ? "moon-stars" : "sun")"></i>
+                    </button>
+                </div>
+                
+                @* Notifications *@
                 <button class="topbar-icon-btn" title="Notifications">
                     <i class="bi bi-bell"></i>
                     <span class="notification-badge">3</span>
                 </button>
                 
+                @* User Menu *@
                 <UserMenu />
             </div>
         </header>
 
-        <!-- Content -->
+        <!-- Page Content -->
         <main class="app-content">
-            @Body
+            <div class="page-wrapper">
+                @Body
+            </div>
         </main>
     </div>
 </div>
-
-<!-- Overlay pour mobile -->
-@if (!isCollapsed)
-{
-    <div class="sidebar-overlay" @onclick="ToggleSidebar"></div>
-}
