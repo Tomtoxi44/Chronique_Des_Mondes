@@ -1,3 +1,8 @@
+/* 
+ * User Menu - Chronique des Mondes
+ * Medieval Fantasy Theme
+ */
+
 /* User Menu Container */
 .user-menu {
     position: relative;
@@ -12,27 +17,27 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    border: 1px solid var(--border-color, #dee2e6);
-    border-radius: 0.375rem;
-    background-color: var(--surface-color, white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background-elevated);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--duration-fast) var(--ease-out);
 }
 
 .user-menu-trigger:hover {
-    background-color: var(--surface-hover, #f8f9fa);
-    border-color: var(--border-hover, #adb5bd);
+    background-color: rgba(201, 162, 39, 0.1);
+    border-color: var(--color-gold);
 }
 
 .user-menu-trigger i:first-child {
     font-size: 1.25rem;
-    color: var(--primary-color, #0d6efd);
+    color: var(--color-gold);
 }
 
 .user-menu-name {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--text-primary, #212529);
+    color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -41,12 +46,13 @@
 
 .user-menu-trigger i:last-child {
     font-size: 0.75rem;
-    color: var(--text-secondary, #6c757d);
-    transition: transform 0.2s ease;
+    color: var(--color-text-tertiary);
+    transition: transform var(--duration-fast) var(--ease-out);
 }
 
 .user-menu-trigger:hover i:last-child {
     transform: translateY(2px);
+    color: var(--color-gold);
 }
 
 /* Dropdown Menu */
@@ -55,12 +61,24 @@
     top: calc(100% + 0.5rem);
     right: 0;
     min-width: 250px;
-    background-color: var(--surface-color, white);
-    border: 1px solid var(--border-color, #dee2e6);
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+    background-color: var(--color-background-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 0, 0, 0.3);
+    z-index: var(--z-dropdown);
     animation: dropdownFadeIn 0.2s ease;
+    overflow: hidden;
+}
+
+/* Gold accent on top */
+.user-menu-dropdown::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-gold);
 }
 
 @keyframes dropdownFadeIn {
@@ -80,23 +98,25 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    background: linear-gradient(180deg, rgba(201, 162, 39, 0.08) 0%, transparent 100%);
 }
 
 .user-menu-header strong {
-    font-size: 0.875rem;
-    color: var(--text-primary, #212529);
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    color: var(--color-gold);
 }
 
 .user-menu-header small {
     font-size: 0.75rem;
-    color: var(--text-secondary, #6c757d);
+    color: var(--color-text-secondary);
 }
 
 /* Divider */
 .user-menu-divider {
     height: 1px;
-    background-color: var(--border-color, #dee2e6);
-    margin: 0.5rem 0;
+    background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    margin: 0.25rem 0;
 }
 
 /* Menu Items */
@@ -106,25 +126,32 @@
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     text-decoration: none;
-    color: var(--text-primary, #212529);
+    color: var(--color-text-primary);
     background: none;
     border: none;
     width: 100%;
     text-align: left;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all var(--duration-fast) var(--ease-out);
     font-size: 0.875rem;
+    font-family: var(--font-body);
 }
 
 .user-menu-item:hover {
-    background-color: var(--surface-hover, #f8f9fa);
+    background-color: rgba(201, 162, 39, 0.1);
+    color: var(--color-gold);
 }
 
 .user-menu-item i {
     font-size: 1rem;
-    color: var(--text-secondary, #6c757d);
+    color: var(--color-text-secondary);
     width: 1.25rem;
     text-align: center;
+    transition: color var(--duration-fast) var(--ease-out);
+}
+
+.user-menu-item:hover i {
+    color: var(--color-gold);
 }
 
 .user-menu-item span {
@@ -133,15 +160,20 @@
 
 /* Logout Button */
 .user-menu-logout {
-    color: var(--danger-color, #dc3545);
+    color: var(--color-crimson);
 }
 
 .user-menu-logout i {
-    color: var(--danger-color, #dc3545);
+    color: var(--color-crimson);
 }
 
 .user-menu-logout:hover {
-    background-color: var(--danger-light, #f8d7da);
+    background-color: rgba(139, 41, 66, 0.15);
+    color: var(--color-crimson-light);
+}
+
+.user-menu-logout:hover i {
+    color: var(--color-crimson-light);
 }
 
 /* Auth Buttons (Not Authorized) */
@@ -157,7 +189,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 999;
+    z-index: calc(var(--z-dropdown) - 1);
 }
 
 /* Responsive */
@@ -168,5 +200,6 @@
     
     .user-menu-dropdown {
         right: -1rem;
+        min-width: 220px;
     }
 }
