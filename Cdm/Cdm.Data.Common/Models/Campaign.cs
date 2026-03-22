@@ -57,10 +57,21 @@ public class Campaign
     public string? CoverImageUrl { get; set; }
 
     /// <summary>
+    /// World ID this campaign belongs to
+    /// </summary>
+    public int? WorldId { get; set; }
+
+    /// <summary>
     /// User ID of the campaign creator (Game Master)
     /// </summary>
     [Required]
     public int CreatedBy { get; set; }
+
+    /// <summary>
+    /// Navigation property to the world
+    /// </summary>
+    [ForeignKey(nameof(WorldId))]
+    public virtual World? World { get; set; }
 
     /// <summary>
     /// Navigation property to the campaign creator
