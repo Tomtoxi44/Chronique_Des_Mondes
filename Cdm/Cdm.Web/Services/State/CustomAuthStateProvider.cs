@@ -12,6 +12,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     private const string AuthTokenKey = "auth_token";
     private const string AuthUserIdKey = "auth_user_id";
     private const string AuthUserEmailKey = "auth_user_email";
+    private const string AuthUserNicknameKey = "auth_user_nickname";
     
     public CustomAuthStateProvider(
         ILocalStorageService localStorage,
@@ -35,6 +36,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         {
             var userId = await this.localStorage.GetItemAsync(AuthUserIdKey);
             var userEmail = await this.localStorage.GetItemAsync(AuthUserEmailKey);
+            var userNickname = await this.localStorage.GetItemAsync(AuthUserNicknameKey);
             
             if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(userEmail))
             {
@@ -46,7 +48,8 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
             {
                 new Claim(ClaimTypes.NameIdentifier, userId),
                 new Claim(ClaimTypes.Email, userEmail),
-                new Claim(ClaimTypes.Name, userEmail)
+                new Claim(ClaimTypes.Name, userNickname ?? userEmail),
+                new Claim("nickname", userNickname ?? userEmail)
             };
             
             var identity = new ClaimsIdentity(claims, "jwt");
@@ -63,17 +66,19 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         }
     }
     
-    public async Task MarkUserAsAuthenticatedAsync(int userId, string email, string token)
+    public async Task MarkUserAsAuthenticatedAsync(int userId, string email, string nickname, string token)
     {
         await this.localStorage.SetItemAsync(AuthTokenKey, token);
         await this.localStorage.SetItemAsync(AuthUserIdKey, userId.ToString());
         await this.localStorage.SetItemAsync(AuthUserEmailKey, email);
+        await this.localStorage.SetItemAsync(AuthUserNicknameKey, nickname);
         
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Name, email)
+            new Claim(ClaimTypes.Name, nickname ?? email),
+            new Claim("nickname", nickname ?? email)
         };
         
         var identity = new ClaimsIdentity(claims, "jwt");
@@ -89,6 +94,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         await this.localStorage.RemoveItemAsync(AuthTokenKey);
         await this.localStorage.RemoveItemAsync(AuthUserIdKey);
         await this.localStorage.RemoveItemAsync(AuthUserEmailKey);
+        await this.localStorage.RemoveItemAsync(AuthUserNicknameKey);
         
         var anonymous = new ClaimsPrincipal(new ClaimsIdentity());
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(anonymous)));

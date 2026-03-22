@@ -1,7 +1,9 @@
 @page "/characters"
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Shared.DTOs.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @layout AppLayout
+@rendermode InteractiveServer
 
 <PageTitle>Mes Personnages - Chronique des Mondes</PageTitle>
 
@@ -22,84 +24,114 @@
 
     <AuthorizeView>
         <Authorized>
-            <!-- Empty State (temporaire) -->
-            <div class="card">
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <h3 class="empty-state-title">Aucun personnage</h3>
-                    <p class="empty-state-description">
-                        Vous n'avez pas encore créé de personnage. 
-                        Commencez votre aventure en créant votre premier héros !
-                    </p>
-                    <a href="/characters/create" class="btn btn-primary">
-                        <i class="bi bi-plus-lg"></i>
-                        Créer mon premier personnage
-                    </a>
+            @if (IsLoading)
+            {
+                <!-- Loading State -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Chargement des personnages...</p>
                 </div>
-            </div>
-
-            <!-- Info Card -->
-            <div class="card card-gold" style="margin-top: var(--spacing-xl);">
-                <div class="card-body" style="display: flex; align-items: center; gap: var(--spacing-lg);">
-                    <div style="flex-shrink: 0;">
-                        <i class="bi bi-info-circle text-gold" style="font-size: 2rem;"></i>
-                    </div>
-                    <div>
-                        <h4 style="margin: 0 0 var(--spacing-xs) 0; font-family: var(--font-heading);">
-                            Fonctionnalité en développement
-                        </h4>
-                        <p style="margin: 0; color: var(--color-text-secondary);">
-                            La gestion complète des personnages arrive bientôt ! 
-                            Vous pourrez créer des fiches détaillées, gérer l'inventaire, 
-                            les compétences et l'historique de vos héros.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Preview of what's coming -->
-            <section class="content-section" style="margin-top: var(--spacing-2xl);">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="bi bi-stars"></i>
-                        À venir
-                    </h2>
-                </div>
-                
-                <div class="content-grid content-grid-3">
-                    <div class="card card-feature">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-file-person"></i>
+            }
+            else if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <!-- Error State -->
+                <div class="card card-crimson">
+                    <div class="card-body" style="display: flex; align-items: center; gap: var(--spacing-lg);">
+                        <div style="flex-shrink: 0;">
+                            <i class="bi bi-exclamation-triangle text-crimson" style="font-size: 2rem;"></i>
                         </div>
-                        <h3 class="card-feature-title">Fiches détaillées</h3>
-                        <p class="card-feature-description">
-                            Caractéristiques, compétences, équipement et historique complet
-                        </p>
-                    </div>
-                    
-                    <div class="card card-feature">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-backpack"></i>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 var(--spacing-xs) 0; font-family: var(--font-heading); color: var(--color-crimson);">
+                                Erreur de chargement
+                            </h4>
+                            <p style="margin: 0; color: var(--color-text-secondary);">
+                                @ErrorMessage
+                            </p>
                         </div>
-                        <h3 class="card-feature-title">Gestion d'inventaire</h3>
-                        <p class="card-feature-description">
-                            Armes, armures, objets magiques et consommables
-                        </p>
-                    </div>
-                    
-                    <div class="card card-feature">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-graph-up-arrow"></i>
-                        </div>
-                        <h3 class="card-feature-title">Progression</h3>
-                        <p class="card-feature-description">
-                            Suivi de l'expérience, des niveaux et des accomplissements
-                        </p>
+                        <button class="btn btn-outline" @onclick="LoadCharactersAsync">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            Réessayer
+                        </button>
                     </div>
                 </div>
-            </section>
+            }
+            else if (Characters == null || !Characters.Any())
+            {
+                <!-- Empty State -->
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h3 class="empty-state-title">Aucun personnage</h3>
+                        <p class="empty-state-description">
+                            Vous n'avez pas encore créé de personnage. 
+                            Commencez votre aventure en créant votre premier héros !
+                        </p>
+                        <a href="/characters/create" class="btn btn-primary">
+                            <i class="bi bi-plus-lg"></i>
+                            Créer mon premier personnage
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Characters Grid -->
+                <div class="content-grid content-grid-auto">
+                    @foreach (var character in Characters)
+                    {
+                        <div class="card card-character" @onclick="() => ViewCharacter(character.Id)">
+                            <div class="character-avatar">
+                                @if (!string.IsNullOrEmpty(character.AvatarUrl))
+                                {
+                                    <img src="@character.AvatarUrl" alt="@character.Name" />
+                                }
+                                else
+                                {
+                                    <div class="character-avatar-placeholder">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                }
+                            </div>
+                            <div class="character-info">
+                                <h3 class="character-name">
+                                    @if (!string.IsNullOrEmpty(character.FirstName))
+                                    {
+                                        @character.FirstName @(" ") @character.Name
+                                    }
+                                    else
+                                    {
+                                        @character.Name
+                                    }
+                                </h3>
+                                @if (character.Age.HasValue)
+                                {
+                                    <span class="character-age">@character.Age ans</span>
+                                }
+                                @if (!string.IsNullOrEmpty(character.Description))
+                                {
+                                    <p class="character-description">@TruncateDescription(character.Description)</p>
+                                }
+                            </div>
+                            <div class="character-actions">
+                                <button class="btn btn-icon btn-sm" @onclick:stopPropagation="true" @onclick="() => EditCharacter(character.Id)" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-icon btn-sm btn-danger" @onclick:stopPropagation="true" @onclick="() => ConfirmDelete(character)" title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <div class="character-meta">
+                                <span class="character-date">
+                                    <i class="bi bi-calendar3"></i>
+                                    Créé le @character.CreatedAt.ToString("dd/MM/yyyy")
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
         </Authorized>
         
         <NotAuthorized>
@@ -121,3 +153,45 @@
         </NotAuthorized>
     </AuthorizeView>
 </div>
+
+<!-- Delete Confirmation Modal -->
+@if (ShowDeleteModal && CharacterToDelete != null)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-crimson"></i>
+                    Confirmer la suppression
+                </h3>
+                <button class="modal-close" @onclick="CancelDelete">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Êtes-vous sûr de vouloir supprimer le personnage 
+                    <strong>@GetCharacterFullName(CharacterToDelete)</strong> ?
+                </p>
+                <p class="text-muted">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CancelDelete">
+                    Annuler
+                </button>
+                <button class="btn btn-danger" @onclick="DeleteCharacterAsync" disabled="@IsDeleting">
+                    @if (IsDeleting)
+                    {
+                        <span class="spinner spinner-sm"></span>
+                        <span>Suppression...</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-trash"></i>
+                        <span>Supprimer</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}

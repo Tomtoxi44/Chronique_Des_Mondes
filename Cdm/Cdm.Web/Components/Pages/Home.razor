@@ -1,5 +1,6 @@
 @page "/"
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @layout AppLayout
 
@@ -145,99 +146,7 @@
     </Authorized>
     
     <NotAuthorized>
-        <!-- Landing Page pour visiteurs -->
-        <div class="landing">
-            <!-- Hero Section -->
-            <section class="landing-hero">
-                <div class="landing-hero-content">
-                    <h1 class="landing-hero-title">
-                        <span class="text-gold">Chronique</span> des <span class="text-gold">Mondes</span>
-                    </h1>
-                    <p class="landing-hero-subtitle">
-                        Votre plateforme pour vivre des aventures épiques en ligne.
-                        Créez vos personnages, gérez vos campagnes et lancez les dés du destin.
-                    </p>
-                    <div class="landing-hero-actions">
-                        <a href="/register" class="btn btn-cta btn-lg">
-                            <i class="bi bi-rocket-takeoff"></i>
-                            Commencer l'Aventure
-                        </a>
-                        <a href="/login" class="btn btn-secondary btn-lg">
-                            <i class="bi bi-box-arrow-in-right"></i>
-                            Se Connecter
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Features Section -->
-            <section class="landing-features">
-                <div class="section-header" style="text-align: center; margin-bottom: var(--spacing-2xl);">
-                    <h2 class="section-title" style="justify-content: center;">
-                        <i class="bi bi-stars"></i>
-                        Fonctionnalités
-                    </h2>
-                    <p class="section-subtitle">Tout ce dont vous avez besoin pour vos parties de JDR</p>
-                </div>
-                
-                <div class="content-grid content-grid-4">
-                    <div class="card card-feature">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-person-badge"></i>
-                        </div>
-                        <h3 class="card-feature-title">Création de Personnages</h3>
-                        <p class="card-feature-description">
-                            Créez des personnages détaillés avec inventaire, compétences et historique.
-                        </p>
-                    </div>
-                    
-                    <div class="card card-feature">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-map"></i>
-                        </div>
-                        <h3 class="card-feature-title">Gestion de Campagnes</h3>
-                        <p class="card-feature-description">
-                            Organisez vos parties, suivez votre progression et gérez vos joueurs.
-                        </p>
-                    </div>
-                    
-                    <div class="card card-feature">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-dice-5"></i>
-                        </div>
-                        <h3 class="card-feature-title">Lanceur de Dés</h3>
-                        <p class="card-feature-description">
-                            Système de dés intégré avec historique et modificateurs personnalisés.
-                        </p>
-                    </div>
-                    
-                    <div class="card card-feature">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-people"></i>
-                        </div>
-                        <h3 class="card-feature-title">Jeu en Temps Réel</h3>
-                        <p class="card-feature-description">
-                            Jouez avec vos amis en temps réel grâce à notre technologie SignalR.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- CTA Section -->
-            <section class="landing-cta">
-                <div class="card card-gold" style="text-align: center; padding: var(--spacing-2xl);">
-                    <h2 style="font-family: var(--font-display); margin-bottom: var(--spacing-md);">
-                        Prêt à forger votre légende ?
-                    </h2>
-                    <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-xl); max-width: 500px; margin-left: auto; margin-right: auto;">
-                        Rejoignez des milliers d'aventuriers et commencez votre épopée dès maintenant.
-                    </p>
-                    <a href="/register" class="btn btn-primary btn-lg">
-                        <i class="bi bi-person-plus"></i>
-                        Créer un compte gratuit
-                    </a>
-                </div>
-            </section>
-        </div>
+        <!-- Redirection vers la page de connexion -->
+        <RedirectToLogin />
     </NotAuthorized>
 </AuthorizeView>

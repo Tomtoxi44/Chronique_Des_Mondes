@@ -38,6 +38,8 @@
                         <span>Déconnexion</span>
                     </button>
                 </div>
+                
+                <div class="user-menu-overlay" @onclick="CloseDropdown"></div>
             }
         </Authorized>
         <NotAuthorized>
@@ -48,8 +50,3 @@
         </NotAuthorized>
     </AuthorizeView>
 </div>
-
-@if (isDropdownOpen)
-{
-    <div class="user-menu-overlay" @onclick="CloseDropdown"></div>
-}
