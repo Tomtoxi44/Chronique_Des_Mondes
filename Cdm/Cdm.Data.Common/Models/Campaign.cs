@@ -32,12 +32,6 @@ public class Campaign
     public string? Description { get; set; }
 
     /// <summary>
-    /// Game system type for this campaign
-    /// </summary>
-    [Required]
-    public GameType GameType { get; set; } = GameType.Generic;
-
-    /// <summary>
     /// Campaign visibility level (Private or Public)
     /// </summary>
     [Required]
@@ -57,9 +51,10 @@ public class Campaign
     public string? CoverImageUrl { get; set; }
 
     /// <summary>
-    /// World ID this campaign belongs to
+    /// World ID this campaign belongs to (required)
     /// </summary>
-    public int? WorldId { get; set; }
+    [Required]
+    public int WorldId { get; set; }
 
     /// <summary>
     /// User ID of the campaign creator (Game Master)
@@ -68,10 +63,10 @@ public class Campaign
     public int CreatedBy { get; set; }
 
     /// <summary>
-    /// Navigation property to the world
+    /// Navigation property to the world (required)
     /// </summary>
     [ForeignKey(nameof(WorldId))]
-    public virtual World? World { get; set; }
+    public virtual World World { get; set; } = null!;
 
     /// <summary>
     /// Navigation property to the campaign creator
@@ -101,4 +96,19 @@ public class Campaign
     /// </summary>
     [Required]
     public bool IsDeleted { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the chapters in this campaign.
+    /// </summary>
+    public virtual ICollection<Chapter> Chapters { get; set; } = new List<Chapter>();
+
+    /// <summary>
+    /// Gets or sets the events specific to this campaign.
+    /// </summary>
+    public virtual ICollection<Event> Events { get; set; } = new List<Event>();
+
+    /// <summary>
+    /// Gets or sets the achievements specific to this campaign.
+    /// </summary>
+    public virtual ICollection<Achievement> Achievements { get; set; } = new List<Achievement>();
 }

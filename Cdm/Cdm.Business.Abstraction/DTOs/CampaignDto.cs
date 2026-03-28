@@ -24,7 +24,12 @@ public class CampaignDto
     public string? Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the game system type
+    /// Gets or sets the world ID this campaign belongs to
+    /// </summary>
+    public int WorldId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the game system type (inherited from World)
     /// </summary>
     public GameType GameType { get; set; }
 

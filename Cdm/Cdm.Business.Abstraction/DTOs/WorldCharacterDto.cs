@@ -1,43 +1,50 @@
 // -----------------------------------------------------------------------
-// <copyright file="CharacterGameProfile.cs" company="ANGIBAUD Tommy">
+// <copyright file="WorldCharacterDto.cs" company="ANGIBAUD Tommy">
 // Copyright (c) ANGIBAUD Tommy. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Cdm.Data.Common.Models;
+namespace Cdm.Business.Abstraction.DTOs;
 
 using Cdm.Common.Enums;
 
 /// <summary>
-/// Represents a character's profile in a specific game/campaign.
-/// Contains game-specific data (D&D stats, Skyrim attributes, etc.) in JSON.
+/// Data transfer object for a WorldCharacter (character adapted to a specific world).
 /// </summary>
-public class CharacterGameProfile
+public class WorldCharacterDto
 {
     /// <summary>
-    /// Gets or sets the profile ID.
+    /// Gets or sets the world character identifier.
     /// </summary>
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the character ID.
+    /// Gets or sets the base character ID.
     /// </summary>
     public int CharacterId { get; set; }
 
     /// <summary>
-    /// Gets or sets the campaign ID.
+    /// Gets or sets the base character name.
     /// </summary>
-    public int CampaignId { get; set; }
+    public string CharacterName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the game type (Generic, D&D, Skyrim, etc.).
+    /// Gets or sets the world ID this character belongs to.
+    /// </summary>
+    public int WorldId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the world name.
+    /// </summary>
+    public string WorldName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the game type of the world.
     /// </summary>
     public GameType GameType { get; set; }
 
     /// <summary>
     /// Gets or sets game-specific data stored as JSON.
-    /// For D&D: {"Strength": 18, "Dexterity": 14, ...}
-    /// For Skyrim: {"Health": 200, "Magicka": 150, ...}
     /// </summary>
     public string? GameSpecificData { get; set; }
 
@@ -57,12 +64,12 @@ public class CharacterGameProfile
     public int? MaxHealth { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether this profile is active in the campaign.
+    /// Gets or sets a value indicating whether this character is active in the world.
     /// </summary>
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
 
     /// <summary>
-    /// Gets or sets when the character joined this campaign.
+    /// Gets or sets when the character joined this world.
     /// </summary>
     public DateTime JoinedAt { get; set; }
 
@@ -72,12 +79,12 @@ public class CharacterGameProfile
     public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the base character.
+    /// Gets or sets the user ID who owns the base character.
     /// </summary>
-    public virtual Character Character { get; set; } = null!;
+    public int UserId { get; set; }
 
     /// <summary>
-    /// Gets or sets the campaign.
+    /// Gets or sets the avatar URL of the base character.
     /// </summary>
-    public virtual Campaign Campaign { get; set; } = null!;
+    public string? AvatarUrl { get; set; }
 }

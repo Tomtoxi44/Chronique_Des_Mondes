@@ -1,25 +1,25 @@
 // -----------------------------------------------------------------------
-// <copyright file="World.cs" company="ANGIBAUD Tommy">
+// <copyright file="WorldDto.cs" company="ANGIBAUD Tommy">
 // Copyright (c) ANGIBAUD Tommy. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Cdm.Data.Common.Models;
+namespace Cdm.Business.Abstraction.DTOs;
 
 using Cdm.Common.Enums;
 
 /// <summary>
-/// Represents a world (container for campaigns).
+/// Data transfer object for a World.
 /// </summary>
-public class World
+public class WorldDto
 {
     /// <summary>
-    /// Gets or sets the world ID.
+    /// Gets or sets the world identifier.
     /// </summary>
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the user ID who created this world.
+    /// Gets or sets the user ID who created this world (Game Master).
     /// </summary>
     public int UserId { get; set; }
 
@@ -41,7 +41,7 @@ public class World
     /// <summary>
     /// Gets or sets a value indicating whether the world is active.
     /// </summary>
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
 
     /// <summary>
     /// Gets or sets the creation date.
@@ -54,27 +54,12 @@ public class World
     public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the owner user.
+    /// Gets or sets the number of campaigns in this world.
     /// </summary>
-    public virtual User Owner { get; set; } = null!;
+    public int CampaignCount { get; set; }
 
     /// <summary>
-    /// Gets or sets the campaigns in this world.
+    /// Gets or sets the number of characters in this world.
     /// </summary>
-    public virtual ICollection<Campaign> Campaigns { get; set; } = new List<Campaign>();
-
-    /// <summary>
-    /// Gets or sets the world characters (characters adapted to this world).
-    /// </summary>
-    public virtual ICollection<WorldCharacter> WorldCharacters { get; set; } = new List<WorldCharacter>();
-
-    /// <summary>
-    /// Gets or sets the events specific to this world.
-    /// </summary>
-    public virtual ICollection<Event> Events { get; set; } = new List<Event>();
-
-    /// <summary>
-    /// Gets or sets the achievements specific to this world.
-    /// </summary>
-    public virtual ICollection<Achievement> Achievements { get; set; } = new List<Achievement>();
+    public int CharacterCount { get; set; }
 }

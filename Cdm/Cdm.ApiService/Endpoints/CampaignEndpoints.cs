@@ -66,7 +66,7 @@ public static class CampaignEndpoints
             {
                 Name = request.Name,
                 Description = request.Description,
-                GameType = request.GameType,
+                WorldId = request.WorldId,
                 Visibility = request.Visibility,
                 MaxPlayers = request.MaxPlayers,
                 CoverImageBase64 = request.CoverImageBase64

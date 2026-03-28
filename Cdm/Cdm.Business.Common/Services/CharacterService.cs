@@ -252,8 +252,9 @@ public class CharacterService(
                 return false;
             }
 
-            // Get campaign to determine game type
+            // Get campaign to determine world and game type
             var campaign = await this.dbContext.Campaigns
+                .Include(c => c.World)
                 .FirstOrDefaultAsync(c => c.Id == campaignId && c.IsActive);
 
             if (campaign == null)
@@ -262,27 +263,33 @@ public class CharacterService(
                 return false;
             }
 
-            // Check if profile already exists
-            var existingProfile = await this.dbContext.CharacterGameProfiles
-                .FirstOrDefaultAsync(p => p.CharacterId == characterId && p.CampaignId == campaignId);
+            if (campaign.World == null)
+            {
+                this.logger.LogWarning("Campaign {CampaignId} has no associated world", campaignId);
+                return false;
+            }
+
+            // Check if character is already in this world
+            var existingProfile = await this.dbContext.WorldCharacters
+                .FirstOrDefaultAsync(p => p.CharacterId == characterId && p.WorldId == campaign.WorldId);
 
             if (existingProfile != null)
             {
                 this.logger.LogWarning(
-                    "Game profile already exists for character {CharacterId} in campaign {CampaignId}",
+                    "Character {CharacterId} already has a profile in world {WorldId}",
                     characterId,
-                    campaignId);
+                    campaign.WorldId);
                 return false;
             }
 
             // Serialize game profile data
-            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(gameProfileData, campaign.GameType);
+            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(gameProfileData, campaign.World.GameType);
 
             if (gameSpecificDataJson == null)
             {
                 this.logger.LogWarning(
                     "Failed to serialize game profile data for game type {GameType}",
-                    campaign.GameType);
+                    campaign.World.GameType);
                 return false;
             }
 
@@ -304,12 +311,11 @@ public class CharacterService(
                 maxHealth = skyrimProfile.MaxHealth;
             }
 
-            // Create game profile
-            var gameProfile = new CharacterGameProfile
+            // Create world character profile
+            var worldCharacter = new WorldCharacter
             {
                 CharacterId = characterId,
-                CampaignId = campaignId,
-                GameType = campaign.GameType,
+                WorldId = campaign.WorldId,
                 GameSpecificData = gameSpecificDataJson,
                 Level = level,
                 CurrentHealth = currentHealth,
@@ -319,13 +325,17 @@ public class CharacterService(
                 UpdatedAt = DateTime.UtcNow
             };
 
-            this.dbContext.CharacterGameProfiles.Add(gameProfile);
+            this.dbContext.WorldCharacters.Add(worldCharacter);
+            await this.dbContext.SaveChangesAsync();
+
+            // Lock the character so it cannot join other worlds
+            character.IsLocked = true;
             await this.dbContext.SaveChangesAsync();
 
             this.logger.LogInformation(
-                "Game profile created successfully for character {CharacterId} in campaign {CampaignId}",
+                "World character created successfully for character {CharacterId} in world {WorldId}",
                 characterId,
-                campaignId);
+                campaign.WorldId);
 
             return true;
         }
@@ -363,22 +373,35 @@ public class CharacterService(
                 return null;
             }
 
-            var gameProfile = await this.dbContext.CharacterGameProfiles
-                .FirstOrDefaultAsync(p => p.CharacterId == characterId && p.CampaignId == campaignId && p.IsActive);
+            // Get campaign to determine world
+            var campaign = await this.dbContext.Campaigns
+                .Include(c => c.World)
+                .FirstOrDefaultAsync(c => c.Id == campaignId && c.IsActive);
 
-            if (gameProfile == null)
+            if (campaign == null || campaign.World == null)
+            {
+                this.logger.LogWarning("Campaign {CampaignId} not found or has no world", campaignId);
+                return null;
+            }
+
+            // Get world character profile
+            var worldCharacter = await this.dbContext.WorldCharacters
+                .Include(wc => wc.World)
+                .FirstOrDefaultAsync(p => p.CharacterId == characterId && p.WorldId == campaign.WorldId && p.IsActive);
+
+            if (worldCharacter == null)
             {
                 this.logger.LogWarning(
-                    "Game profile not found for character {CharacterId} in campaign {CampaignId}",
+                    "World character not found for character {CharacterId} in world {WorldId}",
                     characterId,
-                    campaignId);
+                    campaign.WorldId);
                 return null;
             }
 
             // Deserialize to typed profile
             var profileData = CharacterProfileMapper.DeserializeGameProfile(
-                gameProfile.GameSpecificData,
-                gameProfile.GameType);
+                worldCharacter.GameSpecificData,
+                campaign.World.GameType);
 
             return profileData;
         }
@@ -416,52 +439,64 @@ public class CharacterService(
                 return false;
             }
 
-            var gameProfile = await this.dbContext.CharacterGameProfiles
-                .FirstOrDefaultAsync(p => p.CharacterId == characterId && p.CampaignId == campaignId && p.IsActive);
+            // Get campaign to determine world
+            var campaign = await this.dbContext.Campaigns
+                .Include(c => c.World)
+                .FirstOrDefaultAsync(c => c.Id == campaignId && c.IsActive);
 
-            if (gameProfile == null)
+            if (campaign == null || campaign.World == null)
+            {
+                this.logger.LogWarning("Campaign {CampaignId} not found or has no world", campaignId);
+                return false;
+            }
+
+            // Get world character profile
+            var worldCharacter = await this.dbContext.WorldCharacters
+                .FirstOrDefaultAsync(p => p.CharacterId == characterId && p.WorldId == campaign.WorldId && p.IsActive);
+
+            if (worldCharacter == null)
             {
                 this.logger.LogWarning(
-                    "Game profile not found for character {CharacterId} in campaign {CampaignId}",
+                    "World character not found for character {CharacterId} in world {WorldId}",
                     characterId,
-                    campaignId);
+                    campaign.WorldId);
                 return false;
             }
 
             // Serialize game profile data
-            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(gameProfileData, gameProfile.GameType);
+            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(gameProfileData, campaign.World.GameType);
 
             if (gameSpecificDataJson == null)
             {
                 this.logger.LogWarning(
                     "Failed to serialize game profile data for game type {GameType}",
-                    gameProfile.GameType);
+                    campaign.World.GameType);
                 return false;
             }
 
             // Update common fields based on game type
             if (gameProfileData is DndCharacterProfile dndProfile)
             {
-                gameProfile.Level = dndProfile.Level;
-                gameProfile.CurrentHealth = dndProfile.CurrentHitPoints;
-                gameProfile.MaxHealth = dndProfile.MaxHitPoints;
+                worldCharacter.Level = dndProfile.Level;
+                worldCharacter.CurrentHealth = dndProfile.CurrentHitPoints;
+                worldCharacter.MaxHealth = dndProfile.MaxHitPoints;
             }
             else if (gameProfileData is SkyrimCharacterProfile skyrimProfile)
             {
-                gameProfile.Level = skyrimProfile.Level;
-                gameProfile.CurrentHealth = skyrimProfile.CurrentHealth;
-                gameProfile.MaxHealth = skyrimProfile.MaxHealth;
+                worldCharacter.Level = skyrimProfile.Level;
+                worldCharacter.CurrentHealth = skyrimProfile.CurrentHealth;
+                worldCharacter.MaxHealth = skyrimProfile.MaxHealth;
             }
 
-            gameProfile.GameSpecificData = gameSpecificDataJson;
-            gameProfile.UpdatedAt = DateTime.UtcNow;
+            worldCharacter.GameSpecificData = gameSpecificDataJson;
+            worldCharacter.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
 
             this.logger.LogInformation(
-                "Game profile updated successfully for character {CharacterId} in campaign {CampaignId}",
+                "World character updated successfully for character {CharacterId} in world {WorldId}",
                 characterId,
-                campaignId);
+                campaign.WorldId);
 
             return true;
         }
