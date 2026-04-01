@@ -1,0 +1,96 @@
+@* -----------------------------------------------------------------------
+    <copyright file="Index.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@page "/worlds"
+@using Cdm.Web.Components.Layout
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Mes Mondes - Chronique des Mondes</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
+    <!-- Page Header -->
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Style="flex-wrap: wrap; gap: 16px;">
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+            <FluentLabel Typo="Typography.PageTitle" Style="color: var(--cdm-text-primary);">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Globe())" Style="margin-right: 8px; color: var(--cdm-gold);" />
+                Mes Mondes
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted);">
+                Creez et gerez vos univers de jeu
+            </FluentLabel>
+        </FluentStack>
+        
+        <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size20.Add())">
+            Nouveau Monde
+        </FluentButton>
+    </FluentStack>
+
+    <!-- Empty State -->
+    @if (!_worlds.Any())
+    {
+        <FluentCard Style="padding: 48px; text-align: center;">
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16" HorizontalAlignment="HorizontalAlignment.Center">
+                <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Style="color: var(--cdm-gold); opacity: 0.5;" />
+                <FluentLabel Typo="Typography.H4" Style="color: var(--cdm-text-primary);">
+                    Aucun monde pour le moment
+                </FluentLabel>
+                <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); max-width: 400px;">
+                    Les mondes sont des univers dans lesquels se deroulent vos campagnes. Creez votre premier monde pour commencer l'aventure !
+                </FluentLabel>
+                <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size20.Add())" Style="margin-top: 8px;">
+                    Creer mon premier monde
+                </FluentButton>
+            </FluentStack>
+        </FluentCard>
+    }
+    else
+    {
+        <!-- Worlds Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            @foreach (var world in _worlds)
+            {
+                <FluentCard Style="padding: 0; overflow: hidden;">
+                    <div style="height: 120px; background: linear-gradient(135deg, var(--cdm-bg-elevated) 0%, var(--cdm-bg-dark) 100%); display: flex; align-items: center; justify-content: center;">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Style="color: var(--cdm-gold); opacity: 0.3;" />
+                    </div>
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="8" Style="padding: 16px;">
+                        <FluentLabel Typo="Typography.H5" Style="color: var(--cdm-text-primary);">@world.Name</FluentLabel>
+                        <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); font-size: 14px;">
+                            @(world.Description ?? "Aucune description")
+                        </FluentLabel>
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Style="margin-top: 8px;">
+                            <FluentBadge Appearance="Appearance.Neutral">@world.CampaignCount campagnes</FluentBadge>
+                            <FluentBadge Appearance="Appearance.Neutral">@world.CharacterCount personnages</FluentBadge>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            }
+        </div>
+    }
+</FluentStack>
+
+@code {
+    private List<WorldViewModel> _worlds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: Load worlds from service
+        await Task.CompletedTask;
+    }
+
+    private class WorldViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? ImageUrl { get; set; }
+        public int CampaignCount { get; set; }
+        public int CharacterCount { get; set; }
+    }
+}

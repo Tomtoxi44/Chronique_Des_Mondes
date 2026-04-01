@@ -2,192 +2,237 @@
 @using Cdm.Web.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
-@layout AppLayout
+@layout MainLayout
 
-<PageTitle>Paramètres - Chronique des Mondes</PageTitle>
+<PageTitle>Parametres - Chronique des Mondes</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <div class="settings-container">
-            <div class="page-header">
-                <h1 class="page-title">Paramètres</h1>
-                <p class="page-subtitle">Gérez vos préférences et paramètres de compte</p>
-            </div>
+        <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
+            <!-- Page Header -->
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+                <FluentLabel Typo="Typography.H4">Parametres</FluentLabel>
+                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Gerez vos preferences et parametres de compte</FluentLabel>
+            </FluentStack>
 
-            <div class="settings-sections">
-                <!-- General Settings -->
-                <section class="settings-section">
-                    <h2>
-                        <i class="bi bi-sliders text-gold"></i>
-                        Général
-                    </h2>
-                    <div class="settings-card">
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Thème</strong>
-                                <small>Choisissez votre thème préféré</small>
-                            </div>
-                            <select class="input input-sm" style="width: auto; min-width: 150px;">
-                                <option value="dark" selected>Sombre (Nuit)</option>
-                                <option value="light">Clair (Parchemin)</option>
-                                <option value="auto">Automatique</option>
-                            </select>
-                        </div>
+            <!-- General Settings -->
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Options())" Color="Color.Accent" />
+                        <FluentLabel Typo="Typography.H5">General</FluentLabel>
+                    </FluentStack>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Langue</strong>
-                                <small>Langue de l'interface</small>
-                            </div>
-                            <select class="input input-sm" style="width: auto; min-width: 150px;">
-                                <option value="fr" selected>Français</option>
-                                <option value="en">English</option>
-                            </select>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Animations</strong>
-                                <small>Activer les animations de l'interface</small>
-                            </div>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="checkbox" checked />
-                                <span class="checkbox-label">Activé</span>
-                            </label>
-                        </div>
-                    </div>
-                </section>
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Theme</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Choisissez votre theme prefere</FluentLabel>
+                            </FluentStack>
+                            <FluentSelect TOption="string" Style="min-width: 150px;">
+                                <FluentOption Value="@("dark")" Selected="true">Sombre (Nuit)</FluentOption>
+                                <FluentOption Value="@("light")">Clair (Parchemin)</FluentOption>
+                                <FluentOption Value="@("auto")">Automatique</FluentOption>
+                            </FluentSelect>
+                        </FluentStack>
 
-                <!-- Notifications -->
-                <section class="settings-section">
-                    <h2>
-                        <i class="bi bi-bell text-gold"></i>
-                        Notifications
-                    </h2>
-                    <div class="settings-card">
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Notifications par email</strong>
-                                <small>Recevoir des notifications par email</small>
-                            </div>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="checkbox" checked />
-                                <span class="checkbox-label">Activé</span>
-                            </label>
-                        </div>
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Langue</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Langue de l'interface</FluentLabel>
+                            </FluentStack>
+                            <FluentSelect TOption="string" Style="min-width: 150px;">
+                                <FluentOption Value="@("fr")" Selected="true">Francais</FluentOption>
+                                <FluentOption Value="@("en")">English</FluentOption>
+                            </FluentSelect>
+                        </FluentStack>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Notifications in-app</strong>
-                                <small>Recevoir des notifications dans l'application</small>
-                            </div>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="checkbox" checked />
-                                <span class="checkbox-label">Activé</span>
-                            </label>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Sons</strong>
-                                <small>Jouer des sons pour les notifications</small>
-                            </div>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="checkbox" />
-                                <span class="checkbox-label">Désactivé</span>
-                            </label>
-                        </div>
-                    </div>
-                </section>
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Animations</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Activer les animations de l'interface</FluentLabel>
+                            </FluentStack>
+                            <FluentSwitch @bind-Value="@animationsEnabled" Label="@(animationsEnabled ? "Active" : "Desactive")" />
+                        </FluentStack>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
 
-                <!-- Game Settings -->
-                <section class="settings-section">
-                    <h2>
-                        <i class="bi bi-dice-6 text-gold"></i>
-                        Préférences de jeu
-                    </h2>
-                    <div class="settings-card">
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Animation des dés</strong>
-                                <small>Afficher l'animation lors des lancers de dés</small>
-                            </div>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="checkbox" checked />
-                                <span class="checkbox-label">Activé</span>
-                            </label>
-                        </div>
+            <!-- Notifications -->
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Alert())" Color="Color.Accent" />
+                        <FluentLabel Typo="Typography.H5">Notifications</FluentLabel>
+                    </FluentStack>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Confirmations</strong>
-                                <small>Demander confirmation avant les actions importantes</small>
-                            </div>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" class="checkbox" checked />
-                                <span class="checkbox-label">Activé</span>
-                            </label>
-                        </div>
-                    </div>
-                </section>
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Notifications par email</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Recevoir des notifications par email</FluentLabel>
+                            </FluentStack>
+                            <FluentSwitch @bind-Value="@emailNotifications" Label="@(emailNotifications ? "Active" : "Desactive")" />
+                        </FluentStack>
 
-                <!-- Account Info -->
-                <section class="settings-section">
-                    <h2>
-                        <i class="bi bi-person-badge text-gold"></i>
-                        Compte
-                    </h2>
-                    <div class="settings-card">
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Email</strong>
-                                <small>@context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value</small>
-                            </div>
-                            <span class="badge badge-bronze">Non modifiable</span>
-                        </div>
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Notifications in-app</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Recevoir des notifications dans l'application</FluentLabel>
+                            </FluentStack>
+                            <FluentSwitch @bind-Value="@inAppNotifications" Label="@(inAppNotifications ? "Active" : "Desactive")" />
+                        </FluentStack>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong>Identifiant unique</strong>
-                                <small class="text-muted" style="font-family: monospace; font-size: 0.75rem;">
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Sons</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Jouer des sons pour les notifications</FluentLabel>
+                            </FluentStack>
+                            <FluentSwitch @bind-Value="@soundEnabled" Label="@(soundEnabled ? "Active" : "Desactive")" />
+                        </FluentStack>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+
+            <!-- Game Settings -->
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Cube())" Color="Color.Accent" />
+                        <FluentLabel Typo="Typography.H5">Preferences de jeu</FluentLabel>
+                    </FluentStack>
+
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Animation des des</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Afficher l'animation lors des lancers de des</FluentLabel>
+                            </FluentStack>
+                            <FluentSwitch @bind-Value="@diceAnimations" Label="@(diceAnimations ? "Active" : "Desactive")" />
+                        </FluentStack>
+
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Confirmations</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Demander confirmation avant les actions importantes</FluentLabel>
+                            </FluentStack>
+                            <FluentSwitch @bind-Value="@confirmations" Label="@(confirmations ? "Active" : "Desactive")" />
+                        </FluentStack>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+
+            <!-- Account Info -->
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Accent" />
+                        <FluentLabel Typo="Typography.H5">Compte</FluentLabel>
+                    </FluentStack>
+
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Email</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">
+                                    @context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value
+                                </FluentLabel>
+                            </FluentStack>
+                            <FluentBadge Appearance="Appearance.Neutral">Non modifiable</FluentBadge>
+                        </FluentStack>
+
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Weight="FontWeight.Bold">Identifiant unique</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 10px; font-family: monospace;">
                                     @context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                
-                <!-- Danger Zone -->
-                <section class="settings-section">
-                    <h2>
-                        <i class="bi bi-exclamation-triangle text-crimson"></i>
-                        Zone de danger
-                    </h2>
-                    <div class="settings-card" style="border-color: rgba(139, 41, 66, 0.3);">
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <strong class="text-crimson">Supprimer mon compte</strong>
-                                <small>Cette action est irréversible. Toutes vos données seront supprimées.</small>
-                            </div>
-                            <button class="btn btn-danger btn-sm" disabled>
-                                <i class="bi bi-trash"></i>
-                                Supprimer
-                            </button>
-                        </div>
-                    </div>
-                </section>
-            </div>
+                                </FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
 
-            <div class="settings-actions">
-                <button class="btn btn-primary" disabled>
-                    <i class="bi bi-check-lg"></i>
+            <!-- Danger Zone -->
+            <FluentCard Style="border: 1px solid var(--error);">
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" Color="Color.Error" />
+                        <FluentLabel Typo="Typography.H5" Style="color: var(--error);">Zone de danger</FluentLabel>
+                    </FluentStack>
+
+                    <FluentStack Orientation="Orientation.Horizontal" 
+                                 VerticalAlignment="VerticalAlignment.Center"
+                                 HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                                 Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                            <FluentLabel Weight="FontWeight.Bold" Style="color: var(--error);">Supprimer mon compte</FluentLabel>
+                            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Cette action est irreversible. Toutes vos donnees seront supprimees.</FluentLabel>
+                        </FluentStack>
+                        <FluentButton Appearance="Appearance.Outline" 
+                                      IconStart="@(new Icons.Regular.Size20.Delete())"
+                                      Disabled="true"
+                                      Style="color: var(--error); border-color: var(--error);">
+                            Supprimer
+                        </FluentButton>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+
+            <!-- Save Actions -->
+            <FluentStack Orientation="Orientation.Horizontal" 
+                         VerticalAlignment="VerticalAlignment.Center"
+                         HorizontalAlignment="HorizontalAlignment.End"
+                         Style="gap: 16px;">
+                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Info())" Style="margin-right: 4px;" />
+                    Fonctionnalite a venir
+                </FluentLabel>
+                <FluentButton Appearance="Appearance.Accent" 
+                              IconStart="@(new Icons.Regular.Size20.Checkmark())"
+                              Disabled="true">
                     Sauvegarder les modifications
-                </button>
-                <span class="text-muted" style="font-size: var(--font-size-small);">
-                    <i class="bi bi-info-circle"></i>
-                    Fonctionnalité à venir
-                </span>
-            </div>
-        </div>
+                </FluentButton>
+            </FluentStack>
+        </FluentStack>
     </Authorized>
 </AuthorizeView>
+
+@code {
+    private bool animationsEnabled = true;
+    private bool emailNotifications = true;
+    private bool inAppNotifications = true;
+    private bool soundEnabled = false;
+    private bool diceAnimations = true;
+    private bool confirmations = true;
+}

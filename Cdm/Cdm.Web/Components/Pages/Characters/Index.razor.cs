@@ -1,6 +1,7 @@
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Shared.DTOs.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace Cdm.Web.Components.Pages.Characters;
 
@@ -18,6 +19,9 @@ public partial class Index : ComponentBase
     [Inject]
     private ILogger<Index> Logger { get; set; } = default!;
 
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+
     /// <summary>
     /// Gets or sets the list of characters.
     /// </summary>
@@ -32,11 +36,6 @@ public partial class Index : ComponentBase
     /// Gets or sets the error message.
     /// </summary>
     private string? ErrorMessage { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether the delete modal is shown.
-    /// </summary>
-    private bool ShowDeleteModal { get; set; }
 
     /// <summary>
     /// Gets or sets the character to delete.
@@ -71,7 +70,7 @@ public partial class Index : ComponentBase
         catch (Exception ex)
         {
             this.Logger.LogError(ex, "Error loading characters");
-            this.ErrorMessage = "Impossible de charger vos personnages. Veuillez réessayer.";
+            this.ErrorMessage = "Impossible de charger vos personnages. Veuillez reessayer.";
         }
         finally
         {
@@ -98,22 +97,29 @@ public partial class Index : ComponentBase
     }
 
     /// <summary>
-    /// Shows the delete confirmation modal.
+    /// Shows the delete confirmation dialog.
     /// </summary>
     /// <param name="character">The character to delete.</param>
-    private void ConfirmDelete(CharacterDto character)
+    private async Task ConfirmDelete(CharacterDto character)
     {
         this.CharacterToDelete = character;
-        this.ShowDeleteModal = true;
-    }
+        
+        var dialog = await this.DialogService.ShowConfirmationAsync(
+            $"Etes-vous sur de vouloir supprimer le personnage {GetCharacterFullName(character)} ? Cette action est irreversible.",
+            "Supprimer",
+            "Annuler",
+            "Confirmer la suppression");
 
-    /// <summary>
-    /// Cancels the delete operation.
-    /// </summary>
-    private void CancelDelete()
-    {
-        this.CharacterToDelete = null;
-        this.ShowDeleteModal = false;
+        var result = await dialog.Result;
+        
+        if (!result.Cancelled)
+        {
+            await this.DeleteCharacterAsync();
+        }
+        else
+        {
+            this.CharacterToDelete = null;
+        }
     }
 
     /// <summary>
@@ -129,6 +135,7 @@ public partial class Index : ComponentBase
         try
         {
             this.IsDeleting = true;
+            StateHasChanged();
 
             var success = await this.CharacterApi.DeleteCharacterAsync(this.CharacterToDelete.Id);
 
@@ -141,7 +148,7 @@ public partial class Index : ComponentBase
             }
             else
             {
-                this.ErrorMessage = "Impossible de supprimer le personnage. Veuillez réessayer.";
+                this.ErrorMessage = "Impossible de supprimer le personnage. Veuillez reessayer.";
             }
         }
         catch (Exception ex)
@@ -152,7 +159,6 @@ public partial class Index : ComponentBase
         finally
         {
             this.IsDeleting = false;
-            this.ShowDeleteModal = false;
             this.CharacterToDelete = null;
         }
     }

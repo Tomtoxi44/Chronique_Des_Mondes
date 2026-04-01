@@ -6,6 +6,7 @@ using Cdm.Web.Services.Storage;
 using Cdm.Web.Services.State;
 using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add Fluent UI
+builder.Services.AddFluentUIComponents();
 
 builder.Services.AddOutputCache();
 

@@ -1,6 +1,7 @@
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Shared.DTOs.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.FluentUI.AspNetCore.Components;
 using System.Text.RegularExpressions;
 
 namespace Cdm.Web.Components.Pages.Characters;
@@ -22,6 +23,9 @@ public partial class Detail : ComponentBase
     [Inject]
     private ILogger<Detail> Logger { get; set; } = default!;
 
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+
     /// <summary>
     /// Gets or sets the character.
     /// </summary>
@@ -36,11 +40,6 @@ public partial class Detail : ComponentBase
     /// Gets or sets the error message.
     /// </summary>
     private string? ErrorMessage { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether the delete modal is shown.
-    /// </summary>
-    private bool ShowDeleteModal { get; set; }
 
     /// <summary>
     /// Gets or sets whether a delete operation is in progress.
@@ -77,7 +76,7 @@ public partial class Detail : ComponentBase
         catch (Exception ex)
         {
             this.Logger.LogError(ex, "Error loading character {CharacterId}", this.Id);
-            this.ErrorMessage = "Impossible de charger le personnage. Veuillez réessayer.";
+            this.ErrorMessage = "Impossible de charger le personnage. Veuillez reessayer.";
         }
         finally
         {
@@ -86,19 +85,22 @@ public partial class Detail : ComponentBase
     }
 
     /// <summary>
-    /// Shows the delete confirmation modal.
+    /// Shows the delete confirmation dialog.
     /// </summary>
-    private void ConfirmDelete()
+    private async Task ConfirmDelete()
     {
-        this.ShowDeleteModal = true;
-    }
+        var dialog = await this.DialogService.ShowConfirmationAsync(
+            $"Etes-vous sur de vouloir supprimer le personnage {GetCharacterFullName()} ? Cette action est irreversible.",
+            "Supprimer",
+            "Annuler",
+            "Confirmer la suppression");
 
-    /// <summary>
-    /// Cancels the delete operation.
-    /// </summary>
-    private void CancelDelete()
-    {
-        this.ShowDeleteModal = false;
+        var result = await dialog.Result;
+        
+        if (!result.Cancelled)
+        {
+            await this.DeleteCharacterAsync();
+        }
     }
 
     /// <summary>
@@ -109,6 +111,7 @@ public partial class Detail : ComponentBase
         try
         {
             this.IsDeleting = true;
+            StateHasChanged();
 
             var success = await this.CharacterApi.DeleteCharacterAsync(this.Id);
 
@@ -119,15 +122,13 @@ public partial class Detail : ComponentBase
             }
             else
             {
-                this.ErrorMessage = "Impossible de supprimer le personnage. Veuillez réessayer.";
-                this.ShowDeleteModal = false;
+                this.ErrorMessage = "Impossible de supprimer le personnage. Veuillez reessayer.";
             }
         }
         catch (Exception ex)
         {
             this.Logger.LogError(ex, "Error deleting character {CharacterId}", this.Id);
             this.ErrorMessage = "Une erreur est survenue lors de la suppression.";
-            this.ShowDeleteModal = false;
         }
         finally
         {
@@ -152,24 +153,5 @@ public partial class Detail : ComponentBase
         }
 
         return this.Character.Name;
-    }
-
-    /// <summary>
-    /// Formats the description with line breaks.
-    /// </summary>
-    /// <param name="description">The description to format.</param>
-    /// <returns>The formatted description with HTML line breaks.</returns>
-    private static string FormatDescription(string description)
-    {
-        if (string.IsNullOrEmpty(description))
-        {
-            return string.Empty;
-        }
-
-        // Escape HTML characters first
-        var escaped = System.Web.HttpUtility.HtmlEncode(description);
-        
-        // Replace newlines with <br> tags
-        return escaped.Replace("\n", "<br />");
     }
 }
