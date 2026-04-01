@@ -69,6 +69,93 @@ public class CampaignService(
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<CampaignResponse?> GetCampaignByIdAsync(int campaignId)
+    {
+        try
+        {
+            await this.AddAuthHeaderAsync();
+
+            this.logger.LogInformation("Getting campaign {CampaignId} from API", campaignId);
+
+            var response = await this.httpClient.GetAsync($"api/campaigns/{campaignId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var campaignResponse = await response.Content.ReadFromJsonAsync<CampaignResponse>();
+                this.logger.LogInformation("Campaign {CampaignId} retrieved successfully", campaignId);
+                return campaignResponse;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            this.logger.LogWarning(
+                "Failed to get campaign {CampaignId} with status {StatusCode}: {Error}",
+                campaignId,
+                response.StatusCode,
+                errorContent);
+
+            return null;
+        }
+        catch (HttpRequestException ex)
+        {
+            this.logger.LogError(ex, "HTTP error getting campaign {CampaignId}", campaignId);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Unexpected error getting campaign {CampaignId}", campaignId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<CampaignResponse?> UpdateCampaignAsync(int campaignId, CampaignForm.CreateCampaignModel model)
+    {
+        try
+        {
+            await this.AddAuthHeaderAsync();
+
+            var request = new UpdateCampaignRequest
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Visibility = model.Visibility,
+                MaxPlayers = model.MaxPlayers,
+                CoverImageBase64 = model.CoverImageBase64
+            };
+
+            this.logger.LogInformation("Sending campaign update request to API for {CampaignId}", campaignId);
+
+            var response = await this.httpClient.PutAsJsonAsync($"api/campaigns/{campaignId}", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var campaignResponse = await response.Content.ReadFromJsonAsync<CampaignResponse>();
+                this.logger.LogInformation("Campaign {CampaignId} updated successfully", campaignId);
+                return campaignResponse;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            this.logger.LogWarning(
+                "Campaign update failed for {CampaignId} with status {StatusCode}: {Error}",
+                campaignId,
+                response.StatusCode,
+                errorContent);
+
+            return null;
+        }
+        catch (HttpRequestException ex)
+        {
+            this.logger.LogError(ex, "HTTP error updating campaign {CampaignId}", campaignId);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Unexpected error updating campaign {CampaignId}", campaignId);
+            return null;
+        }
+    }
+
     /// <summary>
     /// Adds JWT authorization header to HTTP requests.
     /// </summary>
@@ -105,6 +192,37 @@ public class CampaignService(
         /// Gets or sets the visibility level.
         /// </summary>
         public Visibility Visibility { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum number of players.
+        /// </summary>
+        public int MaxPlayers { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cover image Base64.
+        /// </summary>
+        public string? CoverImageBase64 { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for updating a campaign.
+    /// </summary>
+    private class UpdateCampaignRequest
+    {
+        /// <summary>
+        /// Gets or sets the campaign name.
+        /// </summary>
+        public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the campaign description.
+        /// </summary>
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Gets or sets the visibility level.
+        /// </summary>
+        public Common.Enums.Visibility Visibility { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum number of players.

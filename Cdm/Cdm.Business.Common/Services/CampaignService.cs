@@ -19,14 +19,17 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 /// <param name="dbContext">Database context for campaign data access.</param>
 /// <param name="imageStorageService">Service for image storage operations.</param>
+/// <param name="roleService">Service for managing user roles.</param>
 /// <param name="logger">Logger instance for structured logging.</param>
 public class CampaignService(
     AppDbContext dbContext,
     IImageStorageService imageStorageService,
+    IRoleService roleService,
     ILogger<CampaignService> logger) : ICampaignService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly IImageStorageService imageStorageService = imageStorageService;
+    private readonly IRoleService roleService = roleService;
     private readonly ILogger<CampaignService> logger = logger;
 
     /// <inheritdoc/>
@@ -40,6 +43,30 @@ public class CampaignService(
                 "Creating campaign '{CampaignName}' for user {UserId}",
                 dto.Name,
                 userId);
+
+            // Auto-assign GameMaster role if user doesn't have it
+            var hasGameMasterRole = await this.roleService.HasRoleAsync(userId, "GameMaster");
+            if (!hasGameMasterRole)
+            {
+                this.logger.LogInformation(
+                    "User {UserId} doesn't have GameMaster role, assigning it automatically",
+                    userId);
+
+                var roleAssigned = await this.roleService.RequestGameMasterRoleAsync(userId);
+
+                if (roleAssigned)
+                {
+                    this.logger.LogInformation(
+                        "GameMaster role successfully assigned to user {UserId}",
+                        userId);
+                }
+                else
+                {
+                    this.logger.LogWarning(
+                        "Failed to assign GameMaster role to user {UserId}",
+                        userId);
+                }
+            }
 
             // Handle image upload if provided
             string? coverImageUrl = null;
@@ -187,6 +214,103 @@ public class CampaignService(
             this.logger.LogError(
                 ex,
                 "Error retrieving campaign {CampaignId} for user {UserId}",
+                campaignId,
+                userId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<CampaignDto?> UpdateCampaignAsync(int campaignId, UpdateCampaignDto dto, int userId)
+    {
+        this.logger.LogInformation("Updating campaign {CampaignId} by user {UserId}", campaignId, userId);
+
+        try
+        {
+            // 1. Retrieve campaign with tracking
+            var campaign = await this.dbContext.Campaigns
+                .FirstOrDefaultAsync(c => c.Id == campaignId && !c.IsDeleted);
+
+            if (campaign == null)
+            {
+                this.logger.LogWarning("Campaign {CampaignId} not found", campaignId);
+                return null;
+            }
+
+            // 2. Authorization check: only creator can update
+            if (campaign.CreatedBy != userId)
+            {
+                this.logger.LogWarning(
+                    "User {UserId} not authorized to update campaign {CampaignId}. Creator is {CreatorId}",
+                    userId,
+                    campaignId,
+                    campaign.CreatedBy);
+                return null; // Not authorized
+            }
+
+            // 3. Validate MaxPlayers constraint (cannot be less than current player count)
+            // Note: Cette fonctionnalité nécessite une table CampaignPlayers (future US)
+            // Pour l'instant, on autorise toute valeur entre 1-20
+            // TODO: Uncomment when CampaignPlayers table exists
+            /*
+            var currentPlayerCount = await this.dbContext.CampaignPlayers
+                .CountAsync(cp => cp.CampaignId == campaignId);
+
+            if (dto.MaxPlayers < currentPlayerCount)
+            {
+                throw new ValidationException(
+                    $"MaxPlayers must be at least {currentPlayerCount} (current player count).");
+            }
+            */
+
+            // 4. Update scalar properties
+            campaign.Name = dto.Name;
+            campaign.Description = dto.Description;
+            campaign.Visibility = dto.Visibility;
+            campaign.MaxPlayers = dto.MaxPlayers;
+            campaign.UpdatedAt = DateTime.UtcNow;
+
+            // 5. Handle cover image update
+            if (!string.IsNullOrWhiteSpace(dto.CoverImageBase64))
+            {
+                this.logger.LogInformation("Updating cover image for campaign {CampaignId}", campaignId);
+
+                // Delete old image if exists
+                if (!string.IsNullOrEmpty(campaign.CoverImageUrl))
+                {
+                    this.logger.LogDebug("Deleting old cover image: {ImageUrl}", campaign.CoverImageUrl);
+                    await this.imageStorageService.DeleteCampaignCoverAsync(campaign.CoverImageUrl);
+                }
+
+                // Upload new image
+                var newImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
+                    dto.CoverImageBase64,
+                    campaignId);
+
+                if (newImageUrl == null)
+                {
+                    this.logger.LogWarning(
+                        "Failed to upload new cover image for campaign {CampaignId}",
+                        campaignId);
+                    return null;
+                }
+
+                campaign.CoverImageUrl = newImageUrl;
+            }
+
+            // 6. Save changes
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation("Campaign {CampaignId} updated successfully", campaignId);
+
+            // 7. Return updated DTO
+            return this.MapToDto(campaign);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(
+                ex,
+                "Error updating campaign {CampaignId} by user {UserId}",
                 campaignId,
                 userId);
             return null;

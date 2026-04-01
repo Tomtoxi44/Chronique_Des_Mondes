@@ -10,7 +10,7 @@
 @using Cdm.Web.Services
 @using Microsoft.AspNetCore.Authorization
 @layout AppLayout
-@attribute [Authorize(Roles = "GameMaster")]
+@attribute [Authorize]
 @inject ICampaignService CampaignService
 @inject NavigationManager NavigationManager
 @inject ILogger<CreateCampaign> Logger

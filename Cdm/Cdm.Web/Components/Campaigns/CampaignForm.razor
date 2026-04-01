@@ -44,18 +44,35 @@
         <label for="gameType" class="form-label fw-bold">
             <i class="bi bi-controller"></i> Système de jeu <span class="text-danger">*</span>
         </label>
-        <InputSelect id="gameType" 
-                    @bind-Value="this.Model.GameType" 
-                    class="form-select">
-            <option value="@GameType.Generic">Générique</option>
-            <option value="@GameType.DnD5e">Dungeons & Dragons 5e</option>
-            <option value="@GameType.Pathfinder">Pathfinder</option>
-            <option value="@GameType.CallOfCthulhu">L'Appel de Cthulhu</option>
-            <option value="@GameType.Warhammer">Warhammer</option>
-            <option value="@GameType.Skyrim">Skyrim</option>
-            <option value="@GameType.Custom">Personnalisé</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => this.Model.GameType)" />
+        @if (this.IsEditMode)
+        {
+            <!-- Read-only in edit mode -->
+            <InputSelect id="gameType" 
+                        @bind-Value="this.Model.GameType" 
+                        class="form-select"
+                        disabled="disabled">
+                <option value="@this.Model.GameType">@this.GetGameTypeDisplayName(this.Model.GameType)</option>
+            </InputSelect>
+            <div class="form-text text-muted">
+                <i class="bi bi-lock"></i> Le système de jeu ne peut pas être modifié après la création
+            </div>
+        }
+        else
+        {
+            <!-- Editable in create mode -->
+            <InputSelect id="gameType" 
+                        @bind-Value="this.Model.GameType" 
+                        class="form-select">
+                <option value="@GameType.Generic">Générique</option>
+                <option value="@GameType.DnD5e">Dungeons & Dragons 5e</option>
+                <option value="@GameType.Pathfinder">Pathfinder</option>
+                <option value="@GameType.CallOfCthulhu">L'Appel de Cthulhu</option>
+                <option value="@GameType.Warhammer">Warhammer</option>
+                <option value="@GameType.Skyrim">Skyrim</option>
+                <option value="@GameType.Custom">Personnalisé</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => this.Model.GameType)" />
+        }
     </div>
 
     <!-- Visibility -->
@@ -91,23 +108,49 @@
         <label class="form-label fw-bold">
             <i class="bi bi-image"></i> Image de couverture
         </label>
+        
+        @if (this.IsEditMode && !string.IsNullOrEmpty(this.ExistingImageUrl))
+        {
+            <div class="mb-2">
+                <p class="text-muted small">Image actuelle :</p>
+                <img src="@this.ExistingImageUrl" 
+                     alt="Current cover" 
+                     class="img-thumbnail" 
+                     style="max-height: 200px; max-width: 100%;" />
+                <p class="text-muted small mt-1">
+                    <i class="bi bi-info-circle"></i> Charger une nouvelle image remplacera l'image actuelle
+                </p>
+            </div>
+        }
+        
         <ImageUploader OnImageSelected="HandleImageSelected" InputId="campaignCoverInput" />
     </div>
 
     <!-- Submit Button -->
-    <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-primary btn-lg" disabled="@this.IsSubmitting">
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1" disabled="@this.IsSubmitting">
             @if (this.IsSubmitting)
             {
                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                <span>Création en cours...</span>
+                <span>@(this.IsEditMode ? "Mise à jour..." : "Création en cours...")</span>
             }
             else
             {
-                <i class="bi bi-plus-circle me-2"></i>
-                <span>Créer la campagne</span>
+                <i class="bi bi-@(this.IsEditMode ? "save" : "plus-circle") me-2"></i>
+                <span>@(this.IsEditMode ? "Mettre à jour" : "Créer la campagne")</span>
             }
         </button>
+
+        @if (this.IsEditMode)
+        {
+            <button type="button" 
+                    class="btn btn-secondary" 
+                    @onclick="HandleCancel"
+                    disabled="@this.IsSubmitting">
+                <i class="bi bi-x-circle me-2"></i>
+                Annuler
+            </button>
+        }
     </div>
 </EditForm>
 
@@ -125,10 +168,28 @@
     public bool IsSubmitting { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the form is in edit mode.
+    /// </summary>
+    [Parameter]
+    public bool IsEditMode { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the existing image URL (for edit mode).
+    /// </summary>
+    [Parameter]
+    public string? ExistingImageUrl { get; set; }
+
+    /// <summary>
     /// Event callback when the form is submitted with valid data.
     /// </summary>
     [Parameter]
     public EventCallback OnSubmit { get; set; }
+
+    /// <summary>
+    /// Event callback when the cancel button is clicked (edit mode only).
+    /// </summary>
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
 
     /// <summary>
     /// Handles image selection from the uploader component.
@@ -145,6 +206,34 @@
     private async Task HandleValidSubmit()
     {
         await this.OnSubmit.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Handles cancel button click.
+    /// </summary>
+    private async Task HandleCancel()
+    {
+        await this.OnCancel.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Gets the display name for a game type.
+    /// </summary>
+    /// <param name="gameType">The game type.</param>
+    /// <returns>The display name.</returns>
+    private string GetGameTypeDisplayName(GameType gameType)
+    {
+        return gameType switch
+        {
+            GameType.Generic => "Générique",
+            GameType.DnD5e => "Dungeons & Dragons 5e",
+            GameType.Pathfinder => "Pathfinder",
+            GameType.CallOfCthulhu => "L'Appel de Cthulhu",
+            GameType.Warhammer => "Warhammer",
+            GameType.Skyrim => "Skyrim",
+            GameType.Custom => "Personnalisé",
+            _ => gameType.ToString()
+        };
     }
 
     /// <summary>

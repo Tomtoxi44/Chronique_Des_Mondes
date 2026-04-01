@@ -1,0 +1,189 @@
+@* -----------------------------------------------------------------------
+    <copyright file="EditCampaign.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@page "/campaigns/{Id:int}/edit"
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Campaigns
+@using Cdm.Web.Services
+@using Microsoft.AspNetCore.Authorization
+@layout AppLayout
+@attribute [Authorize]
+@inject ICampaignService CampaignService
+@inject NavigationManager NavigationManager
+@inject ILogger<EditCampaign> Logger
+@rendermode InteractiveServer
+<PageTitle>Modifier la Campagne - Chronique des Mondes</PageTitle>
+
+<div class="container" style="padding-top: var(--spacing-xl); max-width: 800px;">
+    @if (this.isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-3 text-muted">Chargement de la campagne...</p>
+        </div>
+    }
+    else if (this.campaign == null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            Campagne introuvable ou vous n'êtes pas autorisé à la modifier.
+        </div>
+        <div class="text-center">
+            <a href="/" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Retour à l'accueil
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">
+                    <i class="bi bi-pencil"></i> Modifier la Campagne
+                </h2>
+            </div>
+            <div class="card-body" style="padding: var(--spacing-xl);">
+                @if (!string.IsNullOrEmpty(this.errorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        @this.errorMessage
+                        <button type="button" class="btn-close" @onclick="() => this.errorMessage = null"></button>
+                    </div>
+                }
+
+                @if (this.isSuccess)
+                {
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-check-circle"></i>
+                        Campagne mise à jour avec succès ! Redirection en cours...
+                    </div>
+                }
+                else
+                {
+                    <CampaignForm Model="@this.editModel" 
+                                 IsSubmitting="@this.isSubmitting"
+                                 IsEditMode="true"
+                                 ExistingImageUrl="@this.campaign.CoverImageUrl"
+                                 OnSubmit="HandleUpdateCampaignAsync"
+                                 OnCancel="HandleCancel" />
+                }
+            </div>
+        </div>
+
+        <div class="mt-3 text-center">
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à l'accueil
+            </a>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Gets or sets the campaign ID from route parameter.
+    /// </summary>
+    [Parameter]
+    public int Id { get; set; }
+
+    private CampaignResponse? campaign;
+    private CampaignForm.CreateCampaignModel editModel = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool isSuccess = false;
+    private string? errorMessage;
+
+    /// <inheritdoc/>
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            this.Logger.LogInformation("Loading campaign {CampaignId} for editing", this.Id);
+
+            this.campaign = await this.CampaignService.GetCampaignByIdAsync(this.Id);
+
+            if (this.campaign != null)
+            {
+                // Pre-fill form with existing data
+                this.editModel = new CampaignForm.CreateCampaignModel
+                {
+                    Name = this.campaign.Name,
+                    Description = this.campaign.Description,
+                    GameType = (Cdm.Common.Enums.GameType)this.campaign.GameType,
+                    Visibility = (Cdm.Common.Enums.Visibility)this.campaign.Visibility,
+                    MaxPlayers = this.campaign.MaxPlayers,
+                    CoverImageBase64 = null // Don't pre-fill image (keep existing)
+                };
+
+                this.Logger.LogInformation("Campaign {CampaignId} loaded successfully", this.Id);
+            }
+            else
+            {
+                this.Logger.LogWarning("Campaign {CampaignId} not found or not authorized", this.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            this.errorMessage = $"Erreur lors du chargement de la campagne : {ex.Message}";
+            this.Logger.LogError(ex, "Error loading campaign {CampaignId}", this.Id);
+        }
+        finally
+        {
+            this.isLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Handles campaign update submission.
+    /// </summary>
+    private async Task HandleUpdateCampaignAsync()
+    {
+        try
+        {
+            this.isSubmitting = true;
+            this.errorMessage = null;
+
+            this.Logger.LogInformation("Submitting campaign update for {CampaignId}: {Name}", this.Id, this.editModel.Name);
+
+            var updatedCampaign = await this.CampaignService.UpdateCampaignAsync(this.Id, this.editModel);
+
+            if (updatedCampaign != null)
+            {
+                this.Logger.LogInformation("Campaign {CampaignId} updated successfully", this.Id);
+                this.isSuccess = true;
+
+                // Redirect to home after a short delay
+                await Task.Delay(1500);
+                this.NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                this.errorMessage = "Échec de la mise à jour de la campagne. Veuillez vérifier vos données et réessayer.";
+                this.Logger.LogWarning("Campaign update failed for {CampaignId}", this.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            this.errorMessage = $"Une erreur s'est produite : {ex.Message}";
+            this.Logger.LogError(ex, "Error updating campaign {CampaignId}", this.Id);
+        }
+        finally
+        {
+            this.isSubmitting = false;
+        }
+    }
+
+    /// <summary>
+    /// Handles cancel button click.
+    /// </summary>
+    private void HandleCancel()
+    {
+        this.Logger.LogInformation("Campaign edit cancelled for {CampaignId}", this.Id);
+        this.NavigationManager.NavigateTo("/");
+    }
+}
