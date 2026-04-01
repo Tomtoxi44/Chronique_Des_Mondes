@@ -9,22 +9,27 @@
 <AuthorizeView>
     <Authorized>
         <div class="settings-container">
-            <h1>Paramètres</h1>
-            <p class="text-muted">Gérez vos préférences et paramètres de compte</p>
+            <div class="page-header">
+                <h1 class="page-title">Paramètres</h1>
+                <p class="page-subtitle">Gérez vos préférences et paramètres de compte</p>
+            </div>
 
             <div class="settings-sections">
                 <!-- General Settings -->
                 <section class="settings-section">
-                    <h2>Général</h2>
+                    <h2>
+                        <i class="bi bi-sliders text-gold"></i>
+                        Général
+                    </h2>
                     <div class="settings-card">
                         <div class="setting-item">
                             <div class="setting-info">
                                 <strong>Thème</strong>
                                 <small>Choisissez votre thème préféré</small>
                             </div>
-                            <select class="form-select" style="width: auto;">
-                                <option value="dark" selected>Sombre</option>
-                                <option value="light">Clair</option>
+                            <select class="input input-sm" style="width: auto; min-width: 150px;">
+                                <option value="dark" selected>Sombre (Nuit)</option>
+                                <option value="light">Clair (Parchemin)</option>
                                 <option value="auto">Automatique</option>
                             </select>
                         </div>
@@ -34,26 +39,41 @@
                                 <strong>Langue</strong>
                                 <small>Langue de l'interface</small>
                             </div>
-                            <select class="form-select" style="width: auto;">
+                            <select class="input input-sm" style="width: auto; min-width: 150px;">
                                 <option value="fr" selected>Français</option>
                                 <option value="en">English</option>
                             </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Animations</strong>
+                                <small>Activer les animations de l'interface</small>
+                            </div>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="checkbox" checked />
+                                <span class="checkbox-label">Activé</span>
+                            </label>
                         </div>
                     </div>
                 </section>
 
                 <!-- Notifications -->
                 <section class="settings-section">
-                    <h2>Notifications</h2>
+                    <h2>
+                        <i class="bi bi-bell text-gold"></i>
+                        Notifications
+                    </h2>
                     <div class="settings-card">
                         <div class="setting-item">
                             <div class="setting-info">
                                 <strong>Notifications par email</strong>
                                 <small>Recevoir des notifications par email</small>
                             </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="emailNotif" checked>
-                            </div>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="checkbox" checked />
+                                <span class="checkbox-label">Activé</span>
+                            </label>
                         </div>
 
                         <div class="setting-item">
@@ -61,38 +81,112 @@
                                 <strong>Notifications in-app</strong>
                                 <small>Recevoir des notifications dans l'application</small>
                             </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="inAppNotif" checked>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="checkbox" checked />
+                                <span class="checkbox-label">Activé</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Sons</strong>
+                                <small>Jouer des sons pour les notifications</small>
                             </div>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="checkbox" />
+                                <span class="checkbox-label">Désactivé</span>
+                            </label>
                         </div>
                     </div>
                 </section>
 
-                <!-- Account Info (Read-only for now) -->
+                <!-- Game Settings -->
                 <section class="settings-section">
-                    <h2>Compte</h2>
+                    <h2>
+                        <i class="bi bi-dice-6 text-gold"></i>
+                        Préférences de jeu
+                    </h2>
+                    <div class="settings-card">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Animation des dés</strong>
+                                <small>Afficher l'animation lors des lancers de dés</small>
+                            </div>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="checkbox" checked />
+                                <span class="checkbox-label">Activé</span>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong>Confirmations</strong>
+                                <small>Demander confirmation avant les actions importantes</small>
+                            </div>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" class="checkbox" checked />
+                                <span class="checkbox-label">Activé</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Account Info -->
+                <section class="settings-section">
+                    <h2>
+                        <i class="bi bi-person-badge text-gold"></i>
+                        Compte
+                    </h2>
                     <div class="settings-card">
                         <div class="setting-item">
                             <div class="setting-info">
                                 <strong>Email</strong>
                                 <small>@context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value</small>
                             </div>
-                            <span class="badge bg-secondary">Non modifiable</span>
+                            <span class="badge badge-bronze">Non modifiable</span>
                         </div>
 
                         <div class="setting-item">
                             <div class="setting-info">
-                                <strong>Identifiant</strong>
-                                <small>@context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value</small>
+                                <strong>Identifiant unique</strong>
+                                <small class="text-muted" style="font-family: monospace; font-size: 0.75rem;">
+                                    @context.User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                </small>
                             </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Danger Zone -->
+                <section class="settings-section">
+                    <h2>
+                        <i class="bi bi-exclamation-triangle text-crimson"></i>
+                        Zone de danger
+                    </h2>
+                    <div class="settings-card" style="border-color: rgba(139, 41, 66, 0.3);">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <strong class="text-crimson">Supprimer mon compte</strong>
+                                <small>Cette action est irréversible. Toutes vos données seront supprimées.</small>
+                            </div>
+                            <button class="btn btn-danger btn-sm" disabled>
+                                <i class="bi bi-trash"></i>
+                                Supprimer
+                            </button>
                         </div>
                     </div>
                 </section>
             </div>
 
             <div class="settings-actions">
-                <button class="btn btn-primary" disabled>Sauvegarder les modifications</button>
-                <small class="text-muted">Fonctionnalité à venir avec US-004</small>
+                <button class="btn btn-primary" disabled>
+                    <i class="bi bi-check-lg"></i>
+                    Sauvegarder les modifications
+                </button>
+                <span class="text-muted" style="font-size: var(--font-size-small);">
+                    <i class="bi bi-info-circle"></i>
+                    Fonctionnalité à venir
+                </span>
             </div>
         </div>
     </Authorized>

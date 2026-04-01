@@ -1,0 +1,223 @@
+@page "/characters/{Id:int}/edit"
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Shared.DTOs.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
+@layout AppLayout
+@rendermode InteractiveServer
+
+<PageTitle>Modifier @(Character?.Name ?? "Personnage") - Chronique des Mondes</PageTitle>
+
+<div class="character-form-page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumbs">
+        <a href="/characters" class="breadcrumb-item">Personnages</a>
+        <span class="breadcrumb-separator">/</span>
+        <a href="/characters/@Id" class="breadcrumb-item">@(Character?.Name ?? "...")</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Modifier</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Modifier le Personnage</h1>
+        <p class="page-subtitle">Mettez à jour les informations de votre héros</p>
+    </div>
+
+    <AuthorizeView>
+        <Authorized Context="authContext">
+            @if (IsLoading)
+            {
+                <!-- Loading State -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Chargement du personnage...</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(LoadErrorMessage))
+            {
+                <!-- Load Error State -->
+                <div class="card card-crimson">
+                    <div class="card-body" style="display: flex; align-items: center; gap: var(--spacing-lg);">
+                        <div style="flex-shrink: 0;">
+                            <i class="bi bi-exclamation-triangle text-crimson" style="font-size: 2rem;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 var(--spacing-xs) 0; font-family: var(--font-heading); color: var(--color-crimson);">
+                                Erreur
+                            </h4>
+                            <p style="margin: 0; color: var(--color-text-secondary);">
+                                @LoadErrorMessage
+                            </p>
+                        </div>
+                        <a href="/characters" class="btn btn-outline">
+                            <i class="bi bi-arrow-left"></i>
+                            Retour
+                        </a>
+                    </div>
+                </div>
+            }
+            else if (Character != null)
+            {
+                <div class="character-form-container">
+                    <EditForm Model="@FormModel" OnValidSubmit="@HandleSubmitAsync" class="character-form">
+                        <DataAnnotationsValidator />
+                        
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            <div class="form-alert form-alert-error">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <span>@ErrorMessage</span>
+                            </div>
+                        }
+
+                        <!-- Identity Section -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">
+                                <i class="bi bi-person-badge"></i>
+                                Identité
+                            </h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName" class="form-label">Prénom</label>
+                                    <div class="input-group">
+                                        <i class="bi bi-person input-icon"></i>
+                                        <InputText id="firstName" 
+                                                   @bind-Value="FormModel.FirstName" 
+                                                   class="input" 
+                                                   placeholder="Prénom du personnage"
+                                                   disabled="@IsSubmitting" />
+                                    </div>
+                                    <ValidationMessage For="@(() => FormModel.FirstName)" class="input-error" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="name" class="form-label">
+                                        Nom <span class="text-crimson">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <i class="bi bi-person-fill input-icon"></i>
+                                        <InputText id="name" 
+                                                   @bind-Value="FormModel.Name" 
+                                                   class="input" 
+                                                   placeholder="Nom du personnage"
+                                                   disabled="@IsSubmitting" />
+                                    </div>
+                                    <ValidationMessage For="@(() => FormModel.Name)" class="input-error" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="age" class="form-label">Âge</label>
+                                <div class="input-group" style="max-width: 150px;">
+                                    <i class="bi bi-calendar3 input-icon"></i>
+                                    <InputNumber id="age" 
+                                                 @bind-Value="FormModel.Age" 
+                                                 class="input" 
+                                                 placeholder="Âge"
+                                                 disabled="@IsSubmitting" />
+                                </div>
+                                <span class="input-hint">
+                                    <i class="bi bi-info-circle"></i> Laissez vide si inconnu
+                                </span>
+                                <ValidationMessage For="@(() => FormModel.Age)" class="input-error" />
+                            </div>
+                        </div>
+
+                        <!-- Description Section -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">
+                                <i class="bi bi-journal-text"></i>
+                                Description
+                            </h3>
+
+                            <div class="form-group">
+                                <label for="description" class="form-label">Histoire & Description</label>
+                                <InputTextArea id="description" 
+                                               @bind-Value="FormModel.Description" 
+                                               class="input textarea" 
+                                               rows="5"
+                                               placeholder="Décrivez l'apparence, la personnalité et l'histoire de votre personnage..."
+                                               disabled="@IsSubmitting" />
+                                <span class="input-hint">
+                                    <i class="bi bi-lightbulb"></i> Décrivez l'apparence physique, les traits de caractère, et l'histoire de votre personnage
+                                </span>
+                                <ValidationMessage For="@(() => FormModel.Description)" class="input-error" />
+                            </div>
+                        </div>
+
+                        <!-- Avatar Section -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">
+                                <i class="bi bi-image"></i>
+                                Avatar
+                            </h3>
+
+                            <div class="form-group">
+                                <label for="avatarUrl" class="form-label">URL de l'avatar</label>
+                                <div class="input-group">
+                                    <i class="bi bi-link-45deg input-icon"></i>
+                                    <InputText id="avatarUrl" 
+                                               @bind-Value="FormModel.AvatarUrl" 
+                                               class="input" 
+                                               placeholder="https://exemple.com/avatar.jpg"
+                                               disabled="@IsSubmitting" />
+                                </div>
+                                <span class="input-hint">
+                                    <i class="bi bi-info-circle"></i> Entrez l'URL d'une image pour l'avatar de votre personnage
+                                </span>
+                                <ValidationMessage For="@(() => FormModel.AvatarUrl)" class="input-error" />
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(FormModel.AvatarUrl))
+                            {
+                                <div class="avatar-preview">
+                                    <img src="@FormModel.AvatarUrl" alt="Aperçu de l'avatar" @onerror="HandleImageError" />
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <a href="/characters/@Id" class="btn btn-outline">
+                                <i class="bi bi-x-lg"></i>
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">
+                                @if (IsSubmitting)
+                                {
+                                    <span class="spinner spinner-sm"></span>
+                                    <span>Enregistrement...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-lg"></i>
+                                    <span>Enregistrer les modifications</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            }
+        </Authorized>
+        
+        <NotAuthorized>
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-lock text-crimson"></i>
+                    </div>
+                    <h3 class="empty-state-title">Connexion requise</h3>
+                    <p class="empty-state-description">
+                        Vous devez être connecté pour modifier ce personnage.
+                    </p>
+                    <a href="/login" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Se connecter
+                    </a>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>

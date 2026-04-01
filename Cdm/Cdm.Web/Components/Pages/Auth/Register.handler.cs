@@ -50,6 +50,7 @@ public class RegisterHandler
             await this.authStateProvider.MarkUserAsAuthenticatedAsync(
                 response.UserId,
                 response.Email,
+                response.Nickname,
                 response.Token);
             
             // Small delay to ensure localStorage is synchronized

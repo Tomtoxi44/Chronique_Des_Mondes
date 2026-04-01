@@ -12,11 +12,13 @@ public partial class Login
 {
     [Inject] private LoginHandler Handler { get; set; } = default!;
     [Inject] private ILogger<Login> Logger { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
     
     private LoginRequest LoginModel { get; set; } = new();
     private string? ErrorMessage { get; set; }
     private bool IsLoading { get; set; }
     private bool ShowPassword { get; set; }
+    private bool RememberMe { get; set; }
     
     /// <summary>
     /// Toggles password visibility.

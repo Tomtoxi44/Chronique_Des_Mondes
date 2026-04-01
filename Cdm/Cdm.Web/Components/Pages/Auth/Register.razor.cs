@@ -12,11 +12,13 @@ public partial class Register
 {
     [Inject] private RegisterHandler Handler { get; set; } = default!;
     [Inject] private ILogger<Register> Logger { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
     
     private RegisterRequest RegisterModel { get; set; } = new();
     private string? ErrorMessage { get; set; }
     private bool IsLoading { get; set; }
     private bool ShowPassword { get; set; }
+    private bool AcceptTerms { get; set; }
     
     /// <summary>
     /// Toggles password visibility.

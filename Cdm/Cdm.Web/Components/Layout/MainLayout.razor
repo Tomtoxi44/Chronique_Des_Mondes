@@ -1,23 +1,107 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<div class="app-layout">
+    <aside class="sidebar" id="sidebar">
         <NavMenu />
+    </aside>
+    
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="app-main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="topbar-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="topbar-title">Chronique des Mondes</h1>
+            </div>
+            
+            <div class="topbar-right">
+                @* Theme toggle *@
+                <div class="topbar-theme-toggle">
+                    <button class="topbar-icon-btn" onclick="toggleTheme()" title="Toggle theme">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                </div>
+                
+                @* User menu *@
+                <div class="topbar-user-wrapper" style="position: relative;">
+                    <button class="topbar-user-btn" onclick="toggleUserMenu()">
+                        <div class="topbar-user-avatar">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <span class="topbar-user-name">Aventurier</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    
+                    <div class="topbar-dropdown" id="user-dropdown">
+                        <a href="profile" class="topbar-dropdown-item">
+                            <i class="bi bi-person"></i>
+                            <span>Mon Profil</span>
+                        </a>
+                        <a href="settings" class="topbar-dropdown-item">
+                            <i class="bi bi-gear"></i>
+                            <span>Paramètres</span>
+                        </a>
+                        <div class="topbar-dropdown-divider"></div>
+                        <button class="topbar-dropdown-item danger" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Déconnexion</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-content">
+            <div class="page-wrapper">
+                @Body
+            </div>
+        </main>
     </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+<div id="blazor-error-ui" class="blazor-error">
+    <i class="bi bi-exclamation-triangle"></i>
+    <span>Une erreur inattendue s'est produite.</span>
+    <a href="" class="reload">Recharger</a>
+    <button class="dismiss" onclick="this.parentElement.style.display='none'">
+        <i class="bi bi-x"></i>
+    </button>
 </div>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('visible');
+    }
+    
+    function toggleUserMenu() {
+        const dropdown = document.getElementById('user-dropdown');
+        const btn = document.querySelector('.topbar-user-btn');
+        dropdown.classList.toggle('open');
+        btn.classList.toggle('open');
+    }
+    
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const icon = document.querySelector('.topbar-theme-toggle i');
+        if (document.body.classList.contains('light-theme')) {
+            icon.className = 'bi bi-sun';
+        } else {
+            icon.className = 'bi bi-moon-stars';
+        }
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('user-dropdown');
+        const btn = document.querySelector('.topbar-user-btn');
+        if (dropdown && !e.target.closest('.topbar-user-wrapper')) {
+            dropdown.classList.remove('open');
+            btn.classList.remove('open');
+        }
+    });
+</script>

@@ -79,6 +79,9 @@ namespace Cdm.Migrations.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<int?>("WorldId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy")
@@ -90,10 +93,126 @@ namespace Cdm.Migrations.Migrations
                     b.HasIndex("Name")
                         .HasDatabaseName("IX_Campaigns_Name");
 
+                    b.HasIndex("WorldId");
+
                     b.HasIndex("Visibility", "IsActive")
                         .HasDatabaseName("IX_Campaigns_Visibility_IsActive");
 
                     b.ToTable("Campaigns");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.Character", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_Characters_IsActive");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_Characters_Name");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Characters_UserId");
+
+                    b.ToTable("Characters");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.CharacterGameProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CampaignId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CharacterId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CurrentHealth")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GameSpecificData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GameType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("JoinedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int?>("Level")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaxHealth")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId")
+                        .HasDatabaseName("IX_CharacterGameProfiles_CampaignId");
+
+                    b.HasIndex("CharacterId")
+                        .HasDatabaseName("IX_CharacterGameProfiles_CharacterId");
+
+                    b.HasIndex("GameType")
+                        .HasDatabaseName("IX_CharacterGameProfiles_GameType");
+
+                    b.HasIndex("CharacterId", "CampaignId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CharacterGameProfiles_CharacterId_CampaignId");
+
+                    b.ToTable("CharacterGameProfiles");
                 });
 
             modelBuilder.Entity("Cdm.Data.Common.Models.Role", b =>
@@ -224,6 +343,54 @@ namespace Cdm.Migrations.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("Cdm.Data.Common.Models.World", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GameType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameType")
+                        .HasDatabaseName("IX_Worlds_GameType");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_Worlds_IsActive");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Worlds_UserId");
+
+                    b.ToTable("Worlds");
+                });
+
             modelBuilder.Entity("Cdm.Data.Common.Models.Campaign", b =>
                 {
                     b.HasOne("Cdm.Data.Common.Models.User", "CreatedByUser")
@@ -232,7 +399,43 @@ namespace Cdm.Migrations.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Cdm.Data.Common.Models.World", "World")
+                        .WithMany("Campaigns")
+                        .HasForeignKey("WorldId");
+
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("World");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.Character", b =>
+                {
+                    b.HasOne("Cdm.Data.Common.Models.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.CharacterGameProfile", b =>
+                {
+                    b.HasOne("Cdm.Data.Common.Models.Campaign", "Campaign")
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cdm.Data.Common.Models.Character", "Character")
+                        .WithMany("GameProfiles")
+                        .HasForeignKey("CharacterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("Character");
                 });
 
             modelBuilder.Entity("Cdm.Data.Common.Models.UserRole", b =>
@@ -254,6 +457,22 @@ namespace Cdm.Migrations.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Cdm.Data.Common.Models.World", b =>
+                {
+                    b.HasOne("Cdm.Data.Common.Models.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.Character", b =>
+                {
+                    b.Navigation("GameProfiles");
+                });
+
             modelBuilder.Entity("Cdm.Data.Common.Models.Role", b =>
                 {
                     b.Navigation("UserRoles");
@@ -262,6 +481,11 @@ namespace Cdm.Migrations.Migrations
             modelBuilder.Entity("Cdm.Data.Common.Models.User", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.World", b =>
+                {
+                    b.Navigation("Campaigns");
                 });
 #pragma warning restore 612, 618
         }

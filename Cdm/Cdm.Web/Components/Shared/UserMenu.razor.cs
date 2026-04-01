@@ -60,6 +60,6 @@ public partial class UserMenu : ComponentBase
     {
         CloseDropdown();
         await AuthStateProvider.MarkUserAsLoggedOutAsync();
-        NavigationManager.NavigateTo("/login", forceLoad: false);
+        NavigationManager.NavigateTo("/login", forceLoad: true);
     }
 }
