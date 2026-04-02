@@ -1,19 +1,31 @@
 @inherits LayoutComponentBase
 
-<div class="auth-layout">
-    <div class="auth-container">
-        <div class="auth-logo">
-            <img src="/images/logo.png" alt="Chronique des Mondes" class="auth-logo-image" onerror="this.style.display='none'" />
-            <h1 class="auth-logo-text">Chronique des Mondes</h1>
-            <p class="auth-logo-subtitle">Forgez votre destinée</p>
-        </div>
+<FluentDesignTheme Mode="DesignThemeModes.Dark" StorageName="theme" />
+
+<div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--neutral-layer-1) 0%, var(--neutral-layer-3) 100%); padding: 24px;">
+    <FluentStack Orientation="Orientation.Vertical" 
+                 HorizontalAlignment="HorizontalAlignment.Center" 
+                 Style="width: 100%; max-width: 420px;">
         
-        <main class="auth-content">
-            @Body
-        </main>
+        <FluentStack Orientation="Orientation.Vertical" 
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     Style="margin-bottom: 32px;">
+            <img src="/images/logo.png" 
+                 alt="Chronique des Mondes" 
+                 style="width: 80px; height: 80px; margin-bottom: 16px;"
+                 onerror="this.style.display='none'" />
+            <FluentLabel Typo="Typography.H3" Color="Color.Accent" Style="text-align: center;">
+                Chronique des Mondes
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="text-align: center; opacity: 0.7;">
+                Forgez votre destinee
+            </FluentLabel>
+        </FluentStack>
         
-        <footer class="auth-footer">
-            <p>&copy; @DateTime.Now.Year Chronique des Mondes &bull; Tous droits réservés</p>
-        </footer>
-    </div>
+        @Body
+        
+        <FluentLabel Typo="Typography.Body" Style="text-align: center; opacity: 0.5; margin-top: 32px; font-size: 12px;">
+            @DateTime.Now.Year Chronique des Mondes - Tous droits reserves
+        </FluentLabel>
+    </FluentStack>
 </div>

@@ -1,0 +1,361 @@
+/*
+ * Fluent UI Custom Theme - Chronique des Mondes
+ * Medieval Fantasy Color Palette
+ */
+
+:root {
+    /* ============================================
+       PALETTE PRINCIPALE - Medieval Fantasy
+       ============================================ */
+    
+    /* Fond sombre - Ciel nocturne */
+    --cdm-bg-darkest: #11151D;
+    --cdm-bg-dark: #222D41;
+    --cdm-bg-elevated: #374158;
+    
+    /* Accents */
+    --cdm-accent-burgundy: #7F5056;
+    --cdm-accent-coral: #D76C58;
+    
+    /* Or Royal (du logo) */
+    --cdm-gold: #C9A227;
+    --cdm-gold-light: #D4B84A;
+    --cdm-gold-dark: #8B6914;
+    
+    /* Texte */
+    --cdm-text-primary: #E8E6E3;
+    --cdm-text-secondary: #BFA76F;
+    --cdm-text-muted: #7A8B9A;
+    
+    /* ============================================
+       OVERRIDE FLUENT UI DESIGN TOKENS
+       ============================================ */
+    
+    /* Neutral Background */
+    --neutral-layer-1: var(--cdm-bg-dark);
+    --neutral-layer-2: var(--cdm-bg-darkest);
+    --neutral-layer-3: var(--cdm-bg-darkest);
+    --neutral-layer-4: var(--cdm-bg-elevated);
+    --neutral-layer-card-container: var(--cdm-bg-elevated);
+    
+    /* Neutral Fill */
+    --neutral-fill-rest: var(--cdm-bg-elevated);
+    --neutral-fill-hover: #3D4A64;
+    --neutral-fill-active: #4A5876;
+    --neutral-fill-stealth-rest: transparent;
+    --neutral-fill-stealth-hover: rgba(255, 255, 255, 0.06);
+    --neutral-fill-stealth-active: rgba(255, 255, 255, 0.1);
+    
+    /* Neutral Stroke */
+    --neutral-stroke-rest: rgba(201, 162, 39, 0.2);
+    --neutral-stroke-hover: rgba(201, 162, 39, 0.35);
+    --neutral-stroke-active: var(--cdm-gold);
+    --neutral-stroke-divider-rest: rgba(201, 162, 39, 0.15);
+    
+    /* Accent (Or Royal) */
+    --accent-fill-rest: var(--cdm-gold);
+    --accent-fill-hover: var(--cdm-gold-light);
+    --accent-fill-active: var(--cdm-gold-dark);
+    --accent-foreground-rest: var(--cdm-gold);
+    --accent-foreground-hover: var(--cdm-gold-light);
+    --accent-stroke-control-rest: var(--cdm-gold);
+    
+    /* Foreground */
+    --neutral-foreground-rest: var(--cdm-text-primary);
+    --neutral-foreground-hover: #FFFFFF;
+    --neutral-foreground-hint: var(--cdm-text-muted);
+    
+    /* Focus */
+    --focus-stroke-outer: var(--cdm-gold);
+    --focus-stroke-inner: var(--cdm-bg-darkest);
+    
+    /* Error/Warning/Success */
+    --error: var(--cdm-accent-coral);
+    --warning: #FBBF24;
+    --success: #22C55E;
+}
+
+/* ============================================
+   HEADER STYLING
+   ============================================ */
+fluent-header,
+.fluent-header {
+    background: var(--cdm-bg-dark) !important;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.2) !important;
+}
+
+/* ============================================
+   NAVIGATION MENU STYLING
+   ============================================ */
+fluent-nav-menu,
+.fluent-nav-menu {
+    background: var(--cdm-bg-darkest) !important;
+    border-right: 1px solid rgba(201, 162, 39, 0.15) !important;
+}
+
+fluent-nav-link.selected,
+fluent-nav-link[aria-current="page"] {
+    background: rgba(201, 162, 39, 0.15) !important;
+    border-left: 3px solid var(--cdm-gold) !important;
+}
+
+fluent-nav-link:hover {
+    background: rgba(201, 162, 39, 0.08) !important;
+}
+
+fluent-nav-group-header {
+    color: var(--cdm-text-secondary) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+}
+
+/* ============================================
+   CARD STYLING
+   ============================================ */
+fluent-card,
+.fluent-card {
+    background: var(--cdm-bg-elevated) !important;
+    border: 1px solid rgba(201, 162, 39, 0.15) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ============================================
+   BUTTON STYLING
+   ============================================ */
+fluent-button[appearance="accent"] {
+    background: linear-gradient(135deg, var(--cdm-gold) 0%, var(--cdm-gold-dark) 100%) !important;
+    color: var(--cdm-bg-darkest) !important;
+    font-weight: 600 !important;
+}
+
+fluent-button[appearance="accent"]:hover {
+    background: linear-gradient(135deg, var(--cdm-gold-light) 0%, var(--cdm-gold) 100%) !important;
+}
+
+fluent-button[appearance="outline"] {
+    border-color: var(--cdm-gold) !important;
+    color: var(--cdm-gold) !important;
+}
+
+fluent-button[appearance="outline"]:hover {
+    background: rgba(201, 162, 39, 0.1) !important;
+}
+
+/* ============================================
+   INPUT STYLING
+   ============================================ */
+fluent-text-field,
+fluent-text-area,
+fluent-number-field,
+fluent-select {
+    --neutral-fill-input-rest: var(--cdm-bg-darkest);
+    --neutral-fill-input-hover: var(--cdm-bg-dark);
+}
+
+fluent-text-field::part(root),
+fluent-text-area::part(root),
+fluent-number-field::part(root),
+fluent-select::part(root) {
+    border-color: rgba(201, 162, 39, 0.25) !important;
+}
+
+fluent-text-field:focus-within::part(root),
+fluent-text-area:focus-within::part(root),
+fluent-number-field:focus-within::part(root),
+fluent-select:focus-within::part(root) {
+    border-color: var(--cdm-gold) !important;
+    box-shadow: 0 0 0 1px var(--cdm-gold) !important;
+}
+
+/* ============================================
+   BODY CONTENT STYLING
+   ============================================ */
+fluent-body-content,
+.fluent-body-content {
+    background: var(--cdm-bg-darkest) !important;
+}
+
+/* ============================================
+   PROFILE MENU STYLING
+   ============================================ */
+fluent-profile-menu {
+    --neutral-layer-floating: var(--cdm-bg-elevated);
+}
+
+fluent-profile-menu::part(popup) {
+    background: var(--cdm-bg-elevated) !important;
+    border: 1px solid rgba(201, 162, 39, 0.2) !important;
+}
+
+/* ============================================
+   BREADCRUMB STYLING
+   ============================================ */
+fluent-breadcrumb-item a {
+    color: var(--cdm-text-secondary) !important;
+}
+
+fluent-breadcrumb-item a:hover {
+    color: var(--cdm-gold) !important;
+}
+
+fluent-breadcrumb-item:last-child {
+    color: var(--cdm-text-primary) !important;
+}
+
+/* ============================================
+   DATA GRID STYLING
+   ============================================ */
+fluent-data-grid {
+    --neutral-fill-rest: var(--cdm-bg-elevated);
+}
+
+fluent-data-grid-row:hover {
+    background: rgba(201, 162, 39, 0.08) !important;
+}
+
+fluent-data-grid-row[row-type="header"] {
+    background: var(--cdm-bg-dark) !important;
+    color: var(--cdm-text-secondary) !important;
+}
+
+/* ============================================
+   MESSAGE BAR STYLING
+   ============================================ */
+fluent-message-bar[intent="error"] {
+    --message-bar-background: rgba(215, 108, 88, 0.15);
+    border-left: 3px solid var(--cdm-accent-coral);
+}
+
+fluent-message-bar[intent="success"] {
+    --message-bar-background: rgba(34, 197, 94, 0.15);
+    border-left: 3px solid var(--success);
+}
+
+fluent-message-bar[intent="warning"] {
+    --message-bar-background: rgba(251, 191, 36, 0.15);
+    border-left: 3px solid var(--warning);
+}
+
+/* ============================================
+   DIALOG STYLING
+   ============================================ */
+fluent-dialog::part(control) {
+    background: var(--cdm-bg-elevated) !important;
+    border: 1px solid rgba(201, 162, 39, 0.2) !important;
+}
+
+/* ============================================
+   TABS STYLING
+   ============================================ */
+fluent-tab[aria-selected="true"] {
+    color: var(--cdm-gold) !important;
+    border-bottom-color: var(--cdm-gold) !important;
+}
+
+fluent-tab:hover {
+    color: var(--cdm-gold-light) !important;
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--cdm-bg-darkest);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cdm-bg-elevated);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 162, 39, 0.3);
+}
+
+/* ============================================
+   LOGO STYLING
+   ============================================ */
+.cdm-logo {
+    height: 40px;
+    width: auto;
+}
+
+.cdm-logo-small {
+    height: 32px;
+    width: auto;
+}
+
+/* ============================================
+   QUICK ACTION CARDS (Home Page)
+   ============================================ */
+.quick-action-card {
+    background: var(--cdm-bg-elevated);
+    border: 1px solid rgba(201, 162, 39, 0.15);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-action-card:hover {
+    border-color: var(--cdm-gold);
+    background: rgba(201, 162, 39, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.quick-action-card .icon {
+    font-size: 32px;
+    color: var(--cdm-gold);
+    margin-bottom: 12px;
+}
+
+.quick-action-card .title {
+    font-weight: 600;
+    color: var(--cdm-text-primary);
+    margin-bottom: 4px;
+}
+
+.quick-action-card .description {
+    font-size: 12px;
+    color: var(--cdm-text-muted);
+}
+
+/* ============================================
+   STAT CARDS (Dashboard)
+   ============================================ */
+.stat-card {
+    background: var(--cdm-bg-elevated);
+    border: 1px solid rgba(201, 162, 39, 0.15);
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-card .icon {
+    color: var(--cdm-gold);
+    font-size: 24px;
+}
+
+.stat-card .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--cdm-text-primary);
+}
+
+.stat-card .label {
+    font-size: 12px;
+    color: var(--cdm-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

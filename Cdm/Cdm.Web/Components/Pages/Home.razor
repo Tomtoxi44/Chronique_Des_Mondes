@@ -2,151 +2,185 @@
 @using Cdm.Web.Components.Layout
 @using Cdm.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Authorization
-@layout AppLayout
+@layout MainLayout
 
 <PageTitle>Accueil - Chronique des Mondes</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <!-- Dashboard pour utilisateurs connectés -->
-        <div class="dashboard">
+        <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
             <!-- Hero Welcome -->
-            <section class="dashboard-hero">
-                <div class="dashboard-hero-content">
-                    <h1 class="dashboard-hero-title">
-                        Bienvenue, <span class="text-gold">@context.User.Identity?.Name</span> !
-                    </h1>
-                    <p class="dashboard-hero-subtitle">Prêt pour votre prochaine aventure épique ?</p>
-                </div>
-                <div class="dashboard-hero-actions">
-                    <a href="/campaigns/create" class="btn btn-primary btn-lg">
-                        <i class="bi bi-plus-lg"></i>
-                        Nouvelle Campagne
-                    </a>
-                    <a href="/characters/create" class="btn btn-secondary btn-lg">
-                        <i class="bi bi-person-plus"></i>
-                        Nouveau Personnage
-                    </a>
-                </div>
-            </section>
+            <FluentCard Style="background: linear-gradient(135deg, var(--accent-fill-rest) 0%, var(--accent-fill-hover) 100%); color: white;">
+                <FluentStack Orientation="Orientation.Horizontal" 
+                             VerticalAlignment="VerticalAlignment.Center"
+                             HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                             Wrap="true"
+                             Style="padding: 16px;">
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                        <FluentLabel Typo="Typography.H3" Style="color: white;">
+                            Bienvenue, @context.User.Identity?.Name !
+                        </FluentLabel>
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.9; color: white;">
+                            Pret pour votre prochaine aventure epique ?
+                        </FluentLabel>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 12px;">
+                        <FluentButton Appearance="Appearance.Accent" 
+                                      IconStart="@(new Icons.Regular.Size20.Add())"
+                                      Href="/campaigns/create"
+                                      Style="background: white; color: var(--accent-fill-rest);">
+                            Nouvelle Campagne
+                        </FluentButton>
+                        <FluentButton Appearance="Appearance.Outline" 
+                                      IconStart="@(new Icons.Regular.Size20.PersonAdd())"
+                                      Href="/characters/create"
+                                      Style="border-color: white; color: white;">
+                            Nouveau Personnage
+                        </FluentButton>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
 
             <!-- Stats Cards -->
-            <section class="dashboard-stats">
-                <div class="card card-stat">
-                    <div class="card-stat-icon text-gold">
-                        <i class="bi bi-people-fill"></i>
-                    </div>
-                    <div class="card-stat-content">
-                        <span class="card-stat-value">0</span>
-                        <span class="card-stat-label">Personnages</span>
-                    </div>
-                </div>
+            <FluentGrid Spacing="3" Justify="JustifyContent.FlexStart">
+                <FluentGridItem xs="12" sm="6" md="3">
+                    <FluentCard Style="height: 100%;">
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size28.People())" Color="Color.Accent" />
+                            <FluentStack Orientation="Orientation.Vertical">
+                                <FluentLabel Typo="Typography.H4">0</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Personnages</FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentCard>
+                </FluentGridItem>
                 
-                <div class="card card-stat">
-                    <div class="card-stat-icon text-crimson">
-                        <i class="bi bi-map-fill"></i>
-                    </div>
-                    <div class="card-stat-content">
-                        <span class="card-stat-value">0</span>
-                        <span class="card-stat-label">Campagnes</span>
-                    </div>
-                </div>
+                <FluentGridItem xs="12" sm="6" md="3">
+                    <FluentCard Style="height: 100%;">
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size28.BookOpen())" Color="Color.Error" />
+                            <FluentStack Orientation="Orientation.Vertical">
+                                <FluentLabel Typo="Typography.H4">0</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Campagnes</FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentCard>
+                </FluentGridItem>
                 
-                <div class="card card-stat">
-                    <div class="card-stat-icon text-bronze">
-                        <i class="bi bi-dice-6-fill"></i>
-                    </div>
-                    <div class="card-stat-content">
-                        <span class="card-stat-value">0</span>
-                        <span class="card-stat-label">Lancers de dés</span>
-                    </div>
-                </div>
+                <FluentGridItem xs="12" sm="6" md="3">
+                    <FluentCard Style="height: 100%;">
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size28.Globe())" Color="Color.Warning" />
+                            <FluentStack Orientation="Orientation.Vertical">
+                                <FluentLabel Typo="Typography.H4">0</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Mondes</FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentCard>
+                </FluentGridItem>
                 
-                <div class="card card-stat">
-                    <div class="card-stat-icon text-success">
-                        <i class="bi bi-calendar-event-fill"></i>
-                    </div>
-                    <div class="card-stat-content">
-                        <span class="card-stat-value">0</span>
-                        <span class="card-stat-label">Sessions jouées</span>
-                    </div>
-                </div>
-            </section>
+                <FluentGridItem xs="12" sm="6" md="3">
+                    <FluentCard Style="height: 100%;">
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size28.Trophy())" Color="Color.Success" />
+                            <FluentStack Orientation="Orientation.Vertical">
+                                <FluentLabel Typo="Typography.H4">0</FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Succes</FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentCard>
+                </FluentGridItem>
+            </FluentGrid>
 
             <!-- Quick Actions -->
-            <section class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="bi bi-lightning-fill"></i>
-                        Actions Rapides
-                    </h2>
-                </div>
-                
-                <div class="content-grid content-grid-4">
-                    <a href="/characters" class="card card-feature card-hover">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-person-badge"></i>
-                        </div>
-                        <h3 class="card-feature-title">Mes Personnages</h3>
-                        <p class="card-feature-description">Créez et gérez vos héros</p>
-                    </a>
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Flash())" Color="Color.Accent" />
+                        <FluentLabel Typo="Typography.H5">Actions Rapides</FluentLabel>
+                    </FluentStack>
                     
-                    <a href="/campaigns" class="card card-feature card-hover">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-book"></i>
-                        </div>
-                        <h3 class="card-feature-title">Mes Campagnes</h3>
-                        <p class="card-feature-description">Explorez vos aventures</p>
-                    </a>
-                    
-                    <a href="/dice" class="card card-feature card-hover">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-dice-5"></i>
-                        </div>
-                        <h3 class="card-feature-title">Lanceur de Dés</h3>
-                        <p class="card-feature-description">Lancez les dés du destin</p>
-                    </a>
-                    
-                    <a href="/profile" class="card card-feature card-hover">
-                        <div class="card-feature-icon">
-                            <i class="bi bi-gear"></i>
-                        </div>
-                        <h3 class="card-feature-title">Mon Profil</h3>
-                        <p class="card-feature-description">Gérez votre compte</p>
-                    </a>
-                </div>
-            </section>
+                    <FluentGrid Spacing="3">
+                        <FluentGridItem xs="12" sm="6" md="3">
+                            <FluentCard Style="cursor: pointer; transition: all 0.2s;" @onclick='() => NavigateTo("/characters")'>
+                                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 12px; padding: 16px;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Person())" Color="Color.Accent" />
+                                    <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Mes Personnages</FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; font-size: 12px;">Creez et gerez vos heros</FluentLabel>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                        
+                        <FluentGridItem xs="12" sm="6" md="3">
+                            <FluentCard Style="cursor: pointer; transition: all 0.2s;" @onclick='() => NavigateTo("/campaigns")'>
+                                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 12px; padding: 16px;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Book())" Color="Color.Accent" />
+                                    <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Mes Campagnes</FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; font-size: 12px;">Explorez vos aventures</FluentLabel>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                        
+                        <FluentGridItem xs="12" sm="6" md="3">
+                            <FluentCard Style="cursor: pointer; transition: all 0.2s;" @onclick='() => NavigateTo("/worlds")'>
+                                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 12px; padding: 16px;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Globe())" Color="Color.Accent" />
+                                    <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Mes Mondes</FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; font-size: 12px;">Creez des univers</FluentLabel>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                        
+                        <FluentGridItem xs="12" sm="6" md="3">
+                            <FluentCard Style="cursor: pointer; transition: all 0.2s;" @onclick='() => NavigateTo("/dice")'>
+                                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 12px; padding: 16px;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Cube())" Color="Color.Accent" />
+                                    <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Lanceur de Des</FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; font-size: 12px;">Lancez les des du destin</FluentLabel>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentStack>
+            </FluentCard>
 
             <!-- Recent Activity -->
-            <section class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="bi bi-clock-history"></i>
-                        Activité Récente
-                    </h2>
-                </div>
-                
-                <div class="card">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">
-                            <i class="bi bi-hourglass"></i>
-                        </div>
-                        <h3 class="empty-state-title">Aucune activité récente</h3>
-                        <p class="empty-state-description">
-                            Commencez par créer votre premier personnage ou rejoignez une campagne !
-                        </p>
-                        <a href="/characters/create" class="btn btn-primary">
-                            <i class="bi bi-plus-lg"></i>
-                            Créer un personnage
-                        </a>
-                    </div>
-                </div>
-            </section>
-        </div>
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.History())" Color="Color.Accent" />
+                        <FluentLabel Typo="Typography.H5">Activite Recente</FluentLabel>
+                    </FluentStack>
+                    
+                    <FluentStack Orientation="Orientation.Vertical" 
+                                 HorizontalAlignment="HorizontalAlignment.Center"
+                                 Style="padding: 48px; gap: 16px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Clock())" Color="Color.Neutral" />
+                        <FluentLabel Typo="Typography.H6">Aucune activite recente</FluentLabel>
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center;">
+                            Commencez par creer votre premier personnage ou rejoignez une campagne !
+                        </FluentLabel>
+                        <FluentButton Appearance="Appearance.Accent" 
+                                      IconStart="@(new Icons.Regular.Size20.Add())"
+                                      Href="/characters/create">
+                            Creer un personnage
+                        </FluentButton>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+        </FluentStack>
     </Authorized>
     
     <NotAuthorized>
-        <!-- Redirection vers la page de connexion -->
         <RedirectToLogin />
     </NotAuthorized>
 </AuthorizeView>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private void NavigateTo(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+}

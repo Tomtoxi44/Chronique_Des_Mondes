@@ -4,140 +4,164 @@
 @using Cdm.Web.Components.Shared
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
-@layout AppLayout
+@layout MainLayout
 @attribute [Authorize]
 
 <PageTitle>Mon Profil - Chronique des Mondes</PageTitle>
 
-<div class="profile-page">
+<FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
+    <!-- Page Header -->
+    <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+        <FluentLabel Typo="Typography.H4">Mon Profil</FluentLabel>
+        <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Gerez vos informations personnelles</FluentLabel>
+    </FluentStack>
+
     @if (profile == null && string.IsNullOrEmpty(errorMessage))
     {
-        <div class="loading-state">
-            <div class="loading-spinner"></div>
-            <span class="loading-text">Chargement du profil...</span>
-        </div>
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Vertical" 
+                         HorizontalAlignment="HorizontalAlignment.Center"
+                         Style="padding: 48px; gap: 16px;">
+                <FluentProgressRing />
+                <FluentLabel>Chargement du profil...</FluentLabel>
+            </FluentStack>
+        </FluentCard>
     }
     else if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="card" style="max-width: 600px; margin: 0 auto;">
-            <div class="empty-state">
-                <div class="empty-state-icon">
-                    <i class="bi bi-exclamation-triangle text-crimson"></i>
-                </div>
-                <h3 class="empty-state-title">Erreur de chargement</h3>
-                <p class="empty-state-description">@errorMessage</p>
-                <button type="button" class="btn btn-primary" @onclick="LoadProfileAsync">
-                    <i class="bi bi-arrow-clockwise"></i>
-                    Réessayer
-                </button>
-            </div>
-        </div>
+        <FluentMessageBar Title="Erreur de chargement" Intent="MessageIntent.Error" Style="width: 100%;">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
+                <span>@errorMessage</span>
+                <FluentButton Appearance="Appearance.Outline" 
+                              IconStart="@(new Icons.Regular.Size20.ArrowClockwise())"
+                              OnClick="@LoadProfileAsync">
+                    Reessayer
+                </FluentButton>
+            </FluentStack>
+        </FluentMessageBar>
     }
     else if (profile != null)
     {
         <!-- Profile Header Card -->
-        <div class="card card-gold">
-            <div class="profile-header">
-                <AuthorizeView>
-                    <Authorized>
-                        <div class="profile-avatar">
-                            @if (!string.IsNullOrEmpty(profile.AvatarUrl))
-                            {
-                                <img src="@profile.AvatarUrl" alt="Avatar de @profile.Nickname" />
-                            }
-                            else
-                            {
-                                <i class="bi bi-person-fill"></i>
-                            }
-                        </div>
-                        <h1 class="profile-name">@profile.Nickname</h1>
-                        <p class="profile-email">
-                            <i class="bi bi-envelope"></i>
-                            @profile.Email
-                        </p>
-                        @if (!string.IsNullOrEmpty(profile.Username))
+        <FluentCard Style="background: linear-gradient(135deg, var(--accent-fill-rest) 0%, var(--accent-fill-hover) 100%);">
+            <AuthorizeView>
+                <Authorized>
+                    <FluentStack Orientation="Orientation.Horizontal" 
+                                 VerticalAlignment="VerticalAlignment.Center"
+                                 Wrap="true"
+                                 Style="gap: 24px; padding: 16px;">
+                        @if (!string.IsNullOrEmpty(profile.AvatarUrl))
                         {
-                            <span class="badge badge-gold" style="margin-top: var(--spacing-sm);">
-                                <i class="bi bi-at"></i> @profile.Username
-                            </span>
+                            <FluentPersona Image="@profile.AvatarUrl"
+                                           Name="@profile.Nickname"
+                                           ImageSize="100px" />
                         }
-                    </Authorized>
-                </AuthorizeView>
-            </div>
-        </div>
+                        else
+                        {
+                            <FluentPersona Name="@profile.Nickname"
+                                           ImageSize="100px" />
+                        }
+                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                            <FluentLabel Typo="Typography.H3" Style="color: white;">@profile.Nickname</FluentLabel>
+                            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 4px; color: white; opacity: 0.9;">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" />
+                                <FluentLabel Style="color: white;">@profile.Email</FluentLabel>
+                            </FluentStack>
+                            @if (!string.IsNullOrEmpty(profile.Username))
+                            {
+                                <FluentBadge Appearance="Appearance.Accent">
+                                    @@ @profile.Username
+                                </FluentBadge>
+                            }
+                        </FluentStack>
+                    </FluentStack>
+                </Authorized>
+            </AuthorizeView>
+        </FluentCard>
 
         <!-- Role Management -->
-        <div class="profile-section">
-            <RoleManager />
-        </div>
+        <RoleManager />
 
         <!-- Account Information -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="profile-section-title">
-                    <i class="bi bi-info-circle"></i>
-                    Informations du compte
-                </h2>
-            </div>
-            <div class="card-body">
-                <div class="profile-info-grid">
-                    <div class="profile-info-item">
-                        <span class="profile-info-label">Membre depuis</span>
-                        <span class="profile-info-value">
-                            <i class="bi bi-calendar3 text-gold"></i>
-                            @profile.CreatedAt.ToString("dd MMMM yyyy")
-                        </span>
-                    </div>
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Info())" Color="Color.Accent" />
+                    <FluentLabel Typo="Typography.H5">Informations du compte</FluentLabel>
+                </FluentStack>
+
+                <FluentGrid Spacing="3">
+                    <FluentGridItem xs="12" md="6">
+                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+                            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Membre depuis</FluentLabel>
+                            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" Color="Color.Accent" />
+                                <FluentLabel Typo="Typography.Body">@profile.CreatedAt.ToString("dd MMMM yyyy")</FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentGridItem>
                     
                     @if (profile.LastLoginAt.HasValue)
                     {
-                        <div class="profile-info-item">
-                            <span class="profile-info-label">Dernière connexion</span>
-                            <span class="profile-info-value">
-                                <i class="bi bi-clock text-gold"></i>
-                                @profile.LastLoginAt.Value.ToString("dd MMMM yyyy à HH:mm")
-                            </span>
-                        </div>
+                        <FluentGridItem xs="12" md="6">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Derniere connexion</FluentLabel>
+                                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Clock())" Color="Color.Accent" />
+                                    <FluentLabel Typo="Typography.Body">@profile.LastLoginAt.Value.ToString("dd MMMM yyyy a HH:mm")</FluentLabel>
+                                </FluentStack>
+                            </FluentStack>
+                        </FluentGridItem>
                     }
-                </div>
-            </div>
-        </div>
+                </FluentGrid>
+            </FluentStack>
+        </FluentCard>
 
         <!-- Quick Actions -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="profile-section-title">
-                    <i class="bi bi-lightning"></i>
-                    Actions rapides
-                </h2>
-            </div>
-            <div class="card-body">
-                <div class="content-grid content-grid-3">
-                    <a href="/settings" class="btn btn-secondary btn-block">
-                        <i class="bi bi-gear"></i>
-                        Paramètres
-                    </a>
-                    <a href="/characters" class="btn btn-secondary btn-block">
-                        <i class="bi bi-people"></i>
-                        Mes personnages
-                    </a>
-                    <a href="/campaigns" class="btn btn-secondary btn-block">
-                        <i class="bi bi-map"></i>
-                        Mes campagnes
-                    </a>
-                </div>
-            </div>
-        </div>
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Flash())" Color="Color.Accent" />
+                    <FluentLabel Typo="Typography.H5">Actions rapides</FluentLabel>
+                </FluentStack>
+
+                <FluentGrid Spacing="3">
+                    <FluentGridItem xs="12" sm="4">
+                        <FluentButton Appearance="Appearance.Outline" 
+                                      Href="/settings"
+                                      IconStart="@(new Icons.Regular.Size20.Settings())"
+                                      Style="width: 100%;">
+                            Parametres
+                        </FluentButton>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12" sm="4">
+                        <FluentButton Appearance="Appearance.Outline" 
+                                      Href="/characters"
+                                      IconStart="@(new Icons.Regular.Size20.People())"
+                                      Style="width: 100%;">
+                            Mes personnages
+                        </FluentButton>
+                    </FluentGridItem>
+                    <FluentGridItem xs="12" sm="4">
+                        <FluentButton Appearance="Appearance.Outline" 
+                                      Href="/campaigns"
+                                      IconStart="@(new Icons.Regular.Size20.BookOpen())"
+                                      Style="width: 100%;">
+                            Mes campagnes
+                        </FluentButton>
+                    </FluentGridItem>
+                </FluentGrid>
+            </FluentStack>
+        </FluentCard>
 
         @if (!string.IsNullOrEmpty(successMessage))
         {
-            <div class="alert alert-success" style="margin-top: var(--spacing-lg);">
-                <i class="bi bi-check-circle"></i>
+            <FluentMessageBar Title="Succes" Intent="MessageIntent.Success" Style="width: 100%;">
                 @successMessage
-            </div>
+            </FluentMessageBar>
         }
     }
-</div>
+</FluentStack>
 
 @code {
     [Inject] private ProfileApiClient ProfileClient { get; set; } = default!;
@@ -182,17 +206,17 @@
             if (updatedProfile != null)
             {
                 profile = updatedProfile;
-                successMessage = "Profil mis à jour avec succès !";
+                successMessage = "Profil mis a jour avec succes !";
             }
             else
             {
-                errorMessage = "Erreur lors de la mise à jour du profil.";
+                errorMessage = "Erreur lors de la mise a jour du profil.";
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating profile");
-            errorMessage = "Erreur lors de la mise à jour du profil.";
+            errorMessage = "Erreur lors de la mise a jour du profil.";
         }
     }
 
@@ -211,7 +235,7 @@
                 {
                     profile.AvatarUrl = avatarUrl;
                 }
-                successMessage = "Avatar mis à jour avec succès !";
+                successMessage = "Avatar mis a jour avec succes !";
                 await LoadProfileAsync();
             }
             else

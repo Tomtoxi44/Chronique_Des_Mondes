@@ -6,6 +6,11 @@
 public enum GameType
 {
     /// <summary>
+    /// Empty world serving as an invitation lobby (no game rules)
+    /// </summary>
+    Empty = -1,
+
+    /// <summary>
     /// Generic game type with flexible attributes
     /// </summary>
     Generic = 0,
@@ -29,6 +34,11 @@ public enum GameType
     /// Warhammer Fantasy Roleplay
     /// </summary>
     Warhammer = 4,
+
+    /// <summary>
+    /// Cyberpunk RED role-playing game
+    /// </summary>
+    Cyberpunk = 5,
 
     /// <summary>
     /// The Elder Scrolls V: Skyrim

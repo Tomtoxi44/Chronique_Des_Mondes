@@ -11,4 +11,9 @@
     <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.14.0" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.0" />
+  </ItemGroup>
+
 </Project>

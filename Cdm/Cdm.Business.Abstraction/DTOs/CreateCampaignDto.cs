@@ -22,10 +22,10 @@ public class CreateCampaignDto
     public string? Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the game system type
+    /// Gets or sets the world ID this campaign belongs to
     /// </summary>
-    [Required(ErrorMessage = "Game type is required")]
-    public GameType GameType { get; set; }
+    [Required(ErrorMessage = "World ID is required")]
+    public int WorldId { get; set; }
 
     /// <summary>
     /// Gets or sets the campaign visibility (default: Private)

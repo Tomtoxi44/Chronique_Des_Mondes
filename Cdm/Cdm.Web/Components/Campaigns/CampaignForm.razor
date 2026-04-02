@@ -5,110 +5,121 @@
 ----------------------------------------------------------------------- *@
 
 @using Cdm.Common.Enums
+@using Cdm.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Forms
 @using System.ComponentModel.DataAnnotations
 
 <EditForm Model="@this.Model" OnValidSubmit="HandleValidSubmit">
     <DataAnnotationsValidator />
-    <ValidationSummary class="alert alert-danger" />
+    <FluentValidationSummary />
 
-    <!-- Campaign Name -->
-    <div class="mb-3">
-        <label for="campaignName" class="form-label fw-bold">
-            <i class="bi bi-bookmark"></i> Nom de la campagne <span class="text-danger">*</span>
-        </label>
-        <InputText id="campaignName" 
-                  @bind-Value="this.Model.Name" 
-                  class="form-control" 
-                  placeholder="Ex: La Quête du Dragon Pourpre" />
-        <ValidationMessage For="@(() => this.Model.Name)" />
-        <div class="form-text">Entre 3 et 100 caractères</div>
-    </div>
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+        <!-- Campaign Name -->
+        <div>
+            <FluentTextField @bind-Value="this.Model.Name"
+                            Label="Nom de la campagne"
+                            Placeholder="Ex: La Quete du Dragon Pourpre"
+                            Required="true"
+                            Style="width: 100%;">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Bookmark())" Slot="start" />
+            </FluentTextField>
+            <ValidationMessage For="@(() => this.Model.Name)" />
+            <FluentLabel Typo="Typography.Body" Style="font-size: 12px; color: var(--neutral-foreground-hint); margin-top: 4px;">
+                Entre 3 et 100 caracteres
+            </FluentLabel>
+        </div>
 
-    <!-- Campaign Description -->
-    <div class="mb-3">
-        <label for="campaignDescription" class="form-label fw-bold">
-            <i class="bi bi-text-paragraph"></i> Description
-        </label>
-        <InputTextArea id="campaignDescription" 
-                      @bind-Value="this.Model.Description" 
-                      class="form-control" 
-                      rows="5"
-                      placeholder="Décrivez l'univers, les objectifs et l'ambiance de votre campagne..." />
-        <ValidationMessage For="@(() => this.Model.Description)" />
-        <div class="form-text">Maximum 5000 caractères</div>
-    </div>
+        <!-- Campaign Description -->
+        <div>
+            <FluentTextArea @bind-Value="this.Model.Description"
+                           Label="Description"
+                           Placeholder="Decrivez l'univers, les objectifs et l'ambiance de votre campagne..."
+                           Rows="5"
+                           Style="width: 100%;" />
+            <ValidationMessage For="@(() => this.Model.Description)" />
+            <FluentLabel Typo="Typography.Body" Style="font-size: 12px; color: var(--neutral-foreground-hint); margin-top: 4px;">
+                Maximum 5000 caracteres
+            </FluentLabel>
+        </div>
 
-    <!-- Game Type -->
-    <div class="mb-3">
-        <label for="gameType" class="form-label fw-bold">
-            <i class="bi bi-controller"></i> Système de jeu <span class="text-danger">*</span>
-        </label>
-        <InputSelect id="gameType" 
-                    @bind-Value="this.Model.GameType" 
-                    class="form-select">
-            <option value="@GameType.Generic">Générique</option>
-            <option value="@GameType.DnD5e">Dungeons & Dragons 5e</option>
-            <option value="@GameType.Pathfinder">Pathfinder</option>
-            <option value="@GameType.CallOfCthulhu">L'Appel de Cthulhu</option>
-            <option value="@GameType.Warhammer">Warhammer</option>
-            <option value="@GameType.Skyrim">Skyrim</option>
-            <option value="@GameType.Custom">Personnalisé</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => this.Model.GameType)" />
-    </div>
+        <!-- Game Type -->
+        <div>
+            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold" Style="margin-bottom: 8px;">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Games())" Style="margin-right: 8px;" />
+                Systeme de jeu
+            </FluentLabel>
+            <FluentSelect TOption="string"
+                         Value="@this.Model.GameType.ToString()"
+                         ValueChanged="@(value => this.Model.GameType = Enum.Parse<GameType>(value))"
+                         Style="width: 100%;">
+                <FluentOption Value="@nameof(GameType.Generic)">Generique</FluentOption>
+                <FluentOption Value="@nameof(GameType.DnD5e)">Dungeons & Dragons 5e</FluentOption>
+                <FluentOption Value="@nameof(GameType.Pathfinder)">Pathfinder</FluentOption>
+                <FluentOption Value="@nameof(GameType.CallOfCthulhu)">L'Appel de Cthulhu</FluentOption>
+                <FluentOption Value="@nameof(GameType.Warhammer)">Warhammer</FluentOption>
+                <FluentOption Value="@nameof(GameType.Skyrim)">Skyrim</FluentOption>
+                <FluentOption Value="@nameof(GameType.Custom)">Personnalise</FluentOption>
+            </FluentSelect>
+            <ValidationMessage For="@(() => this.Model.GameType)" />
+        </div>
 
-    <!-- Visibility -->
-    <div class="mb-3">
-        <label for="visibility" class="form-label fw-bold">
-            <i class="bi bi-eye"></i> Visibilité
-        </label>
-        <InputSelect id="visibility" 
-                    @bind-Value="this.Model.Visibility" 
-                    class="form-select">
-            <option value="@Visibility.Private">Privée (sur invitation uniquement)</option>
-            <option value="@Visibility.Public">Publique (recherche possible)</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => this.Model.Visibility)" />
-    </div>
+        <!-- Visibility -->
+        <div>
+            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold" Style="margin-bottom: 8px;">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Eye())" Style="margin-right: 8px;" />
+                Visibilite
+            </FluentLabel>
+            <FluentSelect TOption="string"
+                         Value="@this.Model.Visibility.ToString()"
+                         ValueChanged="@(value => this.Model.Visibility = Enum.Parse<Visibility>(value))"
+                         Style="width: 100%;">
+                <FluentOption Value="@nameof(Visibility.Private)">Privee (sur invitation uniquement)</FluentOption>
+                <FluentOption Value="@nameof(Visibility.Public)">Publique (recherche possible)</FluentOption>
+            </FluentSelect>
+            <ValidationMessage For="@(() => this.Model.Visibility)" />
+        </div>
 
-    <!-- Max Players -->
-    <div class="mb-3">
-        <label for="maxPlayers" class="form-label fw-bold">
-            <i class="bi bi-people"></i> Nombre maximum de joueurs
-        </label>
-        <InputNumber id="maxPlayers" 
-                    @bind-Value="this.Model.MaxPlayers" 
-                    class="form-control" 
-                    min="1"
-                    max="20" />
-        <ValidationMessage For="@(() => this.Model.MaxPlayers)" />
-        <div class="form-text">Entre 1 et 20 joueurs</div>
-    </div>
+        <!-- Max Players -->
+        <div>
+            <FluentNumberField @bind-Value="this.Model.MaxPlayers"
+                              Label="Nombre maximum de joueurs"
+                              Min="1"
+                              Max="20"
+                              Style="width: 100%;">
+                <FluentIcon Value="@(new Icons.Regular.Size20.People())" Slot="start" />
+            </FluentNumberField>
+            <ValidationMessage For="@(() => this.Model.MaxPlayers)" />
+            <FluentLabel Typo="Typography.Body" Style="font-size: 12px; color: var(--neutral-foreground-hint); margin-top: 4px;">
+                Entre 1 et 20 joueurs
+            </FluentLabel>
+        </div>
 
-    <!-- Cover Image -->
-    <div class="mb-3">
-        <label class="form-label fw-bold">
-            <i class="bi bi-image"></i> Image de couverture
-        </label>
-        <ImageUploader OnImageSelected="HandleImageSelected" InputId="campaignCoverInput" />
-    </div>
+        <!-- Cover Image -->
+        <div>
+            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold" Style="margin-bottom: 8px;">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Image())" Style="margin-right: 8px;" />
+                Image de couverture
+            </FluentLabel>
+            <ImageUploader OnImageSelected="HandleImageSelected" InputId="campaignCoverInput" />
+        </div>
 
-    <!-- Submit Button -->
-    <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-primary btn-lg" disabled="@this.IsSubmitting">
+        <!-- Submit Button -->
+        <FluentButton Type="ButtonType.Submit"
+                      Appearance="Appearance.Accent"
+                      Loading="@this.IsSubmitting"
+                      Disabled="@this.IsSubmitting"
+                      IconStart="@(new Icons.Regular.Size20.AddCircle())"
+                      Style="width: 100%;">
             @if (this.IsSubmitting)
             {
-                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                <span>Création en cours...</span>
+                <span>Creation en cours...</span>
             }
             else
             {
-                <i class="bi bi-plus-circle me-2"></i>
-                <span>Créer la campagne</span>
+                <span>Creer la campagne</span>
             }
-        </button>
-    </div>
+        </FluentButton>
+    </FluentStack>
 </EditForm>
 
 @code {
@@ -156,19 +167,19 @@
         /// Gets or sets the campaign name.
         /// </summary>
         [Required(ErrorMessage = "Le nom de la campagne est requis")]
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Le nom doit contenir entre 3 et 100 caractères")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Le nom doit contenir entre 3 et 100 caracteres")]
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the campaign description.
         /// </summary>
-        [MaxLength(5000, ErrorMessage = "La description ne peut pas dépasser 5000 caractères")]
+        [MaxLength(5000, ErrorMessage = "La description ne peut pas depasser 5000 caracteres")]
         public string? Description { get; set; }
 
         /// <summary>
         /// Gets or sets the game type.
         /// </summary>
-        [Required(ErrorMessage = "Le système de jeu est requis")]
+        [Required(ErrorMessage = "Le systeme de jeu est requis")]
         public GameType GameType { get; set; } = GameType.Generic;
 
         /// <summary>
@@ -179,7 +190,7 @@
         /// <summary>
         /// Gets or sets the maximum number of players.
         /// </summary>
-        [Range(1, 20, ErrorMessage = "Le nombre de joueurs doit être entre 1 et 20")]
+        [Range(1, 20, ErrorMessage = "Le nombre de joueurs doit etre entre 1 et 20")]
         public int MaxPlayers { get; set; } = 6;
 
         /// <summary>
