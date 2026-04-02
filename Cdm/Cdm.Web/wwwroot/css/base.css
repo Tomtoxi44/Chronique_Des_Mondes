@@ -1,12 +1,12 @@
 /* 
  * Base Styles - Chronique des Mondes
- * Reset & fondations
+ * Medieval Fantasy Theme v2.0.0
  */
 
 /* ============================================
-   IMPORTS
+   IMPORTS - Polices médiévales
    ============================================ */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ============================================
    RESET
@@ -17,136 +17,396 @@
   padding: 0;
 }
 
-/* Retire le focus outline sur les éléments non interactifs */
-h1, h2, h3, h4, h5, h6, p, div, span {
-  outline: none;
-}
-
-/* Focus visible uniquement pour les éléments interactifs */
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-}
-
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: var(--font-family-body);
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
-  color: var(--color-text-secondary);
-  background-color: var(--color-background-primary);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ============================================
-   TYPOGRAPHIE
+   TYPOGRAPHIE MÉDIÉVALE
    ============================================ */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family-heading);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.2;
+  line-height: var(--line-height-heading);
   margin-bottom: var(--spacing-md);
+  letter-spacing: 0.02em;
 }
 
 h1 {
   font-size: var(--font-size-h1);
   font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-h1);
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 h2 {
   font-size: var(--font-size-h2);
-  line-height: var(--line-height-h2);
+  color: var(--color-gold-300);
 }
 
 h3 {
   font-size: var(--font-size-h3);
-  line-height: var(--line-height-h3);
 }
 
 h4 {
   font-size: var(--font-size-h4);
-  line-height: var(--line-height-h4);
 }
 
 h5 {
   font-size: var(--font-size-h5);
-  line-height: var(--line-height-h5);
 }
 
 h6 {
   font-size: var(--font-size-h6);
-  line-height: var(--line-height-h6);
+}
+
+/* Titre décoratif pour les pages importantes */
+.title-decorative {
+  font-family: var(--font-family-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 p {
   margin-bottom: var(--spacing-md);
+  color: var(--color-text-secondary);
 }
 
 a {
-  color: var(--color-primary-300);
+  color: var(--color-gold-300);
   text-decoration: none;
   transition: color var(--duration-fast) var(--ease-out);
 }
 
 a:hover {
-  color: var(--color-primary-100);
+  color: var(--color-gold-500);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-strong {
+strong, b {
   font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+small {
+  font-size: var(--font-size-small);
+  color: var(--color-text-tertiary);
 }
 
 code {
   font-family: var(--font-family-mono);
   font-size: 0.9em;
-  background-color: var(--color-background-secondary);
-  padding: 0.125rem 0.25rem;
+  background-color: var(--color-bg-elevated);
+  padding: 0.2em 0.4em;
   border-radius: var(--border-radius-sm);
+  border: 1px solid var(--color-border);
 }
 
 /* ============================================
-   FOCUS STYLES
+   SÉLECTION DE TEXTE
    ============================================ */
-*:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
+::selection {
+  background-color: var(--color-gold-500);
+  color: var(--color-bg-primary);
 }
 
 /* ============================================
-   SCROLLBAR
+   FOCUS STYLES - Accessible
+   ============================================ */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold-500);
+  outline-offset: 2px;
+  box-shadow: var(--shadow-focus);
+}
+
+/* ============================================
+   SCROLLBAR PERSONNALISÉE
    ============================================ */
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-background-secondary);
+  background: var(--color-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-primary-700);
-  border-radius: var(--border-radius-md);
+  background: var(--color-bronze-500);
+  border-radius: var(--border-radius-full);
+  border: 2px solid var(--color-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary-500);
+  background: var(--color-gold-500);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bronze-500) var(--color-bg-secondary);
 }
 
 /* ============================================
-   UTILITY CLASSES
+   CONTAINER
+   ============================================ */
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.container-sm {
+  max-width: 640px;
+}
+
+.container-md {
+  max-width: 960px;
+}
+
+/* ============================================
+   UTILITAIRES - TEXTE
+   ============================================ */
+.text-primary { color: var(--color-text-primary) !important; }
+.text-secondary { color: var(--color-text-secondary) !important; }
+.text-tertiary { color: var(--color-text-tertiary) !important; }
+.text-muted { color: var(--color-text-muted) !important; }
+.text-gold { color: var(--color-gold-500) !important; }
+.text-crimson { color: var(--color-crimson-500) !important; }
+.text-success { color: var(--color-success-500) !important; }
+.text-warning { color: var(--color-warning-500) !important; }
+.text-error { color: var(--color-error-500) !important; }
+
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-small); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-h6); }
+.text-xl { font-size: var(--font-size-h5); }
+.text-2xl { font-size: var(--font-size-h4); }
+.text-3xl { font-size: var(--font-size-h3); }
+.text-4xl { font-size: var(--font-size-h2); }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.font-normal { font-weight: var(--font-weight-regular); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.font-heading { font-family: var(--font-family-heading); }
+.font-body { font-family: var(--font-family-body); }
+.font-accent { font-family: var(--font-family-accent); }
+
+.uppercase { text-transform: uppercase; letter-spacing: 0.05em; }
+.capitalize { text-transform: capitalize; }
+.lowercase { text-transform: lowercase; }
+
+/* ============================================
+   UTILITAIRES - ESPACEMENT
+   ============================================ */
+.m-0 { margin: 0; }
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+.m-xl { margin: var(--spacing-xl); }
+
+.mt-0 { margin-top: 0; }
+.mt-xs { margin-top: var(--spacing-xs); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+.mt-2xl { margin-top: var(--spacing-2xl); }
+
+.mb-0 { margin-bottom: 0; }
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+.mb-2xl { margin-bottom: var(--spacing-2xl); }
+
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+.p-0 { padding: 0; }
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+.p-2xl { padding: var(--spacing-2xl); }
+
+.px-md { padding-left: var(--spacing-md); padding-right: var(--spacing-md); }
+.px-lg { padding-left: var(--spacing-lg); padding-right: var(--spacing-lg); }
+.py-md { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
+.py-lg { padding-top: var(--spacing-lg); padding-bottom: var(--spacing-lg); }
+
+/* ============================================
+   UTILITAIRES - FLEXBOX
+   ============================================ */
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+.flex-shrink-0 { flex-shrink: 0; }
+
+.items-start { align-items: flex-start; }
+.items-center { align-items: center; }
+.items-end { align-items: flex-end; }
+.items-stretch { align-items: stretch; }
+
+.justify-start { justify-content: flex-start; }
+.justify-center { justify-content: center; }
+.justify-end { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+.gap-xl { gap: var(--spacing-xl); }
+
+/* ============================================
+   UTILITAIRES - GRID
+   ============================================ */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 768px) {
+  .md\:grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .sm\:grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+}
+
+/* ============================================
+   UTILITAIRES - AFFICHAGE
+   ============================================ */
+.hidden { display: none; }
+.block { display: block; }
+.inline-block { display: inline-block; }
+.visible { visibility: visible; }
+.invisible { visibility: hidden; }
+
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-x-hidden { overflow-x: hidden; }
+.overflow-y-auto { overflow-y: auto; }
+
+/* ============================================
+   UTILITAIRES - POSITIONNEMENT
+   ============================================ */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.top-0 { top: 0; }
+.right-0 { right: 0; }
+.bottom-0 { bottom: 0; }
+.left-0 { left: 0; }
+
+/* ============================================
+   UTILITAIRES - DIMENSIONS
+   ============================================ */
+.w-full { width: 100%; }
+.w-auto { width: auto; }
+.h-full { height: 100%; }
+.h-screen { height: 100vh; }
+.min-h-screen { min-height: 100vh; }
+
+/* ============================================
+   UTILITAIRES - BORDURES
+   ============================================ */
+.rounded-sm { border-radius: var(--border-radius-sm); }
+.rounded-md { border-radius: var(--border-radius-md); }
+.rounded-lg { border-radius: var(--border-radius-lg); }
+.rounded-xl { border-radius: var(--border-radius-xl); }
+.rounded-full { border-radius: var(--border-radius-full); }
+
+.border { border: 1px solid var(--color-border); }
+.border-gold { border-color: var(--color-gold-500); }
+.border-2 { border-width: 2px; }
+
+/* ============================================
+   UTILITAIRES - OMBRES
+   ============================================ */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-gold { box-shadow: var(--shadow-gold); }
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-none { box-shadow: none; }
+
+/* ============================================
+   UTILITAIRES - BACKGROUNDS
+   ============================================ */
+.bg-primary { background-color: var(--color-bg-primary); }
+.bg-secondary { background-color: var(--color-bg-secondary); }
+.bg-elevated { background-color: var(--color-bg-elevated); }
+.bg-card { background-color: var(--color-bg-card); }
+.bg-gold { background-color: var(--color-gold-500); }
+.bg-transparent { background-color: transparent; }
+
+/* ============================================
+   UTILITAIRES - TRANSITIONS
+   ============================================ */
+.transition { transition: all var(--duration-normal) var(--ease-in-out); }
+.transition-fast { transition: all var(--duration-fast) var(--ease-in-out); }
+.transition-slow { transition: all var(--duration-slow) var(--ease-in-out); }
+.transition-colors { transition: color, background-color, border-color var(--duration-fast) var(--ease-in-out); }
+
+/* ============================================
+   UTILITAIRES - OPACITÉ
+   ============================================ */
+.opacity-0 { opacity: 0; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+
+/* ============================================
+   UTILITAIRES - CURSEUR
+   ============================================ */
+.cursor-pointer { cursor: pointer; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* ============================================
+   ACCESSIBILITÉ
    ============================================ */
 .sr-only {
   position: absolute;
@@ -160,61 +420,132 @@ code {
   border-width: 0;
 }
 
-.container {
-  max-width: var(--container-max-width);
-  margin: 0 auto;
-  padding: 0 var(--spacing-lg);
+/* Skip link pour la navigation au clavier */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: var(--color-gold-500);
+  color: var(--color-bg-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  z-index: var(--z-tooltip);
+  transition: top var(--duration-fast);
 }
 
-/* Text colors */
-.text-primary { color: var(--color-text-primary); }
-.text-secondary { color: var(--color-text-secondary); }
-.text-tertiary { color: var(--color-text-tertiary); }
+.skip-link:focus {
+  top: 0;
+}
 
-/* Text sizes */
-.text-xs { font-size: var(--font-size-xs); }
-.text-small { font-size: var(--font-size-small); }
-.text-base { font-size: var(--font-size-base); }
-.text-h6 { font-size: var(--font-size-h6); }
-.text-h5 { font-size: var(--font-size-h5); }
-.text-h4 { font-size: var(--font-size-h4); }
-.text-h3 { font-size: var(--font-size-h3); }
-.text-h2 { font-size: var(--font-size-h2); }
-.text-h1 { font-size: var(--font-size-h1); }
+/* ============================================
+   ANIMATIONS DE BASE
+   ============================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-/* Font weights */
-.font-normal { font-weight: var(--font-weight-regular); }
-.font-medium { font-weight: var(--font-weight-medium); }
-.font-semibold { font-weight: var(--font-weight-semibold); }
-.font-bold { font-weight: var(--font-weight-bold); }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-/* Spacing utilities */
-.mt-xs { margin-top: var(--spacing-xs); }
-.mt-sm { margin-top: var(--spacing-sm); }
-.mt-md { margin-top: var(--spacing-md); }
-.mt-lg { margin-top: var(--spacing-lg); }
-.mt-xl { margin-top: var(--spacing-xl); }
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-.mb-xs { margin-bottom: var(--spacing-xs); }
-.mb-sm { margin-bottom: var(--spacing-sm); }
-.mb-md { margin-bottom: var(--spacing-md); }
-.mb-lg { margin-bottom: var(--spacing-lg); }
-.mb-xl { margin-bottom: var(--spacing-xl); }
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
-.p-xs { padding: var(--spacing-xs); }
-.p-sm { padding: var(--spacing-sm); }
-.p-md { padding: var(--spacing-md); }
-.p-lg { padding: var(--spacing-lg); }
-.p-xl { padding: var(--spacing-xl); }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
-/* Display utilities */
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.gap-sm { gap: var(--spacing-sm); }
-.gap-md { gap: var(--spacing-md); }
-.gap-lg { gap: var(--spacing-lg); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
-.grid { display: grid; }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in { animation: fadeIn var(--duration-normal) var(--ease-out); }
+.animate-fade-in-up { animation: fadeInUp var(--duration-normal) var(--ease-out); }
+.animate-fade-in-down { animation: fadeInDown var(--duration-normal) var(--ease-out); }
+.animate-scale-in { animation: scaleIn var(--duration-normal) var(--ease-out); }
+.animate-pulse { animation: pulse 2s var(--ease-in-out) infinite; }
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* ============================================
+   DÉCORATION MÉDIÉVALE
+   ============================================ */
+/* Séparateur décoratif */
+.divider-ornate {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  color: var(--color-gold-500);
+  margin: var(--spacing-xl) 0;
+}
+
+.divider-ornate::before,
+.divider-ornate::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-500), transparent);
+}
+
+/* Effet parchemin pour les cartes */
+.parchment-texture {
+  position: relative;
+  background-color: var(--color-bg-card);
+}
+
+.parchment-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+/* Bordure dorée décorative */
+.border-ornate {
+  border: 2px solid var(--color-gold-700);
+  position: relative;
+}
+
+.border-ornate::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--color-gold-500);
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.5;
+}

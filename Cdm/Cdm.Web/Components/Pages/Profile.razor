@@ -9,56 +9,57 @@
 
 <PageTitle>Mon Profil - Chronique des Mondes</PageTitle>
 
-<div class="container" style="padding-top: var(--spacing-xl);">
+<div class="profile-page">
     @if (profile == null && string.IsNullOrEmpty(errorMessage))
     {
-        <div class="text-center" style="padding: var(--spacing-xxl);">
-            <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Chargement...</span>
-            </div>
-            <p style="margin-top: var(--spacing-md); color: var(--text-muted);">Chargement du profil...</p>
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">Chargement du profil...</span>
         </div>
     }
     else if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger" style="max-width: 600px; margin: 0 auto;">
-            <i class="bi bi-exclamation-triangle"></i>
-            @errorMessage
-            <button type="button" class="btn btn-primary" @onclick="LoadProfileAsync" style="margin-left: var(--spacing-md);">
-                Réessayer
-            </button>
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-exclamation-triangle text-crimson"></i>
+                </div>
+                <h3 class="empty-state-title">Erreur de chargement</h3>
+                <p class="empty-state-description">@errorMessage</p>
+                <button type="button" class="btn btn-primary" @onclick="LoadProfileAsync">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Réessayer
+                </button>
+            </div>
         </div>
     }
     else if (profile != null)
     {
-        <!-- Profile Header -->
-        <div class="card" style="margin-bottom: var(--spacing-lg);">
-            <div class="card-body" style="text-align: center; padding: var(--spacing-xl);">
+        <!-- Profile Header Card -->
+        <div class="card card-gold">
+            <div class="profile-header">
                 <AuthorizeView>
                     <Authorized>
-                        <div style="position: relative; display: inline-block;">
+                        <div class="profile-avatar">
                             @if (!string.IsNullOrEmpty(profile.AvatarUrl))
                             {
-                                <img src="@profile.AvatarUrl" alt="Avatar" 
-                                     style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-color);" />
+                                <img src="@profile.AvatarUrl" alt="Avatar de @profile.Nickname" />
                             }
                             else
                             {
-                                <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--primary-color); 
-                                            display: flex; align-items: center; justify-content: center; border: 4px solid var(--primary-light);">
-                                    <i class="bi bi-person" style="font-size: 4rem; color: white;"></i>
-                                </div>
+                                <i class="bi bi-person-fill"></i>
                             }
                         </div>
-                        <h1 style="margin-top: var(--spacing-md); margin-bottom: var(--spacing-xs);">@profile.Nickname</h1>
-                        <p style="color: var(--text-muted); margin-bottom: var(--spacing-xs);">
-                            <i class="bi bi-envelope"></i> @profile.Email
+                        <h1 class="profile-name">@profile.Nickname</h1>
+                        <p class="profile-email">
+                            <i class="bi bi-envelope"></i>
+                            @profile.Email
                         </p>
                         @if (!string.IsNullOrEmpty(profile.Username))
                         {
-                            <p style="color: var(--text-muted);">
+                            <span class="badge badge-gold" style="margin-top: var(--spacing-sm);">
                                 <i class="bi bi-at"></i> @profile.Username
-                            </p>
+                            </span>
                         }
                     </Authorized>
                 </AuthorizeView>
@@ -66,35 +67,36 @@
         </div>
 
         <!-- Role Management -->
-        <RoleManager />
+        <div class="profile-section">
+            <RoleManager />
+        </div>
 
-        <!-- Profile Information -->
-        <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <!-- Account Information -->
+        <div class="card">
             <div class="card-header">
-                <h2 style="margin: 0; font-size: 1.25rem;">
-                    <i class="bi bi-info-circle"></i> Informations du compte
+                <h2 class="profile-section-title">
+                    <i class="bi bi-info-circle"></i>
+                    Informations du compte
                 </h2>
             </div>
             <div class="card-body">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg);">
-                    <div>
-                        <label style="display: block; font-weight: 600; margin-bottom: var(--spacing-xs); color: var(--text-muted);">
-                            Membre depuis
-                        </label>
-                        <p style="margin: 0;">
+                <div class="profile-info-grid">
+                    <div class="profile-info-item">
+                        <span class="profile-info-label">Membre depuis</span>
+                        <span class="profile-info-value">
+                            <i class="bi bi-calendar3 text-gold"></i>
                             @profile.CreatedAt.ToString("dd MMMM yyyy")
-                        </p>
+                        </span>
                     </div>
                     
                     @if (profile.LastLoginAt.HasValue)
                     {
-                        <div>
-                            <label style="display: block; font-weight: 600; margin-bottom: var(--spacing-xs); color: var(--text-muted);">
-                                Dernière connexion
-                            </label>
-                            <p style="margin: 0;">
-                                @profile.LastLoginAt.Value.ToString("dd MMMM yyyy HH:mm")
-                            </p>
+                        <div class="profile-info-item">
+                            <span class="profile-info-label">Dernière connexion</span>
+                            <span class="profile-info-value">
+                                <i class="bi bi-clock text-gold"></i>
+                                @profile.LastLoginAt.Value.ToString("dd MMMM yyyy à HH:mm")
+                            </span>
                         </div>
                     }
                 </div>
@@ -104,31 +106,36 @@
         <!-- Quick Actions -->
         <div class="card">
             <div class="card-header">
-                <h2 style="margin: 0; font-size: 1.25rem;">
-                    <i class="bi bi-lightning"></i> Actions rapides
+                <h2 class="profile-section-title">
+                    <i class="bi bi-lightning"></i>
+                    Actions rapides
                 </h2>
             </div>
             <div class="card-body">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md);">
-                    <a href="/settings" class="btn btn-outline-primary" style="text-align: center;">
+                <div class="content-grid content-grid-3">
+                    <a href="/settings" class="btn btn-secondary btn-block">
                         <i class="bi bi-gear"></i>
                         Paramètres
                     </a>
-                    <a href="/characters" class="btn btn-outline-primary" style="text-align: center;">
-                        <i class="bi bi-person"></i>
+                    <a href="/characters" class="btn btn-secondary btn-block">
+                        <i class="bi bi-people"></i>
                         Mes personnages
+                    </a>
+                    <a href="/campaigns" class="btn btn-secondary btn-block">
+                        <i class="bi bi-map"></i>
+                        Mes campagnes
                     </a>
                 </div>
             </div>
         </div>
-    }
 
-    @if (!string.IsNullOrEmpty(successMessage))
-    {
-        <div class="alert alert-success" style="margin-top: var(--spacing-lg); max-width: 600px; margin-left: auto; margin-right: auto;">
-            <i class="bi bi-check-circle"></i>
-            @successMessage
-        </div>
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success" style="margin-top: var(--spacing-lg);">
+                <i class="bi bi-check-circle"></i>
+                @successMessage
+            </div>
+        }
     }
 </div>
 
@@ -147,18 +154,19 @@
 
     private async Task LoadProfileAsync()
     {
+        errorMessage = string.Empty;
         try
         {
             profile = await ProfileClient.GetProfileAsync();
             if (profile == null)
             {
-                errorMessage = "Erreur lors du chargement du profil";
+                errorMessage = "Impossible de charger les informations du profil.";
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading profile");
-            errorMessage = "Erreur lors du chargement du profil";
+            errorMessage = "Une erreur s'est produite lors du chargement du profil.";
         }
     }
 
@@ -178,13 +186,13 @@
             }
             else
             {
-                errorMessage = "Erreur lors de la mise à jour du profil";
+                errorMessage = "Erreur lors de la mise à jour du profil.";
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating profile");
-            errorMessage = "Erreur lors de la mise à jour du profil";
+            errorMessage = "Erreur lors de la mise à jour du profil.";
         }
     }
 
@@ -204,17 +212,17 @@
                     profile.AvatarUrl = avatarUrl;
                 }
                 successMessage = "Avatar mis à jour avec succès !";
-                await LoadProfileAsync(); // Reload full profile
+                await LoadProfileAsync();
             }
             else
             {
-                errorMessage = "Erreur lors de l'upload de l'avatar";
+                errorMessage = "Erreur lors de l'upload de l'avatar.";
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error uploading avatar");
-            errorMessage = "Erreur lors de l'upload de l'avatar";
+            errorMessage = "Erreur lors de l'upload de l'avatar.";
         }
     }
 }

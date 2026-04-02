@@ -2,116 +2,135 @@
 @using Cdm.Web.Shared.DTOs.Models
 @using Cdm.Web.Shared.DTOs.ViewModels
 @using Cdm.Web.Components.Layout
-@inject NavigationManager NavigationManager
 @layout AuthLayout
 
-<div class="auth-layout">
-    <div class="auth-container">
-        <div class="card auth-card">
-            <div class="auth-card-header">
-                <h1 class="auth-card-title">Créer un compte</h1>
-                <p class="auth-card-subtitle">Rejoignez Chronique des Mondes</p>
+<PageTitle>Inscription - Chronique des Mondes</PageTitle>
+
+<div class="auth-card">
+    <div class="auth-card-header">
+        <h1 class="auth-card-title">Créer un compte</h1>
+        <p class="auth-card-subtitle">Rejoignez l'aventure</p>
+    </div>
+
+    <div class="auth-card-body">
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="auth-alert auth-alert-error">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>@ErrorMessage</span>
+            </div>
+        }
+
+        <EditForm Model="@RegisterModel" OnValidSubmit="@HandleRegisterAsync" class="auth-form">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label for="email" class="form-label">
+                    Email <span class="text-crimson">*</span>
+                </label>
+                <div class="input-group">
+                    <i class="bi bi-envelope input-icon"></i>
+                    <InputText 
+                        id="email" 
+                        @bind-Value="RegisterModel.Email" 
+                        class="input" 
+                        placeholder="votre@email.com"
+                        disabled="@IsLoading" />
+                </div>
+                <ValidationMessage For="@(() => RegisterModel.Email)" class="input-error" />
             </div>
 
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <div class="alert alert-error">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    @ErrorMessage
+            <div class="form-group">
+                <label for="nickname" class="form-label">
+                    Pseudo <span class="text-crimson">*</span>
+                </label>
+                <div class="input-group">
+                    <i class="bi bi-person input-icon"></i>
+                    <InputText 
+                        id="nickname" 
+                        @bind-Value="RegisterModel.Nickname" 
+                        class="input" 
+                        placeholder="Votre nom d'aventurier"
+                        disabled="@IsLoading" />
                 </div>
-            }
+                <ValidationMessage For="@(() => RegisterModel.Nickname)" class="input-error" />
+                <span class="input-hint">
+                    <i class="bi bi-info-circle"></i> Maximum 50 caractères
+                </span>
+            </div>
 
-            <EditForm Model="@RegisterModel" OnValidSubmit="@HandleRegisterAsync">
-                <DataAnnotationsValidator />
-
-                <div class="form-group">
-                    <label for="email" class="required">Email</label>
-                    <div class="input-group">
-                        <i class="bi bi-envelope input-icon"></i>
-                        <InputText 
-                            id="email" 
-                            @bind-Value="RegisterModel.Email" 
-                            class="input" 
-                            placeholder="votre@email.com"
-                            disabled="@IsLoading" />
-                    </div>
-                    <ValidationMessage For="@(() => RegisterModel.Email)" class="error-message" />
-                </div>
-
-                <div class="form-group">
-                    <label for="nickname" class="required">Pseudo</label>
-                    <div class="input-group">
-                        <i class="bi bi-person input-icon"></i>
-                        <InputText 
-                            id="nickname" 
-                            @bind-Value="RegisterModel.Nickname" 
-                            class="input" 
-                            placeholder="Votre pseudo"
-                            disabled="@IsLoading" />
-                    </div>
-                    <ValidationMessage For="@(() => RegisterModel.Nickname)" class="error-message" />
-                    <span class="help-text">
-                        Maximum 50 caractères
-                    </span>
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="required">Mot de passe</label>
-                    <div class="input-group">
-                        <i class="bi bi-lock input-icon"></i>
-                        <InputText 
-                            id="password" 
-                            type="@(ShowPassword ? "text" : "password")"
-                            @bind-Value="RegisterModel.Password" 
-                            class="input" 
-                            placeholder="••••••••"
-                            disabled="@IsLoading" />
-                        <i class="bi @(ShowPassword ? "bi-eye-slash" : "bi-eye") input-icon-right clickable" 
-                           @onclick="TogglePasswordVisibility"></i>
-                    </div>
-                    <ValidationMessage For="@(() => RegisterModel.Password)" class="error-message" />
-                    <span class="help-text">
-                        Min. 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial
-                    </span>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword" class="required">Confirmer le mot de passe</label>
-                    <div class="input-group">
-                        <i class="bi bi-lock-fill input-icon"></i>
-                        <InputText 
-                            id="confirmPassword" 
-                            type="@(ShowPassword ? "text" : "password")"
-                            @bind-Value="RegisterModel.ConfirmPassword" 
-                            class="input" 
-                            placeholder="••••••••"
-                            disabled="@IsLoading" />
-                    </div>
-                    <ValidationMessage For="@(() => RegisterModel.ConfirmPassword)" class="error-message" />
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" disabled="@IsLoading" style="width: 100%;">
-                        @if (IsLoading)
-                        {
-                            <span class="spinner spinner-sm"></span>
-                            <span>Inscription en cours...</span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-person-plus"></i>
-                            <span>S'inscrire</span>
-                        }
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    Mot de passe <span class="text-crimson">*</span>
+                </label>
+                <div class="input-group">
+                    <i class="bi bi-lock input-icon"></i>
+                    <InputText 
+                        id="password" 
+                        type="@(ShowPassword ? "text" : "password")"
+                        @bind-Value="RegisterModel.Password" 
+                        class="input" 
+                        placeholder="Choisissez un mot de passe"
+                        disabled="@IsLoading" />
+                    <button type="button" 
+                            class="input-icon-btn" 
+                            @onclick="TogglePasswordVisibility"
+                            tabindex="-1">
+                        <i class="bi bi-@(ShowPassword ? "eye-slash" : "eye")"></i>
                     </button>
                 </div>
-            </EditForm>
-
-            <div class="auth-card-footer">
-                <p>
-                    Vous avez déjà un compte ? 
-                    <a href="/login">Se connecter</a>
-                </p>
+                <ValidationMessage For="@(() => RegisterModel.Password)" class="input-error" />
+                <span class="input-hint">
+                    <i class="bi bi-shield-check"></i> Min. 8 caractères, majuscule, minuscule, chiffre, caractère spécial
+                </span>
             </div>
-        </div>
+
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">
+                    Confirmer le mot de passe <span class="text-crimson">*</span>
+                </label>
+                <div class="input-group">
+                    <i class="bi bi-lock-fill input-icon"></i>
+                    <InputText 
+                        id="confirmPassword" 
+                        type="@(ShowPassword ? "text" : "password")"
+                        @bind-Value="RegisterModel.ConfirmPassword" 
+                        class="input" 
+                        placeholder="Confirmez votre mot de passe"
+                        disabled="@IsLoading" />
+                </div>
+                <ValidationMessage For="@(() => RegisterModel.ConfirmPassword)" class="input-error" />
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" @bind="AcceptTerms" class="checkbox" />
+                    <span class="checkbox-label">
+                        J'accepte les <a href="/terms" class="text-gold">conditions d'utilisation</a> 
+                        et la <a href="/privacy" class="text-gold">politique de confidentialité</a>
+                    </span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" disabled="@(IsLoading || !AcceptTerms)">
+                @if (IsLoading)
+                {
+                    <span class="spinner spinner-sm"></span>
+                    <span>Inscription...</span>
+                }
+                else
+                {
+                    <i class="bi bi-person-plus"></i>
+                    <span>Créer mon compte</span>
+                }
+            </button>
+        </EditForm>
+    </div>
+
+    <div class="auth-card-footer">
+        <p class="auth-card-footer-text">
+            Déjà inscrit ?
+            <a href="/login" class="auth-card-footer-link">Se connecter</a>
+        </p>
     </div>
 </div>

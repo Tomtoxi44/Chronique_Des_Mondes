@@ -15,30 +15,51 @@
 @inject NavigationManager NavigationManager
 @inject ILogger<CreateCampaign> Logger
 @rendermode InteractiveServer
-<PageTitle>Créer une Campagne - Chronique des Mondes</PageTitle>
 
-<div class="container" style="padding-top: var(--spacing-xl); max-width: 800px;">
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">
-                <i class="bi bi-plus-circle"></i> Créer une Nouvelle Campagne
-            </h2>
-        </div>
-        <div class="card-body" style="padding: var(--spacing-xl);">
+<PageTitle>Nouvelle Campagne - Chronique des Mondes</PageTitle>
+
+<div class="create-campaign-page">
+    <!-- Breadcrumbs -->
+    <nav class="breadcrumbs">
+        <a href="/" class="breadcrumb-item">
+            <i class="bi bi-house-door"></i>
+        </a>
+        <span class="breadcrumb-separator">/</span>
+        <a href="/campaigns" class="breadcrumb-item">Campagnes</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Nouvelle</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="bi bi-plus-circle text-gold"></i>
+            Créer une Nouvelle Campagne
+        </h1>
+        <p class="page-subtitle">Donnez vie à votre prochaine aventure épique</p>
+    </div>
+
+    <div class="card card-gold" style="max-width: 800px;">
+        <div class="card-body" style="padding: var(--spacing-2xl);">
             @if (!string.IsNullOrEmpty(this.errorMessage))
             {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="auth-alert auth-alert-error" style="margin-bottom: var(--spacing-lg);">
                     <i class="bi bi-exclamation-triangle"></i>
-                    @this.errorMessage
-                    <button type="button" class="btn-close" @onclick="() => this.errorMessage = null"></button>
+                    <span>@this.errorMessage</span>
+                    <button type="button" 
+                            class="btn btn-ghost btn-sm" 
+                            style="margin-left: auto;"
+                            @onclick="() => this.errorMessage = null">
+                        <i class="bi bi-x"></i>
+                    </button>
                 </div>
             }
 
             @if (this.success)
             {
-                <div class="alert alert-success" role="alert">
+                <div class="auth-alert auth-alert-success">
                     <i class="bi bi-check-circle"></i>
-                    Campagne créée avec succès ! Redirection en cours...
+                    <span>Campagne créée avec succès ! Redirection en cours...</span>
                 </div>
             }
             else
@@ -50,9 +71,10 @@
         </div>
     </div>
 
-    <div class="mt-3 text-center">
-        <a href="/" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Retour à l'accueil
+    <div style="margin-top: var(--spacing-xl); text-align: center;">
+        <a href="/campaigns" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Retour aux campagnes
         </a>
     </div>
 </div>
@@ -84,7 +106,7 @@
 
                 // Redirect to campaign details page after a short delay
                 await Task.Delay(1500);
-                this.NavigationManager.NavigateTo("/");
+                this.NavigationManager.NavigateTo("/campaigns");
             }
             else
             {

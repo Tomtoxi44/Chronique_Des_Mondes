@@ -33,6 +33,21 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<Campaign> Campaigns { get; set; } = null!;
 
+    /// <summary>
+    /// Worlds table
+    /// </summary>
+    public DbSet<World> Worlds { get; set; } = null!;
+
+    /// <summary>
+    /// Characters table
+    /// </summary>
+    public DbSet<Character> Characters { get; set; } = null!;
+
+    /// <summary>
+    /// Character game profiles table
+    /// </summary>
+    public DbSet<CharacterGameProfile> CharacterGameProfiles { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -127,6 +142,104 @@ public class AppDbContext : DbContext
             entity.Property(c => c.GameType)
                 .HasDefaultValue(GameType.Generic);
         });
+
+        // Configure World entity
+        modelBuilder.Entity<World>(entity =>
+        {
+            // UserId index
+            entity.HasIndex(w => w.UserId)
+                .HasDatabaseName("IX_Worlds_UserId");
+
+            // GameType index
+            entity.HasIndex(w => w.GameType)
+                .HasDatabaseName("IX_Worlds_GameType");
+
+            // IsActive index
+            entity.HasIndex(w => w.IsActive)
+                .HasDatabaseName("IX_Worlds_IsActive");
+
+            // User relationship
+            entity.HasOne(w => w.Owner)
+                .WithMany()
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Set default values
+            entity.Property(w => w.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(w => w.IsActive)
+                .HasDefaultValue(true);
+        });
+
+        // Configure Character entity
+        modelBuilder.Entity<Character>(entity =>
+        {
+            // UserId index
+            entity.HasIndex(c => c.UserId)
+                .HasDatabaseName("IX_Characters_UserId");
+
+            // IsActive index
+            entity.HasIndex(c => c.IsActive)
+                .HasDatabaseName("IX_Characters_IsActive");
+
+            // Name index for search
+            entity.HasIndex(c => c.Name)
+                .HasDatabaseName("IX_Characters_Name");
+
+            // User relationship
+            entity.HasOne(c => c.Owner)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Set default values
+            entity.Property(c => c.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(c => c.IsActive)
+                .HasDefaultValue(true);
+        });
+
+        // Configure CharacterGameProfile entity
+        modelBuilder.Entity<CharacterGameProfile>(entity =>
+        {
+            // CharacterId index
+            entity.HasIndex(cgp => cgp.CharacterId)
+                .HasDatabaseName("IX_CharacterGameProfiles_CharacterId");
+
+            // CampaignId index
+            entity.HasIndex(cgp => cgp.CampaignId)
+                .HasDatabaseName("IX_CharacterGameProfiles_CampaignId");
+
+            // GameType index
+            entity.HasIndex(cgp => cgp.GameType)
+                .HasDatabaseName("IX_CharacterGameProfiles_GameType");
+
+            // Unique constraint: one character can only join a campaign once
+            entity.HasIndex(cgp => new { cgp.CharacterId, cgp.CampaignId })
+                .IsUnique()
+                .HasDatabaseName("IX_CharacterGameProfiles_CharacterId_CampaignId");
+
+            // Character relationship
+            entity.HasOne(cgp => cgp.Character)
+                .WithMany(c => c.GameProfiles)
+                .HasForeignKey(cgp => cgp.CharacterId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+
+            // Campaign relationship
+            entity.HasOne(cgp => cgp.Campaign)
+                .WithMany()
+                .HasForeignKey(cgp => cgp.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Set default values
+            entity.Property(cgp => cgp.JoinedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(cgp => cgp.IsActive)
+                .HasDefaultValue(true);
+        });
     }
 
     /// <summary>
@@ -150,7 +263,8 @@ public class AppDbContext : DbContext
     private void UpdateTimestamps()
     {
         var entries = ChangeTracker.Entries()
-            .Where(e => (e.Entity is User || e.Entity is Campaign) && (e.State == EntityState.Added || e.State == EntityState.Modified));
+            .Where(e => (e.Entity is User || e.Entity is Campaign || e.Entity is World || e.Entity is Character || e.Entity is CharacterGameProfile) 
+                && (e.State == EntityState.Added || e.State == EntityState.Modified));
 
         foreach (var entry in entries)
         {
@@ -171,6 +285,35 @@ public class AppDbContext : DbContext
                 if (entry.State == EntityState.Modified)
                 {
                     campaign.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+            else if (entry.Entity is World world)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    world.CreatedAt = DateTime.UtcNow;
+                }
+                if (entry.State == EntityState.Modified)
+                {
+                    world.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+            else if (entry.Entity is Character character)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    character.CreatedAt = DateTime.UtcNow;
+                }
+                if (entry.State == EntityState.Modified)
+                {
+                    character.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+            else if (entry.Entity is CharacterGameProfile profile)
+            {
+                if (entry.State == EntityState.Modified)
+                {
+                    profile.UpdatedAt = DateTime.UtcNow;
                 }
             }
         }

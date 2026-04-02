@@ -33,6 +33,21 @@ public class MigrationsContext : DbContext
     /// </summary>
     public DbSet<Campaign> Campaigns { get; set; } = null!;
 
+    /// <summary>
+    /// Worlds table
+    /// </summary>
+    public DbSet<World> Worlds { get; set; } = null!;
+
+    /// <summary>
+    /// Characters table
+    /// </summary>
+    public DbSet<Character> Characters { get; set; } = null!;
+
+    /// <summary>
+    /// Character game profiles table
+    /// </summary>
+    public DbSet<CharacterGameProfile> CharacterGameProfiles { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -130,6 +145,62 @@ public class MigrationsContext : DbContext
 
             entity.Property(c => c.GameType)
                 .HasDefaultValue(GameType.Generic);
+        });
+
+        // Configure World entity
+        modelBuilder.Entity<World>(entity =>
+        {
+            entity.HasIndex(w => w.UserId).HasDatabaseName("IX_Worlds_UserId");
+            entity.HasIndex(w => w.GameType).HasDatabaseName("IX_Worlds_GameType");
+            entity.HasIndex(w => w.IsActive).HasDatabaseName("IX_Worlds_IsActive");
+
+            entity.HasOne(w => w.Owner)
+                .WithMany()
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(w => w.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(w => w.IsActive).HasDefaultValue(true);
+        });
+
+        // Configure Character entity
+        modelBuilder.Entity<Character>(entity =>
+        {
+            entity.HasIndex(c => c.UserId).HasDatabaseName("IX_Characters_UserId");
+            entity.HasIndex(c => c.IsActive).HasDatabaseName("IX_Characters_IsActive");
+            entity.HasIndex(c => c.Name).HasDatabaseName("IX_Characters_Name");
+
+            entity.HasOne(c => c.Owner)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(c => c.IsActive).HasDefaultValue(true);
+        });
+
+        // Configure CharacterGameProfile entity
+        modelBuilder.Entity<CharacterGameProfile>(entity =>
+        {
+            entity.HasIndex(cgp => cgp.CharacterId).HasDatabaseName("IX_CharacterGameProfiles_CharacterId");
+            entity.HasIndex(cgp => cgp.CampaignId).HasDatabaseName("IX_CharacterGameProfiles_CampaignId");
+            entity.HasIndex(cgp => cgp.GameType).HasDatabaseName("IX_CharacterGameProfiles_GameType");
+            entity.HasIndex(cgp => new { cgp.CharacterId, cgp.CampaignId })
+                .IsUnique()
+                .HasDatabaseName("IX_CharacterGameProfiles_CharacterId_CampaignId");
+
+            entity.HasOne(cgp => cgp.Character)
+                .WithMany(c => c.GameProfiles)
+                .HasForeignKey(cgp => cgp.CharacterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(cgp => cgp.Campaign)
+                .WithMany()
+                .HasForeignKey(cgp => cgp.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(cgp => cgp.JoinedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(cgp => cgp.IsActive).HasDefaultValue(true);
         });
 
         // Seed global roles: Player, GameMaster, Admin

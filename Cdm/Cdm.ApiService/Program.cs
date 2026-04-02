@@ -65,6 +65,7 @@ builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
+builder.Services.AddScoped<ICharacterService, CharacterService>();
 // Email service is optional for MVP
 // builder.Services.AddScoped<IEmailService, AzureEmailService>();
 
@@ -87,6 +88,7 @@ app.MapAuthEndpoints();
 app.MapProfileEndpoints();
 app.MapRoleEndpoints();
 app.MapCampaignEndpoints();
+app.MapCharacterEndpoints();
 
 app.MapDefaultEndpoints();
 

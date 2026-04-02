@@ -1,0 +1,216 @@
+@page "/characters/{Id:int}"
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Shared.DTOs.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@layout AppLayout
+@rendermode InteractiveServer
+
+<PageTitle>@(Character?.Name ?? "Personnage") - Chronique des Mondes</PageTitle>
+
+<div class="character-detail-page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumbs">
+        <a href="/characters" class="breadcrumb-item">Personnages</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">@(Character?.Name ?? "Chargement...")</span>
+    </nav>
+
+    <AuthorizeView>
+        <Authorized>
+            @if (IsLoading)
+            {
+                <!-- Loading State -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Chargement du personnage...</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <!-- Error State -->
+                <div class="card card-crimson">
+                    <div class="card-body" style="display: flex; align-items: center; gap: var(--spacing-lg);">
+                        <div style="flex-shrink: 0;">
+                            <i class="bi bi-exclamation-triangle text-crimson" style="font-size: 2rem;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 var(--spacing-xs) 0; font-family: var(--font-heading); color: var(--color-crimson);">
+                                Erreur
+                            </h4>
+                            <p style="margin: 0; color: var(--color-text-secondary);">
+                                @ErrorMessage
+                            </p>
+                        </div>
+                        <a href="/characters" class="btn btn-outline">
+                            <i class="bi bi-arrow-left"></i>
+                            Retour
+                        </a>
+                    </div>
+                </div>
+            }
+            else if (Character != null)
+            {
+                <!-- Character Detail -->
+                <div class="character-detail">
+                    <!-- Header -->
+                    <div class="character-detail-header">
+                        <div class="character-detail-avatar">
+                            @if (!string.IsNullOrEmpty(Character.AvatarUrl))
+                            {
+                                <img src="@Character.AvatarUrl" alt="@Character.Name" />
+                            }
+                            else
+                            {
+                                <div class="avatar-placeholder">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="character-detail-info">
+                            <h1 class="character-detail-name">
+                                @if (!string.IsNullOrEmpty(Character.FirstName))
+                                {
+                                    @Character.FirstName @(" ") @Character.Name
+                                }
+                                else
+                                {
+                                    @Character.Name
+                                }
+                            </h1>
+                            @if (Character.Age.HasValue)
+                            {
+                                <span class="character-detail-age">
+                                    <i class="bi bi-calendar3"></i>
+                                    @Character.Age ans
+                                </span>
+                            }
+                            <div class="character-detail-meta">
+                                <span>
+                                    <i class="bi bi-clock-history"></i>
+                                    Créé le @Character.CreatedAt.ToString("dd MMMM yyyy")
+                                </span>
+                                @if (Character.UpdatedAt.HasValue)
+                                {
+                                    <span>
+                                        <i class="bi bi-pencil"></i>
+                                        Modifié le @Character.UpdatedAt.Value.ToString("dd MMMM yyyy")
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <div class="character-detail-actions">
+                            <a href="/characters/@Id/edit" class="btn btn-primary">
+                                <i class="bi bi-pencil"></i>
+                                Modifier
+                            </a>
+                            <button class="btn btn-outline btn-danger" @onclick="ConfirmDelete">
+                                <i class="bi bi-trash"></i>
+                                Supprimer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    @if (!string.IsNullOrEmpty(Character.Description))
+                    {
+                        <div class="character-detail-section">
+                            <h2 class="section-title">
+                                <i class="bi bi-journal-text"></i>
+                                Description
+                            </h2>
+                            <div class="character-description-content">
+                                @((MarkupString)FormatDescription(Character.Description))
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Placeholder for future features -->
+                    <div class="character-detail-section">
+                        <h2 class="section-title">
+                            <i class="bi bi-stars"></i>
+                            Fonctionnalités à venir
+                        </h2>
+                        <div class="future-features-grid">
+                            <div class="future-feature-card">
+                                <i class="bi bi-heart-pulse"></i>
+                                <span>Caractéristiques</span>
+                            </div>
+                            <div class="future-feature-card">
+                                <i class="bi bi-magic"></i>
+                                <span>Compétences</span>
+                            </div>
+                            <div class="future-feature-card">
+                                <i class="bi bi-backpack"></i>
+                                <span>Inventaire</span>
+                            </div>
+                            <div class="future-feature-card">
+                                <i class="bi bi-book"></i>
+                                <span>Journal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </Authorized>
+        
+        <NotAuthorized>
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-lock text-crimson"></i>
+                    </div>
+                    <h3 class="empty-state-title">Connexion requise</h3>
+                    <p class="empty-state-description">
+                        Vous devez être connecté pour accéder à ce personnage.
+                    </p>
+                    <a href="/login" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Se connecter
+                    </a>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (ShowDeleteModal)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-crimson"></i>
+                    Confirmer la suppression
+                </h3>
+                <button class="modal-close" @onclick="CancelDelete">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Êtes-vous sûr de vouloir supprimer le personnage 
+                    <strong>@GetCharacterFullName()</strong> ?
+                </p>
+                <p class="text-muted">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CancelDelete">
+                    Annuler
+                </button>
+                <button class="btn btn-danger" @onclick="DeleteCharacterAsync" disabled="@IsDeleting">
+                    @if (IsDeleting)
+                    {
+                        <span class="spinner spinner-sm"></span>
+                        <span>Suppression...</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-trash"></i>
+                        <span>Supprimer</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
