@@ -1,11 +1,13 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <link rel="stylesheet" href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" />
     <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/fluent-theme.css" />
     <link rel="stylesheet" href="@Assets["Cdm.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -13,7 +15,12 @@
 </head>
 
 <body>
+    <FluentToastProvider />
+    <FluentDialogProvider />
+    <FluentTooltipProvider />
+    <FluentMessageBarProvider />
     <Routes />
+    <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

@@ -4,10 +4,16 @@ Plateforme de gestion de parties de jeu de rôle (JDR) multi-systèmes avec supp
 
 ## 📋 Description
 
-**Chronique des Mondes** permet aux maîtres de jeu et joueurs de gérer leurs campagnes, personnages, sessions et combats en temps réel, avec support pour plusieurs systèmes de jeu :
+**Chronique des Mondes** est une application d'assistance aux jeux de rôle avec deux interfaces complémentaires :
 
-- 🎯 **Generic** - Systèmes de jeu personnalisés
-- 🐉 **D&D 5e** - Dungeons & Dragons 5ème édition
+- 🖥️ **Desktop (Maître de Jeu)** - Interface complète pour créer et gérer des mondes, campagnes et sessions
+- 📱 **Mobile (Joueurs)** - Interface optimisée pour participer aux sessions et gérer ses personnages
+
+L'application suit une hiérarchie **Monde > Campagne > Chapitre** et supporte plusieurs systèmes de jeu :
+
+- 🎯 **Empty** - Monde vide servant de salon d'invitation
+- 🎲 **Custom** - Systèmes de jeu personnalisés
+- 🐉 **D&D 5e** - Dungeons & Dragons 5ème édition avec règles automatisées
 - ⚔️ **Skyrim** - Elder Scrolls avec mécaniques spécifiques
 
 ## 🚀 Démarrage rapide
@@ -139,29 +145,43 @@ Le projet implémente une **sécurité multi-couches** :
 
 ## 🎮 Fonctionnalités
 
+### Hiérarchie de jeu
+
+- **Monde** : Univers de jeu avec règles spécifiques (D&D, Skyrim, Custom, Empty)
+  - Le créateur devient automatiquement Maître du Jeu
+  - Peut être créé vide pour servir de salon d'invitation
+  - Contient plusieurs campagnes
+- **Campagne** : Histoire/aventure dans un monde
+  - Peut impacter le monde
+  - Contient plusieurs chapitres
+- **Chapitre** : Séances/épisodes d'une campagne
+  - Contenu organisé avec événements et PNJ
+  - Sessions en ligne avec salon vocal
+
+### Système de personnages
+
+- **Personnage de base** : Créé par l'utilisateur (nom, prénom, caractéristiques)
+- **Duplication lors de l'intégration** : Quand un personnage rejoint un monde, une copie est créée avec les règles du monde appliquées
+- **Règle de verrouillage** : Un personnage ayant intégré un monde ne peut plus rejoindre un autre monde
+- **Personnage original** : Reste disponible pour créer des copies dans d'autres mondes
+
 ### Phase 1-3 (MVP - Complété)
 
 - ✅ Authentification JWT avec inscription/connexion
 - ✅ Gestion de personnages multi-types (Generic, D&D 5e, Skyrim)
 - ✅ Création et gestion de campagnes
-- ✅ Sessions de jeu avec invitations par token
-- ✅ Chat temps réel via SignalR
-- ✅ Système de combat avec gestion des tours
-- ✅ Lanceur de dés côté serveur (anti-cheat)
+- ✅ Interface utilisateur Blazor avec thème médiéval fantasy
+- ✅ Profil utilisateur avec avatar
 
-### Phase 4-5 (En cours)
+### Phase 4-6 (En cours)
 
-- 🔄 Bibliothèque de sorts avec filtres par type de jeu
-- 🔄 Système d'équipement et d'inventaire
-- 🔄 Échanges d'objets entre joueurs
+- 🔄 Hiérarchie Monde > Campagne > Chapitre
+- 🔄 Système d'événements (Monde, Campagne, Chapitre)
+- 🔄 Système de succès avec attribution automatique/manuelle
+- 🔄 Système de combat avec jets de dés automatiques
+- 🔄 Sessions de jeu avec invitations par token
+- 🔄 Chat temps réel via SignalR
 - 🔄 Système de notifications
-
-### Phase 6 (Future)
-
-- ⏳ Déploiement Docker
-- ⏳ Rate limiting (10 req/sec par utilisateur)
-- ⏳ Monitoring production
-- ⏳ Backups automatisés
 
 ## 🧪 Tests
 

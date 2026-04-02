@@ -2,18 +2,97 @@
 
 ## 📋 Vue d'Ensemble
 
-**Chronique des Mondes** est une plateforme de jeu de rôle (JDR) permettant à des utilisateurs de créer, gérer et participer à des campagnes de jeu.
+**Chronique des Mondes** est une application d'assistance aux jeux de rôle (JDR) avec deux interfaces complémentaires :
+
+- 🖥️ **Desktop (Maître de Jeu)** - Interface complète pour créer et gérer des mondes, campagnes et sessions
+- 📱 **Mobile (Joueurs)** - Interface optimisée pour participer aux sessions et gérer ses personnages
+
+### Hiérarchie Principale
+
+L'application suit une organisation hiérarchique en trois niveaux :
+
+**Monde** → **Campagne** → **Chapitre**
+
+- **Monde** : Univers de jeu avec règles spécifiques
+  - Le créateur devient automatiquement **Maître du Jeu**
+  - Peut être créé vide (**Empty**) pour servir de salon d'invitation
+  - Contient plusieurs campagnes
+  
+- **Campagne** : Histoire/aventure dans un monde
+  - Peut impacter le monde
+  - Contient plusieurs chapitres
+  
+- **Chapitre** : Séances/épisodes d'une campagne
+  - Contenu organisé avec événements et PNJ
+  - Sessions en ligne avec salon vocal
+
+### Systèmes de Jeu Supportés
+
+1. **Empty** : Monde vide servant uniquement de salon d'invitation
+2. **Custom** : Mode libre où le MJ gère manuellement toutes les règles
+3. **D&D 5e** : Dungeons & Dragons avec règles automatisées
+4. **Skyrim** : Elder Scrolls avec mécaniques spécifiques
 
 ### Concept Principal
+
 Un utilisateur peut endosser **plusieurs rôles simultanément** :
 - **Joueur** dans certaines campagnes
 - **Maître du Jeu (MJ)** dans d'autres campagnes
 - Même jouer dans des campagnes créées par d'autres tout en étant MJ de ses propres campagnes
 
-### Systèmes de Jeu Supportés
-La plateforme supporte deux modes de jeu :
-1. **Générique** : Mode libre où le MJ gère manuellement toutes les règles
-2. **Spécialisé** : Systèmes avec règles automatisées (D&D, Skyrim à venir)
+---
+
+## 🌍 Système de Mondes
+
+### Création d'un Monde
+
+#### Paramètres de Base
+- **Nom** du monde
+- **Description** de l'univers
+- **Système de règles** (Empty, Custom, D&D, Skyrim)
+- **Visibilité** : Public ou privé
+
+#### Règles du Monde
+- Le **créateur** devient automatiquement **Maître du Jeu** du monde
+- Un monde peut contenir **plusieurs campagnes**
+- Les règles du monde s'appliquent à toutes les campagnes qu'il contient
+- Un monde **Empty** sert uniquement de salon d'invitation (pas de règles de jeu)
+
+### Gestion d'un Monde
+
+#### Campagnes du Monde
+- Liste de toutes les campagnes du monde
+- Création de nouvelles campagnes dans le monde
+- Suppression de campagnes (par le MJ uniquement)
+
+#### Personnages du Monde
+- Liste de tous les personnages ayant intégré le monde
+- Consultation des caractéristiques selon les règles du monde
+
+### Types de Mondes
+
+#### Monde Empty
+- **Usage** : Salon d'invitation, lieu de rencontre
+- **Règles** : Aucune
+- **Personnages** : Peuvent rejoindre sans adaptation
+- **But** : Socialisation, recrutement pour d'autres mondes
+
+#### Monde Custom
+- **Usage** : Règles personnalisées par le MJ
+- **Règles** : Définies librement par le MJ
+- **Personnages** : Adaptés manuellement par le MJ
+
+#### Monde D&D 5e
+- **Usage** : Campagnes Dungeons & Dragons
+- **Règles** : D&D 5ème édition officielles
+- **Personnages** : Caractéristiques D&D automatiques (classes, races, etc.)
+- **Calculs** : Jets de dés, CA, sauvegardes automatisés
+
+#### Monde Skyrim
+- **Usage** : Campagnes Elder Scrolls
+- **Règles** : Système Skyrim
+- **Personnages** : Compétences, perks, races de Skyrim
+- **Calculs** : Formules Skyrim pour combat et magie
 
 ---
 
@@ -33,34 +112,99 @@ La plateforme supporte deux modes de jeu :
 
 ## 🎭 Système de Personnages
 
+### Deux Niveaux de Personnages
+
+#### 1. Personnage de Base (Original)
+Créé par l'utilisateur dans son profil :
+- **Nom** et **Prénom**
+- **Description** générale
+- **Image/Avatar**
+- **Caractéristiques de base** (points de vie, attributs génériques)
+- **Statut** : Disponible ou Verrouillé
+
+#### 2. Personnage de Monde (Copie Adaptée)
+Créé automatiquement lors de l'intégration dans un monde :
+- **Copie** du personnage de base
+- **Adaptation** selon les règles du monde
+- **Caractéristiques spécifiques** au système de jeu (D&D, Skyrim, etc.)
+- **Lien** vers le personnage original
+
+### Processus d'Intégration
+
+#### Rejoindre un Monde
+1. Le joueur sélectionne un **personnage de base disponible**
+2. Le joueur demande à rejoindre un **monde**
+3. Le système crée une **copie** du personnage
+4. La copie est **adaptée** aux règles du monde :
+   - **Empty** : Copie simple sans modification
+   - **Custom** : Adaptation manuelle par le MJ
+   - **D&D** : Ajout de race, classe, caractéristiques D&D
+   - **Skyrim** : Ajout de race, compétences, perks Skyrim
+5. Le personnage de base devient **verrouillé**
+6. Le personnage de monde est **actif** dans le monde
+
+#### Règle de Verrouillage
+- Un personnage de base ayant intégré un monde devient **verrouillé**
+- Un personnage verrouillé **ne peut plus rejoindre** d'autres mondes
+- Cette règle évite les incohérences (un même personnage ne peut pas avoir des stats D&D et Skyrim simultanément)
+- Le personnage original **reste visible** dans le profil mais est marqué comme "Intégré dans [Nom du Monde]"
+
+#### Créer des Copies pour Plusieurs Mondes
+- Pour jouer dans plusieurs mondes, l'utilisateur doit créer **plusieurs personnages de base**
+- Chaque personnage de base peut rejoindre **un seul monde**
+- Exemple :
+  - **Aragorn** (personnage de base) → rejoint **Monde D&D** → devient **Aragorn (D&D)** avec classe Rôdeur
+  - **Dovahkiin** (personnage de base) → rejoint **Monde Skyrim** → devient **Dovahkiin (Skyrim)** avec compétences Skyrim
+
 ### Création de Personnages
 
-#### Mode Générique
-- **Nom** du personnage
+#### Mode Empty
+- **Nom** et **Prénom**
+- **Description** libre
+- **Points de vie** (optionnel)
+- Aucune caractéristique spécifique
+
+#### Mode Custom
+- **Nom** et **Prénom**
 - **Points de vie** (HP)
 - **Champs personnalisables** selon les besoins du MJ
-- **Gestion manuelle** des caractéristiques
+- **Gestion manuelle** des caractéristiques par le MJ
 
-#### Mode Spécialisé (Exemple : D&D)
-- **Race** (Elfe, Nain, Humain, etc.)
-- **Classe** (Guerrier, Mage, Clerc, etc.)
+#### Mode D&D 5e
+- **Nom** et **Prénom**
+- **Race** (Elfe, Nain, Humain, Demi-Elfe, etc.)
+- **Classe** (Guerrier, Mage, Clerc, Rôdeur, etc.)
+- **Sous-classe** (Archétype)
 - **Caractéristiques** (Force, Dextérité, Constitution, Intelligence, Sagesse, Charisme)
 - **Compétences** et maîtrises
-- **Niveau** et progression
-- **Classe d'armure** (CA)
+- **Niveau** et progression (1-20)
+- **Classe d'armure** (CA) calculée automatiquement
 - **Bonus de maîtrise** automatique selon le niveau
+- **Points de vie maximum** calculés selon classe et Constitution
 - **Calculs automatiques** pour attaques et défense
 
+#### Mode Skyrim
+- **Nom** et **Prénom**
+- **Race** (Nord, Elfe noir, Khajiit, Argonien, etc.)
+- **Compétences** (Combat, Magie, Furtivité)
+- **Perks** débloqués
+- **Santé**, **Magie**, **Endurance**
+- **Niveau** général et par compétence
+- **Calculs automatiques** selon les formules Skyrim
+
 ### Règles de Compatibilité
-- Un personnage D&D ne peut rejoindre qu'une campagne D&D
-- Un personnage générique peut rejoindre une campagne générique
+- Un personnage **D&D** ne peut rejoindre qu'un monde **D&D**
+- Un personnage **Skyrim** ne peut rejoindre qu'un monde **Skyrim**
+- Un personnage **Custom** peut rejoindre un monde **Custom**
+- Un personnage **Empty** peut rejoindre n'importe quel monde
 - Impossibilité de mélanger les systèmes de jeu
 
 ### Gestion des Personnages
-- Modification des caractéristiques
-- Suivi de la progression
-- Duplication possible pour créer des variantes
-- Suppression de personnages
+- **Modification** des caractéristiques (avant verrouillage uniquement pour le personnage de base)
+- **Modification** du personnage de monde par le MJ ou le joueur selon les règles
+- **Suivi de la progression** (niveaux, expérience)
+- **Suppression** de personnages de base (uniquement si non verrouillés)
+- **Consultation** de l'historique (combats, sessions, événements)
 
 ---
 
@@ -71,13 +215,15 @@ La plateforme supporte deux modes de jeu :
 #### Paramètres de Base
 - **Nom** de la campagne
 - **Description** narrative
-- **Système de jeu** (Générique, D&D, etc.)
-- **Visibilité** : Publique ou privée
+- **Monde parent** : La campagne appartient obligatoirement à un monde
+- **Visibilité** : Publique ou privée (héritée du monde ou différente)
 
 #### Organisation
+- Une campagne **appartient à un monde** spécifique
 - **Campagnes privées** : Accessibles uniquement sur invitation
 - **Campagnes publiques** : Visibles et rejoignables par tous
-- **Un seul MJ** par campagne (le créateur)
+- Le **MJ du monde** peut créer des campagnes dans son monde
+- Le système de jeu est **hérité du monde** (pas de choix à la création)
 
 ### Structure en Chapitres
 
@@ -139,8 +285,206 @@ En plus des caractéristiques génériques, les PNJ/Monstres D&D possèdent :
 #### Gestion des Joueurs
 - Liste des joueurs invités et leur statut
 - Liste des joueurs ayant accepté
-- Personnages associés à chaque joueur
+- Personnages associés à chaque joueur (personnages de monde)
 - Possibilité de retirer des joueurs
+
+---
+
+## 🎯 Système d'Événements
+
+### Concept
+
+Les **événements** sont des modificateurs créés par le MJ qui affectent les personnages et l'ambiance du jeu. Ils peuvent être appliqués à trois niveaux de la hiérarchie.
+
+### Niveaux d'Application
+
+#### 1. Événement de Monde
+- **Portée** : Affecte tous les personnages de toutes les campagnes du monde
+- **Durée** : Permanent ou temporaire
+- **Exemples** :
+  - "Éclipse Éternelle" : -2 en Sagesse pour tous les personnages du monde
+  - "Bénédiction Divine" : +1 en Charisme pour tous
+  - "Famine Globale" : -10 PV maximum pour tous
+
+#### 2. Événement de Campagne
+- **Portée** : Affecte tous les personnages participant à la campagne
+- **Durée** : Lié à la campagne (disparaît si la campagne se termine)
+- **Exemples** :
+  - "Malédiction du Dragon" : -3 en Force pour tous les participants
+  - "Alliance des Mages" : +5 bonus aux sorts pour tous
+  - "Blessure de Guerre" : Réduction de 20% des PV max
+
+#### 3. Événement de Chapitre
+- **Portée** : Affecte les personnages uniquement pendant ce chapitre
+- **Durée** : Disparaît à la fin du chapitre
+- **Exemples** :
+  - "Brouillard Empoisonné" : -1 en Constitution pendant le chapitre
+  - "Inspiration Héroïque" : +2 à tous les jets d'attaque
+  - "Fatigue Extrême" : -5 en Initiative
+
+### Création d'Événements
+
+#### Paramètres
+- **Nom** de l'événement
+- **Description** narrative (pourquoi cet événement se produit)
+- **Niveau d'application** (Monde, Campagne, Chapitre)
+- **Type d'effet** :
+  - Modificateur de caractéristique (Force, Dextérité, etc.)
+  - Modificateur de PV (maximum ou actuels)
+  - Modificateur de jets de dés (attaque, sauvegarde, etc.)
+  - Effet narratif (pas de mécanique, juste RP)
+- **Valeur** du modificateur (+/- X)
+- **Durée** : Permanent, temporaire (X jours), jusqu'à condition
+
+#### Permissions
+- Seul le **MJ du monde** peut créer des événements de Monde
+- Le **MJ** d'une campagne peut créer des événements de Campagne
+- Le **MJ** peut créer des événements de Chapitre pour le chapitre actif
+
+### Impact sur les Personnages
+
+#### Application Automatique
+- Les événements s'appliquent **automatiquement** aux personnages concernés
+- Les modificateurs sont **cumulatifs** (plusieurs événements peuvent s'additionner)
+- Les personnages voient leurs stats ajustées en temps réel
+- Exemple : Un personnage avec 16 en Dextérité sous "Éclipse Éternelle" (-2 Dex) aura 14
+
+#### Affichage pour les Joueurs
+- Liste des événements actifs affectant le personnage
+- Origine de chaque événement (Monde, Campagne, Chapitre)
+- Modificateurs totaux appliqués
+- Icône/indicateur visuel sur la fiche de personnage
+
+#### Gestion par le MJ
+- Création, modification, suppression d'événements
+- Activation/désactivation temporaire
+- Historique des événements passés
+- Aperçu de l'impact global sur tous les personnages
+
+---
+
+## 🏆 Système de Succès (Achievements)
+
+### Concept
+
+Les **succès** (achievements) récompensent les joueurs pour leurs accomplissements dans un monde, une campagne ou un chapitre spécifique. Ils sont créés par le MJ et peuvent être attribués automatiquement ou manuellement.
+
+### Niveaux de Succès
+
+#### 1. Succès de Monde
+- **Portée** : Disponibles pour tous les joueurs du monde
+- **Attribution** : Conservés même après la fin des campagnes
+- **Exemples** :
+  - "Explorateur du Monde" : Visiter 10 lieux différents du monde
+  - "Légende du Monde" : Atteindre le niveau 20
+  - "Héros du Monde" : Vaincre le boss final du monde
+
+#### 2. Succès de Campagne
+- **Portée** : Spécifiques à une campagne
+- **Attribution** : Liés à la progression dans la campagne
+- **Exemples** :
+  - "Vainqueur du Dragon Noir" : Vaincre le dragon de la campagne
+  - "Sauveur de la Ville" : Compléter la quête principale
+  - "Compagnon Fidèle" : Participer à 10 sessions de la campagne
+
+#### 3. Succès de Chapitre
+- **Portée** : Spécifiques à un chapitre
+- **Attribution** : Débloqués pendant ou à la fin du chapitre
+- **Exemples** :
+  - "Découvreur de Secrets" : Trouver la salle cachée du chapitre 3
+  - "Pacifiste" : Terminer le chapitre sans combat
+  - "Speedrunner" : Terminer le chapitre en moins de 2 heures
+
+### Création de Succès
+
+#### Paramètres
+- **Nom** du succès
+- **Description** (comment l'obtenir)
+- **Niveau** (Monde, Campagne, Chapitre)
+- **Rareté** :
+  - Commun (facile à obtenir)
+  - Rare (nécessite effort)
+  - Épique (accomplissement notable)
+  - Légendaire (exploit exceptionnel)
+- **Icône** ou image du succès
+- **Récompense** (optionnelle) :
+  - Points d'expérience bonus
+  - Titre honorifique
+  - Objet unique
+- **Condition de déblocage** :
+  - Automatique (basée sur une statistique)
+  - Manuelle (attribué par le MJ)
+
+#### Permissions
+- Le **MJ du monde** peut créer des succès de Monde
+- Le **MJ** d'une campagne peut créer des succès de Campagne
+- Le **MJ** peut créer des succès de Chapitre
+
+### Modes d'Attribution
+
+#### Attribution Automatique
+Le système détecte automatiquement quand un joueur remplit les conditions :
+- **Conditions statistiques** :
+  - "Atteindre niveau X"
+  - "Infliger X dégâts en un coup"
+  - "Vaincre X ennemis"
+  - "Participer à X sessions"
+- **Vérification continue** après chaque action significative
+- **Notification immédiate** au déblocage
+- **Bannière de célébration** selon la rareté
+
+#### Attribution Manuelle par le MJ
+Le MJ décide manuellement d'attribuer le succès :
+- **Succès narratifs** (actions créatives, roleplay exceptionnel)
+- **Succès secrets** (conditions non révélées aux joueurs)
+- **Succès événementiels** (participation à un événement spécial)
+- Le MJ sélectionne un ou plusieurs joueurs et leur attribue le succès
+- Notification envoyée aux joueurs concernés
+
+### Interface pour les Joueurs
+
+#### Liste des Succès
+- **Tous les succès** du monde/campagne/chapitre actuel
+- Succès **débloqués** (avec date et heure)
+- Succès **verrouillés** (avec indice ou description complète selon le choix du MJ)
+- **Progression** vers les succès automatiques (ex: "15/50 sorts appris")
+- **Filtrage** par niveau (Monde, Campagne, Chapitre) et rareté
+
+#### Célébrations
+**Commun :**
+- Notification discrète
+- Son de succès simple
+- Badge ajouté au profil
+
+**Rare :**
+- Notification plus visible
+- Animation de l'icône
+- Message de félicitations
+
+**Épique :**
+- Bannière plein écran
+- Animation élaborée
+- Annonce aux autres joueurs de la session
+
+**Légendaire :**
+- Célébration maximale avec effets visuels
+- Annonce à tous les joueurs du monde
+- Badge permanent ultra-visible
+- Titre honorifique déblocable
+
+### Gestion par le MJ
+
+#### Tableau de Bord
+- Liste de tous les succès créés (par niveau)
+- Statistiques de déblocage (combien de joueurs ont obtenu chaque succès)
+- Succès les plus rares / les plus communs
+- Historique des attributions manuelles
+
+#### Attribution Manuelle
+- Sélection d'un succès
+- Sélection des joueurs concernés
+- Confirmation avec message optionnel
+- Log de l'attribution pour traçabilité
 
 ---
 
@@ -307,27 +651,34 @@ En plus des caractéristiques génériques, les PNJ/Monstres D&D possèdent :
 
 ### Déclenchement d'un Combat
 
-#### Par le MJ
+#### Lancé Uniquement par le MJ
 1. Le MJ consulte un chapitre de sa campagne
-2. Visualisation des PNJ et monstres du chapitre
+2. Visualisation des PNJ et monstres disponibles
 3. Sélection des créatures qui participent au combat
-4. Sélection des joueurs participants
+4. Sélection des joueurs participants (personnages de la campagne en cours)
 5. Lancement du combat
+
+#### Types de Combat
+- **Joueurs vs Créatures** : Combat classique contre des PNJ hostiles ou monstres
+- **Joueurs vs Joueurs** (PvP) : Combat entre personnages joueurs (arène, duel, etc.)
+- **Mixte** : Joueurs + PNJ alliés vs Joueurs + PNJ ennemis
 
 ### Calcul d'Initiative
 
-#### Mode Générique
+#### Mode Empty/Custom
 - Le MJ définit l'ordre des tours selon sa méthode préférée :
   - **Ordre manuel** : Le MJ décide de l'ordre des participants
   - **Jets de dés libres** : Le MJ demande des jets (ex: 1d6, 1d10) et ordonne les résultats
   - Le joueur peut lancer physiquement ou utiliser l'application
   - Les résultats sont transmis au MJ qui établit l'ordre
 
-#### Mode D&D (et systèmes à règles automatisées)
+#### Mode D&D/Skyrim (systèmes à règles automatisées)
 - Chaque participant lance automatiquement un **jet d'initiative**
 - **Formule D&D** : 1d20 + modificateur de Dextérité
+- **Formule Skyrim** : Basée sur les compétences de combat
 - Calcul automatique par l'application
 - Ordre des tours établi automatiquement du plus haut au plus bas
+- Les **événements actifs** sont pris en compte dans les modificateurs
 
 **Note** : En mode D&D/Skyrim, le MJ peut désactiver les calculs automatiques pour gérer l'initiative manuellement (mode hybride).
 
@@ -354,7 +705,7 @@ En plus des caractéristiques génériques, les PNJ/Monstres D&D possèdent :
 
 ### Résolution des Actions
 
-#### Mode Générique - Gestion Manuelle
+#### Mode Empty/Custom - Gestion Manuelle
 
 **Principe** : Le MJ demande des jets de dés et interprète les résultats selon sa propre logique.
 
@@ -375,28 +726,48 @@ En plus des caractéristiques génériques, les PNJ/Monstres D&D possèdent :
 - Interprétation narrative des résultats
 - Pas de formules fixes
 
-#### Mode D&D/Skyrim - Calculs Automatiques
+#### Mode D&D/Skyrim - Calculs Automatiques avec Statistiques
 
-**Principe** : L'application connaît les règles et effectue les calculs automatiquement.
+**Principe** : L'application connaît les règles et ajoute automatiquement les statistiques du personnage aux jets de dés.
 
 **Jets d'Attaque D&D** :
-- **Attaque au corps à corps** : 1d20 + modificateur Force/Dextérité + bonus de maîtrise
-- **Attaque à distance** : 1d20 + modificateur Dextérité + bonus de maîtrise
-- **Attaque de sort** : 1d20 + modificateur d'incantation + bonus de maîtrise
+- **Le joueur lance le dé** (ou utilise le lanceur automatique)
+- **Le système ajoute automatiquement** :
+  - Modificateur de Force/Dextérité (selon l'arme)
+  - Bonus de maîtrise
+  - Modificateurs d'événements actifs
+- **Formule complète** : Résultat du dé + modificateurs automatiques
+- Exemple : Le joueur lance 1d20 et obtient 14 → le système affiche "14 + 5 (Force) + 3 (Maîtrise) = 22"
 - Comparaison automatique avec la Classe d'Armure (CA) de la cible
 - Résultat affiché : "Touché !" ou "Raté !"
 
 **Calcul des Dégâts D&D** :
-- Application automatique de la formule de dégâts de l'arme/sort
-- Ajout des modificateurs appropriés selon les règles
-- Gestion des coups critiques (20 naturel = dégâts doublés)
-- Application des résistances et vulnérabilités des créatures
-- Mise à jour automatique des PV de la cible
+- **Le joueur lance les dés de dégâts** de l'arme/sort
+- **Le système ajoute automatiquement** :
+  - Modificateur de Force/Dextérité (pour les armes)
+  - Bonus d'arme magique (+1, +2, etc.)
+  - Modificateurs d'événements actifs
+- **Gestion automatique** :
+  - Coups critiques (20 naturel = dégâts doublés)
+  - Résistances et vulnérabilités des créatures
+  - Mise à jour automatique des PV de la cible
+- Exemple : Le joueur lance 1d8 et obtient 6 → le système affiche "6 + 4 (Force) = 10 dégâts"
 
 **Jets de Sauvegarde D&D** :
-- Jet 1d20 + modificateur de caractéristique appropriée
+- Jet 1d20 + modificateur de caractéristique appropriée (ajouté automatiquement)
 - Comparaison automatique avec le DD (Difficulté de Sauvegarde)
 - Application automatique des effets (demi-dégâts, immunité, etc.)
+- Les événements actifs modifient les jets de sauvegarde
+
+**Skyrim** :
+- Formules de dégâts basées sur les compétences
+- Bonus de perks appliqués automatiquement
+- Calculs d'armure et de résistance Skyrim
+
+**Vue Spécifique pour MJ et Joueurs** :
+- **Vue MJ** : Voit tous les jets, PV de toutes les créatures, peut modifier manuellement
+- **Vue Joueur** : Voit uniquement ses jets et les informations publiques (PV visibles, etc.)
+- **Synchronisation temps réel** via SignalR
 
 **Mode Hybride** :
 - Le MJ peut désactiver les calculs automatiques même en mode D&D/Skyrim
@@ -1091,31 +1462,45 @@ Défis plus ambitieux :
 
 ### Termes Généraux (tous systèmes)
 
-**MJ (Maître du Jeu)** : Utilisateur qui crée et anime une campagne, gère le scénario et contrôle les PNJ.
+**Monde** : Univers de jeu avec règles spécifiques (Empty, Custom, D&D, Skyrim). Contient plusieurs campagnes. Le créateur devient automatiquement Maître du Jeu.
+
+**MJ (Maître du Jeu)** : Utilisateur qui crée et anime un monde/campagne, gère le scénario et contrôle les PNJ.
 
 **Joueur** : Utilisateur qui participe à une campagne en incarnant un personnage.
 
-**Campagne** : Histoire et monde de jeu créés par un MJ, composés de chapitres. Peut être en mode Générique, D&D, Skyrim, etc.
+**Campagne** : Histoire et aventure dans un monde, composée de chapitres. Hérite du système de règles du monde.
 
-**Chapitre** : Section d'une campagne avec son propre contenu narratif et ses PNJ.
+**Chapitre** : Section d'une campagne avec son propre contenu narratif, PNJ et événements.
 
-**Personnage** : Avatar qu'un joueur incarne dans une campagne. Ses caractéristiques dépendent du système de jeu.
+**Personnage de Base** : Personnage original créé par l'utilisateur dans son profil. Peut rejoindre un seul monde.
+
+**Personnage de Monde** : Copie d'un personnage de base adaptée aux règles d'un monde spécifique (D&D, Skyrim, etc.).
+
+**Verrouillage** : État d'un personnage de base ayant rejoint un monde. Il ne peut plus rejoindre d'autres mondes.
 
 **PNJ (Personnage Non-Joueur)** : Personnage contrôlé par le MJ, peut être un allié ou un ennemi.
 
 **Session** : Séance de jeu active où MJ et joueurs se retrouvent pour faire progresser une campagne.
 
-**Sort** : Capacité magique ou spéciale qu'un personnage peut apprendre et utiliser. En mode générique, défini librement. En D&D, suit les règles officielles.
+**Événement** : Modificateur créé par le MJ applicable à un Monde, une Campagne ou un Chapitre. Affecte les personnages automatiquement.
+
+**Succès (Achievement)** : Récompense débloquée pour accomplissement dans un Monde, une Campagne ou un Chapitre. Peut être automatique ou attribué manuellement par le MJ.
+
+**Sort** : Capacité magique ou spéciale qu'un personnage peut apprendre et utiliser. En mode Custom, défini librement. En D&D/Skyrim, suit les règles officielles.
 
 **Équipement** : Objet (arme, armure, item) qu'un personnage possède dans son inventaire.
 
-**Initiative** : Ordre dans lequel les participants jouent pendant un combat. Déterminé manuellement (générique) ou automatiquement (D&D).
+**Initiative** : Ordre dans lequel les participants jouent pendant un combat. Déterminé manuellement (Custom) ou automatiquement (D&D/Skyrim).
 
-**Points de Vie (PV/HP)** : Représentation de la santé du personnage. Gestion manuelle en générique, automatique en D&D.
-
-**Succès** : Récompense (achievement) débloquée pour accomplissement d'un exploit dans le jeu.
+**Points de Vie (PV/HP)** : Représentation de la santé du personnage. Gestion manuelle en Custom, automatique en D&D/Skyrim.
 
 **Mode Hybride** : En mode D&D/Skyrim, possibilité pour le MJ de désactiver les calculs automatiques pour gérer manuellement certaines situations.
+
+### Termes Spécifiques aux Systèmes de Jeu
+
+**Empty** : Type de monde vide servant uniquement de salon d'invitation. Aucune règle de jeu.
+
+**Custom** : Type de monde avec règles personnalisées définies librement par le MJ.
 
 ### Termes Spécifiques D&D
 
@@ -1146,10 +1531,14 @@ Défis plus ambitieux :
 Cette spécification fonctionnelle définit l'ensemble des fonctionnalités de **Chronique des Mondes** du point de vue utilisateur, sans référence aux technologies d'implémentation.
 
 Le système offre une plateforme complète pour :
-- ✅ Créer et gérer des campagnes JDR
+- ✅ Créer et gérer des mondes avec règles spécifiques (Empty, Custom, D&D, Skyrim)
+- ✅ Organiser des campagnes et chapitres dans une hiérarchie claire
+- ✅ Gérer des personnages avec duplication et verrouillage par monde
+- ✅ Créer des événements affectant Monde/Campagne/Chapitre
+- ✅ Attribuer des succès automatiques ou manuels aux joueurs
+- ✅ Lancer des combats avec jets de dés automatiques (stats ajoutées automatiquement)
 - ✅ Jouer avec des systèmes de règles automatisés ou libres
 - ✅ Collaborer avec d'autres joueurs
 - ✅ Suivre sa progression et ses statistiques
-- ✅ Débloquer des succès et relever des défis
 
-La flexibilité du système permet à chaque groupe de jouer selon ses préférences, que ce soit avec des règles strictes (D&D) ou en mode narratif libre (générique).
+La flexibilité du système permet à chaque groupe de jouer selon ses préférences, que ce soit avec des règles strictes (D&D, Skyrim) ou en mode narratif libre (Custom), ou simplement se retrouver dans un salon (Empty).

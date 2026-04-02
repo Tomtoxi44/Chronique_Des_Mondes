@@ -1,107 +1,167 @@
 @inherits LayoutComponentBase
+@using Cdm.Web.Components.Shared
+@using Cdm.Web.Services.State
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
+@inject CustomAuthStateProvider AuthStateProvider
 
-<div class="app-layout">
-    <aside class="sidebar" id="sidebar">
-        <NavMenu />
-    </aside>
-    
-    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<FluentDesignTheme @bind-Mode="@_themeMode" StorageName="theme" />
 
-    <div class="app-main">
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="topbar-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
-                    <i class="bi bi-list"></i>
-                </button>
-                <h1 class="topbar-title">Chronique des Mondes</h1>
-            </div>
+<FluentLayout>
+    <FluentHeader Style="background: var(--cdm-bg-dark); border-bottom: 1px solid rgba(201, 162, 39, 0.2); height: 56px;">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="width: 100%; padding: 0 16px; height: 100%;">
+            <!-- Logo and Title -->
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 12px;">
+                <FluentButton Appearance="Appearance.Stealth" 
+                              IconStart="@(new Icons.Regular.Size20.Navigation())"
+                              OnClick="@(() => _navMenuExpanded = !_navMenuExpanded)"
+                              Title="Menu" />
+                <FluentAnchor Href="/" Appearance="Appearance.Stealth" Style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                    <img src="images/logo.png" alt="Chronique des Mondes" class="cdm-logo" />
+                </FluentAnchor>
+            </FluentStack>
             
-            <div class="topbar-right">
-                @* Theme toggle *@
-                <div class="topbar-theme-toggle">
-                    <button class="topbar-icon-btn" onclick="toggleTheme()" title="Toggle theme">
-                        <i class="bi bi-moon-stars"></i>
-                    </button>
-                </div>
+            <FluentSpacer />
+            
+            <!-- Right side: Theme toggle and Profile -->
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                <FluentButton Appearance="Appearance.Stealth"
+                              IconStart="@(_themeMode == DesignThemeModes.Dark ? new Icons.Regular.Size20.WeatherMoon() : new Icons.Regular.Size20.WeatherSunny())"
+                              OnClick="@ToggleTheme"
+                              Title="Changer de theme" />
                 
-                @* User menu *@
-                <div class="topbar-user-wrapper" style="position: relative;">
-                    <button class="topbar-user-btn" onclick="toggleUserMenu()">
-                        <div class="topbar-user-avatar">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <span class="topbar-user-name">Aventurier</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </button>
-                    
-                    <div class="topbar-dropdown" id="user-dropdown">
-                        <a href="profile" class="topbar-dropdown-item">
-                            <i class="bi bi-person"></i>
-                            <span>Mon Profil</span>
-                        </a>
-                        <a href="settings" class="topbar-dropdown-item">
-                            <i class="bi bi-gear"></i>
-                            <span>Paramètres</span>
-                        </a>
-                        <div class="topbar-dropdown-divider"></div>
-                        <button class="topbar-dropdown-item danger" onclick="logout()">
-                            <i class="bi bi-box-arrow-right"></i>
-                            <span>Déconnexion</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
+                <AuthorizeView>
+                    <Authorized>
+                        @{
+                            var displayName = GetDisplayName(context);
+                            var initials = GetInitials(displayName);
+                        }
+                        <FluentProfileMenu Initials="@initials"
+                                           FullName="@displayName"
+                                           Style="min-width: 180px;">
+                            <HeaderTemplate>
+                                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="padding: 12px; gap: 12px;">
+                                    <FluentPersona Name="@displayName"
+                                                   Initials="@initials"
+                                                   ImageSize="40px" />
+                                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="2">
+                                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@displayName</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 12px; color: var(--cdm-text-muted);">
+                                            @context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                                        </FluentLabel>
+                                    </FluentStack>
+                                </FluentStack>
+                            </HeaderTemplate>
+                            <FooterTemplate>
+                                <FluentStack Orientation="Orientation.Vertical" Style="width: 100%;">
+                                    <FluentAnchor Href="/profile" Appearance="Appearance.Stealth" Style="width: 100%; padding: 8px 12px;">
+                                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                                            <FluentIcon Value="@(new Icons.Regular.Size20.Person())" />
+                                            <span>Mon Profil</span>
+                                        </FluentStack>
+                                    </FluentAnchor>
+                                    <FluentAnchor Href="/settings" Appearance="Appearance.Stealth" Style="width: 100%; padding: 8px 12px;">
+                                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                                            <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" />
+                                            <span>Parametres</span>
+                                        </FluentStack>
+                                    </FluentAnchor>
+                                    <FluentDivider Style="width: 100%; margin: 4px 0;" />
+                                    <FluentButton Appearance="Appearance.Stealth" 
+                                                  Style="width: 100%; padding: 8px 12px; justify-content: flex-start;"
+                                                  OnClick="@HandleLogout">
+                                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                                            <FluentIcon Value="@(new Icons.Regular.Size20.SignOut())" Color="Color.Error" />
+                                            <span style="color: var(--cdm-accent-coral);">Deconnexion</span>
+                                        </FluentStack>
+                                    </FluentButton>
+                                </FluentStack>
+                            </FooterTemplate>
+                        </FluentProfileMenu>
+                    </Authorized>
+                    <NotAuthorized>
+                        <FluentAnchor Href="/login" Appearance="Appearance.Accent">Connexion</FluentAnchor>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </FluentStack>
+        </FluentStack>
+    </FluentHeader>
 
-        <main class="app-content">
-            <div class="page-wrapper">
-                @Body
-            </div>
-        </main>
-    </div>
-</div>
-
-<div id="blazor-error-ui" class="blazor-error">
-    <i class="bi bi-exclamation-triangle"></i>
-    <span>Une erreur inattendue s'est produite.</span>
-    <a href="" class="reload">Recharger</a>
-    <button class="dismiss" onclick="this.parentElement.style.display='none'">
-        <i class="bi bi-x"></i>
-    </button>
-</div>
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('visible');
-    }
-    
-    function toggleUserMenu() {
-        const dropdown = document.getElementById('user-dropdown');
-        const btn = document.querySelector('.topbar-user-btn');
-        dropdown.classList.toggle('open');
-        btn.classList.toggle('open');
-    }
-    
-    function toggleTheme() {
-        document.body.classList.toggle('light-theme');
-        const icon = document.querySelector('.topbar-theme-toggle i');
-        if (document.body.classList.contains('light-theme')) {
-            icon.className = 'bi bi-sun';
-        } else {
-            icon.className = 'bi bi-moon-stars';
+    <FluentStack Orientation="Orientation.Horizontal" Style="height: calc(100vh - 56px);">
+        @if (_navMenuExpanded)
+        {
+            <FluentNavMenu Width="250" 
+                           Collapsible="false"
+                           Style="height: 100%; background: var(--cdm-bg-darkest); border-right: 1px solid rgba(201, 162, 39, 0.15);">
+                
+                <FluentNavGroup Title="Navigation" Expanded="true">
+                    <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())">Accueil</FluentNavLink>
+                    <FluentNavLink Href="/worlds" Icon="@(new Icons.Regular.Size20.Globe())">Mondes</FluentNavLink>
+                    <FluentNavLink Href="/campaigns" Icon="@(new Icons.Regular.Size20.Briefcase())">Campagnes</FluentNavLink>
+                    <FluentNavLink Href="/characters" Icon="@(new Icons.Regular.Size20.People())">Personnages</FluentNavLink>
+                </FluentNavGroup>
+                
+                <FluentNavGroup Title="Outils" Expanded="true">
+                    <FluentNavLink Href="/dice" Icon="@(new Icons.Regular.Size20.Cube())">Lanceur de des</FluentNavLink>
+                </FluentNavGroup>
+                
+                <FluentNavGroup Title="Compte" Expanded="true">
+                    <FluentNavLink Href="/profile" Icon="@(new Icons.Regular.Size20.PersonCircle())">Mon Profil</FluentNavLink>
+                    <FluentNavLink Href="/settings" Icon="@(new Icons.Regular.Size20.Settings())">Parametres</FluentNavLink>
+                </FluentNavGroup>
+            </FluentNavMenu>
         }
+
+        <FluentBodyContent Style="padding: 24px; overflow-y: auto; flex: 1; background: var(--cdm-bg-darkest);">
+            <FluentMessageBarProvider Section="@MESSAGES_TOP" />
+            @Body
+        </FluentBodyContent>
+    </FluentStack>
+</FluentLayout>
+
+@code {
+    private const string MESSAGES_TOP = "MESSAGES_TOP";
+    private bool _navMenuExpanded = true;
+    private DesignThemeModes _themeMode = DesignThemeModes.Dark;
+
+    private void ToggleTheme()
+    {
+        _themeMode = _themeMode == DesignThemeModes.Dark 
+            ? DesignThemeModes.Light 
+            : DesignThemeModes.Dark;
     }
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('user-dropdown');
-        const btn = document.querySelector('.topbar-user-btn');
-        if (dropdown && !e.target.closest('.topbar-user-wrapper')) {
-            dropdown.classList.remove('open');
-            btn.classList.remove('open');
-        }
-    });
-</script>
+
+    private string GetDisplayName(AuthenticationState context)
+    {
+        // Try to get nickname first, then fall back to name claim
+        var nickname = context.User.FindFirst("nickname")?.Value;
+        if (!string.IsNullOrEmpty(nickname))
+            return nickname;
+            
+        var name = context.User.Identity?.Name;
+        if (!string.IsNullOrEmpty(name) && !name.Contains("@"))
+            return name;
+            
+        // If name is an email, try to extract username part
+        if (!string.IsNullOrEmpty(name) && name.Contains("@"))
+            return name.Split('@')[0];
+            
+        return "Utilisateur";
+    }
+
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "U";
+        
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        return name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthStateProvider.MarkUserAsLoggedOutAsync();
+        NavigationManager.NavigateTo("/login", forceLoad: true);
+    }
+}

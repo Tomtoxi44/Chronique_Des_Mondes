@@ -44,9 +44,29 @@ public class MigrationsContext : DbContext
     public DbSet<Character> Characters { get; set; } = null!;
 
     /// <summary>
-    /// Character game profiles table
+    /// World characters table (characters adapted to worlds)
     /// </summary>
-    public DbSet<CharacterGameProfile> CharacterGameProfiles { get; set; } = null!;
+    public DbSet<WorldCharacter> WorldCharacters { get; set; } = null!;
+
+    /// <summary>
+    /// Chapters table
+    /// </summary>
+    public DbSet<Chapter> Chapters { get; set; } = null!;
+
+    /// <summary>
+    /// Events table
+    /// </summary>
+    public DbSet<Event> Events { get; set; } = null!;
+
+    /// <summary>
+    /// Achievements table
+    /// </summary>
+    public DbSet<Achievement> Achievements { get; set; } = null!;
+
+    /// <summary>
+    /// User achievements junction table
+    /// </summary>
+    public DbSet<UserAchievement> UserAchievements { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,10 +129,6 @@ public class MigrationsContext : DbContext
             entity.HasIndex(c => c.CreatedBy)
                 .HasDatabaseName("IX_Campaigns_CreatedBy");
 
-            // GameType index for filtering by game system
-            entity.HasIndex(c => c.GameType)
-                .HasDatabaseName("IX_Campaigns_GameType");
-
             // Composite index for public campaigns listing
             entity.HasIndex(c => new { c.Visibility, c.IsActive })
                 .HasDatabaseName("IX_Campaigns_Visibility_IsActive");
@@ -126,6 +142,12 @@ public class MigrationsContext : DbContext
                 .WithMany()
                 .HasForeignKey(c => c.CreatedBy)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // World relationship (prevent cascade delete cycles)
+            entity.HasOne(c => c.World)
+                .WithMany(w => w.Campaigns)
+                .HasForeignKey(c => c.WorldId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Set default values
             entity.Property(c => c.CreatedAt)
@@ -142,9 +164,6 @@ public class MigrationsContext : DbContext
 
             entity.Property(c => c.MaxPlayers)
                 .HasDefaultValue(6);
-
-            entity.Property(c => c.GameType)
-                .HasDefaultValue(GameType.Generic);
         });
 
         // Configure World entity
@@ -168,6 +187,7 @@ public class MigrationsContext : DbContext
         {
             entity.HasIndex(c => c.UserId).HasDatabaseName("IX_Characters_UserId");
             entity.HasIndex(c => c.IsActive).HasDatabaseName("IX_Characters_IsActive");
+            entity.HasIndex(c => c.IsLocked).HasDatabaseName("IX_Characters_IsLocked");
             entity.HasIndex(c => c.Name).HasDatabaseName("IX_Characters_Name");
 
             entity.HasOne(c => c.Owner)
@@ -177,30 +197,148 @@ public class MigrationsContext : DbContext
 
             entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(c => c.IsActive).HasDefaultValue(true);
+            entity.Property(c => c.IsLocked).HasDefaultValue(false);
         });
 
-        // Configure CharacterGameProfile entity
-        modelBuilder.Entity<CharacterGameProfile>(entity =>
+        // Configure WorldCharacter entity (characters adapted to worlds)
+        modelBuilder.Entity<WorldCharacter>(entity =>
         {
-            entity.HasIndex(cgp => cgp.CharacterId).HasDatabaseName("IX_CharacterGameProfiles_CharacterId");
-            entity.HasIndex(cgp => cgp.CampaignId).HasDatabaseName("IX_CharacterGameProfiles_CampaignId");
-            entity.HasIndex(cgp => cgp.GameType).HasDatabaseName("IX_CharacterGameProfiles_GameType");
-            entity.HasIndex(cgp => new { cgp.CharacterId, cgp.CampaignId })
+            entity.HasIndex(wc => wc.CharacterId).HasDatabaseName("IX_WorldCharacters_CharacterId");
+            entity.HasIndex(wc => wc.WorldId).HasDatabaseName("IX_WorldCharacters_WorldId");
+            entity.HasIndex(wc => new { wc.CharacterId, wc.WorldId })
                 .IsUnique()
-                .HasDatabaseName("IX_CharacterGameProfiles_CharacterId_CampaignId");
+                .HasDatabaseName("IX_WorldCharacters_CharacterId_WorldId");
 
-            entity.HasOne(cgp => cgp.Character)
-                .WithMany(c => c.GameProfiles)
-                .HasForeignKey(cgp => cgp.CharacterId)
+            entity.HasOne(wc => wc.Character)
+                .WithMany(c => c.WorldCharacters)
+                .HasForeignKey(wc => wc.CharacterId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(cgp => cgp.Campaign)
-                .WithMany()
-                .HasForeignKey(cgp => cgp.CampaignId)
+            entity.HasOne(wc => wc.World)
+                .WithMany(w => w.WorldCharacters)
+                .HasForeignKey(wc => wc.WorldId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.Property(cgp => cgp.JoinedAt).HasDefaultValueSql("GETUTCDATE()");
-            entity.Property(cgp => cgp.IsActive).HasDefaultValue(true);
+            entity.Property(wc => wc.JoinedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(wc => wc.IsActive).HasDefaultValue(true);
+        });
+
+        // Configure Chapter entity
+        modelBuilder.Entity<Chapter>(entity =>
+        {
+            entity.HasIndex(ch => ch.CampaignId).HasDatabaseName("IX_Chapters_CampaignId");
+            entity.HasIndex(ch => new { ch.CampaignId, ch.ChapterNumber })
+                .HasDatabaseName("IX_Chapters_CampaignId_ChapterNumber");
+            entity.HasIndex(ch => ch.IsCompleted).HasDatabaseName("IX_Chapters_IsCompleted");
+
+            entity.HasOne(ch => ch.Campaign)
+                .WithMany(c => c.Chapters)
+                .HasForeignKey(ch => ch.CampaignId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(ch => ch.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(ch => ch.IsActive).HasDefaultValue(true);
+            entity.Property(ch => ch.IsCompleted).HasDefaultValue(false);
+        });
+
+        // Configure Event entity
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasIndex(e => e.Level).HasDatabaseName("IX_Events_Level");
+            entity.HasIndex(e => e.WorldId).HasDatabaseName("IX_Events_WorldId");
+            entity.HasIndex(e => e.CampaignId).HasDatabaseName("IX_Events_CampaignId");
+            entity.HasIndex(e => e.ChapterId).HasDatabaseName("IX_Events_ChapterId");
+            entity.HasIndex(e => e.IsActive).HasDatabaseName("IX_Events_IsActive");
+
+            entity.HasOne(e => e.World)
+                .WithMany(w => w.Events)
+                .HasForeignKey(e => e.WorldId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Campaign)
+                .WithMany(c => c.Events)
+                .HasForeignKey(e => e.CampaignId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Chapter)
+                .WithMany(ch => ch.Events)
+                .HasForeignKey(e => e.ChapterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Creator)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsPermanent).HasDefaultValue(true);
+        });
+
+        // Configure Achievement entity
+        modelBuilder.Entity<Achievement>(entity =>
+        {
+            entity.HasIndex(a => a.Level).HasDatabaseName("IX_Achievements_Level");
+            entity.HasIndex(a => a.WorldId).HasDatabaseName("IX_Achievements_WorldId");
+            entity.HasIndex(a => a.CampaignId).HasDatabaseName("IX_Achievements_CampaignId");
+            entity.HasIndex(a => a.ChapterId).HasDatabaseName("IX_Achievements_ChapterId");
+            entity.HasIndex(a => a.Rarity).HasDatabaseName("IX_Achievements_Rarity");
+            entity.HasIndex(a => a.IsActive).HasDatabaseName("IX_Achievements_IsActive");
+
+            entity.HasOne(a => a.World)
+                .WithMany(w => w.Achievements)
+                .HasForeignKey(a => a.WorldId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.Campaign)
+                .WithMany(c => c.Achievements)
+                .HasForeignKey(a => a.CampaignId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.Chapter)
+                .WithMany(ch => ch.Achievements)
+                .HasForeignKey(a => a.ChapterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.Creator)
+                .WithMany()
+                .HasForeignKey(a => a.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(a => a.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(a => a.IsActive).HasDefaultValue(true);
+            entity.Property(a => a.IsAutomatic).HasDefaultValue(false);
+            entity.Property(a => a.IsSecret).HasDefaultValue(false);
+            entity.Property(a => a.Rarity).HasDefaultValue(AchievementRarity.Common);
+        });
+
+        // Configure UserAchievement entity
+        modelBuilder.Entity<UserAchievement>(entity =>
+        {
+            entity.HasIndex(ua => ua.UserId).HasDatabaseName("IX_UserAchievements_UserId");
+            entity.HasIndex(ua => ua.AchievementId).HasDatabaseName("IX_UserAchievements_AchievementId");
+            entity.HasIndex(ua => new { ua.UserId, ua.AchievementId })
+                .IsUnique()
+                .HasDatabaseName("IX_UserAchievements_UserId_AchievementId");
+            entity.HasIndex(ua => ua.UnlockedAt).HasDatabaseName("IX_UserAchievements_UnlockedAt");
+
+            entity.HasOne(ua => ua.User)
+                .WithMany()
+                .HasForeignKey(ua => ua.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ua => ua.Achievement)
+                .WithMany(a => a.UserAchievements)
+                .HasForeignKey(ua => ua.AchievementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ua => ua.AwardedByUser)
+                .WithMany()
+                .HasForeignKey(ua => ua.AwardedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(ua => ua.UnlockedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(ua => ua.IsManuallyAwarded).HasDefaultValue(false);
         });
 
         // Seed global roles: Player, GameMaster, Admin

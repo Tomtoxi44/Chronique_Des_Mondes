@@ -8,6 +8,7 @@ namespace Cdm.Business.Common.Services;
 
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.Services;
+using Cdm.Common.Enums;
 using Cdm.Common.Services;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
@@ -61,12 +62,22 @@ public class CampaignService(
                 }
             }
 
+            // Verify world exists
+            var world = await this.dbContext.Worlds.FindAsync(dto.WorldId);
+            if (world == null)
+            {
+                this.logger.LogWarning(
+                    "World {WorldId} not found for campaign creation",
+                    dto.WorldId);
+                return null;
+            }
+
             // Create campaign entity
             var campaign = new Campaign
             {
                 Name = dto.Name,
                 Description = dto.Description,
-                GameType = dto.GameType,
+                WorldId = dto.WorldId,
                 Visibility = dto.Visibility,
                 MaxPlayers = dto.MaxPlayers,
                 CoverImageUrl = coverImageUrl,
@@ -129,6 +140,7 @@ public class CampaignService(
             this.logger.LogInformation("Retrieving campaigns for user {UserId}", userId);
 
             var campaigns = await this.dbContext.Campaigns
+                .Include(c => c.World)
                 .Where(c => c.CreatedBy == userId && !c.IsDeleted)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
@@ -158,6 +170,7 @@ public class CampaignService(
                 userId);
 
             var campaign = await this.dbContext.Campaigns
+                .Include(c => c.World)
                 .FirstOrDefaultAsync(c => c.Id == campaignId && !c.IsDeleted);
 
             if (campaign == null)
@@ -205,7 +218,8 @@ public class CampaignService(
             Id = campaign.Id,
             Name = campaign.Name,
             Description = campaign.Description,
-            GameType = campaign.GameType,
+            WorldId = campaign.WorldId,
+            GameType = campaign.World?.GameType ?? GameType.Custom,
             Visibility = campaign.Visibility,
             MaxPlayers = campaign.MaxPlayers,
             CoverImageUrl = campaign.CoverImageUrl,

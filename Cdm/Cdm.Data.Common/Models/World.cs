@@ -62,4 +62,19 @@ public class World
     /// Gets or sets the campaigns in this world.
     /// </summary>
     public virtual ICollection<Campaign> Campaigns { get; set; } = new List<Campaign>();
+
+    /// <summary>
+    /// Gets or sets the world characters (characters adapted to this world).
+    /// </summary>
+    public virtual ICollection<WorldCharacter> WorldCharacters { get; set; } = new List<WorldCharacter>();
+
+    /// <summary>
+    /// Gets or sets the events specific to this world.
+    /// </summary>
+    public virtual ICollection<Event> Events { get; set; } = new List<Event>();
+
+    /// <summary>
+    /// Gets or sets the achievements specific to this world.
+    /// </summary>
+    public virtual ICollection<Achievement> Achievements { get; set; } = new List<Achievement>();
 }

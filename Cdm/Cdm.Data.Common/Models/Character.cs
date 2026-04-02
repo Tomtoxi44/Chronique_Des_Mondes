@@ -52,6 +52,12 @@ public class Character
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether the character is locked (already joined a world).
+    /// A locked character cannot join another world.
+    /// </summary>
+    public bool IsLocked { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets the creation date.
     /// </summary>
     public DateTime CreatedAt { get; set; }
@@ -67,7 +73,7 @@ public class Character
     public virtual User Owner { get; set; } = null!;
 
     /// <summary>
-    /// Gets or sets the character game profiles.
+    /// Gets or sets the world characters (copies of this character adapted to different worlds).
     /// </summary>
-    public virtual ICollection<CharacterGameProfile> GameProfiles { get; set; } = new List<CharacterGameProfile>();
+    public virtual ICollection<WorldCharacter> WorldCharacters { get; set; } = new List<WorldCharacter>();
 }

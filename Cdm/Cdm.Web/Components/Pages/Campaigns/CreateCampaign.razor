@@ -9,7 +9,7 @@
 @using Cdm.Web.Components.Campaigns
 @using Cdm.Web.Services
 @using Microsoft.AspNetCore.Authorization
-@layout AppLayout
+@layout MainLayout
 @attribute [Authorize(Roles = "GameMaster")]
 @inject ICampaignService CampaignService
 @inject NavigationManager NavigationManager
@@ -18,66 +18,66 @@
 
 <PageTitle>Nouvelle Campagne - Chronique des Mondes</PageTitle>
 
-<div class="create-campaign-page">
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="24" Style="max-width: 800px; margin: 0 auto; padding: 24px;">
     <!-- Breadcrumbs -->
-    <nav class="breadcrumbs">
-        <a href="/" class="breadcrumb-item">
-            <i class="bi bi-house-door"></i>
-        </a>
-        <span class="breadcrumb-separator">/</span>
-        <a href="/campaigns" class="breadcrumb-item">Campagnes</a>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">Nouvelle</span>
-    </nav>
+    <FluentBreadcrumb>
+        <FluentBreadcrumbItem Href="/">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
+        </FluentBreadcrumbItem>
+        <FluentBreadcrumbItem Href="/campaigns">
+            Campagnes
+        </FluentBreadcrumbItem>
+        <FluentBreadcrumbItem>
+            Nouvelle
+        </FluentBreadcrumbItem>
+    </FluentBreadcrumb>
 
     <!-- Page Header -->
-    <div class="page-header">
-        <h1 class="page-title">
-            <i class="bi bi-plus-circle text-gold"></i>
-            Créer une Nouvelle Campagne
-        </h1>
-        <p class="page-subtitle">Donnez vie à votre prochaine aventure épique</p>
-    </div>
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="8">
+        <FluentLabel Typo="Typography.PageTitle">
+            <FluentIcon Value="@(new Icons.Regular.Size24.AddCircle())" Style="margin-right: 8px; color: var(--accent-fill-rest);" />
+            Creer une Nouvelle Campagne
+        </FluentLabel>
+        <FluentLabel Typo="Typography.Body" Style="color: var(--neutral-foreground-hint);">
+            Donnez vie a votre prochaine aventure epique
+        </FluentLabel>
+    </FluentStack>
 
-    <div class="card card-gold" style="max-width: 800px;">
-        <div class="card-body" style="padding: var(--spacing-2xl);">
-            @if (!string.IsNullOrEmpty(this.errorMessage))
-            {
-                <div class="auth-alert auth-alert-error" style="margin-bottom: var(--spacing-lg);">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <span>@this.errorMessage</span>
-                    <button type="button" 
-                            class="btn btn-ghost btn-sm" 
-                            style="margin-left: auto;"
-                            @onclick="() => this.errorMessage = null">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-            }
+    <!-- Main Card -->
+    <FluentCard Style="padding: 32px;">
+        @if (!string.IsNullOrEmpty(this.errorMessage))
+        {
+            <FluentMessageBar Title="Erreur" 
+                             Intent="@MessageIntent.Error" 
+                             AllowDismiss="true" 
+                             OnDismiss="@(() => this.errorMessage = null)"
+                             Style="margin-bottom: 24px;">
+                @this.errorMessage
+            </FluentMessageBar>
+        }
 
-            @if (this.success)
-            {
-                <div class="auth-alert auth-alert-success">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Campagne créée avec succès ! Redirection en cours...</span>
-                </div>
-            }
-            else
-            {
-                <CampaignForm Model="@this.model" 
-                             IsSubmitting="@this.isSubmitting" 
-                             OnSubmit="HandleCreateCampaignAsync" />
-            }
-        </div>
-    </div>
+        @if (this.success)
+        {
+            <FluentMessageBar Title="Succes" Intent="@MessageIntent.Success">
+                <FluentIcon Value="@(new Icons.Regular.Size20.CheckmarkCircle())" Style="margin-right: 8px;" />
+                Campagne creee avec succes ! Redirection en cours...
+            </FluentMessageBar>
+        }
+        else
+        {
+            <CampaignForm Model="@this.model" 
+                         IsSubmitting="@this.isSubmitting" 
+                         OnSubmit="HandleCreateCampaignAsync" />
+        }
+    </FluentCard>
 
-    <div style="margin-top: var(--spacing-xl); text-align: center;">
-        <a href="/campaigns" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i>
+    <!-- Back Button -->
+    <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+        <FluentAnchor Href="/campaigns" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.ArrowLeft())">
             Retour aux campagnes
-        </a>
-    </div>
-</div>
+        </FluentAnchor>
+    </FluentStack>
+</FluentStack>
 
 @code {
     private CampaignForm.CreateCampaignModel model = new();
@@ -110,7 +110,7 @@
             }
             else
             {
-                this.errorMessage = "Échec de la création de la campagne. Veuillez vérifier vos données et réessayer.";
+                this.errorMessage = "Echec de la creation de la campagne. Veuillez verifier vos donnees et reessayer.";
                 this.Logger.LogWarning("Campaign creation failed");
             }
         }
