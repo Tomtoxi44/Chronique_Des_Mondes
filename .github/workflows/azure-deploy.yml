@@ -65,6 +65,7 @@ jobs:
     needs: build-api
     permissions:
       contents: read
+      id-token: write  # Required for EntraID authentication
 
     steps:
       - uses: actions/checkout@v4
@@ -80,14 +81,29 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore Cdm/Cdm.Migrations/Cdm.Migrations.csproj
 
-      - name: Run database migrations
+      - name: Login to Azure with EntraID
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get Azure SQL Access Token
+        id: get-token
+        run: |
+          TOKEN=$(az account get-access-token --resource https://database.windows.net/ --query accessToken -o tsv)
+          echo "::add-mask::$TOKEN"
+          echo "sql-token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Run database migrations with EntraID
         run: |
           dotnet ef database update \
             --project Cdm/Cdm.Migrations/Cdm.Migrations.csproj \
             --startup-project Cdm/Cdm.Migrations/Cdm.Migrations.csproj \
-            --connection "Server=79.137.75.13,1433;Database=ChroniqueDesMondes;User Id=sa;Password=${{ secrets.SQL_PASSWORD }};TrustServerCertificate=True;Encrypt=False;"
+            --connection "Server=cdm-server-sql.database.windows.net;Database=ChroniqueDesMondesDb;Authentication=Active Directory Access Token;"
         env:
           DOTNET_ENVIRONMENT: Production
+          AZURE_SQL_ACCESS_TOKEN: ${{ steps.get-token.outputs.sql-token }}
 
   deploy-web:
     runs-on: ubuntu-latest
