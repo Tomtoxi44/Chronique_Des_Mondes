@@ -1,5 +1,6 @@
 namespace Cdm.Migrations;
 
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -12,9 +13,25 @@ public class MigrationsContextFactory : IDesignTimeDbContextFactory<MigrationsCo
     {
         var optionsBuilder = new DbContextOptionsBuilder<MigrationsContext>();
         
-        // Use a temporary connection string for design time
-        // The real connection string will come from Aspire at runtime
-        optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=ChroniqueDesMondes;Trusted_Connection=True;");
+        // Check for Azure SQL access token from environment variable
+        var azureToken = Environment.GetEnvironmentVariable("AZURE_SQL_ACCESS_TOKEN");
+        var connectionString = "Server=(localdb)\\mssqllocaldb;Database=ChroniqueDesMondes;Trusted_Connection=True;";
+        
+        // Use Azure SQL if token is available (production/CI environment)
+        if (!string.IsNullOrEmpty(azureToken))
+        {
+            connectionString = "Server=cdm-server-sql.database.windows.net;Database=cdm-bdd-sql;";
+            
+            var sqlConnection = new SqlConnection(connectionString);
+            sqlConnection.AccessToken = azureToken;
+            
+            optionsBuilder.UseSqlServer(sqlConnection);
+        }
+        else
+        {
+            // Use local database for development
+            optionsBuilder.UseSqlServer(connectionString);
+        }
         
         return new MigrationsContext(optionsBuilder.Options);
     }

@@ -99,8 +99,7 @@ jobs:
         run: |
           dotnet ef database update \
             --project Cdm/Cdm.Migrations/Cdm.Migrations.csproj \
-            --startup-project Cdm/Cdm.Migrations/Cdm.Migrations.csproj \
-            --connection "Server=cdm-server-sql.database.windows.net;Database=cdm-bdd-sql;Authentication=Active Directory Access Token;"
+            --startup-project Cdm/Cdm.Migrations/Cdm.Migrations.csproj
         env:
           DOTNET_ENVIRONMENT: Production
           AZURE_SQL_ACCESS_TOKEN: ${{ steps.get-token.outputs.sql-token }}
