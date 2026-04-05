@@ -86,7 +86,19 @@ public class Campaign
     public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
-    /// Campaign active status
+    /// Campaign status (Planning, Active, OnHold, Completed, Cancelled)
+    /// </summary>
+    [Required]
+    public CampaignStatus Status { get; set; } = CampaignStatus.Planning;
+
+    /// <summary>
+    /// Invite token for joining the campaign (nullable, generated on demand)
+    /// </summary>
+    [MaxLength(100)]
+    public string? InviteToken { get; set; }
+
+    /// <summary>
+    /// Campaign active status (deprecated - use Status instead)
     /// </summary>
     [Required]
     public bool IsActive { get; set; } = true;

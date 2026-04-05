@@ -64,7 +64,17 @@ public class CampaignDto
     public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets whether the campaign is active
+    /// Gets or sets the campaign status (Planning, Active, OnHold, Completed, Cancelled)
+    /// </summary>
+    public CampaignStatus Status { get; set; }
+
+    /// <summary>
+    /// Gets or sets the invite token (null if not generated yet)
+    /// </summary>
+    public string? InviteToken { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the campaign is active (deprecated - use Status)
     /// </summary>
     public bool IsActive { get; set; }
 }

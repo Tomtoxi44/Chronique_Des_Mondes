@@ -55,6 +55,23 @@ public static class CampaignEndpoints
             .RequireAuthorization(policy => policy.RequireRole("GameMaster"))
             .WithName("DeleteCampaign")
             .WithOpenApi();
+
+        // POST /api/campaigns/{id}/invite - Generate invite token
+        group.MapPost("/{id:int}/invite", GenerateInviteTokenAsync)
+            .RequireAuthorization(policy => policy.RequireRole("GameMaster"))
+            .WithName("GenerateCampaignInvite")
+            .WithOpenApi();
+
+        // POST /api/campaigns/join - Join campaign with invite token
+        group.MapPost("/join", JoinCampaignAsync)
+            .WithName("JoinCampaign")
+            .WithOpenApi();
+
+        // PATCH /api/campaigns/{id}/status - Update campaign status
+        group.MapPatch("/{id:int}/status", UpdateCampaignStatusAsync)
+            .RequireAuthorization(policy => policy.RequireRole("GameMaster"))
+            .WithName("UpdateCampaignStatus")
+            .WithOpenApi();
     }
 
     /// <summary>
@@ -327,6 +344,146 @@ public static class CampaignEndpoints
             logger.LogError(ex, "Error deleting campaign {CampaignId}", id);
             return Results.Problem(
                 title: "An error occurred while deleting the campaign",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Generates an invite token for a campaign.
+    /// </summary>
+    /// <param name="id">Campaign ID.</param>
+    /// <param name="campaignService">The campaign service.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="httpContext">The HTTP context.</param>
+    /// <returns>The invite token.</returns>
+    private static async Task<IResult> GenerateInviteTokenAsync(
+        int id,
+        ICampaignService campaignService,
+        ILogger<Program> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                logger.LogWarning("Invalid user ID claim for invite token generation");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation("Generating invite token for campaign {CampaignId}", id);
+
+            var inviteToken = await campaignService.GenerateInviteTokenAsync(id, userId);
+
+            if (inviteToken == null)
+            {
+                logger.LogWarning("Failed to generate invite token for campaign {CampaignId}", id);
+                return Results.NotFound(new { Message = "Campaign not found or unauthorized" });
+            }
+
+            logger.LogInformation("Successfully generated invite token for campaign {CampaignId}", id);
+
+            return Results.Ok(new { InviteToken = inviteToken });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error generating invite token for campaign {CampaignId}", id);
+            return Results.Problem(
+                title: "An error occurred while generating invite token",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Joins a campaign using an invite token.
+    /// </summary>
+    /// <param name="request">Request containing the invite token.</param>
+    /// <param name="campaignService">The campaign service.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="httpContext">The HTTP context.</param>
+    /// <returns>The campaign details.</returns>
+    private static async Task<IResult> JoinCampaignAsync(
+        [FromBody] JoinCampaignRequest request,
+        ICampaignService campaignService,
+        ILogger<Program> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                logger.LogWarning("Invalid user ID claim for join campaign");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation("User {UserId} joining campaign with token", userId);
+
+            var campaign = await campaignService.JoinCampaignAsync(request.InviteToken, userId);
+
+            if (campaign == null)
+            {
+                logger.LogWarning("Failed to join campaign with token for user {UserId}", userId);
+                return Results.NotFound(new { Message = "Invalid invite token or campaign not found" });
+            }
+
+            logger.LogInformation("User {UserId} successfully joined campaign {CampaignId}", userId, campaign.Id);
+
+            return Results.Ok(campaign);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error joining campaign");
+            return Results.Problem(
+                title: "An error occurred while joining the campaign",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Updates the status of a campaign.
+    /// </summary>
+    /// <param name="id">Campaign ID.</param>
+    /// <param name="request">Request containing the new status.</param>
+    /// <param name="campaignService">The campaign service.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="httpContext">The HTTP context.</param>
+    /// <returns>The updated campaign.</returns>
+    private static async Task<IResult> UpdateCampaignStatusAsync(
+        int id,
+        [FromBody] UpdateCampaignStatusRequest request,
+        ICampaignService campaignService,
+        ILogger<Program> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                logger.LogWarning("Invalid user ID claim for campaign status update");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation("Updating status for campaign {CampaignId} to {Status}", id, request.Status);
+
+            var campaign = await campaignService.UpdateCampaignStatusAsync(id, request.Status, userId);
+
+            if (campaign == null)
+            {
+                logger.LogWarning("Failed to update status for campaign {CampaignId}", id);
+                return Results.NotFound(new { Message = "Campaign not found or unauthorized" });
+            }
+
+            logger.LogInformation("Successfully updated status for campaign {CampaignId}", id);
+
+            return Results.Ok(campaign);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating status for campaign {CampaignId}", id);
+            return Results.Problem(
+                title: "An error occurred while updating campaign status",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }
