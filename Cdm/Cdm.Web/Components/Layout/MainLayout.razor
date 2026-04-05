@@ -8,7 +8,7 @@
 <FluentDesignTheme @bind-Mode="@_themeMode" StorageName="theme" />
 
 <FluentLayout>
-    <FluentHeader Style="background: var(--cdm-bg-dark); border-bottom: 1px solid rgba(201, 162, 39, 0.2); height: 56px;">
+    <FluentHeader Style="height: 56px; border-bottom: 1px solid var(--neutral-stroke-divider-rest);">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="width: 100%; padding: 0 16px; height: 100%;">
             <!-- Logo and Title -->
             <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 12px;">
@@ -17,7 +17,8 @@
                               OnClick="@(() => _navMenuExpanded = !_navMenuExpanded)"
                               Title="Menu" />
                 <FluentAnchor Href="/" Appearance="Appearance.Stealth" Style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-                    <img src="images/logo.png" alt="Chronique des Mondes" class="cdm-logo" />
+                    <img src="LogoCdm.svg" alt="Chronique des Mondes" style="height: 40px; width: auto;" />
+                    <FluentLabel Typo="Typography.H6" Style="margin: 0;">Chronique des Mondes</FluentLabel>
                 </FluentAnchor>
             </FluentStack>
             
@@ -46,7 +47,7 @@
                                                    ImageSize="40px" />
                                     <FluentStack Orientation="Orientation.Vertical" VerticalGap="2">
                                         <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@displayName</FluentLabel>
-                                        <FluentLabel Typo="Typography.Body" Style="font-size: 12px; color: var(--cdm-text-muted);">
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 12px; opacity: 0.7;">
                                             @context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
                                         </FluentLabel>
                                     </FluentStack>
@@ -72,7 +73,7 @@
                                                   OnClick="@HandleLogout">
                                         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
                                             <FluentIcon Value="@(new Icons.Regular.Size20.SignOut())" Color="Color.Error" />
-                                            <span style="color: var(--cdm-accent-coral);">Deconnexion</span>
+                                            <span>Deconnexion</span>
                                         </FluentStack>
                                     </FluentButton>
                                 </FluentStack>
@@ -92,7 +93,7 @@
         {
             <FluentNavMenu Width="250" 
                            Collapsible="false"
-                           Style="height: 100%; background: var(--cdm-bg-darkest); border-right: 1px solid rgba(201, 162, 39, 0.15);">
+                           Style="height: 100%; border-right: 1px solid var(--neutral-stroke-divider-rest);">
                 
                 <FluentNavGroup Title="Navigation" Expanded="true">
                     <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())">Accueil</FluentNavLink>
@@ -112,7 +113,7 @@
             </FluentNavMenu>
         }
 
-        <FluentBodyContent Style="padding: 24px; overflow-y: auto; flex: 1; background: var(--cdm-bg-darkest);">
+        <FluentBodyContent Style="padding: 24px; overflow-y: auto; flex: 1;">
             <FluentMessageBarProvider Section="@MESSAGES_TOP" />
             @Body
         </FluentBodyContent>

@@ -10,31 +10,29 @@
     <Authorized>
         <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
             <!-- Hero Welcome -->
-            <FluentCard Style="background: linear-gradient(135deg, var(--accent-fill-rest) 0%, var(--accent-fill-hover) 100%); color: white;">
+            <FluentCard>
                 <FluentStack Orientation="Orientation.Horizontal" 
                              VerticalAlignment="VerticalAlignment.Center"
                              HorizontalAlignment="HorizontalAlignment.SpaceBetween"
                              Wrap="true"
-                             Style="padding: 16px;">
+                             Style="padding: 24px; gap: 16px;">
                     <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                        <FluentLabel Typo="Typography.H3" Style="color: white;">
+                        <FluentLabel Typo="Typography.H3">
                             Bienvenue, @context.User.Identity?.Name !
                         </FluentLabel>
-                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.9; color: white;">
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.8;">
                             Pret pour votre prochaine aventure epique ?
                         </FluentLabel>
                     </FluentStack>
-                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 12px;">
+                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 12px;" Wrap="true">
                         <FluentButton Appearance="Appearance.Accent" 
                                       IconStart="@(new Icons.Regular.Size20.Add())"
-                                      Href="/campaigns/create"
-                                      Style="background: white; color: var(--accent-fill-rest);">
+                                      Href="/campaigns/create">
                             Nouvelle Campagne
                         </FluentButton>
                         <FluentButton Appearance="Appearance.Outline" 
                                       IconStart="@(new Icons.Regular.Size20.PersonAdd())"
-                                      Href="/characters/create"
-                                      Style="border-color: white; color: white;">
+                                      Href="/characters/create">
                             Nouveau Personnage
                         </FluentButton>
                     </FluentStack>
