@@ -135,7 +135,7 @@
         _isLoading = false;
     }
 
-    private async Task HandleDeleteWorld(Guid worldId)
+    private async Task HandleDeleteWorld(int worldId)
     {
         var world = _worlds?.FirstOrDefault(w => w.Id == worldId);
         if (world == null) return;

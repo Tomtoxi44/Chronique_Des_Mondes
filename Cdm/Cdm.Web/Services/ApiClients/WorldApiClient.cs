@@ -1,4 +1,5 @@
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Common.Enums;
 using System.Net.Http.Json;
 
 namespace Cdm.Web.Services.ApiClients;
@@ -35,7 +36,7 @@ public class WorldApiClient
     /// <summary>
     /// Get a world by ID
     /// </summary>
-    public async Task<WorldDto?> GetWorldByIdAsync(Guid id)
+    public async Task<WorldDto?> GetWorldByIdAsync(int id)
     {
         try
         {
@@ -59,7 +60,7 @@ public class WorldApiClient
     /// <summary>
     /// Get characters assigned to a world
     /// </summary>
-    public async Task<List<object>> GetWorldCharactersAsync(Guid worldId)
+    public async Task<List<object>> GetWorldCharactersAsync(int worldId)
     {
         try
         {
@@ -95,7 +96,7 @@ public class WorldApiClient
     /// <summary>
     /// Update an existing world
     /// </summary>
-    public async Task<WorldDto?> UpdateWorldAsync(Guid id, UpdateWorldRequest request)
+    public async Task<WorldDto?> UpdateWorldAsync(int id, UpdateWorldRequest request)
     {
         try
         {
@@ -119,7 +120,7 @@ public class WorldApiClient
     /// <summary>
     /// Delete a world (soft delete)
     /// </summary>
-    public async Task<bool> DeleteWorldAsync(Guid id)
+    public async Task<bool> DeleteWorldAsync(int id)
     {
         try
         {
@@ -136,7 +137,7 @@ public class WorldApiClient
     /// <summary>
     /// Upload an image for a world
     /// </summary>
-    public async Task<string?> UploadWorldImageAsync(Guid id, MultipartFormDataContent content)
+    public async Task<string?> UploadWorldImageAsync(int id, MultipartFormDataContent content)
     {
         try
         {
@@ -154,6 +155,6 @@ public class WorldApiClient
 }
 
 // Request DTOs (to match backend)
-public record CreateWorldRequest(string Name, string Description, string GameType);
+public record CreateWorldRequest(string Name, string Description, GameType GameType);
 public record UpdateWorldRequest(string Name, string Description, bool IsActive);
 public record UploadImageResponse(string ImageUrl);

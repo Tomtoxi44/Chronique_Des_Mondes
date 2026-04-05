@@ -4,22 +4,16 @@
 
 <FluentCard Style="height: 100%; cursor: pointer; transition: all 0.2s;" @onclick="HandleClick">
     <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-        <!-- Image or Placeholder -->
-        @if (!string.IsNullOrEmpty(World.ImageUrl))
-        {
-            <img src="@World.ImageUrl" 
-                 alt="@World.Name" 
-                 style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--control-corner-radius);" />
-        }
-        else
-        {
-            <FluentStack Orientation="Orientation.Vertical" 
-                         HorizontalAlignment="HorizontalAlignment.Center"
-                         VerticalAlignment="VerticalAlignment.Center"
-                         Style="width: 100%; height: 200px; background: var(--neutral-fill-secondary-rest); border-radius: var(--control-corner-radius);">
-                <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.Neutral" />
-            </FluentStack>
-        }
+        <!-- Image or Placeholder (WorldDto doesn't have ImageUrl yet) -->
+        <FluentStack Orientation="Orientation.Vertical" 
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     VerticalAlignment="VerticalAlignment.Center"
+                     Style="width: 100%; height: 200px; background: var(--neutral-fill-secondary-rest); border-radius: var(--control-corner-radius);">
+            <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.Accent" />
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.5; font-size: 12px; margin-top: 8px;">
+                @GetGameTypeDisplay()
+            </FluentLabel>
+        </FluentStack>
 
         <!-- World Info -->
         <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px; flex: 1;">
@@ -75,8 +69,7 @@
                 <FluentButton Appearance="Appearance.Accent" 
                               IconStart="@(new Icons.Regular.Size16.Eye())"
                               Style="flex: 1;"
-                              @onclick:stopPropagation="true"
-                              OnClick="@(() => NavigationManager.NavigateTo($"/worlds/{World.Id}"))">
+                              @onclick="@(() => NavigationManager.NavigateTo($"/worlds/{World.Id}"))">
                     Voir
                 </FluentButton>
                 
@@ -84,16 +77,14 @@
                 {
                     <FluentButton Appearance="Appearance.Outline" 
                                   IconStart="@(new Icons.Regular.Size16.Edit())"
-                                  @onclick:stopPropagation="true"
-                                  OnClick="@(() => NavigationManager.NavigateTo($"/worlds/edit/{World.Id}"))">
+                                  @onclick="@(() => NavigationManager.NavigateTo($"/worlds/edit/{World.Id}"))">
                         Éditer
                     </FluentButton>
                     
                     <FluentButton Appearance="Appearance.Outline" 
                                   IconStart="@(new Icons.Regular.Size16.Delete())"
                                   Color="Color.Error"
-                                  @onclick:stopPropagation="true"
-                                  OnClick="HandleDelete">
+                                  @onclick="@HandleDelete">
                         Supprimer
                     </FluentButton>
                 }
@@ -116,7 +107,7 @@
     public bool ShowActions { get; set; } = true;
 
     [Parameter]
-    public EventCallback<Guid> OnDelete { get; set; }
+    public EventCallback<int> OnDelete { get; set; }
 
     private void HandleClick()
     {
@@ -135,12 +126,16 @@
     {
         return World.GameType switch
         {
-            "Generic" => "Générique",
-            "D&D5e" => "D&D 5e",
-            "Skyrim" => "Skyrim",
-            "Custom" => "Personnalisé",
-            "Empty" => "Vide",
-            _ => World.GameType
+            GameType.Generic => "Générique",
+            GameType.DnD5e => "D&D 5e",
+            GameType.Skyrim => "Skyrim",
+            GameType.Custom => "Personnalisé",
+            GameType.Empty => "Vide",
+            GameType.Pathfinder => "Pathfinder",
+            GameType.CallOfCthulhu => "Call of Cthulhu",
+            GameType.Warhammer => "Warhammer",
+            GameType.Cyberpunk => "Cyberpunk",
+            _ => World.GameType.ToString()
         };
     }
 
@@ -148,11 +143,15 @@
     {
         return World.GameType switch
         {
-            "D&D5e" => "#8B0000",      // Dark red
-            "Skyrim" => "#4A5568",     // Slate gray
-            "Custom" => "#6366F1",     // Indigo
-            "Empty" => "#9CA3AF",      // Gray
-            _ => "#059669"             // Green (Generic)
+            GameType.DnD5e => "#8B0000",      // Dark red
+            GameType.Skyrim => "#4A5568",     // Slate gray
+            GameType.Pathfinder => "#8B4513",  // Saddle brown
+            GameType.CallOfCthulhu => "#2C3E50", // Dark blue-gray
+            GameType.Warhammer => "#4B0082",   // Indigo
+            GameType.Cyberpunk => "#FF1493",   // Deep pink
+            GameType.Custom => "#6366F1",      // Indigo
+            GameType.Empty => "#9CA3AF",       // Gray
+            _ => "#059669"                     // Green (Generic)
         };
     }
 
