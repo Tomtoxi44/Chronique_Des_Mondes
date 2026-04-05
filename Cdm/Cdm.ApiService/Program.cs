@@ -52,6 +52,27 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
+
+    // Configure JWT for SignalR (allow token from query string)
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // If the request is for our SignalR hubs
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/hubs/session") ||
+                 path.StartsWithSegments("/hubs/combat") ||
+                 path.StartsWithSegments("/hubs/notifications")))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
@@ -72,6 +93,16 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 // Email service is optional for MVP
 // builder.Services.AddScoped<IEmailService, AzureEmailService>();
+
+// Configure SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.MaximumReceiveMessageSize = 102400; // 100 KB
+    options.StreamBufferCapacity = 10;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 
@@ -117,6 +148,11 @@ app.MapWorldEndpoints();
 app.MapChapterEndpoints();
 app.MapEventEndpoints();
 app.MapAchievementEndpoints();
+
+// Map SignalR hubs
+app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");
+app.MapHub<Cdm.ApiService.Hubs.CombatHub>("/hubs/combat");
+app.MapHub<Cdm.ApiService.Hubs.NotificationHub>("/hubs/notifications");
 
 app.MapDefaultEndpoints();
 

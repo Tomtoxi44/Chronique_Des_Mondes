@@ -68,6 +68,11 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<UserAchievement> UserAchievements { get; set; } = null!;
 
+    /// <summary>
+    /// Gets or sets the notifications.
+    /// </summary>
+    public DbSet<Notification> Notifications { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

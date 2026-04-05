@@ -583,4 +583,60 @@ public class EventService(
             CreatedBy = eventEntity.CreatedBy
         };
     }
+
+    /// <inheritdoc/>
+    public async Task<EventDto?> MarkAsPermanentAsync(int eventId, int userId)
+    {
+        try
+        {
+            this.logger.LogInformation(
+                "Marking event {EventId} as permanent by user {UserId}",
+                eventId,
+                userId);
+
+            var eventEntity = await this.dbContext.Events
+                .Include(e => e.World)
+                .Include(e => e.Campaign)
+                .Include(e => e.Chapter)
+                .FirstOrDefaultAsync(e => e.Id == eventId);
+
+            if (eventEntity == null)
+            {
+                this.logger.LogWarning("Event {EventId} not found", eventId);
+                return null;
+            }
+
+            // Verify authorization (must be the creator/GM)
+            if (eventEntity.CreatedBy != userId)
+            {
+                this.logger.LogWarning(
+                    "User {UserId} not authorized to modify event {EventId}",
+                    userId,
+                    eventId);
+                return null;
+            }
+
+            // Mark as permanent and remove expiration
+            eventEntity.IsPermanent = true;
+            eventEntity.ExpiresAt = null;
+            eventEntity.UpdatedAt = DateTime.UtcNow;
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation(
+                "Successfully marked event {EventId} as permanent",
+                eventId);
+
+            return this.MapToDto(eventEntity);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(
+                ex,
+                "Error marking event {EventId} as permanent",
+                eventId);
+
+            return null;
+        }
+    }
 }
