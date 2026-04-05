@@ -91,4 +91,12 @@ public interface IEventService
     /// <param name="chapterId">Optional chapter identifier.</param>
     /// <returns>A list of active events affecting the character.</returns>
     Task<IEnumerable<EventDto>> GetActiveEventsForCharacterAsync(int characterId, int worldId, int? campaignId = null, int? chapterId = null);
+
+    /// <summary>
+    /// Marks an event as permanent (impacts the world permanently).
+    /// </summary>
+    /// <param name="eventId">The event identifier.</param>
+    /// <param name="userId">The user identifier requesting the change (must be GM).</param>
+    /// <returns>The updated event, or null if not found/unauthorized.</returns>
+    Task<EventDto?> MarkAsPermanentAsync(int eventId, int userId);
 }

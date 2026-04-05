@@ -70,6 +70,11 @@ public static class EventEndpoints
         group.MapPut("/{id:int}/active", SetEventActiveAsync)
             .WithName("SetEventActive")
             .WithOpenApi();
+
+        // POST /api/events/{id}/permanent - Mark event as permanent
+        group.MapPost("/{id:int}/permanent", MarkAsPermanentAsync)
+            .WithName("MarkEventAsPermanent")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> CreateEventAsync(
@@ -199,6 +204,22 @@ public static class EventEndpoints
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             return null;
         return userId;
+    }
+
+    private static async Task<IResult> MarkAsPermanentAsync(
+        int id,
+        [FromServices] IEventService eventService,
+        ILogger<EventEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        var userId = GetUserId(httpContext);
+        if (userId == null) return Results.Unauthorized();
+
+        var result = await eventService.MarkAsPermanentAsync(id, userId.Value);
+        if (result == null)
+            return Results.NotFound(new { Error = "Event not found or unauthorized" });
+
+        return Results.Ok(result);
     }
 
     /// <summary>
