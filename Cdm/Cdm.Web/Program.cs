@@ -60,11 +60,13 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
 builder.Services.AddScoped<LoginHandler>();
 builder.Services.AddScoped<RegisterHandler>();
 
-// HTTP Clients - Using Aspire Service Discovery
+// Get API Base URL from configuration (supports Aspire in Dev, real URL in Production)
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https+http://apiservice";
+
+// HTTP Clients - Using Aspire Service Discovery (Dev) or configured URL (Production)
 builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
 {
-    // Aspire Service Discovery will resolve "https+http://apiservice" automatically
-    client.BaseAddress = new Uri("https+http://apiservice");
+    client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
@@ -81,7 +83,7 @@ builder.Services.AddScoped<ProfileApiClient>(sp =>
 
 builder.Services.AddHttpClient("ProfileApiClient", client =>
 {
-    client.BaseAddress = new Uri("https+http://apiservice");
+    client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
@@ -98,7 +100,7 @@ builder.Services.AddScoped<IRoleService, RoleService>(sp =>
 
 builder.Services.AddHttpClient("RoleApiClient", client =>
 {
-    client.BaseAddress = new Uri("https+http://apiservice");
+    client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
@@ -115,7 +117,7 @@ builder.Services.AddScoped<ICampaignService, CampaignService>(sp =>
 
 builder.Services.AddHttpClient("CampaignApiClient", client =>
 {
-    client.BaseAddress = new Uri("https+http://apiservice");
+    client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
@@ -132,7 +134,7 @@ builder.Services.AddScoped<ICharacterApiClient, CharacterApiClient>(sp =>
 
 builder.Services.AddHttpClient("CharacterApiClient", client =>
 {
-    client.BaseAddress = new Uri("https+http://apiservice");
+    client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
