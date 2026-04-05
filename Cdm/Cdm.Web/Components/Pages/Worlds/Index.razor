@@ -5,92 +5,157 @@
 ----------------------------------------------------------------------- *@
 
 @page "/worlds"
+@using Cdm.Business.Abstraction.DTOs
 @using Cdm.Web.Components.Layout
-@using Microsoft.AspNetCore.Authorization
+@using Cdm.Web.Components.Shared
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Components.Authorization
 @layout MainLayout
-@attribute [Authorize]
-@rendermode InteractiveServer
+@inject WorldApiClient WorldApiClient
+@inject NavigationManager NavigationManager
+@inject IMessageService MessageService
 
 <PageTitle>Mes Mondes - Chronique des Mondes</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
-    <!-- Page Header -->
-    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Style="flex-wrap: wrap; gap: 16px;">
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
-            <FluentLabel Typo="Typography.PageTitle" Style="color: var(--cdm-text-primary);">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Globe())" Style="margin-right: 8px; color: var(--cdm-gold);" />
-                Mes Mondes
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted);">
-                Creez et gerez vos univers de jeu
-            </FluentLabel>
-        </FluentStack>
-        
-        <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size20.Add())">
-            Nouveau Monde
-        </FluentButton>
-    </FluentStack>
-
-    <!-- Empty State -->
-    @if (!_worlds.Any())
-    {
-        <FluentCard Style="padding: 48px; text-align: center;">
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16" HorizontalAlignment="HorizontalAlignment.Center">
-                <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Style="color: var(--cdm-gold); opacity: 0.5;" />
-                <FluentLabel Typo="Typography.H4" Style="color: var(--cdm-text-primary);">
-                    Aucun monde pour le moment
-                </FluentLabel>
-                <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); max-width: 400px;">
-                    Les mondes sont des univers dans lesquels se deroulent vos campagnes. Creez votre premier monde pour commencer l'aventure !
-                </FluentLabel>
-                <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size20.Add())" Style="margin-top: 8px;">
-                    Creer mon premier monde
+<AuthorizeView>
+    <Authorized>
+        <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
+            <!-- Header -->
+            <FluentStack Orientation="Orientation.Horizontal" 
+                         VerticalAlignment="VerticalAlignment.Center"
+                         HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                         Wrap="true"
+                         Style="gap: 16px;">
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+                    <FluentLabel Typo="Typography.H3">Mes Mondes</FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">
+                        Créez et gérez vos univers de jeu
+                    </FluentLabel>
+                </FluentStack>
+                
+                <FluentButton Appearance="Appearance.Accent" 
+                              IconStart="@(new Icons.Regular.Size20.Add())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/worlds/create"))">
+                    Nouveau Monde
                 </FluentButton>
             </FluentStack>
-        </FluentCard>
-    }
-    else
-    {
-        <!-- Worlds Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-            @foreach (var world in _worlds)
+
+            <!-- Loading State -->
+            @if (_isLoading)
             {
-                <FluentCard Style="padding: 0; overflow: hidden;">
-                    <div style="height: 120px; background: linear-gradient(135deg, var(--cdm-bg-elevated) 0%, var(--cdm-bg-dark) 100%); display: flex; align-items: center; justify-content: center;">
-                        <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Style="color: var(--cdm-gold); opacity: 0.3;" />
-                    </div>
-                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="8" Style="padding: 16px;">
-                        <FluentLabel Typo="Typography.H5" Style="color: var(--cdm-text-primary);">@world.Name</FluentLabel>
-                        <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); font-size: 14px;">
-                            @(world.Description ?? "Aucune description")
+                <FluentStack Orientation="Orientation.Vertical" 
+                             HorizontalAlignment="HorizontalAlignment.Center"
+                             Style="padding: 48px; gap: 16px;">
+                    <FluentProgressRing Style="width: 48px; height: 48px;" />
+                    <FluentLabel Typo="Typography.Body">Chargement de vos mondes...</FluentLabel>
+                </FluentStack>
+            }
+            else if (_worlds == null || !_worlds.Any())
+            {
+                <!-- Empty State -->
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" 
+                                 HorizontalAlignment="HorizontalAlignment.Center"
+                                 Style="padding: 48px; gap: 16px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.Neutral" />
+                        <FluentLabel Typo="Typography.H6">Aucun monde créé</FluentLabel>
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; max-width: 500px;">
+                            Créez votre premier univers de jeu pour commencer votre aventure.
+                            Choisissez entre D&D 5e, Skyrim, un système personnalisé, ou commencez avec un monde vide.
                         </FluentLabel>
-                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Style="margin-top: 8px;">
-                            <FluentBadge Appearance="Appearance.Neutral">@world.CampaignCount campagnes</FluentBadge>
-                            <FluentBadge Appearance="Appearance.Neutral">@world.CharacterCount personnages</FluentBadge>
-                        </FluentStack>
+                        <FluentButton Appearance="Appearance.Accent" 
+                                      IconStart="@(new Icons.Regular.Size20.Add())"
+                                      OnClick="@(() => NavigationManager.NavigateTo("/worlds/create"))">
+                            Créer mon premier monde
+                        </FluentButton>
                     </FluentStack>
                 </FluentCard>
             }
-        </div>
-    }
-</FluentStack>
+            else
+            {
+                <!-- Worlds Grid -->
+                <FluentGrid Spacing="3" Justify="JustifyContent.FlexStart">
+                    @foreach (var world in _worlds)
+                    {
+                        <FluentGridItem xs="12" sm="6" md="4" lg="3">
+                            <WorldCard World="@world" 
+                                       CampaignCount="0" 
+                                       CharacterCount="0"
+                                       ShowActions="true"
+                                       OnDelete="HandleDeleteWorld" />
+                        </FluentGridItem>
+                    }
+                </FluentGrid>
+
+                <!-- Summary Stats -->
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Horizontal" 
+                                 VerticalAlignment="VerticalAlignment.Center"
+                                 Style="gap: 24px; padding: 8px;">
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Globe())" Color="Color.Accent" />
+                            <FluentLabel Typo="Typography.Body">
+                                <strong>@_worlds.Count</strong> @(_worlds.Count == 1 ? "monde" : "mondes")
+                            </FluentLabel>
+                        </FluentStack>
+                        
+                        <FluentDivider Orientation="Orientation.Vertical" Style="height: 24px;" />
+                        
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 14px;">
+                            Actifs : @_worlds.Count(w => w.IsActive)
+                        </FluentLabel>
+                        
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 14px;">
+                            Inactifs : @_worlds.Count(w => !w.IsActive)
+                        </FluentLabel>
+                    </FluentStack>
+                </FluentCard>
+            }
+        </FluentStack>
+    </Authorized>
+    
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
-    private List<WorldViewModel> _worlds = new();
+    private List<WorldDto>? _worlds;
+    private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        // TODO: Load worlds from service
-        await Task.CompletedTask;
+        await LoadWorldsAsync();
     }
 
-    private class WorldViewModel
+    private async Task LoadWorldsAsync()
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? ImageUrl { get; set; }
-        public int CampaignCount { get; set; }
-        public int CharacterCount { get; set; }
+        _isLoading = true;
+        _worlds = await WorldApiClient.GetMyWorldsAsync();
+        _isLoading = false;
+    }
+
+    private async Task HandleDeleteWorld(Guid worldId)
+    {
+        var world = _worlds?.FirstOrDefault(w => w.Id == worldId);
+        if (world == null) return;
+
+        // TODO: Add confirmation dialog
+        var confirmed = true; // For now, auto-confirm
+
+        if (confirmed)
+        {
+            var success = await WorldApiClient.DeleteWorldAsync(worldId);
+            
+            if (success)
+            {
+                _worlds?.Remove(world);
+                await MessageService.ShowMessageBarAsync($"Le monde '{world.Name}' a été supprimé.", MessageIntent.Success);
+            }
+            else
+            {
+                await MessageService.ShowMessageBarAsync("Erreur lors de la suppression du monde.", MessageIntent.Error);
+            }
+        }
     }
 }
