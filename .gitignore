@@ -9,6 +9,9 @@ appsettings.*.local.json
 
 # Fichiers de logs et diagnostics
 *.log
+**/logs/
+**/api-logs*/
+**/webapp-logs*/
 
 # Fichiers de configuration utilisateurs
 *.suo
