@@ -1,0 +1,162 @@
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@inject NavigationManager NavigationManager
+
+<FluentCard Style="height: 100%; cursor: pointer; transition: all 0.2s;" @onclick="HandleClick">
+    <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+        <!-- Image or Placeholder (WorldDto doesn't have ImageUrl yet) -->
+        <FluentStack Orientation="Orientation.Vertical" 
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     VerticalAlignment="VerticalAlignment.Center"
+                     Style="width: 100%; height: 200px; background: var(--neutral-fill-secondary-rest); border-radius: var(--control-corner-radius);">
+            <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.Accent" />
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.5; font-size: 12px; margin-top: 8px;">
+                @GetGameTypeDisplay()
+            </FluentLabel>
+        </FluentStack>
+
+        <!-- World Info -->
+        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px; flex: 1;">
+            <!-- Name and GameType Badge -->
+            <FluentStack Orientation="Orientation.Horizontal" 
+                         VerticalAlignment="VerticalAlignment.Center" 
+                         HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                         Style="gap: 8px;">
+                <FluentLabel Typo="Typography.H6" Style="margin: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    @World.Name
+                </FluentLabel>
+                <FluentBadge Appearance="@GetGameTypeBadgeAppearance()" BackgroundColor="@GetGameTypeColor()">
+                    @GetGameTypeDisplay()
+                </FluentBadge>
+            </FluentStack>
+
+            <!-- Description -->
+            @if (!string.IsNullOrEmpty(World.Description))
+            {
+                <FluentLabel Typo="Typography.Body" 
+                             Style="opacity: 0.7; font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                    @World.Description
+                </FluentLabel>
+            }
+            else
+            {
+                <FluentLabel Typo="Typography.Body" Style="opacity: 0.5; font-style: italic; font-size: 14px;">
+                    Aucune description
+                </FluentLabel>
+            }
+
+            <FluentSpacer />
+
+            <!-- Stats -->
+            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 16px;">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 4px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Briefcase())" Color="Color.Neutral" />
+                    <FluentLabel Typo="Typography.Body" Style="font-size: 12px; opacity: 0.7;">
+                        @CampaignCount @(CampaignCount == 1 ? "campagne" : "campagnes")
+                    </FluentLabel>
+                </FluentStack>
+                
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 4px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.People())" Color="Color.Neutral" />
+                    <FluentLabel Typo="Typography.Body" Style="font-size: 12px; opacity: 0.7;">
+                        @CharacterCount @(CharacterCount == 1 ? "personnage" : "personnages")
+                    </FluentLabel>
+                </FluentStack>
+            </FluentStack>
+
+            <!-- Actions -->
+            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+                <FluentButton Appearance="Appearance.Accent" 
+                              IconStart="@(new Icons.Regular.Size16.Eye())"
+                              Style="flex: 1;"
+                              @onclick="@(() => NavigationManager.NavigateTo($"/worlds/{World.Id}"))">
+                    Voir
+                </FluentButton>
+                
+                @if (ShowActions)
+                {
+                    <FluentButton Appearance="Appearance.Outline" 
+                                  IconStart="@(new Icons.Regular.Size16.Edit())"
+                                  @onclick="@(() => NavigationManager.NavigateTo($"/worlds/edit/{World.Id}"))">
+                        Éditer
+                    </FluentButton>
+                    
+                    <FluentButton Appearance="Appearance.Outline" 
+                                  IconStart="@(new Icons.Regular.Size16.Delete())"
+                                  Color="Color.Error"
+                                  @onclick="@HandleDelete">
+                        Supprimer
+                    </FluentButton>
+                }
+            </FluentStack>
+        </FluentStack>
+    </FluentStack>
+</FluentCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public WorldDto World { get; set; } = default!;
+
+    [Parameter]
+    public int CampaignCount { get; set; } = 0;
+
+    [Parameter]
+    public int CharacterCount { get; set; } = 0;
+
+    [Parameter]
+    public bool ShowActions { get; set; } = true;
+
+    [Parameter]
+    public EventCallback<int> OnDelete { get; set; }
+
+    private void HandleClick()
+    {
+        NavigationManager.NavigateTo($"/worlds/{World.Id}");
+    }
+
+    private async Task HandleDelete()
+    {
+        if (OnDelete.HasDelegate)
+        {
+            await OnDelete.InvokeAsync(World.Id);
+        }
+    }
+
+    private string GetGameTypeDisplay()
+    {
+        return World.GameType switch
+        {
+            GameType.Generic => "Générique",
+            GameType.DnD5e => "D&D 5e",
+            GameType.Skyrim => "Skyrim",
+            GameType.Custom => "Personnalisé",
+            GameType.Empty => "Vide",
+            GameType.Pathfinder => "Pathfinder",
+            GameType.CallOfCthulhu => "Call of Cthulhu",
+            GameType.Warhammer => "Warhammer",
+            GameType.Cyberpunk => "Cyberpunk",
+            _ => World.GameType.ToString()
+        };
+    }
+
+    private string GetGameTypeColor()
+    {
+        return World.GameType switch
+        {
+            GameType.DnD5e => "#8B0000",      // Dark red
+            GameType.Skyrim => "#4A5568",     // Slate gray
+            GameType.Pathfinder => "#8B4513",  // Saddle brown
+            GameType.CallOfCthulhu => "#2C3E50", // Dark blue-gray
+            GameType.Warhammer => "#4B0082",   // Indigo
+            GameType.Cyberpunk => "#FF1493",   // Deep pink
+            GameType.Custom => "#6366F1",      // Indigo
+            GameType.Empty => "#9CA3AF",       // Gray
+            _ => "#059669"                     // Green (Generic)
+        };
+    }
+
+    private Appearance GetGameTypeBadgeAppearance()
+    {
+        return Appearance.Lightweight;
+    }
+}

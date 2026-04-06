@@ -139,6 +139,23 @@ builder.Services.AddHttpClient("CharacterApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register WorldApiClient with scoped lifetime
+builder.Services.AddScoped<WorldApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("WorldApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<WorldApiClient>>();
+    return new WorldApiClient(httpClient, logger);
+});
+
+builder.Services.AddHttpClient("WorldApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

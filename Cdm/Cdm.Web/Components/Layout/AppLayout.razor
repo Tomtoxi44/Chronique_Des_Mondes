@@ -1,69 +1,73 @@
 @inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
 @using Cdm.Web.Components.Shared
+@inject NavigationManager Navigation
 
 <div class="app-layout @(isDarkTheme ? "dark-theme" : "light-theme")">
-    <!-- Sidebar -->
+    <!-- Sidebar Navigation -->
     <aside class="sidebar @(isCollapsed ? "collapsed" : "") @(isMobileOpen ? "open" : "")" id="sidebar">
         <div class="sidebar-header">
             <a href="/" class="sidebar-logo">
-                <img src="/images/logo.png" alt="Chronique des Mondes" class="sidebar-logo-image" />
-                <div class="sidebar-logo-text">
-                    <span class="sidebar-logo-title">Chronique</span>
-                    <span class="sidebar-logo-subtitle">des Mondes</span>
+                <div class="sidebar-logo-icon">
+                    <i class="bi bi-compass"></i>
                 </div>
+                @if (!isCollapsed)
+                {
+                    <div class="sidebar-logo-text">
+                        <span class="sidebar-logo-title">Chronique</span>
+                        <span class="sidebar-logo-subtitle">des Mondes</span>
+                    </div>
+                }
             </a>
         </div>
 
         <nav class="sidebar-nav">
             <div class="sidebar-nav-section">
-                <span class="sidebar-nav-section-title">Navigation</span>
+                @if (!isCollapsed)
+                {
+                    <span class="sidebar-nav-section-title">NAVIGATION</span>
+                }
                 
-                <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")" data-tooltip="Accueil">
+                <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")" title="Accueil">
                     <i class="bi bi-house-door"></i>
-                    <span>Accueil</span>
+                    @if (!isCollapsed) { <span>Accueil</span> }
                 </a>
                 
-                <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")" data-tooltip="Campagnes">
+                <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")" title="Campagnes">
                     <i class="bi bi-map"></i>
-                    <span>Campagnes</span>
+                    @if (!isCollapsed) { <span>Campagnes</span> }
                 </a>
                 
-                <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")" data-tooltip="Personnages">
+                <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")" title="Personnages">
                     <i class="bi bi-people"></i>
-                    <span>Personnages</span>
-                </a>
-                
-                <a href="/dice" class="sidebar-nav-item @(IsActive("/dice") ? "active" : "")" data-tooltip="Lanceur de dés">
-                    <i class="bi bi-dice-6"></i>
-                    <span>Lanceur de dés</span>
+                    @if (!isCollapsed) { <span>Personnages</span> }
                 </a>
             </div>
             
             <div class="sidebar-divider"></div>
             
             <div class="sidebar-nav-section">
-                <span class="sidebar-nav-section-title">Mon Compte</span>
+                @if (!isCollapsed)
+                {
+                    <span class="sidebar-nav-section-title">COMPTE</span>
+                }
                 
-                <a href="/profile" class="sidebar-nav-item @(IsActive("/profile") ? "active" : "")" data-tooltip="Profil">
+                <a href="/profile" class="sidebar-nav-item @(IsActive("/profile") ? "active" : "")" title="Profil">
                     <i class="bi bi-person-circle"></i>
-                    <span>Mon Profil</span>
+                    @if (!isCollapsed) { <span>Mon Profil</span> }
                 </a>
                 
-                <a href="/settings" class="sidebar-nav-item @(IsActive("/settings") ? "active" : "")" data-tooltip="Paramètres">
+                <a href="/settings" class="sidebar-nav-item @(IsActive("/settings") ? "active" : "")" title="Paramètres">
                     <i class="bi bi-gear"></i>
-                    <span>Paramètres</span>
+                    @if (!isCollapsed) { <span>Paramètres</span> }
                 </a>
             </div>
         </nav>
 
         <div class="sidebar-footer">
-            <button class="sidebar-toggle" @onclick="ToggleSidebar" title="@(isCollapsed ? "Agrandir" : "Réduire")">
+            <button class="sidebar-toggle-btn" @onclick="ToggleSidebar" title="@(isCollapsed ? "Agrandir le menu" : "Réduire le menu")">
                 <i class="bi bi-chevron-@(isCollapsed ? "right" : "left")"></i>
-                @if (!isCollapsed)
-                {
-                    <span>Réduire</span>
-                }
+                @if (!isCollapsed) { <span>Réduire</span> }
             </button>
         </div>
     </aside>
@@ -71,44 +75,38 @@
     <!-- Mobile Overlay -->
     @if (isMobileOpen)
     {
-        <div class="sidebar-overlay visible" @onclick="CloseMobileSidebar"></div>
+        <div class="sidebar-overlay" @onclick="CloseMobileSidebar"></div>
     }
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <div class="app-main">
-        <!-- Topbar -->
+        <!-- Top Bar -->
         <header class="topbar">
             <div class="topbar-left">
-                <button class="topbar-menu-toggle" @onclick="ToggleMobileSidebar" aria-label="Menu">
+                <button class="topbar-menu-btn" @onclick="ToggleMobileSidebar" aria-label="Toggle Menu">
                     <i class="bi bi-list"></i>
                 </button>
-                <h1 class="topbar-title">@GetPageTitle()</h1>
+            </div>
+            
+            <div class="topbar-center">
+                <div class="topbar-logo">
+                    <i class="bi bi-compass"></i>
+                    <span>Chronique des Mondes</span>
+                </div>
             </div>
             
             <div class="topbar-right">
-                @* Theme toggle *@
-                <div class="topbar-theme-toggle">
-                    <button class="topbar-icon-btn" @onclick="ToggleTheme" title="Changer de thème">
-                        <i class="bi bi-@(isDarkTheme ? "moon-stars" : "sun")"></i>
-                    </button>
-                </div>
-                
-                @* Notifications *@
-                <button class="topbar-icon-btn" title="Notifications">
-                    <i class="bi bi-bell"></i>
-                    <span class="notification-badge">3</span>
+                <button class="topbar-icon-btn" @onclick="ToggleTheme" title="@(isDarkTheme ? "Mode clair" : "Mode sombre")">
+                    <i class="bi bi-@(isDarkTheme ? "sun" : "moon-stars")"></i>
                 </button>
                 
-                @* User Menu *@
                 <UserMenu />
             </div>
         </header>
 
         <!-- Page Content -->
         <main class="app-content">
-            <div class="page-wrapper">
-                @Body
-            </div>
+            @Body
         </main>
     </div>
 </div>

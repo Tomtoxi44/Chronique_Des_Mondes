@@ -1,6 +1,6 @@
 /* 
  * App.css - Point d'entrée principal
- * Chronique des Mondes - Medieval Fantasy Theme
+ * Chronique des Mondes - Modern Professional Theme v3.0
  */
 
 /* Variables & Base */
@@ -10,8 +10,6 @@
 /* Layouts */
 @import url('layouts/auth-layout.css');
 @import url('layouts/app-layout.css');
-@import url('layouts/sidebar.css');
-@import url('layouts/topbar.css');
 
 /* Components */
 @import url('components/buttons.css');
