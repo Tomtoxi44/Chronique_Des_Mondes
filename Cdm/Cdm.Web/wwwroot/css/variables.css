@@ -1,38 +1,48 @@
 /* 
  * Variables CSS - Chronique des Mondes
- * Design System v2.0.0 - Medieval Fantasy Theme
+ * Design System v3.0.0 - Modern Professional Theme
  */
 
 :root {
   /* ============================================
-     COULEURS PRINCIPALES - MÉDIÉVAL FANTASY
+     COULEURS PRINCIPALES - VIOLET/INDIGO MODERNE
      ============================================ */
   
-  /* Or Royal - Accent principal */
-  --color-gold-900: #6B5310;
-  --color-gold-700: #8B6914;
-  --color-gold-500: #C9A227;  /* Couleur signature */
-  --color-gold-300: #D4B84A;
-  --color-gold-100: #F0E5C0;
+  /* Indigo - Accent principal */
+  --color-indigo-950: #1e1b4b;
+  --color-indigo-900: #312e81;
+  --color-indigo-800: #3730a3;
+  --color-indigo-700: #4338ca;
+  --color-indigo-600: #4f46e5;  /* Couleur signature */
+  --color-indigo-500: #6366f1;
+  --color-indigo-400: #818cf8;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-50: #eef2ff;
 
-  /* Bronze Profond - Accent secondaire */
-  --color-bronze-700: #5C4A1A;
-  --color-bronze-500: #8B6914;
-  --color-bronze-300: #A68B3D;
+  /* Violet - Accent secondaire */
+  --color-violet-700: #6d28d9;
+  --color-violet-600: #7c3aed;
+  --color-violet-500: #8b5cf6;
+  --color-violet-400: #a78bfa;
+  --color-violet-300: #c4b5fd;
 
-  /* Cramoisi - Actions importantes, D20 */
-  --color-crimson-700: #5C1525;
-  --color-crimson-500: #8B2942;
-  --color-crimson-300: #B84D66;
-  --color-crimson-100: #F5D0D8;
+  /* Rose - Actions importantes */
+  --color-rose-700: #be123c;
+  --color-rose-600: #e11d48;
+  --color-rose-500: #f43f5e;
+  --color-rose-400: #fb7185;
+  --color-rose-300: #fda4af;
+  --color-rose-100: #ffe4e6;
 
   /* ============================================
      THÈME SOMBRE (Défaut)
      ============================================ */
-  --color-bg-primary: #0D1B2A;      /* Ciel nocturne */
-  --color-bg-secondary: #1B2838;    /* Ardoise sombre */
-  --color-bg-elevated: #2C3E50;     /* Charbon */
-  --color-bg-card: #1B2838;
+  --color-bg-primary: #0f0f1a;      /* Très sombre, presque noir avec teinte violette */
+  --color-bg-secondary: #1a1a2e;    /* Ardoise sombre violette */
+  --color-bg-elevated: #25253a;     /* Élevé avec teinte violette */
+  --color-bg-card: #1f1f35;
 
   /* Alias pour compatibilité */
   --color-background-primary: var(--color-bg-primary);
@@ -40,22 +50,22 @@
   --color-background-elevated: var(--color-bg-elevated);
   --color-background-card: var(--color-bg-card);
 
-  --color-text-primary: #E8E6E3;    /* Blanc doux */
-  --color-text-secondary: #BFA76F;  /* Or atténué */
-  --color-text-tertiary: #7A8B9A;   /* Gris bleuté */
-  --color-text-muted: #5A6A7A;
+  --color-text-primary: #f8fafc;    /* Blanc pur légèrement teinté */
+  --color-text-secondary: #cbd5e1;  /* Gris clair */
+  --color-text-tertiary: #94a3b8;   /* Gris moyen */
+  --color-text-muted: #64748b;      /* Gris atténué */
 
   /* Bordures thème sombre */
-  --color-border: rgba(201, 162, 39, 0.2);
-  --color-border-hover: rgba(201, 162, 39, 0.4);
-  --color-border-focus: var(--color-gold-500);
+  --color-border: rgba(99, 102, 241, 0.15);  /* Bordure indigo subtile */
+  --color-border-hover: rgba(99, 102, 241, 0.3);
+  --color-border-focus: var(--color-indigo-500);
 
   /* Alias couleurs principales */
-  --color-gold: var(--color-gold-500);
-  --color-gold-light: var(--color-gold-300);
-  --color-bronze: var(--color-bronze-500);
-  --color-crimson: var(--color-crimson-500);
-  --color-crimson-light: var(--color-crimson-300);
+  --color-primary: var(--color-indigo-600);
+  --color-primary-hover: var(--color-indigo-500);
+  --color-primary-light: var(--color-indigo-400);
+  --color-secondary: var(--color-violet-600);
+  --color-accent: var(--color-rose-500);
 
   /* Alias typographie */
   --font-heading: var(--font-family-heading);
@@ -163,30 +173,31 @@
   --border-width-thick: 3px;
 
   /* ============================================
-     OMBRES - Effet parchemin/fantasy
+     OMBRES - Moderne et subtile
      ============================================ */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-  /* Ombres dorées pour les éléments interactifs */
-  --shadow-gold: 0 4px 16px rgba(201, 162, 39, 0.3);
-  --shadow-gold-lg: 0 8px 32px rgba(201, 162, 39, 0.4);
-  --shadow-focus: 0 0 0 3px rgba(201, 162, 39, 0.3);
+  /* Ombres indigo pour les éléments interactifs */
+  --shadow-primary: 0 4px 16px rgba(99, 102, 241, 0.2);
+  --shadow-primary-lg: 0 8px 32px rgba(99, 102, 241, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.5);
 
   /* Ombre pour les cartes */
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3), 
-                 inset 0 1px 0 rgba(201, 162, 39, 0.1);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+                 0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                 inset 0 1px 0 rgba(99, 102, 241, 0.05);
 
   /* ============================================
      GRADIENTS
      ============================================ */
-  --gradient-gold: linear-gradient(135deg, var(--color-gold-500) 0%, var(--color-gold-700) 100%);
-  --gradient-gold-hover: linear-gradient(135deg, var(--color-gold-300) 0%, var(--color-gold-500) 100%);
-  --gradient-crimson: linear-gradient(135deg, var(--color-crimson-500) 0%, var(--color-crimson-700) 100%);
+  --gradient-primary: linear-gradient(135deg, var(--color-indigo-600) 0%, var(--color-violet-600) 100%);
+  --gradient-primary-hover: linear-gradient(135deg, var(--color-indigo-500) 0%, var(--color-violet-500) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-rose-500) 0%, var(--color-rose-600) 100%);
   --gradient-dark: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
-  --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.1) 100%);
+  --gradient-card: linear-gradient(145deg, rgba(99, 102, 241, 0.02) 0%, rgba(0, 0, 0, 0.05) 100%);
 
   /* ============================================
      ANIMATIONS
@@ -238,10 +249,10 @@
    ============================================ */
 .light-theme,
 .app-layout.light-theme {
-  --color-bg-primary: #F5F0E6;      /* Parchemin */
-  --color-bg-secondary: #FDFCFA;    /* Blanc chaud */
-  --color-bg-elevated: #FFFFFF;
-  --color-bg-card: #FDFCFA;
+  --color-bg-primary: #ffffff;      /* Blanc pur */
+  --color-bg-secondary: #f8fafc;    /* Gris très clair */
+  --color-bg-elevated: #ffffff;
+  --color-bg-card: #ffffff;
 
   /* Alias pour compatibilité */
   --color-background-primary: var(--color-bg-primary);
@@ -249,17 +260,17 @@
   --color-background-elevated: var(--color-bg-elevated);
   --color-background-card: var(--color-bg-card);
 
-  --color-text-primary: #2C2416;    /* Encre sombre */
-  --color-text-secondary: #5C4A32;  /* Brun bronze */
-  --color-text-tertiary: #7A6B5A;
-  --color-text-muted: #9A8B7A;
+  --color-text-primary: #0f172a;    /* Ardoise très sombre */
+  --color-text-secondary: #334155;  /* Ardoise sombre */
+  --color-text-tertiary: #64748b;
+  --color-text-muted: #94a3b8;
 
-  --color-border: rgba(139, 105, 20, 0.25);
-  --color-border-hover: rgba(139, 105, 20, 0.4);
+  --color-border: rgba(99, 102, 241, 0.1);
+  --color-border-hover: rgba(99, 102, 241, 0.2);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08),
-                 0 1px 3px rgba(139, 105, 20, 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 
+                 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
