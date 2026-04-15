@@ -1,0 +1,318 @@
+@page "/chapters/{ChapterId:int}/edit"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.ComponentModel.DataAnnotations
+@inject ChapterApiClient ChapterApiClient
+@inject CampaignApiClient CampaignApiClient
+@inject NavigationManager NavigationManager
+@inject IMessageService MessageService
+
+<PageTitle>Modifier - @(chapter?.Title ?? "Chapitre")</PageTitle>
+
+<div class="page-container">
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <FluentProgressRing />
+            <p>Chargement du chapitre...</p>
+        </div>
+    }
+    else if (chapter == null)
+    {
+        <div class="empty-state">
+            <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Color="Color.Error" />
+            <FluentLabel Typo="Typography.H4">Chapitre introuvable</FluentLabel>
+            <p>Ce chapitre n'existe pas ou vous n'y avez pas accès.</p>
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(() => NavigationManager.NavigateTo("/campaigns"))">
+                Retour aux campagnes
+            </FluentButton>
+        </div>
+    }
+    else
+    {
+        <div class="page-header">
+            <div class="breadcrumb">
+                <FluentAnchor Href="/campaigns" Appearance="Appearance.Lightweight">Campagnes</FluentAnchor>
+                <span class="separator">/</span>
+                <FluentAnchor Href="@($"/campaigns/{chapter.CampaignId}")" Appearance="Appearance.Lightweight">@campaignName</FluentAnchor>
+                <span class="separator">/</span>
+                <FluentAnchor Href="@($"/campaigns/{chapter.CampaignId}/chapters")" Appearance="Appearance.Lightweight">Chapitres</FluentAnchor>
+                <span class="separator">/</span>
+                <FluentAnchor Href="@($"/chapters/{ChapterId}")" Appearance="Appearance.Lightweight">@chapter.Title</FluentAnchor>
+                <span class="separator">/</span>
+                <span>Modifier</span>
+            </div>
+            
+            <FluentLabel Typo="Typography.H3" style="color: var(--color-text-primary); margin-top: 0.5rem;">
+                📝 Modifier le Chapitre
+            </FluentLabel>
+        </div>
+
+        <FluentCard class="form-card">
+            <EditForm Model="@formModel" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                
+                <div class="form-container">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="error-message">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.ErrorCircle())" Color="Color.Error" />
+                            <span>@errorMessage</span>
+                        </div>
+                    }
+
+                    <div class="form-section">
+                        <div class="section-header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.BookOpen())" Color="Color.Accent" />
+                            <FluentLabel Typo="Typography.H6">Informations du chapitre</FluentLabel>
+                        </div>
+
+                        <div class="form-field">
+                            <FluentTextField @bind-Value="formModel.Title"
+                                           Label="Titre *"
+                                           Placeholder="Ex: La quête commence"
+                                           Required="true"
+                                           Disabled="@isSubmitting"
+                                           Style="width: 100%;">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.TextT())" Slot="start" />
+                            </FluentTextField>
+                            <FluentValidationMessage For="@(() => formModel.Title)" />
+                            <div class="field-hint">Entre 3 et 200 caractères</div>
+                        </div>
+
+                        <div class="form-field">
+                            <FluentNumberField Value="@chapter.ChapterNumber"
+                                             Label="Numéro de chapitre"
+                                             Disabled="true"
+                                             ReadOnly="true"
+                                             Style="width: 200px;">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.NumberSymbol())" Slot="start" />
+                            </FluentNumberField>
+                            <div class="field-hint">Le numéro de chapitre ne peut pas être modifié</div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.DocumentText())" Color="Color.Accent" />
+                            <FluentLabel Typo="Typography.H6">Contenu narratif</FluentLabel>
+                        </div>
+
+                        <div class="form-field">
+                            <FluentTextArea @bind-Value="formModel.Content"
+                                          Label="Contenu"
+                                          Placeholder="Décrivez les événements, l'intrigue et les moments clés de ce chapitre..."
+                                          Rows="8"
+                                          Disabled="@isSubmitting"
+                                          Style="width: 100%;" />
+                            <FluentValidationMessage For="@(() => formModel.Content)" />
+                            <div class="field-hint">Maximum 10 000 caractères</div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <FluentButton Appearance="Appearance.Lightweight" 
+                                    IconStart="@(new Icons.Regular.Size20.Dismiss())"
+                                    OnClick="Cancel"
+                                    Disabled="@isSubmitting">
+                            Annuler
+                        </FluentButton>
+                        <FluentButton Type="ButtonType.Submit"
+                                    Appearance="Appearance.Accent"
+                                    IconStart="@(new Icons.Regular.Size20.Checkmark())"
+                                    Loading="@isSubmitting"
+                                    Disabled="@isSubmitting">
+                            @(isSubmitting ? "Enregistrement..." : "Enregistrer les modifications")
+                        </FluentButton>
+                    </div>
+                </div>
+            </EditForm>
+        </FluentCard>
+    }
+</div>
+
+<style>
+    .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--color-text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .separator {
+        color: var(--color-text-muted);
+    }
+
+    .loading-container, .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        gap: 1rem;
+    }
+
+    .empty-state p {
+        color: var(--color-text-secondary);
+        margin: 0;
+    }
+
+    .form-card {
+        padding: 2rem;
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .error-message {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(--error-color-light, #fee);
+        border-radius: 8px;
+        color: var(--error-color, #c00);
+    }
+
+    .form-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: var(--neutral-layer-2);
+        border-radius: 8px;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .field-hint {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--color-border);
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int ChapterId { get; set; }
+
+    private ChapterDto? chapter;
+    private CreateChapterDto formModel = new();
+    private string campaignName = "Campagne";
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChapter();
+        if (chapter != null)
+        {
+            await LoadCampaignInfo();
+            InitializeForm();
+        }
+    }
+
+    private async Task LoadChapter()
+    {
+        isLoading = true;
+        chapter = await ChapterApiClient.GetChapterByIdAsync(ChapterId);
+        isLoading = false;
+    }
+
+    private async Task LoadCampaignInfo()
+    {
+        if (chapter == null) return;
+        
+        var campaign = await CampaignApiClient.GetCampaignByIdAsync(chapter.CampaignId);
+        if (campaign != null)
+        {
+            campaignName = campaign.Name;
+        }
+    }
+
+    private void InitializeForm()
+    {
+        if (chapter == null) return;
+
+        formModel = new CreateChapterDto
+        {
+            CampaignId = chapter.CampaignId,
+            ChapterNumber = chapter.ChapterNumber,
+            Title = chapter.Title,
+            Content = chapter.Content
+        };
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var result = await ChapterApiClient.UpdateChapterAsync(ChapterId, formModel);
+
+            if (result != null)
+            {
+                MessageService.ShowMessageBar("Le chapitre a été modifié avec succès.", MessageIntent.Success);
+
+                NavigationManager.NavigateTo($"/chapters/{ChapterId}");
+            }
+            else
+            {
+                errorMessage = "Une erreur est survenue lors de la modification du chapitre.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo($"/chapters/{ChapterId}");
+    }
+}

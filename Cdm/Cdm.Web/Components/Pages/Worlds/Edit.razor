@@ -1,0 +1,245 @@
+@page "/worlds/edit/{Id:int}"
+@using System.ComponentModel.DataAnnotations
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@inject WorldApiClient WorldApiClient
+@inject NavigationManager NavigationManager
+@inject IMessageService MessageService
+@rendermode InteractiveServer
+
+<PageTitle>Modifier @(_world?.Name ?? "Monde") - Chronique des Mondes</PageTitle>
+
+@if (_isLoading)
+{
+    <FluentStack Orientation="Orientation.Vertical" 
+                 HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="padding: 48px; gap: 16px;">
+        <FluentProgressRing Style="width: 48px; height: 48px;" />
+        <FluentLabel Typo="Typography.Body">Chargement...</FluentLabel>
+    </FluentStack>
+}
+else if (_world == null)
+{
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" 
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     Style="padding: 48px; gap: 16px;">
+            <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Color="Color.Error" />
+            <FluentLabel Typo="Typography.H5">Monde introuvable</FluentLabel>
+            <FluentButton Appearance="Appearance.Accent" 
+                          OnClick="@(() => NavigationManager.NavigateTo("/worlds"))">
+                Retour aux mondes
+            </FluentButton>
+        </FluentStack>
+    </FluentCard>
+}
+else
+{
+    <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; max-width: 800px; margin: 0 auto;">
+        <!-- Breadcrumbs -->
+        <FluentBreadcrumb>
+            <FluentBreadcrumbItem Href="/">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
+            </FluentBreadcrumbItem>
+            <FluentBreadcrumbItem Href="/worlds">
+                Mondes
+            </FluentBreadcrumbItem>
+            <FluentBreadcrumbItem Href="@($"/worlds/{Id}")">
+                @_world.Name
+            </FluentBreadcrumbItem>
+            <FluentBreadcrumbItem>
+                Modifier
+            </FluentBreadcrumbItem>
+        </FluentBreadcrumb>
+
+        <!-- Page Header -->
+        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+            <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Modifier le Monde</FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">Mettez à jour les informations de votre monde</FluentLabel>
+        </FluentStack>
+
+        <!-- Form Card -->
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; padding: 8px;">
+                <EditForm Model="@_model" OnValidSubmit="HandleSubmit">
+                    <DataAnnotationsValidator />
+                    
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 20px;">
+                        <!-- Name -->
+                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+                                Nom du monde <span style="color: var(--color-error-500);">*</span>
+                            </FluentLabel>
+                            <FluentTextField @bind-Value="_model.Name"
+                                             Placeholder="Ex: Le Royaume Oublié"
+                                             Required
+                                             Style="width: 100%;" />
+                            <ValidationMessage For="@(() => _model.Name)" />
+                        </FluentStack>
+
+                        <!-- Description -->
+                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+                                Description
+                            </FluentLabel>
+                            <FluentTextArea @bind-Value="_model.Description"
+                                            Placeholder="Décrivez votre monde..."
+                                            Rows="5"
+                                            Style="width: 100%;" />
+                            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
+                                Une brève description de votre univers (optionnel)
+                            </FluentLabel>
+                        </FluentStack>
+
+                        <!-- Is Active -->
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     VerticalAlignment="VerticalAlignment.Center"
+                                     Style="gap: 12px;">
+                            <FluentCheckbox @bind-Value="_model.IsActive" />
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
+                                <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
+                                    Monde actif
+                                </FluentLabel>
+                                <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
+                                    Les mondes inactifs ne sont pas visibles aux joueurs
+                                </FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+
+                        <!-- Info: GameType cannot be changed -->
+                        <FluentMessageBar Title="Information" Intent="MessageIntent.Info">
+                            Le type de jeu ne peut pas être modifié après la création. Monde actuel: <strong>@GetGameTypeDisplay()</strong>
+                        </FluentMessageBar>
+
+                        <!-- Action Buttons -->
+                        <FluentStack Orientation="Orientation.Horizontal" 
+                                     HorizontalAlignment="HorizontalAlignment.End"
+                                     Style="gap: 12px; margin-top: 8px;">
+                            <FluentButton Appearance="Appearance.Outline"
+                                          OnClick="@(() => NavigationManager.NavigateTo($"/worlds/{Id}"))"
+                                          Disabled="@_isSubmitting">
+                                Annuler
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Accent"
+                                          Type="ButtonType.Submit"
+                                          Loading="@_isSubmitting"
+                                          Disabled="@_isSubmitting"
+                                          IconStart="@(new Icons.Regular.Size20.Save())">
+                                Enregistrer
+                            </FluentButton>
+                        </FluentStack>
+                    </FluentStack>
+                </EditForm>
+            </FluentStack>
+        </FluentCard>
+    </FluentStack>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private WorldDto? _world;
+    private UpdateWorldModel _model = new();
+    private bool _isLoading = true;
+    private bool _isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWorldAsync();
+    }
+
+    private async Task LoadWorldAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            _world = await WorldApiClient.GetWorldByIdAsync(Id);
+            
+            if (_world != null)
+            {
+                _model.Name = _world.Name;
+                _model.Description = _world.Description ?? string.Empty;
+                _model.IsActive = _world.IsActive;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageService.ShowMessageBar($"Erreur: {ex.Message}", MessageIntent.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_world == null) return;
+
+        _isSubmitting = true;
+        try
+        {
+            var request = new UpdateWorldRequest(
+                _model.Name,
+                _model.Description,
+                _model.IsActive
+            );
+
+            var result = await WorldApiClient.UpdateWorldAsync(Id, request);
+
+            if (result != null)
+            {
+                MessageService.ShowMessageBar("Monde mis à jour avec succès !", MessageIntent.Success);
+                NavigationManager.NavigateTo($"/worlds/{Id}");
+            }
+            else
+            {
+                MessageService.ShowMessageBar("Erreur lors de la mise à jour du monde", MessageIntent.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageService.ShowMessageBar($"Erreur: {ex.Message}", MessageIntent.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private string GetGameTypeDisplay()
+    {
+        if (_world == null) return string.Empty;
+        
+        return _world.GameType switch
+        {
+            GameType.Generic => "Générique",
+            GameType.DnD5e => "D&D 5e",
+            GameType.Skyrim => "Skyrim",
+            GameType.Custom => "Personnalisé",
+            GameType.Empty => "Vide",
+            GameType.Pathfinder => "Pathfinder",
+            GameType.CallOfCthulhu => "Call of Cthulhu",
+            GameType.Warhammer => "Warhammer",
+            GameType.Cyberpunk => "Cyberpunk",
+            _ => _world.GameType.ToString()
+        };
+    }
+
+    public class UpdateWorldModel
+    {
+        [Required(ErrorMessage = "Le nom du monde est requis")]
+        [StringLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères")]
+        public string Name { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public bool IsActive { get; set; } = true;
+    }
+}

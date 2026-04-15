@@ -1,0 +1,405 @@
+@page "/chapters/{ChapterId:int}"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject ChapterApiClient ChapterApiClient
+@inject CampaignApiClient CampaignApiClient
+@inject NavigationManager NavigationManager
+@inject IMessageService MessageService
+
+<PageTitle>@(chapter?.Title ?? "Chapitre")</PageTitle>
+
+<div class="page-container">
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <FluentProgressRing />
+            <p>Chargement du chapitre...</p>
+        </div>
+    }
+    else if (chapter == null)
+    {
+        <div class="empty-state">
+            <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Color="Color.Error" />
+            <FluentLabel Typo="Typography.H4">Chapitre introuvable</FluentLabel>
+            <p>Ce chapitre n'existe pas ou vous n'y avez pas accès.</p>
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(() => NavigationManager.NavigateTo("/campaigns"))">
+                Retour aux campagnes
+            </FluentButton>
+        </div>
+    }
+    else
+    {
+        <div class="page-header">
+            <div class="breadcrumb">
+                <FluentAnchor Href="/campaigns" Appearance="Appearance.Lightweight">Campagnes</FluentAnchor>
+                <span class="separator">/</span>
+                <FluentAnchor Href="@($"/campaigns/{chapter.CampaignId}")" Appearance="Appearance.Lightweight">@campaignName</FluentAnchor>
+                <span class="separator">/</span>
+                <FluentAnchor Href="@($"/campaigns/{chapter.CampaignId}/chapters")" Appearance="Appearance.Lightweight">Chapitres</FluentAnchor>
+                <span class="separator">/</span>
+                <span>@chapter.Title</span>
+            </div>
+            
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="chapter-number">Chapitre @chapter.ChapterNumber</div>
+                    <FluentLabel Typo="Typography.H3" style="color: var(--color-text-primary);">
+                        @chapter.Title
+                    </FluentLabel>
+                    <div class="badges">
+                        @if (chapter.IsActive)
+                        {
+                            <FluentBadge Appearance="Appearance.Accent">En cours</FluentBadge>
+                        }
+                        @if (chapter.IsCompleted)
+                        {
+                            <FluentBadge Appearance="Appearance.Neutral">Terminé</FluentBadge>
+                        }
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    @if (!chapter.IsActive && !chapter.IsCompleted)
+                    {
+                        <FluentButton Appearance="Appearance.Accent"
+                                    IconStart="@(new Icons.Regular.Size20.Play())"
+                                    OnClick="StartChapter">
+                            Démarrer
+                        </FluentButton>
+                    }
+                    @if (chapter.IsActive && !chapter.IsCompleted)
+                    {
+                        <FluentButton Appearance="Appearance.Accent"
+                                    IconStart="@(new Icons.Regular.Size20.Checkmark())"
+                                    OnClick="CompleteChapter"
+                                    style="background: var(--success-color, #10b981);">
+                            Terminer
+                        </FluentButton>
+                    }
+                    @if (!chapter.IsCompleted)
+                    {
+                        <FluentButton Appearance="Appearance.Outline"
+                                    IconStart="@(new Icons.Regular.Size20.Edit())"
+                                    OnClick="EditChapter">
+                            Modifier
+                        </FluentButton>
+                    }
+                    <FluentButton Appearance="Appearance.Lightweight"
+                                IconStart="@(new Icons.Regular.Size20.Delete())"
+                                OnClick="DeleteChapter">
+                        Supprimer
+                    </FluentButton>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <FluentCard class="stats-card">
+                <div class="stat-item">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.CalendarLtr())" Color="Color.Accent" />
+                    <div class="stat-content">
+                        <div class="stat-label">Événements</div>
+                        <div class="stat-value">@chapter.EventCount</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Trophy())" Color="Color.Accent" />
+                    <div class="stat-content">
+                        <div class="stat-label">Succès</div>
+                        <div class="stat-value">@chapter.AchievementCount</div>
+                    </div>
+                </div>
+            </FluentCard>
+
+            <FluentCard class="dates-card">
+                <FluentLabel Typo="Typography.H6" style="margin-bottom: 1rem;">Dates importantes</FluentLabel>
+                <div class="date-list">
+                    <div class="date-item">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" />
+                        <span class="date-label">Créé le :</span>
+                        <span class="date-value">@chapter.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    @if (chapter.UpdatedAt.HasValue)
+                    {
+                        <div class="date-item">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.CalendarEdit())" />
+                            <span class="date-label">Modifié le :</span>
+                            <span class="date-value">@chapter.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                    }
+                    @if (chapter.CompletedAt.HasValue)
+                    {
+                        <div class="date-item">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.CalendarCheckmark())" />
+                            <span class="date-label">Terminé le :</span>
+                            <span class="date-value">@chapter.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            </FluentCard>
+        </div>
+
+        @if (!string.IsNullOrEmpty(chapter.Content))
+        {
+            <FluentCard class="content-card">
+                <FluentLabel Typo="Typography.H5" style="margin-bottom: 1rem;">Contenu narratif</FluentLabel>
+                <div class="chapter-content">@chapter.Content</div>
+            </FluentCard>
+        }
+        else
+        {
+            <FluentCard class="empty-content">
+                <FluentIcon Value="@(new Icons.Regular.Size24.DocumentText())" Color="Color.Neutral" />
+                <p>Aucun contenu narratif pour ce chapitre.</p>
+            </FluentCard>
+        }
+    }
+</div>
+
+<style>
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .loading-container, .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        gap: 1rem;
+    }
+
+    .empty-state p {
+        color: var(--color-text-secondary);
+        margin: 0;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--color-text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .separator {
+        color: var(--color-text-muted);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .title-section {
+        flex: 1;
+    }
+
+    .chapter-number {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .badges {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-card {
+        padding: 1.5rem;
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--color-text-primary);
+    }
+
+    .dates-card {
+        padding: 1.5rem;
+    }
+
+    .date-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .date-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .date-label {
+        color: var(--color-text-muted);
+    }
+
+    .date-value {
+        color: var(--color-text-primary);
+        font-weight: 500;
+    }
+
+    .content-card {
+        padding: 2rem;
+    }
+
+    .chapter-content {
+        color: var(--color-text-secondary);
+        line-height: 1.8;
+        white-space: pre-wrap;
+        font-size: 1rem;
+    }
+
+    .empty-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        gap: 0.5rem;
+        text-align: center;
+    }
+
+    .empty-content p {
+        color: var(--color-text-muted);
+        margin: 0;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int ChapterId { get; set; }
+
+    private ChapterDto? chapter;
+    private string campaignName = "Campagne";
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChapter();
+        if (chapter != null)
+        {
+            await LoadCampaignInfo();
+        }
+    }
+
+    private async Task LoadChapter()
+    {
+        isLoading = true;
+        chapter = await ChapterApiClient.GetChapterByIdAsync(ChapterId);
+        isLoading = false;
+    }
+
+    private async Task LoadCampaignInfo()
+    {
+        if (chapter == null) return;
+        
+        var campaign = await CampaignApiClient.GetCampaignByIdAsync(chapter.CampaignId);
+        if (campaign != null)
+        {
+            campaignName = campaign.Name;
+        }
+    }
+
+    private async Task StartChapter()
+    {
+        var result = await ChapterApiClient.StartChapterAsync(ChapterId);
+        
+        if (result != null)
+        {
+            MessageService.ShowMessageBar("Le chapitre a été démarré.", MessageIntent.Success);
+            chapter = result;
+        }
+        else
+        {
+            MessageService.ShowMessageBar("Impossible de démarrer le chapitre.", MessageIntent.Error);
+        }
+    }
+
+    private async Task CompleteChapter()
+    {
+        var result = await ChapterApiClient.CompleteChapterAsync(ChapterId);
+        
+        if (result != null)
+        {
+            MessageService.ShowMessageBar("Le chapitre a été marqué comme terminé.", MessageIntent.Success);
+            chapter = result;
+        }
+        else
+        {
+            MessageService.ShowMessageBar("Impossible de terminer le chapitre.", MessageIntent.Error);
+        }
+    }
+
+    private void EditChapter()
+    {
+        NavigationManager.NavigateTo($"/chapters/{ChapterId}/edit");
+    }
+
+    private async Task DeleteChapter()
+    {
+        var success = await ChapterApiClient.DeleteChapterAsync(ChapterId);
+        
+        if (success)
+        {
+            MessageService.ShowMessageBar("Le chapitre a été supprimé.", MessageIntent.Success);
+            NavigationManager.NavigateTo($"/campaigns/{chapter?.CampaignId}/chapters");
+        }
+        else
+        {
+            MessageService.ShowMessageBar("Impossible de supprimer le chapitre.", MessageIntent.Error);
+        }
+    }
+}

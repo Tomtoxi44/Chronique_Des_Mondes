@@ -156,6 +156,38 @@ builder.Services.AddHttpClient("WorldApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register CampaignApiClient with scoped lifetime
+builder.Services.AddScoped<CampaignApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("CampaignApiClient");
+    var logger = sp.GetRequiredService<ILogger<CampaignApiClient>>();
+    return new CampaignApiClient(httpClient, logger);
+});
+
+builder.Services.AddHttpClient("CampaignApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// Register ChapterApiClient with scoped lifetime
+builder.Services.AddScoped<ChapterApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("ChapterApiClient");
+    var logger = sp.GetRequiredService<ILogger<ChapterApiClient>>();
+    return new ChapterApiClient(httpClient, logger);
+});
+
+builder.Services.AddHttpClient("ChapterApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

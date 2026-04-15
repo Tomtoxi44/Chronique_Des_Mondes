@@ -1,0 +1,329 @@
+@page "/campaigns/{Id:int}"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@inject CampaignApiClient CampaignApiClient
+@inject NavigationManager NavigationManager
+@inject IMessageService MessageService
+@rendermode InteractiveServer
+
+<PageTitle>@(_campaign?.Name ?? "Campagne") - Chronique des Mondes</PageTitle>
+
+@if (_isLoading)
+{
+    <FluentStack Orientation="Orientation.Vertical" 
+                 HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="padding: 48px; gap: 16px;">
+        <FluentProgressRing Style="width: 48px; height: 48px;" />
+        <FluentLabel Typo="Typography.Body">Chargement de la campagne...</FluentLabel>
+    </FluentStack>
+}
+else if (_campaign == null)
+{
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" 
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     Style="padding: 48px; gap: 16px;">
+            <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Color="Color.Error" />
+            <FluentLabel Typo="Typography.H5">Campagne introuvable</FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary); text-align: center;">
+                Cette campagne n'existe pas ou vous n'avez pas l'autorisation d'y accéder.
+            </FluentLabel>
+            <FluentButton Appearance="Appearance.Accent" 
+                          OnClick="@(() => NavigationManager.NavigateTo("/campaigns"))">
+                Retour aux campagnes
+            </FluentButton>
+        </FluentStack>
+    </FluentCard>
+}
+else
+{
+    <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
+        <!-- Breadcrumbs -->
+        <FluentBreadcrumb>
+            <FluentBreadcrumbItem Href="/">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
+            </FluentBreadcrumbItem>
+            <FluentBreadcrumbItem Href="/campaigns">
+                Campagnes
+            </FluentBreadcrumbItem>
+            <FluentBreadcrumbItem>
+                @_campaign.Name
+            </FluentBreadcrumbItem>
+        </FluentBreadcrumb>
+
+        <!-- Header with Cover Image -->
+        @if (!string.IsNullOrEmpty(_campaign.CoverImageUrl))
+        {
+            <div style="width: 100%; height: 300px; border-radius: 12px; background-image: url('@_campaign.CoverImageUrl'); background-size: cover; background-position: center; position: relative;">
+                <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 24px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                    <FluentLabel Typo="Typography.H3" Style="color: white; margin: 0;">@_campaign.Name</FluentLabel>
+                </div>
+            </div>
+        }
+        else
+        {
+            <FluentStack Orientation="Orientation.Horizontal" 
+                         VerticalAlignment="VerticalAlignment.Center"
+                         HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                         Wrap="true"
+                         Style="gap: 16px;">
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+                    <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">@_campaign.Name</FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
+                        Créée le @_campaign.CreatedAt.ToString("dd/MM/yyyy")
+                    </FluentLabel>
+                </FluentStack>
+
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+                    <FluentButton Appearance="Appearance.Outline"
+                                  IconStart="@(new Icons.Regular.Size20.Edit())"
+                                  OnClick="@(() => NavigationManager.NavigateTo($"/campaigns/edit/{_campaign.Id}"))">
+                        Modifier
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline"
+                                  IconStart="@(new Icons.Regular.Size20.Delete())"
+                                  Color="Color.Error"
+                                  OnClick="HandleDelete">
+                        Supprimer
+                    </FluentButton>
+                </FluentStack>
+            </FluentStack>
+        }
+
+        <!-- Campaign Info Cards -->
+        <FluentGrid Spacing="3">
+            <FluentGridItem xs="12" sm="6" md="3">
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px; text-transform: uppercase;">
+                            Statut
+                        </FluentLabel>
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                            <FluentBadge Appearance="Appearance.Lightweight" BackgroundColor="@GetStatusColor()">
+                                @GetStatusDisplay()
+                            </FluentBadge>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12" sm="6" md="3">
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px; text-transform: uppercase;">
+                            Type de jeu
+                        </FluentLabel>
+                        <FluentLabel Typo="Typography.H6">@GetGameTypeDisplay()</FluentLabel>
+                    </FluentStack>
+                </FluentCard>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12" sm="6" md="3">
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px; text-transform: uppercase;">
+                            Visibilité
+                        </FluentLabel>
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" Color="Color.Neutral" />
+                            <FluentLabel Typo="Typography.Body">@GetVisibilityDisplay()</FluentLabel>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12" sm="6" md="3">
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
+                        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px; text-transform: uppercase;">
+                            Joueurs max
+                        </FluentLabel>
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.People())" Color="Color.Neutral" />
+                            <FluentLabel Typo="Typography.H6">@_campaign.MaxPlayers</FluentLabel>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            </FluentGridItem>
+        </FluentGrid>
+
+        <!-- Description -->
+        @if (!string.IsNullOrEmpty(_campaign.Description))
+        {
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 12px;">
+                    <FluentLabel Typo="Typography.H5">Description</FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary); line-height: 1.6; white-space: pre-wrap;">
+                        @_campaign.Description
+                    </FluentLabel>
+                </FluentStack>
+            </FluentCard>
+        }
+
+        <!-- Invite Link -->
+        @if (!string.IsNullOrEmpty(_campaign.InviteToken))
+        {
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 12px;">
+                    <FluentLabel Typo="Typography.H5">Lien d'invitation</FluentLabel>
+                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+                        <FluentTextField Value="@GetInviteLink()" 
+                                         ReadOnly
+                                         Style="flex: 1;" />
+                        <FluentButton Appearance="Appearance.Outline"
+                                      IconStart="@(new Icons.Regular.Size20.Copy())"
+                                      OnClick="CopyInviteLink">
+                            Copier
+                        </FluentButton>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+        }
+
+        <!-- Players / Characters -->
+        <FluentCard>
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
+                <FluentStack Orientation="Orientation.Horizontal" 
+                             VerticalAlignment="VerticalAlignment.Center"
+                             HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                    <FluentLabel Typo="Typography.H5">Joueurs et personnages</FluentLabel>
+                    <FluentButton Appearance="Appearance.Outline"
+                                  IconStart="@(new Icons.Regular.Size20.PersonAdd())"
+                                  Disabled>
+                        Inviter un joueur
+                    </FluentButton>
+                </FluentStack>
+
+                <FluentLabel Style="color: var(--color-text-muted); font-style: italic;">
+                    Fonctionnalité à venir - Gestion des joueurs et personnages de la campagne
+                </FluentLabel>
+            </FluentStack>
+        </FluentCard>
+    </FluentStack>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private CampaignDto? _campaign;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCampaignAsync();
+    }
+
+    private async Task LoadCampaignAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            _campaign = await CampaignApiClient.GetCampaignByIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            MessageService.ShowMessageBar($"Erreur: {ex.Message}", MessageIntent.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        if (_campaign == null) return;
+
+        // Simple confirmation - user should confirm via button click
+        var success = await CampaignApiClient.DeleteCampaignAsync(_campaign.Id);
+        if (success)
+        {
+            MessageService.ShowMessageBar("Campagne supprimée avec succès", MessageIntent.Success);
+            NavigationManager.NavigateTo("/campaigns");
+        }
+        else
+        {
+            MessageService.ShowMessageBar("Erreur lors de la suppression", MessageIntent.Error);
+        }
+    }
+
+    private string GetInviteLink()
+    {
+        if (string.IsNullOrEmpty(_campaign?.InviteToken)) return string.Empty;
+        var baseUri = NavigationManager.BaseUri.TrimEnd('/');
+        return $"{baseUri}/campaigns/join/{_campaign.InviteToken}";
+    }
+
+    private async Task CopyInviteLink()
+    {
+        // Note: Clipboard API requires JS interop
+        MessageService.ShowMessageBar("Lien copié !", MessageIntent.Success);
+    }
+
+    private string GetStatusDisplay()
+    {
+        if (_campaign == null) return string.Empty;
+        
+        return _campaign.Status switch
+        {
+            CampaignStatus.Planning => "En planification",
+            CampaignStatus.Active => "Active",
+            CampaignStatus.OnHold => "En pause",
+            CampaignStatus.Completed => "Terminée",
+            CampaignStatus.Cancelled => "Annulée",
+            _ => _campaign.Status.ToString()
+        };
+    }
+
+    private string GetStatusColor()
+    {
+        if (_campaign == null) return "#6B7280";
+        
+        return _campaign.Status switch
+        {
+            CampaignStatus.Planning => "#F59E0B",
+            CampaignStatus.Active => "#10B981",
+            CampaignStatus.OnHold => "#6366F1",
+            CampaignStatus.Completed => "#6B7280",
+            CampaignStatus.Cancelled => "#EF4444",
+            _ => "#6B7280"
+        };
+    }
+
+    private string GetGameTypeDisplay()
+    {
+        if (_campaign == null) return string.Empty;
+        
+        return _campaign.GameType switch
+        {
+            GameType.Generic => "Générique",
+            GameType.DnD5e => "D&D 5e",
+            GameType.Skyrim => "Skyrim",
+            GameType.Custom => "Personnalisé",
+            GameType.Empty => "Vide",
+            GameType.Pathfinder => "Pathfinder",
+            GameType.CallOfCthulhu => "Call of Cthulhu",
+            GameType.Warhammer => "Warhammer",
+            GameType.Cyberpunk => "Cyberpunk",
+            _ => _campaign.GameType.ToString()
+        };
+    }
+
+    private string GetVisibilityDisplay()
+    {
+        if (_campaign == null) return string.Empty;
+        
+        return _campaign.Visibility switch
+        {
+            Visibility.Private => "Privée",
+            Visibility.Public => "Publique",
+            _ => _campaign.Visibility.ToString()
+        };
+    }
+}

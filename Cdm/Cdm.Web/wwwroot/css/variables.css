@@ -50,10 +50,10 @@
   --color-background-elevated: var(--color-bg-elevated);
   --color-background-card: var(--color-bg-card);
 
-  --color-text-primary: #f8fafc;    /* Blanc pur légèrement teinté */
-  --color-text-secondary: #cbd5e1;  /* Gris clair */
-  --color-text-tertiary: #94a3b8;   /* Gris moyen */
-  --color-text-muted: #64748b;      /* Gris atténué */
+  --color-text-primary: #ffffff;    /* Blanc pur pour maximum contraste */
+  --color-text-secondary: #e2e8f0;  /* Gris très clair */
+  --color-text-tertiary: #cbd5e1;   /* Gris clair */
+  --color-text-muted: #94a3b8;      /* Gris moyen (meilleur contraste) */
 
   /* Bordures thème sombre */
   --color-border: rgba(99, 102, 241, 0.15);  /* Bordure indigo subtile */
