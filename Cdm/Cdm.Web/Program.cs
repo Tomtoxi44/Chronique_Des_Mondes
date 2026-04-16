@@ -204,6 +204,22 @@ builder.Services.AddHttpClient("EventApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register AchievementApiClient with scoped lifetime
+builder.Services.AddScoped<AchievementApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("AchievementApiClient");
+    var logger = sp.GetRequiredService<ILogger<AchievementApiClient>>();
+    return new AchievementApiClient(httpClient, logger);
+});
+
+builder.Services.AddHttpClient("AchievementApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

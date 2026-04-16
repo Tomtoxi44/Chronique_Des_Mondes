@@ -1,0 +1,220 @@
+@* -----------------------------------------------------------------------
+    <copyright file="Manage.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@page "/achievements/manage"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@inject AchievementApiClient AchievementApiClient
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Gérer les Succès - Chronique des Mondes</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
+    <!-- Header -->
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Style="flex-wrap: wrap; gap: 16px;">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="12">
+            <FluentButton Appearance="Appearance.Outline"
+                          IconStart="@(new Icons.Regular.Size20.ArrowLeft())"
+                          OnClick="@(() => NavigationManager.NavigateTo("/achievements"))">
+                Retour
+            </FluentButton>
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+                <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Gérer les Succès</FluentLabel>
+                <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
+                    Créez, modifiez et attribuez des succès à vos joueurs (GM uniquement)
+                </FluentLabel>
+            </FluentStack>
+        </FluentStack>
+        <FluentButton Appearance="Appearance.Accent"
+                      IconStart="@(new Icons.Regular.Size20.Add())"
+                      OnClick="@(() => NavigationManager.NavigateTo("/achievements/create"))">
+            Créer un Succès
+        </FluentButton>
+    </FluentStack>
+
+    <!-- Award Achievement section -->
+    @if (_showAwardForm)
+    {
+        <FluentCard Style="padding: 20px; border: 2px solid var(--cdm-gold);">
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                <FluentLabel Typo="Typography.H5">Attribuer le succès : @_awardTarget?.Name</FluentLabel>
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="flex-wrap: wrap;">
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="6" Style="flex: 1; min-width: 180px;">
+                        <FluentLabel>ID du joueur cible *</FluentLabel>
+                        <FluentNumberField @bind-Value="_awardTargetUserId" Min="1" Placeholder="ID utilisateur" Style="width: 100%;" />
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="6" Style="flex: 2; min-width: 260px;">
+                        <FluentLabel>Message du GM (optionnel)</FluentLabel>
+                        <FluentTextField @bind-Value="_awardMessage" Placeholder="Ex: Félicitations pour ta bravoure !" Style="width: 100%;" />
+                    </FluentStack>
+                </FluentStack>
+                @if (!string.IsNullOrEmpty(_awardError))
+                {
+                    <FluentMessageBar Title="Erreur" Intent="MessageIntent.Error" Style="width: 100%;">@_awardError</FluentMessageBar>
+                }
+                @if (!string.IsNullOrEmpty(_awardSuccess))
+                {
+                    <FluentMessageBar Title="Succès" Intent="MessageIntent.Success" Style="width: 100%;">@_awardSuccess</FluentMessageBar>
+                }
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
+                    <FluentButton Appearance="Appearance.Outline" OnClick="@(() => { _showAwardForm = false; _awardTarget = null; _awardError = string.Empty; _awardSuccess = string.Empty; })">
+                        Annuler
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" Loading="_isAwarding" OnClick="HandleAward">
+                        Attribuer
+                    </FluentButton>
+                </FluentStack>
+            </FluentStack>
+        </FluentCard>
+    }
+
+    <!-- Filters -->
+    <FluentCard Style="padding: 16px;">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="flex-wrap: wrap;">
+            <FluentSearch Placeholder="Rechercher..." @bind-Value="_searchTerm" Style="min-width: 250px;" />
+            <FluentSelect TOption="string" @bind-Value="_rarityFilter" Style="min-width: 160px;">
+                <FluentOption Value="">Toutes les raretés</FluentOption>
+                <FluentOption Value="Common">Commun</FluentOption>
+                <FluentOption Value="Rare">Rare</FluentOption>
+                <FluentOption Value="Epic">Épique</FluentOption>
+                <FluentOption Value="Legendary">Légendaire</FluentOption>
+            </FluentSelect>
+        </FluentStack>
+    </FluentCard>
+
+    @if (_isLoading)
+    {
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 48px; gap: 16px;">
+            <FluentProgressRing Style="width: 48px; height: 48px;" />
+        </FluentStack>
+    }
+    else if (!FilteredAchievements.Any())
+    {
+        <FluentCard Style="padding: 48px; text-align: center;">
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16" HorizontalAlignment="HorizontalAlignment.Center">
+                <FluentIcon Value="@(new Icons.Regular.Size48.Trophy())" Style="color: var(--cdm-gold); opacity: 0.5;" />
+                <FluentLabel Typo="Typography.H4">Aucun succès créé</FluentLabel>
+                <FluentButton Appearance="Appearance.Accent"
+                              IconStart="@(new Icons.Regular.Size20.Add())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/achievements/create"))">
+                    Créer le premier succès
+                </FluentButton>
+            </FluentStack>
+        </FluentCard>
+    }
+    else
+    {
+        <FluentDataGrid Items="@FilteredAchievements.AsQueryable()" GridTemplateColumns="2fr 1fr 1fr 1fr auto" Style="width: 100%;">
+            <PropertyColumn Property="@(a => a.Name)" Title="Nom" />
+            <PropertyColumn Property="@(a => a.Level.ToString())" Title="Niveau" />
+            <TemplateColumn Title="Rareté">
+                <FluentBadge Style="@($"background: {GetRarityColor(context.Rarity)}; color: white;")">@GetRarityLabel(context.Rarity)</FluentBadge>
+            </TemplateColumn>
+            <PropertyColumn Property="@(a => a.UnlockCount)" Title="Débloqué" />
+            <TemplateColumn Title="Actions">
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="4">
+                    <FluentButton Appearance="Appearance.Outline" Style="font-size: 12px;"
+                                  OnClick="@(() => StartAward(context))">
+                        Attribuer
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" Style="font-size: 12px;"
+                                  OnClick="@(() => NavigationManager.NavigateTo($"/achievements/{context.Id}/edit"))">
+                        Modifier
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" Style="font-size: 12px; color: var(--error);"
+                                  OnClick="@(() => HandleDelete(context.Id))">
+                        Suppr.
+                    </FluentButton>
+                </FluentStack>
+            </TemplateColumn>
+        </FluentDataGrid>
+    }
+</FluentStack>
+
+@code {
+    private List<AchievementDto> _achievements = new();
+    private string _searchTerm = string.Empty;
+    private string _rarityFilter = string.Empty;
+    private bool _isLoading = true;
+
+    private bool _showAwardForm;
+    private AchievementDto? _awardTarget;
+    private int? _awardTargetUserId;
+    private string _awardMessage = string.Empty;
+    private bool _isAwarding;
+    private string _awardError = string.Empty;
+    private string _awardSuccess = string.Empty;
+
+    private IQueryable<AchievementDto> FilteredAchievements => _achievements
+        .Where(a => string.IsNullOrEmpty(_searchTerm) || a.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+        .Where(a => string.IsNullOrEmpty(_rarityFilter) || a.Rarity.ToString() == _rarityFilter)
+        .AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        // Load from world 0 as a placeholder; ideally use a dedicated /api/achievements/my-created endpoint.
+        _achievements = await AchievementApiClient.GetAchievementsByWorldAsync(0);
+        _isLoading = false;
+    }
+
+    private void StartAward(AchievementDto achievement)
+    {
+        _awardTarget = achievement;
+        _showAwardForm = true;
+        _awardError = string.Empty;
+        _awardSuccess = string.Empty;
+        _awardTargetUserId = null;
+        _awardMessage = string.Empty;
+    }
+
+    private async Task HandleAward()
+    {
+        if (_awardTarget is null || !_awardTargetUserId.HasValue) return;
+        _isAwarding = true;
+        _awardError = string.Empty;
+        _awardSuccess = string.Empty;
+
+        var result = await AchievementApiClient.AwardAchievementAsync(_awardTarget.Id, _awardTargetUserId.Value, _awardMessage);
+        _isAwarding = false;
+
+        if (result is not null)
+            _awardSuccess = $"Succès \"{_awardTarget.Name}\" attribué avec succès à l'utilisateur #{_awardTargetUserId} !";
+        else
+            _awardError = "Impossible d'attribuer le succès. Vérifiez l'identifiant du joueur.";
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        var deleted = await AchievementApiClient.DeleteAchievementAsync(id);
+        if (deleted)
+            _achievements.RemoveAll(a => a.Id == id);
+    }
+
+    private string GetRarityColor(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "#9d9d9d",
+        AchievementRarity.Rare => "#0070ff",
+        AchievementRarity.Epic => "#a335ee",
+        AchievementRarity.Legendary => "#ff8000",
+        _ => "#9d9d9d"
+    };
+
+    private string GetRarityLabel(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "Commun",
+        AchievementRarity.Rare => "Rare",
+        AchievementRarity.Epic => "Épique",
+        AchievementRarity.Legendary => "Légendaire",
+        _ => rarity.ToString()
+    };
+}
