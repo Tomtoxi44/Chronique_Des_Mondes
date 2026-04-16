@@ -5,11 +5,14 @@
 ----------------------------------------------------------------------- *@
 
 @page "/campaigns"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
 @using Cdm.Web.Components.Layout
-@using Cdm.Web.Services
+@using Cdm.Web.Services.ApiClients
 @using Microsoft.AspNetCore.Authorization
 @layout MainLayout
 @attribute [Authorize]
+@inject CampaignApiClient CampaignApiClient
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
@@ -27,11 +30,18 @@
             </FluentLabel>
         </FluentStack>
         
-        <FluentButton Appearance="Appearance.Accent" 
-                      IconStart="@(new Icons.Regular.Size20.Add())"
-                      OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
-            Nouvelle Campagne
-        </FluentButton>
+        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+            <FluentButton Appearance="Appearance.Outline"
+                          IconStart="@(new Icons.Regular.Size20.PersonAdd())"
+                          OnClick="@(() => NavigationManager.NavigateTo("/campaigns/join"))">
+                Rejoindre
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Accent" 
+                          IconStart="@(new Icons.Regular.Size20.Add())"
+                          OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
+                Nouvelle Campagne
+            </FluentButton>
+        </FluentStack>
     </FluentStack>
 
     <!-- Filters -->
@@ -40,15 +50,24 @@
             <FluentSearch Placeholder="Rechercher une campagne..." @bind-Value="_searchTerm" Style="min-width: 250px;" />
             <FluentSelect TOption="string" @bind-Value="_statusFilter" Style="min-width: 150px;">
                 <FluentOption Value="">Tous les statuts</FluentOption>
-                <FluentOption Value="active">En cours</FluentOption>
-                <FluentOption Value="paused">En pause</FluentOption>
-                <FluentOption Value="completed">Terminees</FluentOption>
+                <FluentOption Value="Planning">En planification</FluentOption>
+                <FluentOption Value="Active">En cours</FluentOption>
+                <FluentOption Value="OnHold">En pause</FluentOption>
+                <FluentOption Value="Completed">Terminees</FluentOption>
+                <FluentOption Value="Cancelled">Annulees</FluentOption>
             </FluentSelect>
         </FluentStack>
     </FluentCard>
 
+    @if (_isLoading)
+    {
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 48px; gap: 16px;">
+            <FluentProgressRing Style="width: 48px; height: 48px;" />
+            <FluentLabel Typo="Typography.Body">Chargement des campagnes...</FluentLabel>
+        </FluentStack>
+    }
     <!-- Empty State -->
-    @if (!_campaigns.Any())
+    else if (!FilteredCampaigns.Any())
     {
         <FluentCard Style="padding: 48px; text-align: center;">
             <FluentStack Orientation="Orientation.Vertical" VerticalGap="16" HorizontalAlignment="HorizontalAlignment.Center">
@@ -57,14 +76,20 @@
                     Aucune campagne pour le moment
                 </FluentLabel>
                 <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); max-width: 400px;">
-                    Les campagnes sont des aventures que vous menez avec vos joueurs. Creez votre premiere campagne pour commencer !
+                    Les campagnes sont des aventures que vous menez avec vos joueurs. Creez votre premiere campagne ou rejoignez-en une !
                 </FluentLabel>
-                <FluentButton Appearance="Appearance.Accent" 
-                              IconStart="@(new Icons.Regular.Size20.Add())" 
-                              Style="margin-top: 8px;"
-                              OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
-                    Creer ma premiere campagne
-                </FluentButton>
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px; margin-top: 8px;">
+                    <FluentButton Appearance="Appearance.Outline"
+                                  IconStart="@(new Icons.Regular.Size20.PersonAdd())"
+                                  OnClick="@(() => NavigationManager.NavigateTo("/campaigns/join"))">
+                        Rejoindre une campagne
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" 
+                                  IconStart="@(new Icons.Regular.Size20.Add())"
+                                  OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
+                        Creer ma premiere campagne
+                    </FluentButton>
+                </FluentStack>
             </FluentStack>
         </FluentCard>
     }
@@ -72,7 +97,7 @@
     {
         <!-- Campaigns Grid -->
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
-            @foreach (var campaign in _campaigns)
+            @foreach (var campaign in FilteredCampaigns)
             {
                 <FluentCard Style="padding: 0; overflow: hidden; cursor: pointer;" @onclick="@(() => NavigationManager.NavigateTo($"/campaigns/{campaign.Id}"))">
                     <div style="height: 140px; background: url('@(campaign.CoverImageUrl ?? "images/campaigns/default-cover.png")') center/cover; position: relative;">
@@ -88,11 +113,11 @@
                         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="margin-top: 8px; color: var(--cdm-text-muted); font-size: 13px;">
                             <span>
                                 <FluentIcon Value="@(new Icons.Regular.Size16.People())" Style="margin-right: 4px;" />
-                                @campaign.PlayerCount/@campaign.MaxPlayers joueurs
+                                Max @campaign.MaxPlayers joueurs
                             </span>
                             <span>
-                                <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" Style="margin-right: 4px;" />
-                                @campaign.SessionCount sessions
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Games())" Style="margin-right: 4px;" />
+                                @GetGameTypeLabel(campaign.GameType)
                             </span>
                         </FluentStack>
                     </FluentStack>
@@ -103,41 +128,48 @@
 </FluentStack>
 
 @code {
-    private List<CampaignViewModel> _campaigns = new();
+    private List<CampaignDto> _campaigns = new();
     private string _searchTerm = string.Empty;
     private string _statusFilter = string.Empty;
+    private bool _isLoading = true;
+
+    private IEnumerable<CampaignDto> FilteredCampaigns => _campaigns
+        .Where(c => string.IsNullOrEmpty(_searchTerm) || c.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+        .Where(c => string.IsNullOrEmpty(_statusFilter) || c.Status.ToString() == _statusFilter);
 
     protected override async Task OnInitializedAsync()
     {
-        // TODO: Load campaigns from service
-        await Task.CompletedTask;
+        _isLoading = true;
+        _campaigns = await CampaignApiClient.GetMyCampaignsAsync();
+        _isLoading = false;
     }
 
-    private Appearance GetStatusAppearance(string status) => status switch
+    private Appearance GetStatusAppearance(CampaignStatus status) => status switch
     {
-        "active" => Appearance.Accent,
-        "paused" => Appearance.Neutral,
-        "completed" => Appearance.Outline,
+        CampaignStatus.Active => Appearance.Accent,
+        CampaignStatus.OnHold => Appearance.Neutral,
+        CampaignStatus.Completed => Appearance.Outline,
         _ => Appearance.Neutral
     };
 
-    private string GetStatusLabel(string status) => status switch
+    private string GetStatusLabel(CampaignStatus status) => status switch
     {
-        "active" => "En cours",
-        "paused" => "En pause",
-        "completed" => "Terminee",
-        _ => status
+        CampaignStatus.Planning => "En planification",
+        CampaignStatus.Active => "En cours",
+        CampaignStatus.OnHold => "En pause",
+        CampaignStatus.Completed => "Terminee",
+        CampaignStatus.Cancelled => "Annulee",
+        _ => status.ToString()
     };
 
-    private class CampaignViewModel
+    private string GetGameTypeLabel(GameType gameType) => gameType switch
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? CoverImageUrl { get; set; }
-        public string Status { get; set; } = "active";
-        public int PlayerCount { get; set; }
-        public int MaxPlayers { get; set; }
-        public int SessionCount { get; set; }
-    }
+        GameType.DnD5e => "D&D 5e",
+        GameType.Pathfinder => "Pathfinder",
+        GameType.CallOfCthulhu => "Call of Cthulhu",
+        GameType.Warhammer => "Warhammer",
+        GameType.Skyrim => "Skyrim",
+        GameType.Custom => "Personnalise",
+        _ => "Generique"
+    };
 }

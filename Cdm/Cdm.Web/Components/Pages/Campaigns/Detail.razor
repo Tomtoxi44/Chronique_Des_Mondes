@@ -165,12 +165,12 @@ else
             </FluentCard>
         }
 
-        <!-- Invite Link -->
+        <!-- Invite Link (section séparée, affichée si le token existe) -->
         @if (!string.IsNullOrEmpty(_campaign.InviteToken))
         {
             <FluentCard>
                 <FluentStack Orientation="Orientation.Vertical" Style="gap: 12px;">
-                    <FluentLabel Typo="Typography.H5">Lien d'invitation</FluentLabel>
+                    <FluentLabel Typo="Typography.H5">Lien d'invitation actif</FluentLabel>
                     <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
                         <FluentTextField Value="@GetInviteLink()" 
                                          ReadOnly
@@ -194,14 +194,32 @@ else
                     <FluentLabel Typo="Typography.H5">Joueurs et personnages</FluentLabel>
                     <FluentButton Appearance="Appearance.Outline"
                                   IconStart="@(new Icons.Regular.Size20.PersonAdd())"
-                                  Disabled>
+                                  Loading="@_isGeneratingInvite"
+                                  Disabled="@_isGeneratingInvite"
+                                  OnClick="HandleGenerateInvite">
                         Inviter un joueur
                     </FluentButton>
                 </FluentStack>
 
-                <FluentLabel Style="color: var(--color-text-muted); font-style: italic;">
-                    Fonctionnalité à venir - Gestion des joueurs et personnages de la campagne
-                </FluentLabel>
+                @if (!string.IsNullOrEmpty(_campaign.InviteToken))
+                {
+                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+                        <FluentTextField Value="@GetInviteLink()" 
+                                         ReadOnly
+                                         Style="flex: 1;" />
+                        <FluentButton Appearance="Appearance.Outline"
+                                      IconStart="@(new Icons.Regular.Size20.Copy())"
+                                      OnClick="CopyInviteLink">
+                            Copier
+                        </FluentButton>
+                    </FluentStack>
+                }
+                else
+                {
+                    <FluentLabel Style="color: var(--color-text-muted); font-style: italic;">
+                        Cliquez sur "Inviter un joueur" pour générer un lien d'invitation.
+                    </FluentLabel>
+                }
             </FluentStack>
         </FluentCard>
     </FluentStack>
@@ -213,6 +231,7 @@ else
 
     private CampaignDto? _campaign;
     private bool _isLoading = true;
+    private bool _isGeneratingInvite = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -258,6 +277,30 @@ else
         if (string.IsNullOrEmpty(_campaign?.InviteToken)) return string.Empty;
         var baseUri = NavigationManager.BaseUri.TrimEnd('/');
         return $"{baseUri}/campaigns/join/{_campaign.InviteToken}";
+    }
+
+    private async Task HandleGenerateInvite()
+    {
+        if (_campaign == null) return;
+
+        _isGeneratingInvite = true;
+        try
+        {
+            var token = await CampaignApiClient.GenerateInviteTokenAsync(_campaign.Id);
+            if (token != null)
+            {
+                _campaign.InviteToken = token;
+                MessageService.ShowMessageBar("Lien d'invitation généré !", MessageIntent.Success);
+            }
+            else
+            {
+                MessageService.ShowMessageBar("Erreur lors de la génération du lien.", MessageIntent.Error);
+            }
+        }
+        finally
+        {
+            _isGeneratingInvite = false;
+        }
     }
 
     private async Task CopyInviteLink()
