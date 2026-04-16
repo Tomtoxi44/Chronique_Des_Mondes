@@ -15,7 +15,7 @@ public class MigrationsContextFactory : IDesignTimeDbContextFactory<MigrationsCo
         
         // Check for Azure SQL access token from environment variable
         var azureToken = Environment.GetEnvironmentVariable("AZURE_SQL_ACCESS_TOKEN");
-        var connectionString = "Server=(localdb)\\mssqllocaldb;Database=ChroniqueDesMondes;Trusted_Connection=True;";
+        var connectionString = "Server=(localdb)\\mssqllocaldb;Database=ChroniqueDesMondesDb;Trusted_Connection=True;";
         
         // Use Azure SQL if token is available (production/CI environment)
         if (!string.IsNullOrEmpty(azureToken))
