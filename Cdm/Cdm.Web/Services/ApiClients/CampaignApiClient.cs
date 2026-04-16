@@ -1,5 +1,6 @@
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Common.Enums;
+using System.Net.Http;
 using System.Net.Http.Json;
 
 namespace Cdm.Web.Services.ApiClients;
@@ -97,6 +98,95 @@ public class CampaignApiClient
             return false;
         }
     }
+
+    /// <summary>
+    /// Create a new campaign
+    /// </summary>
+    public async Task<CampaignDto?> CreateCampaignAsync(CreateCampaignDto dto)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/campaigns", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to create campaign. Status: {StatusCode}", response.StatusCode);
+                return null;
+            }
+            return await response.Content.ReadFromJsonAsync<CampaignDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating campaign");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Generate (or regenerate) an invite token for a campaign
+    /// </summary>
+    public async Task<string?> GenerateInviteTokenAsync(int campaignId)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/campaigns/{campaignId}/invite", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to generate invite token for campaign {CampaignId}", campaignId);
+                return null;
+            }
+            var result = await response.Content.ReadFromJsonAsync<InviteTokenResponse>();
+            return result?.InviteToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating invite token for campaign {CampaignId}", campaignId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Join a campaign using an invite token
+    /// </summary>
+    public async Task<CampaignDto?> JoinCampaignAsync(string inviteToken)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/campaigns/join", new { InviteToken = inviteToken });
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to join campaign with token. Status: {StatusCode}", response.StatusCode);
+                return null;
+            }
+            return await response.Content.ReadFromJsonAsync<CampaignDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error joining campaign with token");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Update the status of a campaign
+    /// </summary>
+    public async Task<CampaignDto?> UpdateCampaignStatusAsync(int campaignId, CampaignStatus status)
+    {
+        try
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"api/campaigns/{campaignId}/status", new { Status = status });
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to update status for campaign {CampaignId}", campaignId);
+                return null;
+            }
+            return await response.Content.ReadFromJsonAsync<CampaignDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating status for campaign {CampaignId}", campaignId);
+            return null;
+        }
+    }
 }
 
 // Request DTOs
@@ -106,3 +196,5 @@ public record UpdateCampaignRequest(
     Visibility Visibility, 
     int MaxPlayers, 
     CampaignStatus Status);
+
+file record InviteTokenResponse(string InviteToken);

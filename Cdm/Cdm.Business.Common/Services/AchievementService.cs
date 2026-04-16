@@ -18,12 +18,15 @@ using Microsoft.Extensions.Logging;
 /// Service for managing achievements and their attribution to users.
 /// </summary>
 /// <param name="dbContext">Database context for achievement data access.</param>
+/// <param name="notificationService">Notification service for sending user notifications.</param>
 /// <param name="logger">Logger instance for structured logging.</param>
 public class AchievementService(
     AppDbContext dbContext,
+    INotificationService notificationService,
     ILogger<AchievementService> logger) : IAchievementService
 {
     private readonly AppDbContext dbContext = dbContext;
+    private readonly INotificationService notificationService = notificationService;
     private readonly ILogger<AchievementService> logger = logger;
 
     /// <inheritdoc/>
@@ -442,6 +445,23 @@ public class AchievementService(
                 .Include(ua => ua.Achievement)
                 .Include(ua => ua.AwardedByUser)
                 .FirstOrDefaultAsync(ua => ua.Id == userAchievement.Id);
+
+            // Send notification to the user who received the achievement
+            if (userAchievement?.Achievement != null)
+            {
+                await this.notificationService.CreateNotificationAsync(new CreateNotificationDto
+                {
+                    UserId = targetUserId,
+                    Type = NotificationType.AchievementUnlocked,
+                    Title = "Succès débloqué !",
+                    Message = string.IsNullOrWhiteSpace(message)
+                        ? $"Vous avez débloqué le succès \"{userAchievement.Achievement.Name}\"."
+                        : $"Vous avez débloqué le succès \"{userAchievement.Achievement.Name}\" : {message}",
+                    RelatedEntityId = achievementId,
+                    RelatedEntityType = "Achievement",
+                    SentBy = gmUserId
+                });
+            }
 
             return userAchievement != null ? this.MapToUserAchievementDto(userAchievement) : null;
         }

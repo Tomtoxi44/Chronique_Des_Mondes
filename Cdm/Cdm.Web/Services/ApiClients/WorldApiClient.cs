@@ -22,13 +22,31 @@ public class WorldApiClient
     {
         try
         {
-            var response = await _httpClient.GetAsync("api/worlds/my");
+            var response = await _httpClient.GetAsync("api/worlds");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<WorldDto>>() ?? new List<WorldDto>();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching my worlds");
+            return new List<WorldDto>();
+        }
+    }
+
+    /// <summary>
+    /// Get all worlds where the user participates (GM + player)
+    /// </summary>
+    public async Task<List<WorldDto>> GetAllMyWorldsAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/worlds/all");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<List<WorldDto>>() ?? new List<WorldDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching all my worlds");
             return new List<WorldDto>();
         }
     }

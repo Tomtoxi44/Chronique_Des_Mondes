@@ -69,4 +69,13 @@ public interface IWorldService
     /// <param name="userId">The user identifier requesting the data.</param>
     /// <returns>A list of world characters.</returns>
     Task<IEnumerable<WorldCharacterDto>> GetWorldCharactersAsync(int worldId, int userId);
+
+    /// <summary>
+    /// Removes a character from a world (soft delete). Only the world owner (GM) or character owner can do this.
+    /// </summary>
+    /// <param name="worldId">The world identifier.</param>
+    /// <param name="characterId">The character identifier.</param>
+    /// <param name="userId">The user identifier requesting the removal.</param>
+    /// <returns>True if removed successfully, false otherwise.</returns>
+    Task<bool> RemoveCharacterFromWorldAsync(int worldId, int characterId, int userId);
 }

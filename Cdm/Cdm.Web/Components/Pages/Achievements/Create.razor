@@ -1,0 +1,158 @@
+@* -----------------------------------------------------------------------
+    <copyright file="Create.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@page "/achievements/create"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@inject AchievementApiClient AchievementApiClient
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Créer un Succès - Chronique des Mondes</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="24" Style="max-width: 700px; margin: 0 auto;">
+    <!-- Header -->
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="12">
+        <FluentButton Appearance="Appearance.Outline"
+                      IconStart="@(new Icons.Regular.Size20.ArrowLeft())"
+                      OnClick="@(() => NavigationManager.NavigateTo("/achievements/manage"))">
+            Retour
+        </FluentButton>
+        <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Créer un Succès</FluentLabel>
+    </FluentStack>
+
+    <FluentCard Style="padding: 24px;">
+        <EditForm Model="@_dto" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+
+                <!-- Name -->
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="6">
+                    <FluentLabel>Nom du succès *</FluentLabel>
+                    <FluentTextField @bind-Value="_dto.Name" Placeholder="Ex: Héros de l'Aube" Style="width: 100%;" />
+                    <FluentValidationMessage For="@(() => _dto.Name)" />
+                </FluentStack>
+
+                <!-- Description -->
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="6">
+                    <FluentLabel>Description *</FluentLabel>
+                    <FluentTextArea @bind-Value="_dto.Description" Rows="3" Placeholder="Décrivez comment débloquer ce succès..." Style="width: 100%;" />
+                    <FluentValidationMessage For="@(() => _dto.Description)" />
+                </FluentStack>
+
+                <!-- Level + Context -->
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="flex-wrap: wrap;">
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="6" Style="flex: 1; min-width: 200px;">
+                        <FluentLabel>Niveau *</FluentLabel>
+                        <FluentSelect TOption="string" @bind-Value="_levelStr" @bind-Value:after="OnLevelChanged" Style="width: 100%;">
+                            <FluentOption Value="World">Monde</FluentOption>
+                            <FluentOption Value="Campaign">Campagne</FluentOption>
+                            <FluentOption Value="Chapter">Chapitre</FluentOption>
+                        </FluentSelect>
+                    </FluentStack>
+                    @if (_dto.Level == AchievementLevel.World)
+                    {
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="6" Style="flex: 1; min-width: 200px;">
+                            <FluentLabel>ID du Monde *</FluentLabel>
+                            <FluentNumberField @bind-Value="_worldId" Min="1" Style="width: 100%;" />
+                        </FluentStack>
+                    }
+                    else if (_dto.Level == AchievementLevel.Campaign)
+                    {
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="6" Style="flex: 1; min-width: 200px;">
+                            <FluentLabel>ID de la Campagne *</FluentLabel>
+                            <FluentNumberField @bind-Value="_campaignId" Min="1" Style="width: 100%;" />
+                        </FluentStack>
+                    }
+                    else if (_dto.Level == AchievementLevel.Chapter)
+                    {
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="6" Style="flex: 1; min-width: 200px;">
+                            <FluentLabel>ID du Chapitre *</FluentLabel>
+                            <FluentNumberField @bind-Value="_chapterId" Min="1" Style="width: 100%;" />
+                        </FluentStack>
+                    }
+                </FluentStack>
+
+                <!-- Rarity -->
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="6">
+                    <FluentLabel>Rareté</FluentLabel>
+                    <FluentSelect TOption="string" @bind-Value="_rarityStr" @bind-Value:after="OnRarityChanged" Style="width: 100%;">
+                        <FluentOption Value="Common">Commun</FluentOption>
+                        <FluentOption Value="Rare">Rare</FluentOption>
+                        <FluentOption Value="Epic">Épique</FluentOption>
+                        <FluentOption Value="Legendary">Légendaire</FluentOption>
+                    </FluentSelect>
+                </FluentStack>
+
+                <!-- Reward description -->
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="6">
+                    <FluentLabel>Description de la récompense</FluentLabel>
+                    <FluentTextField @bind-Value="_dto.RewardDescription" Placeholder="Ex: +10 réputation avec les elfes" Style="width: 100%;" />
+                </FluentStack>
+
+                <!-- Options -->
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="24">
+                    <FluentCheckbox @bind-Value="_dto.IsSecret" Label="Succès secret (caché jusqu'au déblocage)" />
+                </FluentStack>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <FluentMessageBar Title="Erreur" Intent="MessageIntent.Error" Style="width: 100%;">@_errorMessage</FluentMessageBar>
+                }
+
+                <!-- Actions -->
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" HorizontalAlignment="HorizontalAlignment.End">
+                    <FluentButton Appearance="Appearance.Outline" OnClick="@(() => NavigationManager.NavigateTo("/achievements/manage"))">
+                        Annuler
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Loading="_isSaving">
+                        Créer le succès
+                    </FluentButton>
+                </FluentStack>
+            </FluentStack>
+        </EditForm>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    private readonly CreateAchievementDto _dto = new() { Rarity = AchievementRarity.Common };
+    private string _levelStr = "World";
+    private string _rarityStr = "Common";
+    private int? _worldId;
+    private int? _campaignId;
+    private int? _chapterId;
+    private bool _isSaving;
+    private string _errorMessage = string.Empty;
+
+    private void OnLevelChanged() =>
+        _dto.Level = Enum.TryParse<AchievementLevel>(_levelStr, out var l) ? l : AchievementLevel.World;
+
+    private void OnRarityChanged() =>
+        _dto.Rarity = Enum.TryParse<AchievementRarity>(_rarityStr, out var r) ? r : AchievementRarity.Common;
+
+    private async Task HandleSubmit()
+    {
+        _isSaving = true;
+        _errorMessage = string.Empty;
+
+        _dto.WorldId = _dto.Level == AchievementLevel.World ? _worldId : null;
+        _dto.CampaignId = _dto.Level == AchievementLevel.Campaign ? _campaignId : null;
+        _dto.ChapterId = _dto.Level == AchievementLevel.Chapter ? _chapterId : null;
+
+        var created = await AchievementApiClient.CreateAchievementAsync(_dto);
+        _isSaving = false;
+
+        if (created is not null)
+            NavigationManager.NavigateTo("/achievements/manage");
+        else
+            _errorMessage = "Une erreur est survenue lors de la création du succès.";
+    }
+}

@@ -6,6 +6,7 @@
 
 namespace Cdm.Business.Common.Services;
 
+using System.Text.Json;
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.Services;
 using Cdm.Business.Common.Models;
@@ -230,7 +231,7 @@ public class CharacterService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> CreateGameProfileAsync(int characterId, int campaignId, object gameProfileData, int userId)
+    public async Task<bool> CreateGameProfileAsync(int characterId, int campaignId, JsonElement gameProfileData, int userId)
     {
         try
         {
@@ -282,8 +283,18 @@ public class CharacterService(
                 return false;
             }
 
-            // Serialize game profile data
-            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(gameProfileData, campaign.World.GameType);
+            // Deserialize JsonElement to typed profile based on game type
+            var typedProfile = DeserializeGameProfileFromJson(gameProfileData, campaign.World.GameType);
+
+            if (typedProfile == null)
+            {
+                this.logger.LogWarning(
+                    "Failed to deserialize game profile data for game type {GameType}",
+                    campaign.World.GameType);
+                return false;
+            }
+
+            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(typedProfile, campaign.World.GameType);
 
             if (gameSpecificDataJson == null)
             {
@@ -298,13 +309,13 @@ public class CharacterService(
             int? currentHealth = null;
             int? maxHealth = null;
 
-            if (gameProfileData is DndCharacterProfile dndProfile)
+            if (typedProfile is DndCharacterProfile dndProfile)
             {
                 level = dndProfile.Level;
                 currentHealth = dndProfile.CurrentHitPoints;
                 maxHealth = dndProfile.MaxHitPoints;
             }
-            else if (gameProfileData is SkyrimCharacterProfile skyrimProfile)
+            else if (typedProfile is SkyrimCharacterProfile skyrimProfile)
             {
                 level = skyrimProfile.Level;
                 currentHealth = skyrimProfile.CurrentHealth;
@@ -417,7 +428,7 @@ public class CharacterService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateGameProfileAsync(int characterId, int campaignId, object gameProfileData, int userId)
+    public async Task<bool> UpdateGameProfileAsync(int characterId, int campaignId, JsonElement gameProfileData, int userId)
     {
         try
         {
@@ -463,8 +474,18 @@ public class CharacterService(
                 return false;
             }
 
-            // Serialize game profile data
-            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(gameProfileData, campaign.World.GameType);
+            // Deserialize JsonElement to typed profile based on game type
+            var typedProfile = DeserializeGameProfileFromJson(gameProfileData, campaign.World.GameType);
+
+            if (typedProfile == null)
+            {
+                this.logger.LogWarning(
+                    "Failed to deserialize game profile data for game type {GameType}",
+                    campaign.World.GameType);
+                return false;
+            }
+
+            var gameSpecificDataJson = CharacterProfileMapper.SerializeGameProfile(typedProfile, campaign.World.GameType);
 
             if (gameSpecificDataJson == null)
             {
@@ -475,13 +496,13 @@ public class CharacterService(
             }
 
             // Update common fields based on game type
-            if (gameProfileData is DndCharacterProfile dndProfile)
+            if (typedProfile is DndCharacterProfile dndProfile)
             {
                 worldCharacter.Level = dndProfile.Level;
                 worldCharacter.CurrentHealth = dndProfile.CurrentHitPoints;
                 worldCharacter.MaxHealth = dndProfile.MaxHitPoints;
             }
-            else if (gameProfileData is SkyrimCharacterProfile skyrimProfile)
+            else if (typedProfile is SkyrimCharacterProfile skyrimProfile)
             {
                 worldCharacter.Level = skyrimProfile.Level;
                 worldCharacter.CurrentHealth = skyrimProfile.CurrentHealth;
@@ -529,6 +550,20 @@ public class CharacterService(
             AvatarUrl = character.AvatarUrl,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt
+        };
+    }
+
+    /// <summary>
+    /// Deserializes a JsonElement to the appropriate typed game profile based on game type.
+    /// </summary>
+    private static object? DeserializeGameProfileFromJson(JsonElement element, GameType gameType)
+    {
+        var json = element.GetRawText();
+        return gameType switch
+        {
+            GameType.DnD5e => CharacterProfileMapper.DeserializeDndProfile(json),
+            GameType.Skyrim => CharacterProfileMapper.DeserializeSkyrimProfile(json),
+            _ => null
         };
     }
 }

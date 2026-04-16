@@ -412,4 +412,74 @@ public class WorldService(
             AvatarUrl = wc.Character?.AvatarUrl
         };
     }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveCharacterFromWorldAsync(int worldId, int characterId, int userId)
+    {
+        try
+        {
+            this.logger.LogInformation(
+                "Removing character {CharacterId} from world {WorldId} by user {UserId}",
+                characterId, worldId, userId);
+
+            var world = await this.dbContext.Worlds
+                .FirstOrDefaultAsync(w => w.Id == worldId && w.IsActive);
+
+            if (world == null)
+            {
+                this.logger.LogWarning("World {WorldId} not found", worldId);
+                return false;
+            }
+
+            var worldCharacter = await this.dbContext.WorldCharacters
+                .Include(wc => wc.Character)
+                .FirstOrDefaultAsync(wc => wc.WorldId == worldId && wc.CharacterId == characterId && wc.IsActive);
+
+            if (worldCharacter == null)
+            {
+                this.logger.LogWarning(
+                    "WorldCharacter not found for character {CharacterId} in world {WorldId}",
+                    characterId, worldId);
+                return false;
+            }
+
+            // Only the world owner (GM) or the character owner can remove the character
+            bool isWorldOwner = world.UserId == userId;
+            bool isCharacterOwner = worldCharacter.Character?.UserId == userId;
+
+            if (!isWorldOwner && !isCharacterOwner)
+            {
+                this.logger.LogWarning(
+                    "User {UserId} is not authorized to remove character {CharacterId} from world {WorldId}",
+                    userId, characterId, worldId);
+                return false;
+            }
+
+            // Soft delete the world character
+            worldCharacter.IsActive = false;
+            worldCharacter.UpdatedAt = DateTime.UtcNow;
+
+            // Unlock the character so it can join another world
+            if (worldCharacter.Character != null)
+            {
+                worldCharacter.Character.IsLocked = false;
+            }
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation(
+                "Successfully removed character {CharacterId} from world {WorldId}",
+                characterId, worldId);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(
+                ex,
+                "Error removing character {CharacterId} from world {WorldId}",
+                characterId, worldId);
+            return false;
+        }
+    }
 }

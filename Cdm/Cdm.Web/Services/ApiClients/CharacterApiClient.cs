@@ -1,6 +1,8 @@
 using Cdm.Web.Services.ApiClients.Base;
 using Cdm.Web.Services.Storage;
 using Cdm.Web.Shared.DTOs.Models;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Cdm.Web.Services.ApiClients;
 
@@ -13,6 +15,15 @@ public interface ICharacterApiClient
     /// Gets all characters for the current user
     /// </summary>
     Task<IEnumerable<CharacterDto>?> GetMyCharactersAsync();
+
+    /// <summary>Gets the game profile for a character in a campaign.</summary>
+    Task<JsonElement?> GetGameProfileAsync(int characterId, int campaignId);
+
+    /// <summary>Creates the game profile for a character in a campaign.</summary>
+    Task<bool> CreateGameProfileAsync(int characterId, int campaignId, object profileData);
+
+    /// <summary>Updates the game profile for a character in a campaign.</summary>
+    Task<bool> UpdateGameProfileAsync(int characterId, int campaignId, object profileData);
 
     /// <summary>
     /// Gets a specific character by ID
@@ -125,5 +136,60 @@ public class CharacterApiClient : BaseApiClient, ICharacterApiClient
         }
 
         return success;
+    }
+
+    /// <inheritdoc/>
+    public async Task<JsonElement?> GetGameProfileAsync(int characterId, int campaignId)
+    {
+        this.logger.LogInformation("Fetching game profile for character {CharacterId} in campaign {CampaignId}", characterId, campaignId);
+        try
+        {
+            await AddAuthorizationHeaderAsync();
+            var response = await this.httpClient.GetAsync($"/api/characters/{characterId}/game-profile?campaignId={campaignId}");
+            if (!response.IsSuccessStatusCode) return null;
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<JsonElement>(json);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error fetching game profile for character {CharacterId}", characterId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> CreateGameProfileAsync(int characterId, int campaignId, object profileData)
+    {
+        this.logger.LogInformation("Creating game profile for character {CharacterId} in campaign {CampaignId}", characterId, campaignId);
+        try
+        {
+            await AddAuthorizationHeaderAsync();
+            var response = await this.httpClient.PostAsJsonAsync(
+                $"/api/characters/{characterId}/game-profile?campaignId={campaignId}", profileData);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error creating game profile for character {CharacterId}", characterId);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> UpdateGameProfileAsync(int characterId, int campaignId, object profileData)
+    {
+        this.logger.LogInformation("Updating game profile for character {CharacterId} in campaign {CampaignId}", characterId, campaignId);
+        try
+        {
+            await AddAuthorizationHeaderAsync();
+            var response = await this.httpClient.PutAsJsonAsync(
+                $"/api/characters/{characterId}/game-profile?campaignId={campaignId}", profileData);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error updating game profile for character {CharacterId}", characterId);
+            return false;
+        }
     }
 }

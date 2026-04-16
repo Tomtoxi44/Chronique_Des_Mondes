@@ -1,6 +1,7 @@
 namespace Cdm.Business.Abstraction.Services;
 
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Cdm.Business.Abstraction.DTOs;
 
@@ -50,14 +51,15 @@ public interface ICharacterService
     Task<bool> DeleteCharacterAsync(int characterId, int userId);
 
     /// <summary>
-    /// Creates a game-specific profile for a character joining a campaign
+    /// Creates a game-specific profile for a character joining a campaign.
+    /// The JSON body is deserialized server-side based on the campaign's game type.
     /// </summary>
     /// <param name="characterId">The character identifier</param>
     /// <param name="campaignId">The campaign identifier</param>
-    /// <param name="gameProfileData">The game-specific profile data (D&D, Skyrim, etc.)</param>
+    /// <param name="gameProfileData">The game-specific profile data as a JSON element</param>
     /// <param name="userId">The user identifier</param>
     /// <returns>True if profile created successfully, false otherwise</returns>
-    Task<bool> CreateGameProfileAsync(int characterId, int campaignId, object gameProfileData, int userId);
+    Task<bool> CreateGameProfileAsync(int characterId, int campaignId, JsonElement gameProfileData, int userId);
 
     /// <summary>
     /// Gets the game-specific profile for a character in a campaign
@@ -69,12 +71,13 @@ public interface ICharacterService
     Task<object?> GetGameProfileAsync(int characterId, int campaignId, int userId);
 
     /// <summary>
-    /// Updates the game-specific profile for a character in a campaign
+    /// Updates the game-specific profile for a character in a campaign.
+    /// The JSON body is deserialized server-side based on the campaign's game type.
     /// </summary>
     /// <param name="characterId">The character identifier</param>
     /// <param name="campaignId">The campaign identifier</param>
-    /// <param name="gameProfileData">The updated game-specific profile data</param>
+    /// <param name="gameProfileData">The updated game-specific profile data as a JSON element</param>
     /// <param name="userId">The user identifier</param>
     /// <returns>True if updated successfully, false otherwise</returns>
-    Task<bool> UpdateGameProfileAsync(int characterId, int campaignId, object gameProfileData, int userId);
+    Task<bool> UpdateGameProfileAsync(int characterId, int campaignId, JsonElement gameProfileData, int userId);
 }

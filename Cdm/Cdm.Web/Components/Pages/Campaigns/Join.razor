@@ -1,0 +1,148 @@
+@page "/campaigns/join"
+@page "/campaigns/join/{Token}"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@inject CampaignApiClient CampaignApiClient
+@inject NavigationManager NavigationManager
+@inject IMessageService MessageService
+@rendermode InteractiveServer
+
+<PageTitle>Rejoindre une campagne - Chronique des Mondes</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; max-width: 600px; margin: 0 auto; padding: 24px;">
+    <!-- Breadcrumbs -->
+    <FluentBreadcrumb>
+        <FluentBreadcrumbItem Href="/">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
+        </FluentBreadcrumbItem>
+        <FluentBreadcrumbItem Href="/campaigns">
+            Campagnes
+        </FluentBreadcrumbItem>
+        <FluentBreadcrumbItem>
+            Rejoindre
+        </FluentBreadcrumbItem>
+    </FluentBreadcrumb>
+
+    <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
+        <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">
+            Rejoindre une Campagne
+        </FluentLabel>
+        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
+            Entrez le code d'invitation fourni par votre Maître de Jeu.
+        </FluentLabel>
+    </FluentStack>
+
+    <FluentCard Style="padding: 32px;">
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <FluentMessageBar Title="Erreur"
+                             Intent="MessageIntent.Error"
+                             AllowDismiss="true"
+                             OnDismiss="@(() => _errorMessage = null)"
+                             Style="margin-bottom: 24px;">
+                @_errorMessage
+            </FluentMessageBar>
+        }
+
+        @if (_joinedCampaign != null)
+        {
+            <FluentMessageBar Title="Succès" Intent="MessageIntent.Success" Style="margin-bottom: 24px;">
+                Vous avez rejoint la campagne <strong>@_joinedCampaign.Name</strong> avec succès !
+            </FluentMessageBar>
+            <FluentButton Appearance="Appearance.Accent"
+                          IconStart="@(new Icons.Regular.Size20.ArrowRight())"
+                          OnClick="@(() => NavigationManager.NavigateTo($"/campaigns/{_joinedCampaign.Id}"))">
+                Voir la campagne
+            </FluentButton>
+        }
+        else
+        {
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 20px;">
+                <FluentTextField @bind-Value="_inviteToken"
+                                 Label="Code d'invitation"
+                                 Placeholder="Collez ici le code ou le lien d'invitation..."
+                                 Required="true"
+                                 Style="width: 100%;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Key())" Slot="start" />
+                </FluentTextField>
+
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.End" Style="gap: 12px;">
+                    <FluentButton Appearance="Appearance.Outline"
+                                  OnClick="@(() => NavigationManager.NavigateTo("/campaigns"))"
+                                  Disabled="@_isJoining">
+                        Annuler
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent"
+                                  IconStart="@(new Icons.Regular.Size20.PersonAdd())"
+                                  Loading="@_isJoining"
+                                  Disabled="@(_isJoining || string.IsNullOrWhiteSpace(_inviteToken))"
+                                  OnClick="HandleJoin">
+                        @(_isJoining ? "Connexion..." : "Rejoindre")
+                    </FluentButton>
+                </FluentStack>
+            </FluentStack>
+        }
+    </FluentCard>
+</FluentStack>
+
+@code {
+    [Parameter]
+    public string? Token { get; set; }
+
+    private string _inviteToken = string.Empty;
+    private bool _isJoining = false;
+    private string? _errorMessage;
+    private CampaignDto? _joinedCampaign;
+
+    protected override void OnParametersSet()
+    {
+        // Pre-fill from URL route if token provided directly in the URL
+        if (!string.IsNullOrEmpty(Token))
+        {
+            _inviteToken = Token;
+        }
+    }
+
+    private async Task HandleJoin()
+    {
+        if (string.IsNullOrWhiteSpace(_inviteToken)) return;
+
+        _isJoining = true;
+        _errorMessage = null;
+
+        try
+        {
+            // Extract token from full URL if pasted as a link
+            var token = ExtractToken(_inviteToken.Trim());
+            _joinedCampaign = await CampaignApiClient.JoinCampaignAsync(token);
+
+            if (_joinedCampaign == null)
+            {
+                _errorMessage = "Code d'invitation invalide ou campagne introuvable. Vérifiez le lien et réessayez.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Une erreur est survenue : {ex.Message}";
+        }
+        finally
+        {
+            _isJoining = false;
+        }
+    }
+
+    private static string ExtractToken(string input)
+    {
+        // If pasted as a full URL (e.g. http://.../campaigns/join/TOKEN), extract last segment
+        if (input.Contains('/'))
+        {
+            var segments = input.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return segments[^1];
+        }
+        return input;
+    }
+}

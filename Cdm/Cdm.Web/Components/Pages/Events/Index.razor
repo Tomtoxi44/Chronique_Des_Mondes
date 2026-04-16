@@ -1,0 +1,230 @@
+@* -----------------------------------------------------------------------
+    <copyright file="Index.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@page "/events"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@inject EventApiClient EventApiClient
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Événements - Chronique des Mondes</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
+    <!-- Page Header -->
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Style="flex-wrap: wrap; gap: 16px;">
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+            <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">
+                Événements
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
+                Gérez les événements affectant vos mondes, campagnes et chapitres
+            </FluentLabel>
+        </FluentStack>
+        <FluentButton Appearance="Appearance.Accent"
+                      IconStart="@(new Icons.Regular.Size20.Add())"
+                      OnClick="@(() => NavigationManager.NavigateTo("/events/create"))">
+            Nouvel Événement
+        </FluentButton>
+    </FluentStack>
+
+    <!-- Filters -->
+    <FluentCard Style="padding: 16px;">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="flex-wrap: wrap;">
+            <FluentSearch Placeholder="Rechercher un événement..." @bind-Value="_searchTerm" Style="min-width: 250px;" />
+            <FluentSelect TOption="string" @bind-Value="_levelFilter" Style="min-width: 160px;">
+                <FluentOption Value="">Tous les niveaux</FluentOption>
+                <FluentOption Value="World">Monde</FluentOption>
+                <FluentOption Value="Campaign">Campagne</FluentOption>
+                <FluentOption Value="Chapter">Chapitre</FluentOption>
+            </FluentSelect>
+            <FluentSelect TOption="string" @bind-Value="_effectFilter" Style="min-width: 180px;">
+                <FluentOption Value="">Tous les effets</FluentOption>
+                <FluentOption Value="StatModifier">Modificateur de stat</FluentOption>
+                <FluentOption Value="HealthModifier">Modificateur de PV</FluentOption>
+                <FluentOption Value="DiceModifier">Modificateur de dé</FluentOption>
+                <FluentOption Value="Narrative">Narratif</FluentOption>
+            </FluentSelect>
+            <FluentSelect TOption="string" @bind-Value="_activeFilter" Style="min-width: 140px;">
+                <FluentOption Value="">Tous les états</FluentOption>
+                <FluentOption Value="active">Actifs</FluentOption>
+                <FluentOption Value="inactive">Inactifs</FluentOption>
+            </FluentSelect>
+        </FluentStack>
+    </FluentCard>
+
+    @if (_isLoading)
+    {
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 48px; gap: 16px;">
+            <FluentProgressRing Style="width: 48px; height: 48px;" />
+            <FluentLabel Typo="Typography.Body">Chargement des événements...</FluentLabel>
+        </FluentStack>
+    }
+    else if (!FilteredEvents.Any())
+    {
+        <FluentCard Style="padding: 48px; text-align: center;">
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16" HorizontalAlignment="HorizontalAlignment.Center">
+                <FluentIcon Value="@(new Icons.Regular.Size48.CalendarLtr())" Style="color: var(--cdm-gold); opacity: 0.5;" />
+                <FluentLabel Typo="Typography.H4" Style="color: var(--cdm-text-primary);">
+                    Aucun événement trouvé
+                </FluentLabel>
+                <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); max-width: 400px;">
+                    Les événements modifient les statistiques ou la narration de vos personnages. Créez votre premier événement !
+                </FluentLabel>
+                <FluentButton Appearance="Appearance.Accent"
+                              IconStart="@(new Icons.Regular.Size20.Add())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/events/create"))">
+                    Créer un événement
+                </FluentButton>
+            </FluentStack>
+        </FluentCard>
+    }
+    else
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;">
+            @foreach (var evt in FilteredEvents)
+            {
+                <FluentCard Style="padding: 16px; cursor: pointer;" @onclick="@(() => NavigationManager.NavigateTo($"/events/{evt.Id}"))">
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                            <FluentLabel Typo="Typography.H5" Style="color: var(--cdm-text-primary);">@evt.Name</FluentLabel>
+                            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
+                                <FluentBadge Appearance="@GetLevelAppearance(evt.Level)">@GetLevelLabel(evt.Level)</FluentBadge>
+                                @if (evt.IsActive)
+                                {
+                                    <FluentBadge Appearance="Appearance.Accent">Actif</FluentBadge>
+                                }
+                                else
+                                {
+                                    <FluentBadge Appearance="Appearance.Neutral">Inactif</FluentBadge>
+                                }
+                            </FluentStack>
+                        </FluentStack>
+
+                        @if (!string.IsNullOrEmpty(evt.Description))
+                        {
+                            <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                @evt.Description
+                            </FluentLabel>
+                        }
+
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="color: var(--cdm-text-muted); font-size: 13px; flex-wrap: wrap;">
+                            <span title="Type d'effet">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Flash())" Style="margin-right: 4px;" />
+                                @GetEffectLabel(evt.EffectType)
+                            </span>
+                            @if (evt.ModifierValue.HasValue)
+                            {
+                                <span title="Valeur du modificateur">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.ArrowTrending())" Style="margin-right: 4px;" />
+                                    @(evt.ModifierValue > 0 ? $"+{evt.ModifierValue}" : evt.ModifierValue.ToString())
+                                    @if (!string.IsNullOrEmpty(evt.TargetStat))
+                                    {
+                                        @($" sur {evt.TargetStat}")
+                                    }
+                                </span>
+                            }
+                            @if (evt.IsPermanent)
+                            {
+                                <span title="Permanent"><FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" Style="margin-right: 4px;" />Permanent</span>
+                            }
+                            else if (evt.ExpiresAt.HasValue)
+                            {
+                                <span title="Expiration"><FluentIcon Value="@(new Icons.Regular.Size16.Timer())" Style="margin-right: 4px;" />Expire le @evt.ExpiresAt.Value.ToString("dd/MM/yyyy")</span>
+                            }
+                        </FluentStack>
+
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Style="margin-top: 4px;" @onclick:stopPropagation="true">
+                            <FluentButton Appearance="Appearance.Outline" Style="flex: 1;"
+                                          IconStart="@(new Icons.Regular.Size16.Edit())"
+                                          OnClick="@(() => NavigationManager.NavigateTo($"/events/{evt.Id}/edit"))">
+                                Modifier
+                            </FluentButton>
+                            <FluentButton Appearance="@(evt.IsActive ? Appearance.Neutral : Appearance.Accent)"
+                                          IconStart="@(evt.IsActive ? new Icons.Regular.Size16.Pause() as Icon : new Icons.Regular.Size16.Play())"
+                                          OnClick="@(() => ToggleActive(evt))">
+                                @(evt.IsActive ? "Désactiver" : "Activer")
+                            </FluentButton>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            }
+        </div>
+    }
+</FluentStack>
+
+@code {
+    private List<EventDto> _events = new();
+    private string _searchTerm = string.Empty;
+    private string _levelFilter = string.Empty;
+    private string _effectFilter = string.Empty;
+    private string _activeFilter = string.Empty;
+    private bool _isLoading = true;
+
+    private IEnumerable<EventDto> FilteredEvents => _events
+        .Where(e => string.IsNullOrEmpty(_searchTerm) || e.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+        .Where(e => string.IsNullOrEmpty(_levelFilter) || e.Level.ToString() == _levelFilter)
+        .Where(e => string.IsNullOrEmpty(_effectFilter) || e.EffectType.ToString() == _effectFilter)
+        .Where(e => _activeFilter == string.Empty || (_activeFilter == "active") == e.IsActive);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEventsAsync();
+    }
+
+    private async Task LoadEventsAsync()
+    {
+        _isLoading = true;
+        var worlds = await EventApiClient.GetEventsByWorldAsync(0);
+        // Load all visible events: since there's no global "get all" endpoint,
+        // we aggregate from all contexts visible to the user via the API.
+        // For now, load from a world-scope stub (will be filtered server-side for user's worlds).
+        // TODO: If a dedicated /api/events endpoint is added, switch to it.
+        _events = worlds;
+        _isLoading = false;
+    }
+
+    private async Task ToggleActive(EventDto evt)
+    {
+        var updated = await EventApiClient.SetEventActiveAsync(evt.Id, !evt.IsActive);
+        if (updated is not null)
+        {
+            var index = _events.IndexOf(evt);
+            if (index >= 0)
+                _events[index] = updated;
+        }
+    }
+
+    private Appearance GetLevelAppearance(EventLevel level) => level switch
+    {
+        EventLevel.World => Appearance.Accent,
+        EventLevel.Campaign => Appearance.Neutral,
+        EventLevel.Chapter => Appearance.Outline,
+        _ => Appearance.Neutral
+    };
+
+    private string GetLevelLabel(EventLevel level) => level switch
+    {
+        EventLevel.World => "Monde",
+        EventLevel.Campaign => "Campagne",
+        EventLevel.Chapter => "Chapitre",
+        _ => level.ToString()
+    };
+
+    private string GetEffectLabel(EventEffectType effect) => effect switch
+    {
+        EventEffectType.StatModifier => "Modificateur de stat",
+        EventEffectType.HealthModifier => "Modificateur de PV",
+        EventEffectType.DiceModifier => "Modificateur de dé",
+        EventEffectType.Narrative => "Narratif",
+        _ => effect.ToString()
+    };
+}

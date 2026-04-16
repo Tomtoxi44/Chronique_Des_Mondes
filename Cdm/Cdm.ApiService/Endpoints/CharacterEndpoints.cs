@@ -10,6 +10,7 @@ using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text.Json;
 
 /// <summary>
 /// Character endpoints for the API.
@@ -49,6 +50,21 @@ public static class CharacterEndpoints
         // DELETE /api/characters/{id}
         group.MapDelete("/{id:int}", DeleteCharacterAsync)
             .WithName("DeleteCharacter")
+            .WithOpenApi();
+
+        // POST /api/characters/{id}/game-profile
+        group.MapPost("/{id:int}/game-profile", CreateGameProfileAsync)
+            .WithName("CreateGameProfile")
+            .WithOpenApi();
+
+        // GET /api/characters/{id}/game-profile
+        group.MapGet("/{id:int}/game-profile", GetGameProfileAsync)
+            .WithName("GetGameProfile")
+            .WithOpenApi();
+
+        // PUT /api/characters/{id}/game-profile
+        group.MapPut("/{id:int}/game-profile", UpdateGameProfileAsync)
+            .WithName("UpdateGameProfile")
             .WithOpenApi();
     }
 
@@ -234,6 +250,143 @@ public static class CharacterEndpoints
         {
             logger.LogError(ex, "Error deleting character {CharacterId}", id);
             return Results.Problem("An error occurred while deleting the character");
+        }
+    }
+
+    /// <summary>
+    /// Creates a game-specific profile for a character in a campaign world.
+    /// The game profile structure depends on the campaign's game type (D&D 5e, Skyrim, etc.).
+    /// </summary>
+    private static async Task<IResult> CreateGameProfileAsync(
+        [FromRoute] int id,
+        [FromQuery] int campaignId,
+        [FromBody] JsonElement gameProfileData,
+        [FromServices] ICharacterService characterService,
+        ILogger<ICharacterService> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                logger.LogWarning("User ID not found in claims");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation(
+                "Creating game profile for character {CharacterId} in campaign {CampaignId} for user {UserId}",
+                id, campaignId, userId);
+
+            var success = await characterService.CreateGameProfileAsync(id, campaignId, gameProfileData, userId);
+
+            if (!success)
+            {
+                logger.LogWarning(
+                    "Failed to create game profile for character {CharacterId} in campaign {CampaignId}",
+                    id, campaignId);
+                return Results.BadRequest(new { Error = "Failed to create game profile. Character may already be linked to this world, or the game type is unsupported." });
+            }
+
+            logger.LogInformation(
+                "Successfully created game profile for character {CharacterId} in campaign {CampaignId}",
+                id, campaignId);
+
+            return Results.Created($"/api/characters/{id}/game-profile?campaignId={campaignId}", null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating game profile for character {CharacterId}", id);
+            return Results.Problem("An error occurred while creating the game profile");
+        }
+    }
+
+    /// <summary>
+    /// Gets the game-specific profile for a character in a campaign world.
+    /// </summary>
+    private static async Task<IResult> GetGameProfileAsync(
+        [FromRoute] int id,
+        [FromQuery] int campaignId,
+        [FromServices] ICharacterService characterService,
+        ILogger<ICharacterService> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                logger.LogWarning("User ID not found in claims");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation(
+                "Fetching game profile for character {CharacterId} in campaign {CampaignId} for user {UserId}",
+                id, campaignId, userId);
+
+            var profile = await characterService.GetGameProfileAsync(id, campaignId, userId);
+
+            if (profile == null)
+            {
+                logger.LogWarning(
+                    "Game profile not found for character {CharacterId} in campaign {CampaignId}",
+                    id, campaignId);
+                return Results.NotFound(new { Error = "Game profile not found" });
+            }
+
+            return Results.Ok(profile);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error fetching game profile for character {CharacterId}", id);
+            return Results.Problem("An error occurred while fetching the game profile");
+        }
+    }
+
+    /// <summary>
+    /// Updates the game-specific profile for a character in a campaign world.
+    /// </summary>
+    private static async Task<IResult> UpdateGameProfileAsync(
+        [FromRoute] int id,
+        [FromQuery] int campaignId,
+        [FromBody] JsonElement gameProfileData,
+        [FromServices] ICharacterService characterService,
+        ILogger<ICharacterService> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+            {
+                logger.LogWarning("User ID not found in claims");
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation(
+                "Updating game profile for character {CharacterId} in campaign {CampaignId} for user {UserId}",
+                id, campaignId, userId);
+
+            var success = await characterService.UpdateGameProfileAsync(id, campaignId, gameProfileData, userId);
+
+            if (!success)
+            {
+                logger.LogWarning(
+                    "Failed to update game profile for character {CharacterId} in campaign {CampaignId}",
+                    id, campaignId);
+                return Results.NotFound(new { Error = "Game profile not found or you are not authorized to update it" });
+            }
+
+            logger.LogInformation(
+                "Successfully updated game profile for character {CharacterId} in campaign {CampaignId}",
+                id, campaignId);
+
+            return Results.Ok(new { Message = "Game profile updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating game profile for character {CharacterId}", id);
+            return Results.Problem("An error occurred while updating the game profile");
         }
     }
 }
