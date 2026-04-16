@@ -60,6 +60,9 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
 builder.Services.AddScoped<LoginHandler>();
 builder.Services.AddScoped<RegisterHandler>();
 
+// JWT auth handler - automatically injects Bearer token into all API requests
+builder.Services.AddTransient<AuthTokenHandler>();
+
 // Get API Base URL from configuration (supports Aspire in Dev, real URL in Production)
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https+http://apiservice";
 
@@ -154,7 +157,7 @@ builder.Services.AddHttpClient("WorldApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 // Register CampaignApiClient with scoped lifetime
 builder.Services.AddScoped<CampaignApiClient>(sp =>
@@ -170,7 +173,7 @@ builder.Services.AddHttpClient("CampaignApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 // Register ChapterApiClient with scoped lifetime
 builder.Services.AddScoped<ChapterApiClient>(sp =>
@@ -186,7 +189,7 @@ builder.Services.AddHttpClient("ChapterApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 // Register EventApiClient with scoped lifetime
 builder.Services.AddScoped<EventApiClient>(sp =>
@@ -202,7 +205,7 @@ builder.Services.AddHttpClient("EventApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 // Register AchievementApiClient with scoped lifetime
 builder.Services.AddScoped<AchievementApiClient>(sp =>
@@ -218,7 +221,7 @@ builder.Services.AddHttpClient("AchievementApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
@@ -234,7 +237,7 @@ builder.Services.AddHttpClient("NotificationApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+}).AddHttpMessageHandler<AuthTokenHandler>();
 
 var app = builder.Build();
 
