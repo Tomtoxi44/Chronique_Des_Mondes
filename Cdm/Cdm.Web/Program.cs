@@ -188,6 +188,22 @@ builder.Services.AddHttpClient("ChapterApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register EventApiClient with scoped lifetime
+builder.Services.AddScoped<EventApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("EventApiClient");
+    var logger = sp.GetRequiredService<ILogger<EventApiClient>>();
+    return new EventApiClient(httpClient, logger);
+});
+
+builder.Services.AddHttpClient("EventApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

@@ -1,0 +1,253 @@
+@* -----------------------------------------------------------------------
+    <copyright file="Detail.razor" company="ANGIBAUD Tommy">
+    Copyright (c) ANGIBAUD Tommy. All rights reserved.
+    </copyright>
+----------------------------------------------------------------------- *@
+
+@page "/events/{Id:int}"
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Components.Layout
+@using Cdm.Web.Services.ApiClients
+@using Microsoft.AspNetCore.Authorization
+@layout MainLayout
+@attribute [Authorize]
+@inject EventApiClient EventApiClient
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@(_event?.Name ?? "Événement") - Chronique des Mondes</PageTitle>
+
+@if (_isLoading)
+{
+    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 48px; gap: 16px;">
+        <FluentProgressRing Style="width: 48px; height: 48px;" />
+        <FluentLabel Typo="Typography.Body">Chargement...</FluentLabel>
+    </FluentStack>
+}
+else if (_event is null)
+{
+    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 48px; gap: 16px;">
+        <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Style="color: var(--error);" />
+        <FluentLabel Typo="Typography.H4">Événement introuvable</FluentLabel>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => NavigationManager.NavigateTo("/events"))">
+            Retour aux événements
+        </FluentButton>
+    </FluentStack>
+}
+else
+{
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
+        <!-- Header -->
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Style="flex-wrap: wrap; gap: 12px;">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="12">
+                <FluentButton Appearance="Appearance.Outline"
+                              IconStart="@(new Icons.Regular.Size20.ArrowLeft())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/events"))">
+                    Retour
+                </FluentButton>
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="2">
+                    <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">@_event.Name</FluentLabel>
+                    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
+                        <FluentBadge Appearance="@GetLevelAppearance(_event.Level)">@GetLevelLabel(_event.Level)</FluentBadge>
+                        @if (_event.IsActive)
+                        {
+                            <FluentBadge Appearance="Appearance.Accent">Actif</FluentBadge>
+                        }
+                        else
+                        {
+                            <FluentBadge Appearance="Appearance.Neutral">Inactif</FluentBadge>
+                        }
+                        @if (_event.IsPermanent)
+                        {
+                            <FluentBadge Appearance="Appearance.Outline">Permanent</FluentBadge>
+                        }
+                    </FluentStack>
+                </FluentStack>
+            </FluentStack>
+
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
+                <FluentButton Appearance="@(_event.IsActive ? Appearance.Neutral : Appearance.Accent)"
+                              IconStart="@(_event.IsActive ? new Icons.Regular.Size20.Pause() as Icon : new Icons.Regular.Size20.Play())"
+                              Loading="_isTogglingActive"
+                              OnClick="HandleToggleActive">
+                    @(_event.IsActive ? "Désactiver" : "Activer")
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Outline"
+                              IconStart="@(new Icons.Regular.Size20.Edit())"
+                              OnClick="@(() => NavigationManager.NavigateTo($"/events/{_event.Id}/edit"))">
+                    Modifier
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Outline"
+                              IconStart="@(new Icons.Regular.Size20.Delete())"
+                              Style="color: var(--error);"
+                              OnClick="HandleDelete">
+                    Supprimer
+                </FluentButton>
+            </FluentStack>
+        </FluentStack>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start;">
+            <!-- Main info -->
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+                @if (!string.IsNullOrEmpty(_event.Description))
+                {
+                    <FluentCard Style="padding: 20px;">
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                            <FluentLabel Typo="Typography.H5">Description</FluentLabel>
+                            <FluentLabel Typo="Typography.Body" Style="white-space: pre-wrap;">@_event.Description</FluentLabel>
+                        </FluentStack>
+                    </FluentCard>
+                }
+
+                <!-- Effect details -->
+                <FluentCard Style="padding: 20px;">
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                        <FluentLabel Typo="Typography.H5">Effet mécanique</FluentLabel>
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="24" Style="flex-wrap: wrap;">
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+                                <FluentLabel Style="font-size: 12px; color: var(--cdm-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Type</FluentLabel>
+                                <FluentLabel Typo="Typography.Body">@GetEffectLabel(_event.EffectType)</FluentLabel>
+                            </FluentStack>
+                            @if (!string.IsNullOrEmpty(_event.TargetStat))
+                            {
+                                <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+                                    <FluentLabel Style="font-size: 12px; color: var(--cdm-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Statistique cible</FluentLabel>
+                                    <FluentLabel Typo="Typography.Body">@_event.TargetStat</FluentLabel>
+                                </FluentStack>
+                            }
+                            @if (_event.ModifierValue.HasValue)
+                            {
+                                <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+                                    <FluentLabel Style="font-size: 12px; color: var(--cdm-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Modificateur</FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Style="@(_event.ModifierValue > 0 ? "color: var(--success);" : "color: var(--error);")">
+                                        @(_event.ModifierValue > 0 ? $"+{_event.ModifierValue}" : _event.ModifierValue.ToString())
+                                    </FluentLabel>
+                                </FluentStack>
+                            }
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            </FluentStack>
+
+            <!-- Sidebar -->
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                <FluentCard Style="padding: 20px;">
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                        <FluentLabel Typo="Typography.H5">Informations</FluentLabel>
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="8">
+                            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                <FluentLabel Style="color: var(--cdm-text-muted); font-size: 13px;">Niveau</FluentLabel>
+                                <FluentLabel Style="font-size: 13px;">@GetLevelLabel(_event.Level)</FluentLabel>
+                            </FluentStack>
+                            @if (_event.WorldId.HasValue)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentLabel Style="color: var(--cdm-text-muted); font-size: 13px;">Monde</FluentLabel>
+                                    <FluentLabel Style="font-size: 13px;">#@_event.WorldId</FluentLabel>
+                                </FluentStack>
+                            }
+                            @if (_event.CampaignId.HasValue)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentLabel Style="color: var(--cdm-text-muted); font-size: 13px;">Campagne</FluentLabel>
+                                    <FluentLabel Style="font-size: 13px;">#@_event.CampaignId</FluentLabel>
+                                </FluentStack>
+                            }
+                            @if (_event.ChapterId.HasValue)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentLabel Style="color: var(--cdm-text-muted); font-size: 13px;">Chapitre</FluentLabel>
+                                    <FluentLabel Style="font-size: 13px;">#@_event.ChapterId</FluentLabel>
+                                </FluentStack>
+                            }
+                            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                <FluentLabel Style="color: var(--cdm-text-muted); font-size: 13px;">Durée</FluentLabel>
+                                <FluentLabel Style="font-size: 13px;">@(_event.IsPermanent ? "Permanent" : "Temporaire")</FluentLabel>
+                            </FluentStack>
+                            @if (!_event.IsPermanent && _event.ExpiresAt.HasValue)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentLabel Style="color: var(--cdm-text-muted); font-size: 13px;">Expire le</FluentLabel>
+                                    <FluentLabel Style="font-size: 13px;">@_event.ExpiresAt.Value.ToString("dd/MM/yyyy")</FluentLabel>
+                                </FluentStack>
+                            }
+                            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                <FluentLabel Style="color: var(--cdm-text-muted); font-size: 13px;">Créé le</FluentLabel>
+                                <FluentLabel Style="font-size: 13px;">@_event.CreatedAt.ToString("dd/MM/yyyy")</FluentLabel>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            </FluentStack>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <FluentMessageBar Title="Erreur" Intent="MessageIntent.Error" Style="width: 100%;">@_errorMessage</FluentMessageBar>
+        }
+    </FluentStack>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private EventDto? _event;
+    private bool _isLoading = true;
+    private bool _isTogglingActive;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        _event = await EventApiClient.GetEventByIdAsync(Id);
+        _isLoading = false;
+    }
+
+    private async Task HandleToggleActive()
+    {
+        if (_event is null) return;
+        _isTogglingActive = true;
+        var updated = await EventApiClient.SetEventActiveAsync(_event.Id, !_event.IsActive);
+        if (updated is not null)
+            _event = updated;
+        else
+            _errorMessage = "Impossible de modifier l'état de l'événement.";
+        _isTogglingActive = false;
+    }
+
+    private async Task HandleDelete()
+    {
+        if (_event is null) return;
+        var deleted = await EventApiClient.DeleteEventAsync(_event.Id);
+        if (deleted)
+            NavigationManager.NavigateTo("/events");
+        else
+            _errorMessage = "Impossible de supprimer l'événement.";
+    }
+
+    private Appearance GetLevelAppearance(EventLevel level) => level switch
+    {
+        EventLevel.World => Appearance.Accent,
+        EventLevel.Campaign => Appearance.Neutral,
+        EventLevel.Chapter => Appearance.Outline,
+        _ => Appearance.Neutral
+    };
+
+    private string GetLevelLabel(EventLevel level) => level switch
+    {
+        EventLevel.World => "Monde",
+        EventLevel.Campaign => "Campagne",
+        EventLevel.Chapter => "Chapitre",
+        _ => level.ToString()
+    };
+
+    private string GetEffectLabel(EventEffectType effect) => effect switch
+    {
+        EventEffectType.StatModifier => "Modificateur de statistique",
+        EventEffectType.HealthModifier => "Modificateur de PV",
+        EventEffectType.DiceModifier => "Modificateur de jet de dé",
+        EventEffectType.Narrative => "Narratif uniquement",
+        _ => effect.ToString()
+    };
+}
