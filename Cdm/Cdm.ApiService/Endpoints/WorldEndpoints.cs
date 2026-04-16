@@ -65,6 +65,11 @@ public static class WorldEndpoints
         group.MapGet("/{id:int}/characters", GetWorldCharactersAsync)
             .WithName("GetWorldCharacters")
             .WithOpenApi();
+
+        // DELETE /api/worlds/{id}/characters/{characterId} - Remove character from world
+        group.MapDelete("/{id:int}/characters/{characterId:int}", RemoveCharacterFromWorldAsync)
+            .WithName("RemoveCharacterFromWorld")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> CreateWorldAsync(
@@ -284,6 +289,43 @@ public static class WorldEndpoints
             logger.LogError(ex, "Error retrieving characters for world {WorldId}", id);
             return Results.Problem(
                 title: "An error occurred while retrieving world characters",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> RemoveCharacterFromWorldAsync(
+        int id,
+        int characterId,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            logger.LogInformation(
+                "User {UserId} removing character {CharacterId} from world {WorldId}",
+                userId, characterId, id);
+
+            var success = await worldService.RemoveCharacterFromWorldAsync(id, characterId, userId.Value);
+
+            if (!success)
+            {
+                return Results.NotFound(new { Error = "Character not found in world or not authorized" });
+            }
+
+            return Results.NoContent();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error removing character {CharacterId} from world {WorldId}", characterId, id);
+            return Results.Problem(
+                title: "An error occurred while removing the character from the world",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }

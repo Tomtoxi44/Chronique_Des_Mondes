@@ -91,6 +91,7 @@ builder.Services.AddScoped<IWorldService, WorldService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // Email service is optional for MVP
 // builder.Services.AddScoped<IEmailService, AzureEmailService>();
 
@@ -148,6 +149,7 @@ app.MapWorldEndpoints();
 app.MapChapterEndpoints();
 app.MapEventEndpoints();
 app.MapAchievementEndpoints();
+app.MapNotificationEndpoints();
 
 // Map SignalR hubs
 app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");

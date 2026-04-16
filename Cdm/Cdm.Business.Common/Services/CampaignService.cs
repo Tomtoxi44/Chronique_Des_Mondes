@@ -20,14 +20,17 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 /// <param name="dbContext">Database context for campaign data access.</param>
 /// <param name="imageStorageService">Service for image storage operations.</param>
+/// <param name="notificationService">Notification service for sending user notifications.</param>
 /// <param name="logger">Logger instance for structured logging.</param>
 public class CampaignService(
     AppDbContext dbContext,
     IImageStorageService imageStorageService,
+    INotificationService notificationService,
     ILogger<CampaignService> logger) : ICampaignService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly IImageStorageService imageStorageService = imageStorageService;
+    private readonly INotificationService notificationService = notificationService;
     private readonly ILogger<CampaignService> logger = logger;
 
     /// <inheritdoc/>
@@ -480,6 +483,31 @@ public class CampaignService(
                 "User {UserId} successfully joined campaign {CampaignId}",
                 userId,
                 campaign.Id);
+
+            // Notify the user who joined
+            await this.notificationService.CreateNotificationAsync(new CreateNotificationDto
+            {
+                UserId = userId,
+                Type = NotificationType.CampaignInvite,
+                Title = "Campagne rejointe !",
+                Message = $"Vous avez rejoint la campagne \"{campaign.Name}\".",
+                RelatedEntityId = campaign.Id,
+                RelatedEntityType = "Campaign",
+                ActionUrl = $"/campaigns/{campaign.Id}"
+            });
+
+            // Notify the campaign creator (GM)
+            await this.notificationService.CreateNotificationAsync(new CreateNotificationDto
+            {
+                UserId = campaign.CreatedBy,
+                Type = NotificationType.SystemAnnouncement,
+                Title = "Nouveau joueur",
+                Message = $"Un nouveau joueur a rejoint votre campagne \"{campaign.Name}\".",
+                RelatedEntityId = campaign.Id,
+                RelatedEntityType = "Campaign",
+                ActionUrl = $"/campaigns/{campaign.Id}",
+                SentBy = userId
+            });
 
             return this.MapToDto(campaign);
         }
