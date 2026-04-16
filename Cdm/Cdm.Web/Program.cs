@@ -220,6 +220,22 @@ builder.Services.AddHttpClient("AchievementApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register NotificationApiClient with scoped lifetime
+builder.Services.AddScoped<NotificationApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("NotificationApiClient");
+    var logger = sp.GetRequiredService<ILogger<NotificationApiClient>>();
+    return new NotificationApiClient(httpClient, logger);
+});
+
+builder.Services.AddHttpClient("NotificationApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
