@@ -150,7 +150,7 @@
 }
 
 .sidebar-nav-item.active {
-  background: rgba(99, 102, 241, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--color-primary);
   font-weight: 600;
 }

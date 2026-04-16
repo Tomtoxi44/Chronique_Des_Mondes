@@ -1,9 +1,8 @@
 @inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
 @using Cdm.Web.Components.Shared
-@inject NavigationManager Navigation
 
-<div class="app-layout @(isDarkTheme ? "dark-theme" : "light-theme")">
+<div class="@AppLayoutClass">
     <!-- Sidebar Navigation -->
     <aside class="sidebar @(isCollapsed ? "collapsed" : "") @(isMobileOpen ? "open" : "")" id="sidebar">
         <div class="sidebar-header">
@@ -29,17 +28,22 @@
                 }
                 
                 <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")" title="Accueil">
-                    <i class="bi bi-house-door"></i>
+                    <i class="bi bi-@(IsActive("/") ? "house-door-fill" : "house-door")"></i>
                     @if (!isCollapsed) { <span>Accueil</span> }
+                </a>
+
+                <a href="/worlds" class="sidebar-nav-item @(IsActive("/worlds") ? "active" : "")" title="Mondes">
+                    <i class="bi bi-@(IsActive("/worlds") ? "globe2" : "globe")"></i>
+                    @if (!isCollapsed) { <span>Mondes</span> }
                 </a>
                 
                 <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")" title="Campagnes">
-                    <i class="bi bi-map"></i>
+                    <i class="bi bi-@(IsActive("/campaigns") ? "map-fill" : "map")"></i>
                     @if (!isCollapsed) { <span>Campagnes</span> }
                 </a>
                 
                 <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")" title="Personnages">
-                    <i class="bi bi-people"></i>
+                    <i class="bi bi-@(IsActive("/characters") ? "people-fill" : "people")"></i>
                     @if (!isCollapsed) { <span>Personnages</span> }
                 </a>
             </div>
@@ -58,7 +62,7 @@
                 </a>
                 
                 <a href="/settings" class="sidebar-nav-item @(IsActive("/settings") ? "active" : "")" title="Paramètres">
-                    <i class="bi bi-gear"></i>
+                    <i class="bi bi-@(IsActive("/settings") ? "gear-fill" : "gear")"></i>
                     @if (!isCollapsed) { <span>Paramètres</span> }
                 </a>
             </div>
@@ -86,11 +90,12 @@
                 <button class="topbar-menu-btn" @onclick="ToggleMobileSidebar" aria-label="Toggle Menu">
                     <i class="bi bi-list"></i>
                 </button>
+                <span class="topbar-page-title">@GetPageTitle()</span>
             </div>
             
             <div class="topbar-center">
                 <div class="topbar-logo">
-                    <img src="/images/LogoCdm.svg" alt="CDM Logo" style="width: 48px; height: 48px; object-fit: contain;" />
+                    <img src="/images/LogoCdm.svg" alt="CDM Logo" style="width: 36px; height: 36px; object-fit: contain;" />
                     <span>Chronique des Mondes</span>
                 </div>
             </div>
@@ -100,9 +105,17 @@
                     <i class="bi bi-@(isDarkTheme ? "sun" : "moon-stars")"></i>
                 </button>
                 
+                <NotificationBell />
+                
                 <UserMenu />
             </div>
         </header>
+
+        <!-- Fluent UI providers (required for menus, toasts, dialogs, message bars) -->
+        <FluentMenuProvider />
+        <FluentToastProvider />
+        <FluentDialogProvider />
+        <FluentMessageBarProvider />
 
         <!-- Page Content -->
         <main class="app-content">
@@ -110,3 +123,18 @@
         </main>
     </div>
 </div>
+
+<style>
+    .topbar-page-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        display: none;
+    }
+
+    @@media (min-width: 640px) {
+        .topbar-page-title {
+            display: block;
+        }
+    }
+</style>

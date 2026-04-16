@@ -33,7 +33,7 @@
 .card-clickable:hover {
   transform: translateY(-4px);
   border-color: var(--color-border-hover);
-  box-shadow: var(--shadow-lg), 0 0 20px rgba(201, 162, 39, 0.1);
+  box-shadow: var(--shadow-lg), 0 0 20px color-mix(in srgb, var(--color-primary) 10%, transparent);
   cursor: pointer;
 }
 
@@ -48,7 +48,7 @@
 .card-header {
   padding: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
-  background: rgba(201, 162, 39, 0.03);
+  background: color-mix(in srgb, var(--color-primary) 3%, transparent);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -135,7 +135,7 @@
   border: 2px solid var(--color-gold-700);
   border-radius: var(--border-radius-xl);
   padding: var(--spacing-xl);
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(201, 162, 39, 0.1);
+  box-shadow: var(--shadow-lg), 0 0 40px color-mix(in srgb, var(--color-primary) 10%, transparent);
   position: relative;
   overflow: hidden;
 }
@@ -198,11 +198,11 @@
 /* Card avec bordure dorée */
 .card-gold {
   border-color: var(--color-gold-700);
-  box-shadow: var(--shadow-card), 0 0 0 1px rgba(201, 162, 39, 0.1);
+  box-shadow: var(--shadow-card), 0 0 0 1px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .card-gold .card-header {
-  background: linear-gradient(135deg, rgba(201, 162, 39, 0.1) 0%, rgba(139, 105, 20, 0.05) 100%);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   border-bottom-color: var(--color-gold-700);
 }
 

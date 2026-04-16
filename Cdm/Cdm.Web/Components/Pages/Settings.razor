@@ -5,7 +5,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Text.Json
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
-@layout MainLayout
+@layout AppLayout
 @inject ProfileApiClient ProfileClient
 @inject ILogger<Settings> Logger
 
@@ -29,19 +29,31 @@
                     </FluentStack>
 
                     <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                        <FluentStack Orientation="Orientation.Horizontal" 
-                                     VerticalAlignment="VerticalAlignment.Center"
-                                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
-                                     Style="padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
-                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
-                                <FluentLabel Weight="FontWeight.Bold">Theme</FluentLabel>
-                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Choisissez votre theme prefere</FluentLabel>
-                            </FluentStack>
-                            <FluentSelect TOption="string" @bind-Value="_themeStr" Style="min-width: 150px;">
-                                <FluentOption Value="@("dark")">Sombre (Nuit)</FluentOption>
-                                <FluentOption Value="@("light")">Clair (Parchemin)</FluentOption>
-                                <FluentOption Value="@("auto")">Automatique</FluentOption>
-                            </FluentSelect>
+                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 12px; padding: 12px; background: var(--neutral-layer-2); border-radius: 4px;">
+                            <FluentLabel Weight="FontWeight.Bold">Thème visuel</FluentLabel>
+                            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px;">Choisissez un thème TTRPG pour personnaliser l'apparence</FluentLabel>
+                            <div class="theme-picker">
+                                @foreach (var theme in _availableThemes)
+                                {
+                                    <button class="theme-card @(_themeStr == theme.Id ? "active" : "")"
+                                            @onclick="() => SelectTheme(theme.Id)"
+                                            title="@theme.Name"
+                                            type="button">
+                                        <div class="theme-card-preview" style="background: @theme.Bg; border-color: @theme.Primary;">
+                                            <div class="theme-card-swatch" style="background: @theme.Primary;"></div>
+                                            <div class="theme-card-swatch" style="background: @theme.Secondary;"></div>
+                                        </div>
+                                        <div class="theme-card-info">
+                                            <span class="theme-card-icon">@theme.Icon</span>
+                                            <span class="theme-card-name">@theme.Name</span>
+                                        </div>
+                                        @if (_themeStr == theme.Id)
+                                        {
+                                            <div class="theme-card-check">✓</div>
+                                        }
+                                    </button>
+                                }
+                            </div>
                         </FluentStack>
 
                         <FluentStack Orientation="Orientation.Horizontal" 
@@ -248,7 +260,7 @@
     private bool soundEnabled = false;
     private bool diceAnimations = true;
     private bool confirmations = true;
-    private string _themeStr = "dark";
+    private string _themeStr = "theme-generic";
     private string _languageStr = "fr";
     private bool _isSaving = false;
     private string _saveSuccess = string.Empty;
@@ -264,7 +276,7 @@
                 var prefs = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(profile.Preferences);
                 if (prefs != null)
                 {
-                    if (prefs.TryGetValue("theme", out var t)) _themeStr = t.GetString() ?? "dark";
+                    if (prefs.TryGetValue("theme", out var t)) _themeStr = t.GetString() ?? "theme-generic";
                     if (prefs.TryGetValue("language", out var l)) _languageStr = l.GetString() ?? "fr";
                     if (prefs.TryGetValue("animations", out var a)) animationsEnabled = a.GetBoolean();
                     if (prefs.TryGetValue("emailNotifications", out var en)) emailNotifications = en.GetBoolean();
@@ -279,6 +291,25 @@
                 Logger.LogWarning(ex, "Could not deserialize user preferences");
             }
         }
+    }
+
+    private record ThemeOption(string Id, string Name, string Icon, string Primary, string Secondary, string Bg);
+
+    private readonly ThemeOption[] _availableThemes = new[]
+    {
+        new ThemeOption("theme-generic",    "Sombre Générique", "🌑", "#004D61", "#822659", "#1A1A1A"),
+        new ThemeOption("light-theme",      "Clair",            "☀️", "#004D61", "#822659", "#FAFAFA"),
+        new ThemeOption("theme-dnd",        "D&D 5e",           "⚔️", "#C9A227", "#8B0000", "#1C1208"),
+        new ThemeOption("theme-pathfinder", "Pathfinder",       "🌿", "#3A7D44", "#D4AF37", "#0F1A0F"),
+        new ThemeOption("theme-cthulhu",    "Call of Cthulhu",  "🐙", "#2D6A4F", "#6B2D8B", "#0A0F0A"),
+        new ThemeOption("theme-warhammer",  "Warhammer",        "🔱", "#8B0000", "#B8860B", "#0D0A08"),
+        new ThemeOption("theme-cyberpunk",  "Cyberpunk RED",    "⚡", "#00F5FF", "#FF006E", "#0A0A0F"),
+        new ThemeOption("theme-skyrim",     "Skyrim",           "🐉", "#4A7AB5", "#C0C0C0", "#0E1118"),
+    };
+
+    private void SelectTheme(string themeId)
+    {
+        _themeStr = themeId;
     }
 
     private async Task SaveSettingsAsync()

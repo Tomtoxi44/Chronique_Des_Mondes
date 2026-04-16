@@ -25,11 +25,11 @@
     
     /* Neutral Fill */
     --neutral-fill-rest: var(--color-bg-elevated);
-    --neutral-fill-hover: rgba(99, 102, 241, 0.1);
-    --neutral-fill-active: rgba(99, 102, 241, 0.15);
+    --neutral-fill-hover: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    --neutral-fill-active: color-mix(in srgb, var(--color-primary) 15%, transparent);
     --neutral-fill-stealth-rest: transparent;
-    --neutral-fill-stealth-hover: rgba(99, 102, 241, 0.06);
-    --neutral-fill-stealth-active: rgba(99, 102, 241, 0.1);
+    --neutral-fill-stealth-hover: color-mix(in srgb, var(--color-primary) 6%, transparent);
+    --neutral-fill-stealth-active: color-mix(in srgb, var(--color-primary) 10%, transparent);
     
     /* Neutral Stroke */
     --neutral-stroke-rest: var(--color-border);
@@ -85,13 +85,13 @@ fluent-nav-menu,
 
 fluent-nav-link.selected,
 fluent-nav-link[aria-current="page"] {
-    background: rgba(99, 102, 241, 0.1) !important;
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
     border-left: 3px solid var(--color-primary) !important;
     color: var(--color-primary) !important;
 }
 
 fluent-nav-link:hover {
-    background: rgba(99, 102, 241, 0.06) !important;
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent) !important;
 }
 
 fluent-nav-group-header {
@@ -133,7 +133,7 @@ fluent-button[appearance="outline"] {
 }
 
 fluent-button[appearance="outline"]:hover {
-    background: rgba(99, 102, 241, 0.1) !important;
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
 }
 
 /* ============================================
@@ -207,7 +207,7 @@ fluent-data-grid {
 }
 
 fluent-data-grid-row:hover {
-    background: rgba(99, 102, 241, 0.06) !important;
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent) !important;
 }
 
 fluent-data-grid-row[row-type="header"] {
@@ -281,5 +281,5 @@ fluent-badge[appearance="accent"] {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.3);
+    background: color-mix(in srgb, var(--color-primary) 30%, transparent);
 }

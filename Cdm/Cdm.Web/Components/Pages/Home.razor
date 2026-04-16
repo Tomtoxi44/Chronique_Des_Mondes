@@ -1,51 +1,321 @@
 @page "/"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Cdm.Web.Services.ApiClients
+@using Cdm.Business.Abstraction.DTOs
+@inject CampaignApiClient CampaignClient
+@inject WorldApiClient WorldClient
+@inject ICharacterApiClient CharacterClient
 
 <PageTitle>Accueil - Chronique des Mondes</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <div class="home-page">
-            <div class="welcome-section">
-                <h1>Bienvenue, @context.User.Identity?.Name !</h1>
-                <p>Votre nouvelle application redesignée</p>
+        <div class="dashboard">
+            <!-- Hero Banner -->
+            <div class="dashboard-hero">
+                <div class="dashboard-hero-content">
+                    <h1 class="dashboard-hero-title">@GetGreeting(), @context.User.Identity?.Name !</h1>
+                    <p class="dashboard-hero-subtitle">Que les chroniques de vos mondes s'écrivent aujourd'hui.</p>
+                </div>
+                <div class="dashboard-hero-actions">
+                    <a href="/campaigns/create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i>
+                        Nouvelle Campagne
+                    </a>
+                    <a href="/worlds/create" class="btn btn-secondary">
+                        <i class="bi bi-globe2"></i>
+                        Nouveau Monde
+                    </a>
+                </div>
             </div>
+
+            <!-- Stats Grid -->
+            @if (_isLoading)
+            {
+                <div class="dashboard-stats">
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="card card-stat skeleton-card">
+                            <div class="card-stat-icon skeleton-icon"></div>
+                            <div class="card-stat-content">
+                                <div class="skeleton-text skeleton-text--lg"></div>
+                                <div class="skeleton-text skeleton-text--sm"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="dashboard-stats">
+                    <div class="card card-stat">
+                        <div class="card-stat-icon" style="color: var(--color-primary);">
+                            <i class="bi bi-map-fill"></i>
+                        </div>
+                        <div class="card-stat-content">
+                            <span class="card-stat-value">@_campaignCount</span>
+                            <span class="card-stat-label">Campagnes</span>
+                        </div>
+                    </div>
+                    <div class="card card-stat">
+                        <div class="card-stat-icon" style="color: var(--color-secondary);">
+                            <i class="bi bi-globe2"></i>
+                        </div>
+                        <div class="card-stat-content">
+                            <span class="card-stat-value">@_worldCount</span>
+                            <span class="card-stat-label">Mondes</span>
+                        </div>
+                    </div>
+                    <div class="card card-stat">
+                        <div class="card-stat-icon" style="color: var(--color-cta);">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div class="card-stat-content">
+                            <span class="card-stat-value">@_characterCount</span>
+                            <span class="card-stat-label">Personnages</span>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Recent Campaigns -->
+            <section class="dashboard-section">
+                <div class="dashboard-section-header">
+                    <h2 class="dashboard-section-title">
+                        <i class="bi bi-clock-history"></i>
+                        Campagnes récentes
+                    </h2>
+                    <a href="/campaigns" class="dashboard-section-link">Voir tout →</a>
+                </div>
+
+                @if (_isLoading)
+                {
+                    <div class="campaigns-grid">
+                        @for (int i = 0; i < 3; i++)
+                        {
+                            <div class="card skeleton-campaign-card"></div>
+                        }
+                    </div>
+                }
+                else if (_recentCampaigns.Count == 0)
+                {
+                    <div class="dashboard-empty">
+                        <i class="bi bi-map dashboard-empty-icon"></i>
+                        <p>Aucune campagne pour le moment.</p>
+                        <a href="/campaigns/create" class="btn btn-primary">Créer votre première campagne</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="campaigns-grid">
+                        @foreach (var campaign in _recentCampaigns)
+                        {
+                            <a href="/campaigns/@campaign.Id" class="card campaign-card">
+                                <div class="campaign-card-header">
+                                    @if (!string.IsNullOrEmpty(campaign.CoverImageUrl))
+                                    {
+                                        <img src="@campaign.CoverImageUrl" alt="@campaign.Name" class="campaign-card-cover" />
+                                    }
+                                    else
+                                    {
+                                        <div class="campaign-card-cover campaign-card-cover--placeholder">
+                                            <i class="bi bi-map"></i>
+                                        </div>
+                                    }
+                                    <span class="campaign-card-badge campaign-card-badge--@campaign.Status.ToString().ToLower()">
+                                        @GetStatusLabel(campaign.Status)
+                                    </span>
+                                </div>
+                                <div class="campaign-card-body">
+                                    <h3 class="campaign-card-title">@campaign.Name</h3>
+                                    @if (!string.IsNullOrEmpty(campaign.Description))
+                                    {
+                                        <p class="campaign-card-description">@campaign.Description</p>
+                                    }
+                                    <div class="campaign-card-meta">
+                                        <span class="campaign-card-game">
+                                            <i class="bi bi-dice-6"></i>
+                                            @campaign.GameType.ToString()
+                                        </span>
+                                        <span class="campaign-card-date">
+                                            <i class="bi bi-calendar3"></i>
+                                            @campaign.CreatedAt.ToString("dd MMM yyyy")
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="dashboard-section">
+                <h2 class="dashboard-section-title">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    Actions rapides
+                </h2>
+                <div class="quick-actions-grid">
+                    <a href="/campaigns/create" class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-map"></i>
+                        </div>
+                        <h3 class="card-feature-title">Nouvelle Campagne</h3>
+                        <p class="card-feature-description">Créez et gérez vos aventures épiques</p>
+                    </a>
+                    <a href="/worlds/create" class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-globe2"></i>
+                        </div>
+                        <h3 class="card-feature-title">Nouveau Monde</h3>
+                        <p class="card-feature-description">Forgez vos royaumes et contrées</p>
+                    </a>
+                    <a href="/characters/create" class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <h3 class="card-feature-title">Nouveau Personnage</h3>
+                        <p class="card-feature-description">Donnez vie à vos héros et antagonistes</p>
+                    </a>
+                    <a href="/campaigns/join" class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-door-open"></i>
+                        </div>
+                        <h3 class="card-feature-title">Rejoindre</h3>
+                        <p class="card-feature-description">Rejoignez une campagne avec un code</p>
+                    </a>
+                </div>
+            </section>
         </div>
     </Authorized>
-    
+
     <NotAuthorized>
-        <div class="home-page">
-            <div class="welcome-section">
-                <h1>Chronique des Mondes</h1>
-                <p>Veuillez vous connecter pour continuer</p>
-            </div>
+        <div class="landing">
+            <!-- Landing Hero -->
+            <section class="landing-hero">
+                <div class="landing-hero-content">
+                    <h1 class="landing-hero-title">Chronique<br />des Mondes</h1>
+                    <p class="landing-hero-subtitle">
+                        Le compagnon de table pour vos parties de jeu de rôle. Gérez vos campagnes, 
+                        vos mondes et vos personnages, quel que soit le système de jeu.
+                    </p>
+                    <div class="landing-hero-actions">
+                        <a href="/login" class="btn btn-primary btn-lg">
+                            <i class="bi bi-door-open"></i>
+                            Commencer l'aventure
+                        </a>
+                        <a href="/register" class="btn btn-ghost btn-lg">
+                            <i class="bi bi-person-plus"></i>
+                            Créer un compte
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section class="landing-features">
+                <div class="quick-actions-grid">
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-globe2"></i>
+                        </div>
+                        <h3 class="card-feature-title">Mondes vivants</h3>
+                        <p class="card-feature-description">
+                            Créez des univers complets avec leurs histoires, leurs factions et leurs secrets.
+                        </p>
+                    </div>
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-map"></i>
+                        </div>
+                        <h3 class="card-feature-title">Campagnes riches</h3>
+                        <p class="card-feature-description">
+                            Planifiez et jouez des campagnes avec sessions, chapitres et événements.
+                        </p>
+                    </div>
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h3 class="card-feature-title">Personnages détaillés</h3>
+                        <p class="card-feature-description">
+                            Gérez vos fiches de personnages adaptées à chaque système de jeu.
+                        </p>
+                    </div>
+                    <div class="card card-feature">
+                        <div class="card-feature-icon">
+                            <i class="bi bi-palette"></i>
+                        </div>
+                        <h3 class="card-feature-title">Thèmes TTRPG</h3>
+                        <p class="card-feature-description">
+                            Interface adaptée à D&D, Pathfinder, Cyberpunk, Cthulhu et plus encore.
+                        </p>
+                    </div>
+                </div>
+            </section>
         </div>
     </NotAuthorized>
 </AuthorizeView>
 
-<style>
-    .home-page {
-        padding: 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .welcome-section {
-        text-align: center;
-        padding: 4rem 2rem;
-    }
-
-    .welcome-section h1 {
-        font-size: 2.5rem;
-        color: var(--color-text-primary);
-        margin-bottom: 1rem;
-    }
-
-    .welcome-section p {
-        font-size: 1.125rem;
-        color: var(--color-text-secondary);
-    }
-</style>
-
 @code {
+    private bool _isLoading = true;
+    private int _campaignCount = 0;
+    private int _worldCount = 0;
+    private int _characterCount = 0;
+    private List<CampaignDto> _recentCampaigns = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var campaignsTask = CampaignClient.GetMyCampaignsAsync();
+            var worldsTask = WorldClient.GetMyWorldsAsync();
+            var charactersTask = CharacterClient.GetMyCharactersAsync();
+
+            await Task.WhenAll(campaignsTask, worldsTask, (Task)charactersTask);
+
+            var campaigns = await campaignsTask ?? [];
+            var worlds = await worldsTask ?? [];
+            var characters = await charactersTask ?? [];
+
+            _campaignCount = campaigns.Count;
+            _worldCount = worlds.Count;
+            _characterCount = characters.Count();
+
+            _recentCampaigns = campaigns
+                .OrderByDescending(c => c.UpdatedAt ?? c.CreatedAt)
+                .Take(3)
+                .ToList();
+        }
+        catch
+        {
+            // Silent failure — show zeroes
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private static string GetGreeting()
+    {
+        var hour = DateTime.Now.Hour;
+        return hour switch
+        {
+            < 12 => "Bonjour",
+            < 18 => "Bon après-midi",
+            _ => "Bonsoir"
+        };
+    }
+
+    private static string GetStatusLabel(CampaignStatus status) => status switch
+    {
+        CampaignStatus.Planning => "Planification",
+        CampaignStatus.Active => "Active",
+        CampaignStatus.OnHold => "En pause",
+        CampaignStatus.Completed => "Terminée",
+        CampaignStatus.Cancelled => "Annulée",
+        _ => status.ToString()
+    };
 }
+

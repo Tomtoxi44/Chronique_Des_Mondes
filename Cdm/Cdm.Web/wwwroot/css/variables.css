@@ -1,121 +1,148 @@
 /* 
  * Variables CSS - Chronique des Mondes
- * Design System v3.0.0 - Modern Professional Theme
+ * Design System v4.0.0 - TTRPG Theme System
  */
 
 :root {
   /* ============================================
-     COULEURS PRINCIPALES - VIOLET/INDIGO MODERNE
+     THÈME GÉNÉRIQUE SOMBRE (Défaut)
      ============================================ */
-  
-  /* Indigo - Accent principal */
-  --color-indigo-950: #1e1b4b;
-  --color-indigo-900: #312e81;
-  --color-indigo-800: #3730a3;
-  --color-indigo-700: #4338ca;
-  --color-indigo-600: #4f46e5;  /* Couleur signature */
-  --color-indigo-500: #6366f1;
-  --color-indigo-400: #818cf8;
-  --color-indigo-300: #a5b4fc;
-  --color-indigo-200: #c7d2fe;
-  --color-indigo-100: #e0e7ff;
-  --color-indigo-50: #eef2ff;
 
-  /* Violet - Accent secondaire */
-  --color-violet-700: #6d28d9;
-  --color-violet-600: #7c3aed;
-  --color-violet-500: #8b5cf6;
-  --color-violet-400: #a78bfa;
-  --color-violet-300: #c4b5fd;
+  /* Backgrounds */
+  --color-bg-primary: #1A1A1A;
+  --color-bg-secondary: #242424;
+  --color-bg-elevated: #2E2E2E;
+  --color-bg-card: #282828;
 
-  /* Rose - Actions importantes */
-  --color-rose-700: #be123c;
-  --color-rose-600: #e11d48;
-  --color-rose-500: #f43f5e;
-  --color-rose-400: #fb7185;
-  --color-rose-300: #fda4af;
-  --color-rose-100: #ffe4e6;
+  /* Text */
+  --color-text-primary: #F0F0F0;
+  --color-text-secondary: #C8C8C8;
+  --color-text-tertiary: #A0A0A0;
+  --color-text-muted: #6E6E6E;
 
-  /* ============================================
-     THÈME SOMBRE (Défaut)
-     ============================================ */
-  --color-bg-primary: #0f0f1a;      /* Très sombre, presque noir avec teinte violette */
-  --color-bg-secondary: #1a1a2e;    /* Ardoise sombre violette */
-  --color-bg-elevated: #25253a;     /* Élevé avec teinte violette */
-  --color-bg-card: #1f1f35;
+  /* Couleurs sémantiques */
+  --color-primary: #004D61;
+  --color-primary-hover: #006278;
+  --color-primary-light: #007A96;
+  --color-secondary: #822659;
+  --color-secondary-hover: #9B2D6B;
+  --color-cta: #3E5641;
+  --color-cta-hover: #4E6E52;
 
-  /* Alias pour compatibilité */
-  --color-background-primary: var(--color-bg-primary);
-  --color-background-secondary: var(--color-bg-secondary);
-  --color-background-elevated: var(--color-bg-elevated);
-  --color-background-card: var(--color-bg-card);
+  /* Texte bouton primaire (contraste sur gradient primary) */
+  --color-btn-primary-fg: #F0F0F0;
 
-  --color-text-primary: #ffffff;    /* Blanc pur pour maximum contraste */
-  --color-text-secondary: #e2e8f0;  /* Gris très clair */
-  --color-text-tertiary: #cbd5e1;   /* Gris clair */
-  --color-text-muted: #94a3b8;      /* Gris moyen (meilleur contraste) */
-
-  /* Bordures thème sombre */
-  --color-border: rgba(99, 102, 241, 0.15);  /* Bordure indigo subtile */
-  --color-border-hover: rgba(99, 102, 241, 0.3);
-  --color-border-focus: var(--color-indigo-500);
-
-  /* Alias couleurs principales */
-  --color-primary: var(--color-indigo-600);
-  --color-primary-hover: var(--color-indigo-500);
-  --color-primary-light: var(--color-indigo-400);
-  --color-secondary: var(--color-violet-600);
-  --color-accent: var(--color-rose-500);
-
-  /* Alias typographie */
-  --font-heading: var(--font-family-heading);
-  --font-body: var(--font-family-body);
-  --font-display: var(--font-family-accent);
-  --font-mono: var(--font-family-mono);
-
-  /* Alias z-index */
-  --z-sidebar: var(--z-fixed);
-
-  /* ============================================
-     THÈME CLAIR (classe .light-theme)
-     ============================================ */
-  /* Appliqué via .light-theme sur le body */
+  /* Bordures */
+  --color-border: rgba(240, 240, 240, 0.08);
+  --color-border-hover: rgba(240, 240, 240, 0.16);
+  --color-border-focus: #004D61;
 
   /* ============================================
      COULEURS D'ÉTAT
      ============================================ */
-  /* Success */
   --color-success-700: #15803D;
   --color-success-500: #22C55E;
   --color-success-300: #4ADE80;
   --color-success-100: #DCFCE7;
 
-  /* Warning */
   --color-warning-700: #92400E;
   --color-warning-500: #D97706;
   --color-warning-300: #FBBF24;
   --color-warning-100: #FEF3C7;
 
-  /* Error */
   --color-error-700: #B91C1C;
   --color-error-500: #EF4444;
   --color-error-300: #F87171;
   --color-error-100: #FEE2E2;
 
-  /* Info */
   --color-info-700: #1D4ED8;
   --color-info-500: #3B82F6;
   --color-info-300: #60A5FA;
   --color-info-100: #DBEAFE;
 
   /* ============================================
+     GRADIENTS SÉMANTIQUES
+     ============================================ */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --gradient-primary-hover: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-secondary-hover) 100%);
+  --gradient-card: linear-gradient(145deg, rgba(0, 77, 97, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+  --gradient-dark: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+
+  /* ============================================
+     OMBRES
+     ============================================ */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --shadow-primary: 0 4px 16px rgba(0, 77, 97, 0.3);
+  --shadow-primary-lg: 0 8px 32px rgba(0, 77, 97, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(0, 77, 97, 0.5);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+
+  /* ============================================
+     ALIAS RÉTROCOMPATIBILITÉ - BACKGROUNDS
+     ============================================ */
+  --color-background-primary: var(--color-bg-primary);
+  --color-background-secondary: var(--color-bg-secondary);
+  --color-background-elevated: var(--color-bg-elevated);
+  --color-background-card: var(--color-bg-card);
+
+  /* ============================================
+     ALIAS RÉTROCOMPATIBILITÉ - COULEURS
+     ============================================ */
+  --color-gold: var(--color-primary);
+  --color-gold-light: var(--color-primary-light);
+  --color-accent: var(--color-secondary);
+  --color-bronze: var(--color-secondary);
+  --color-bronze-500: var(--color-secondary);
+  --color-crimson: var(--color-secondary);
+  --color-crimson-light: var(--color-secondary-hover);
+  --color-indigo-700: var(--color-primary);
+
+  /* Alias couleurs sémantiques standalone */
+  --color-success: var(--color-success-500);
+  --color-warning: var(--color-warning-500);
+  --color-error: var(--color-error-500);
+  --color-info: var(--color-info-500);
+
+  /* Palette "gold" → déclinaisons primary */
+  --color-gold-100: var(--color-primary-light);
+  --color-gold-300: var(--color-primary-light);
+  --color-gold-500: var(--color-primary);
+  --color-gold-700: var(--color-primary);
+
+  /* Palette "crimson" → déclinaisons secondary */
+  --color-crimson-300: var(--color-secondary-hover);
+  --color-crimson-500: var(--color-secondary);
+  --color-crimson-700: var(--color-secondary);
+
+  /* ============================================
+     ALIAS RÉTROCOMPATIBILITÉ - GRADIENTS
+     ============================================ */
+  --gradient-gold: var(--gradient-primary);
+  --gradient-gold-hover: var(--gradient-primary-hover);
+  --gradient-crimson: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-hover) 100%);
+
+  /* ============================================
+     ALIAS RÉTROCOMPATIBILITÉ - OMBRES
+     ============================================ */
+  --shadow-gold: var(--shadow-primary);
+  --shadow-gold-lg: var(--shadow-primary-lg);
+
+  /* ============================================
      TYPOGRAPHIE
      ============================================ */
-  /* Familles de polices - Médiéval */
   --font-family-heading: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
   --font-family-body: 'Inter', 'Open Sans', sans-serif;
   --font-family-accent: 'Cinzel Decorative', 'Cinzel', serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Alias typographie */
+  --font-heading: var(--font-family-heading);
+  --font-body: var(--font-family-body);
+  --font-display: var(--font-family-accent);
+  --font-mono: var(--font-family-mono);
 
   /* Tailles de police */
   --font-size-display: 4rem;      /* 64px */
@@ -125,6 +152,7 @@
   --font-size-h4: 1.5rem;         /* 24px */
   --font-size-h5: 1.25rem;        /* 20px */
   --font-size-h6: 1.125rem;       /* 18px */
+  --font-size-lg: 1.125rem;       /* 18px – alias de h6 */
   --font-size-base: 1rem;         /* 16px */
   --font-size-small: 0.875rem;    /* 14px */
   --font-size-xs: 0.75rem;        /* 12px */
@@ -154,7 +182,7 @@
   --spacing-4xl: 6rem;      /* 96px */
 
   /* ============================================
-     BORDURES
+     BORDURES & RAYONS
      ============================================ */
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
@@ -163,41 +191,15 @@
   --border-radius-2xl: 24px;
   --border-radius-full: 9999px;
 
-  /* Alias */
+  /* Alias radius */
   --radius-sm: var(--border-radius-sm);
   --radius-md: var(--border-radius-md);
   --radius-lg: var(--border-radius-lg);
+  --radius-xl: var(--border-radius-xl);
 
   --border-width-thin: 1px;
   --border-width-medium: 2px;
   --border-width-thick: 3px;
-
-  /* ============================================
-     OMBRES - Moderne et subtile
-     ============================================ */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
-  /* Ombres indigo pour les éléments interactifs */
-  --shadow-primary: 0 4px 16px rgba(99, 102, 241, 0.2);
-  --shadow-primary-lg: 0 8px 32px rgba(99, 102, 241, 0.25);
-  --shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.5);
-
-  /* Ombre pour les cartes */
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
-                 0 2px 4px -1px rgba(0, 0, 0, 0.06),
-                 inset 0 1px 0 rgba(99, 102, 241, 0.05);
-
-  /* ============================================
-     GRADIENTS
-     ============================================ */
-  --gradient-primary: linear-gradient(135deg, var(--color-indigo-600) 0%, var(--color-violet-600) 100%);
-  --gradient-primary-hover: linear-gradient(135deg, var(--color-indigo-500) 0%, var(--color-violet-500) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--color-rose-500) 0%, var(--color-rose-600) 100%);
-  --gradient-dark: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
-  --gradient-card: linear-gradient(145deg, rgba(99, 102, 241, 0.02) 0%, rgba(0, 0, 0, 0.05) 100%);
 
   /* ============================================
      ANIMATIONS
@@ -225,6 +227,9 @@
   --z-toast: 10600;
   --z-tooltip: 10700;
 
+  /* Alias */
+  --z-sidebar: var(--z-fixed);
+
   /* ============================================
      BREAKPOINTS
      ============================================ */
@@ -249,28 +254,251 @@
    ============================================ */
 .light-theme,
 .app-layout.light-theme {
-  --color-bg-primary: #ffffff;      /* Blanc pur */
-  --color-bg-secondary: #f8fafc;    /* Gris très clair */
-  --color-bg-elevated: #ffffff;
-  --color-bg-card: #ffffff;
+  --color-bg-primary: #FAFAFA;
+  --color-bg-secondary: #F0F0F0;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-card: #FFFFFF;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #3A3A3A;
+  --color-text-tertiary: #5A5A5A;
+  --color-text-muted: #8A8A8A;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-border-hover: rgba(0, 0, 0, 0.2);
 
-  /* Alias pour compatibilité */
+  /* Alias backgrounds */
   --color-background-primary: var(--color-bg-primary);
   --color-background-secondary: var(--color-bg-secondary);
   --color-background-elevated: var(--color-bg-elevated);
   --color-background-card: var(--color-bg-card);
 
-  --color-text-primary: #0f172a;    /* Ardoise très sombre */
-  --color-text-secondary: #334155;  /* Ardoise sombre */
-  --color-text-tertiary: #64748b;
-  --color-text-muted: #94a3b8;
-
-  --color-border: rgba(99, 102, 241, 0.1);
-  --color-border-hover: rgba(99, 102, 241, 0.2);
-
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 
-                 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================
+   THÈME D&D – Dungeons & Dragons 5e
+   ============================================ */
+.theme-dnd {
+  --color-bg-primary: #1C1208;
+  --color-bg-secondary: #231709;
+  --color-bg-elevated: #2E2010;
+  --color-bg-card: #29190C;
+  --color-text-primary: #F5E6C8;
+  --color-text-secondary: #D4C4A0;
+  --color-text-tertiary: #B89B6A;
+  --color-text-muted: #8B7355;
+  --color-primary: #C9A227;
+  --color-primary-hover: #E5BA2A;
+  --color-primary-light: #F0D060;
+  --color-secondary: #8B0000;
+  --color-secondary-hover: #A50000;
+  --color-cta: #8B0000;
+  --color-cta-hover: #A50000;
+  --color-border: rgba(201, 162, 39, 0.2);
+  --color-border-hover: rgba(201, 162, 39, 0.4);
+  --color-border-focus: #C9A227;
+  --gradient-primary: linear-gradient(135deg, #C9A227 0%, #A07D1E 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #E5BA2A 0%, #C9A227 100%);
+  --shadow-primary: 0 4px 16px rgba(201, 162, 39, 0.3);
+  --shadow-primary-lg: 0 8px 32px rgba(201, 162, 39, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(201, 162, 39, 0.5);
+  --gradient-card: linear-gradient(145deg, rgba(201, 162, 39, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+
+/* D&D: texte sombre sur fond doré/brillant */
+  --color-btn-primary-fg: #1C1208;
+
+  /* Alias backgrounds */
+   ============================================ */
+.theme-pathfinder {
+  --color-bg-primary: #0F1A0F;
+  --color-bg-secondary: #162316;
+  --color-bg-elevated: #1D2E1D;
+  --color-bg-card: #192519;
+  --color-text-primary: #E8F0E8;
+  --color-text-secondary: #C8D8C8;
+  --color-text-tertiary: #8AAA8A;
+  --color-text-muted: #6B8A6B;
+  --color-primary: #3A7D44;
+  --color-primary-hover: #4A9A57;
+  --color-primary-light: #5BB86A;
+  --color-secondary: #D4AF37;
+  --color-secondary-hover: #E5C242;
+  --color-cta: #C0392B;
+  --color-cta-hover: #D94535;
+  --color-border: rgba(58, 125, 68, 0.25);
+  --color-border-hover: rgba(58, 125, 68, 0.45);
+  --color-border-focus: #3A7D44;
+  --gradient-primary: linear-gradient(135deg, #3A7D44 0%, #2A5E33 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #4A9A57 0%, #3A7D44 100%);
+  --shadow-primary: 0 4px 16px rgba(58, 125, 68, 0.3);
+  --shadow-primary-lg: 0 8px 32px rgba(58, 125, 68, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(58, 125, 68, 0.5);
+  --gradient-card: linear-gradient(145deg, rgba(58, 125, 68, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+
+/* Pathfinder: texte clair sur fond vert sombre */
+  --color-btn-primary-fg: #E8F0E8;
+
+  /* Alias backgrounds */
+  --color-background-primary: var(--color-bg-primary);
+  --color-background-secondary: var(--color-bg-secondary);
+  --color-background-elevated: var(--color-bg-elevated);
+  --color-background-card: var(--color-bg-card);
+}
+
+/* ============================================
+   THÈME CALL OF CTHULHU
+   ============================================ */
+.theme-cthulhu {
+  --color-bg-primary: #0A0F0A;
+  --color-bg-secondary: #0F150F;
+  --color-bg-elevated: #141C14;
+  --color-bg-card: #111811;
+  --color-text-primary: #B8CDB8;
+  --color-text-secondary: #96B096;
+  --color-text-tertiary: #6B8C6B;
+  --color-text-muted: #4A6B4A;
+  --color-primary: #2D6A4F;
+  --color-primary-hover: #38855F;
+  --color-primary-light: #44A070;
+  --color-secondary: #6B2D8B;
+  --color-secondary-hover: #7F3AA5;
+  --color-cta: #6B2D8B;
+  --color-cta-hover: #7F3AA5;
+  --color-border: rgba(45, 106, 79, 0.2);
+  --color-border-hover: rgba(45, 106, 79, 0.4);
+  --color-border-focus: #2D6A4F;
+  --gradient-primary: linear-gradient(135deg, #2D6A4F 0%, #1E4E38 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #38855F 0%, #2D6A4F 100%);
+  --shadow-primary: 0 4px 16px rgba(45, 106, 79, 0.3);
+  --shadow-primary-lg: 0 8px 32px rgba(45, 106, 79, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(45, 106, 79, 0.5);
+  --gradient-card: linear-gradient(145deg, rgba(45, 106, 79, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+
+/* Cthulhu: texte clair sur fond vert eldritch sombre */
+  --color-btn-primary-fg: #B8CDB8;
+
+  /* Alias backgrounds */
+  --color-background-primary: var(--color-bg-primary);
+  --color-background-secondary: var(--color-bg-secondary);
+  --color-background-elevated: var(--color-bg-elevated);
+  --color-background-card: var(--color-bg-card);
+}
+
+/* ============================================
+   THÈME WARHAMMER FANTASY
+   ============================================ */
+.theme-warhammer {
+  --color-bg-primary: #0D0A08;
+  --color-bg-secondary: #17120D;
+  --color-bg-elevated: #211A13;
+  --color-bg-card: #1A1510;
+  --color-text-primary: #E8D5B0;
+  --color-text-secondary: #C8B590;
+  --color-text-tertiary: #9B8560;
+  --color-text-muted: #6B5840;
+  --color-primary: #8B0000;
+  --color-primary-hover: #A50000;
+  --color-primary-light: #C00000;
+  --color-secondary: #B8860B;
+  --color-secondary-hover: #D49B0D;
+  --color-cta: #8B0000;
+  --color-cta-hover: #A50000;
+  --color-border: rgba(139, 0, 0, 0.25);
+  --color-border-hover: rgba(139, 0, 0, 0.45);
+  --color-border-focus: #8B0000;
+  --gradient-primary: linear-gradient(135deg, #8B0000 0%, #6A0000 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #A50000 0%, #8B0000 100%);
+  --shadow-primary: 0 4px 16px rgba(139, 0, 0, 0.3);
+  --shadow-primary-lg: 0 8px 32px rgba(139, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(139, 0, 0, 0.5);
+  --gradient-card: linear-gradient(145deg, rgba(139, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+
+/* Warhammer: texte clair sur fond rouge sang sombre */
+  --color-btn-primary-fg: #E8D5B0;
+
+  /* Alias backgrounds */
+  --color-background-primary: var(--color-bg-primary);
+  --color-background-secondary: var(--color-bg-secondary);
+  --color-background-elevated: var(--color-bg-elevated);
+  --color-background-card: var(--color-bg-card);
+}
+
+/* ============================================
+   THÈME CYBERPUNK RED
+   ============================================ */
+.theme-cyberpunk {
+  --color-bg-primary: #0A0A0F;
+  --color-bg-secondary: #0F0F1A;
+  --color-bg-elevated: #15152A;
+  --color-bg-card: #121225;
+  --color-text-primary: #E8F4FD;
+  --color-text-secondary: #B0CCE0;
+  --color-text-tertiary: #7090B0;
+  --color-text-muted: #4A6880;
+  --color-primary: #00F5FF;
+  --color-primary-hover: #33F7FF;
+  --color-primary-light: #66FAFF;
+  --color-secondary: #FF006E;
+  --color-secondary-hover: #FF3385;
+  --color-cta: #FFE600;
+  --color-cta-hover: #FFEC33;
+  --color-border: rgba(0, 245, 255, 0.15);
+  --color-border-hover: rgba(0, 245, 255, 0.35);
+  --color-border-focus: #00F5FF;
+  --gradient-primary: linear-gradient(135deg, #00F5FF 0%, #0099AA 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #33F7FF 0%, #00C0D0 100%);
+  --shadow-primary: 0 4px 16px rgba(0, 245, 255, 0.25);
+  --shadow-primary-lg: 0 8px 32px rgba(0, 245, 255, 0.35);
+  --shadow-focus: 0 0 0 3px rgba(0, 245, 255, 0.4), 0 0 20px rgba(0, 245, 255, 0.2);
+  --gradient-card: linear-gradient(145deg, rgba(0, 245, 255, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+
+/* Cyberpunk: texte sombre sur fond cyan néon brillant */
+  --color-btn-primary-fg: #0A0A0F;
+
+  /* Alias backgrounds */
+  --color-background-primary: var(--color-bg-primary);
+  --color-background-secondary: var(--color-bg-secondary);
+  --color-background-elevated: var(--color-bg-elevated);
+  --color-background-card: var(--color-bg-card);
+}
+
+/* ============================================
+   THÈME THE ELDER SCROLLS / SKYRIM
+   ============================================ */
+.theme-skyrim {
+  --color-bg-primary: #0E1118;
+  --color-bg-secondary: #151C28;
+  --color-bg-elevated: #1C2535;
+  --color-bg-card: #182030;
+  --color-text-primary: #E8EEF8;
+  --color-text-secondary: #C0CCE0;
+  --color-text-tertiary: #8899BB;
+  --color-text-muted: #5A6A88;
+  --color-primary: #4A7AB5;
+  --color-primary-hover: #5A8FCC;
+  --color-primary-light: #6BA5E5;
+  --color-secondary: #C0C0C0;
+  --color-secondary-hover: #D8D8D8;
+  --color-cta: #8B6914;
+  --color-cta-hover: #A57B1A;
+  --color-border: rgba(74, 122, 181, 0.2);
+  --color-border-hover: rgba(74, 122, 181, 0.4);
+  --color-border-focus: #4A7AB5;
+  --gradient-primary: linear-gradient(135deg, #4A7AB5 0%, #3A6095 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #5A8FCC 0%, #4A7AB5 100%);
+  --shadow-primary: 0 4px 16px rgba(74, 122, 181, 0.3);
+  --shadow-primary-lg: 0 8px 32px rgba(74, 122, 181, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(74, 122, 181, 0.5);
+  --gradient-card: linear-gradient(145deg, rgba(74, 122, 181, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+
+  /* Skyrim: texte clair sur fond bleu nordique sombre */
+  --color-btn-primary-fg: #E8EEF8;
+
+  /* Alias backgrounds */
+  --color-background-primary: var(--color-bg-primary);
+  --color-background-secondary: var(--color-bg-secondary);
+  --color-background-elevated: var(--color-bg-elevated);
+  --color-background-card: var(--color-bg-card);
 }

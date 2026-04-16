@@ -1,4 +1,6 @@
+using Cdm.Common.Enums;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace Cdm.Web.Components.Layout;
 
@@ -10,9 +12,15 @@ public partial class AppLayout
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
     private bool isCollapsed = false;
     private bool isMobileOpen = false;
     private bool isDarkTheme = true;
+    private string _currentTheme = "theme-generic";
+
+    private string AppLayoutClass => $"app-layout {_currentTheme} {(isDarkTheme ? "" : "light-theme")}".Trim();
 
     /// <summary>
     /// Toggles the sidebar collapsed state.
@@ -45,6 +53,52 @@ public partial class AppLayout
     {
         this.isDarkTheme = !this.isDarkTheme;
     }
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var savedTheme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "cdm-theme-override");
+            if (!string.IsNullOrEmpty(savedTheme) && IsValidTheme(savedTheme))
+            {
+                _currentTheme = savedTheme;
+                StateHasChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns the CSS theme class corresponding to the given <see cref="GameType"/>.
+    /// </summary>
+    public static string GetThemeClass(GameType gameType) => gameType switch
+    {
+        GameType.DnD5e => "theme-dnd",
+        GameType.Pathfinder => "theme-pathfinder",
+        GameType.CallOfCthulhu => "theme-cthulhu",
+        GameType.Warhammer => "theme-warhammer",
+        GameType.Cyberpunk => "theme-cyberpunk",
+        GameType.Skyrim => "theme-skyrim",
+        _ => "theme-generic"
+    };
+
+    /// <summary>
+    /// Applies a theme and persists it to localStorage.
+    /// </summary>
+    public async Task SetThemeAsync(string themeClass)
+    {
+        if (IsValidTheme(themeClass))
+        {
+            _currentTheme = themeClass;
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "cdm-theme-override", themeClass);
+            StateHasChanged();
+        }
+    }
+
+    private static bool IsValidTheme(string theme) => theme is
+        "theme-generic" or "theme-dnd" or "theme-pathfinder" or
+        "theme-cthulhu" or "theme-warhammer" or "theme-cyberpunk" or
+        "theme-skyrim" or "light-theme";
 
     /// <summary>
     /// Determines if the given path matches the current navigation path.

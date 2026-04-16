@@ -42,9 +42,9 @@
    ============================================ */
 .btn-primary {
   background: var(--gradient-gold);
-  color: var(--color-bg-primary);
+  color: var(--color-btn-primary-fg, #F0F0F0);
   border-color: var(--color-gold-700);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -90,7 +90,7 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(201, 162, 39, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   color: var(--color-gold-100);
   border-color: var(--color-gold-300);
   transform: translateY(-2px);
@@ -98,7 +98,7 @@
 
 .btn-secondary:active:not(:disabled) {
   transform: translateY(0);
-  background: rgba(201, 162, 39, 0.15);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 
 /* ============================================
@@ -147,12 +147,12 @@
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(201, 162, 39, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   color: var(--color-gold-300);
 }
 
 .btn-ghost:active:not(:disabled) {
-  background: rgba(201, 162, 39, 0.15);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 
 /* ============================================
@@ -167,7 +167,7 @@
 .btn-outline:hover:not(:disabled) {
   border-color: var(--color-gold-500);
   color: var(--color-gold-300);
-  background: rgba(201, 162, 39, 0.05);
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
 }
 
 /* ============================================

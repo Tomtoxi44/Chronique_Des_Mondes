@@ -9,7 +9,7 @@
 @using Cdm.Web.Components.Campaigns
 @using Cdm.Web.Services
 @using Microsoft.AspNetCore.Authorization
-@layout MainLayout
+@layout AppLayout
 @attribute [Authorize(Roles = "GameMaster")]
 @inject ICampaignService CampaignService
 @inject NavigationManager NavigationManager
