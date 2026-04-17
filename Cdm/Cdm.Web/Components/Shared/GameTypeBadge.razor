@@ -1,0 +1,18 @@
+@* GameTypeBadge — Colored badge for game type display *@
+
+<FluentBadge Appearance="Appearance.Neutral"
+             Class="cdm-gametype-badge"
+             Style="@GetBadgeStyle()">
+    <span class="cdm-gametype-badge-icon">@(ThemeService.GetGameTypeIcon(GameType))</span>
+    <span>@(ThemeService.GetGameTypeDisplayName(GameType))</span>
+</FluentBadge>
+
+@code {
+    [Parameter, EditorRequired] public GameType GameType { get; set; }
+
+    private string GetBadgeStyle()
+    {
+        var theme = ThemeService.GetTheme(GameType);
+        return $"--badge-accent: {theme.AccentColor}; background: color-mix(in srgb, {theme.AccentColor} 15%, transparent); color: {theme.AccentColor}; border: 1px solid color-mix(in srgb, {theme.AccentColor} 30%, transparent); font-size: 0.75rem; padding: 2px 10px; border-radius: 999px;";
+    }
+}

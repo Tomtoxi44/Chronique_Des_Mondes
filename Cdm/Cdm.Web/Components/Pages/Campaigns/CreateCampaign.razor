@@ -7,6 +7,7 @@
 @page "/campaigns/create"
 @using Cdm.Web.Components.Layout
 @using Cdm.Web.Components.Campaigns
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Services
 @using Microsoft.AspNetCore.Authorization
 @layout MainLayout
@@ -14,69 +15,45 @@
 @inject ICampaignService CampaignService
 @inject NavigationManager NavigationManager
 @inject ILogger<CreateCampaign> Logger
+@inject IStringLocalizer<AppStrings> L
 @rendermode InteractiveServer
 
-<PageTitle>Nouvelle Campagne - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Campaigns_Create"] — @L["AppName"]</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="24" Style="max-width: 800px; margin: 0 auto; padding: 24px;">
-    <!-- Breadcrumbs -->
-    <FluentBreadcrumb>
-        <FluentBreadcrumbItem Href="/">
-            <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
-        </FluentBreadcrumbItem>
-        <FluentBreadcrumbItem Href="/campaigns">
-            Campagnes
-        </FluentBreadcrumbItem>
-        <FluentBreadcrumbItem>
-            Nouvelle
-        </FluentBreadcrumbItem>
-    </FluentBreadcrumb>
+<PageHeader Title="@L["Campaigns_Create"]" Subtitle="@L["Campaigns_CreateSubtitle"]">
+    <Actions>
+        <FluentButton Appearance="Appearance.Outline" Href="/campaigns"
+                      IconStart="@(new Icons.Regular.Size20.ArrowLeft())">
+            @L["Common_Back"]
+        </FluentButton>
+    </Actions>
+</PageHeader>
 
-    <!-- Page Header -->
-    <FluentStack Orientation="Orientation.Vertical" VerticalGap="8">
-        <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">
-            Creer une Nouvelle Campagne
-        </FluentLabel>
-        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
-            Donnez vie a votre prochaine aventure epique
-        </FluentLabel>
-    </FluentStack>
+<div class="cdm-content-card" style="max-width: 800px;">
+    @if (!string.IsNullOrEmpty(this.errorMessage))
+    {
+        <FluentMessageBar Title="@L["Common_Error"]" 
+                         Intent="@MessageIntent.Error" 
+                         AllowDismiss="true" 
+                         OnDismiss="@(() => this.errorMessage = null)"
+                         Style="margin-bottom: 24px;">
+            @this.errorMessage
+        </FluentMessageBar>
+    }
 
-    <!-- Main Card -->
-    <FluentCard Style="padding: 32px;">
-        @if (!string.IsNullOrEmpty(this.errorMessage))
-        {
-            <FluentMessageBar Title="Erreur" 
-                             Intent="@MessageIntent.Error" 
-                             AllowDismiss="true" 
-                             OnDismiss="@(() => this.errorMessage = null)"
-                             Style="margin-bottom: 24px;">
-                @this.errorMessage
-            </FluentMessageBar>
-        }
-
-        @if (this.success)
-        {
-            <FluentMessageBar Title="Succes" Intent="@MessageIntent.Success">
-                <FluentIcon Value="@(new Icons.Regular.Size20.CheckmarkCircle())" Style="margin-right: 8px;" />
-                Campagne creee avec succes ! Redirection en cours...
-            </FluentMessageBar>
-        }
-        else
-        {
-            <CampaignForm Model="@this.model" 
-                         IsSubmitting="@this.isSubmitting" 
-                         OnSubmit="HandleCreateCampaignAsync" />
-        }
-    </FluentCard>
-
-    <!-- Back Button -->
-    <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
-        <FluentAnchor Href="/campaigns" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.ArrowLeft())">
-            Retour aux campagnes
-        </FluentAnchor>
-    </FluentStack>
-</FluentStack>
+    @if (this.success)
+    {
+        <FluentMessageBar Title="@L["Common_Success"]" Intent="@MessageIntent.Success">
+            @L["Campaigns_CreateSuccess"]
+        </FluentMessageBar>
+    }
+    else
+    {
+        <CampaignForm Model="@this.model" 
+                     IsSubmitting="@this.isSubmitting" 
+                     OnSubmit="HandleCreateCampaignAsync" />
+    }
+</div>
 
 @code {
     private CampaignForm.CreateCampaignModel model = new();

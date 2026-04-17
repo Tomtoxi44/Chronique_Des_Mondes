@@ -7,6 +7,7 @@ using Cdm.Web.Services.State;
 using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.FluentUI.AspNetCore.Components;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,12 @@ builder.Services.AddRazorComponents()
 
 // Add Fluent UI
 builder.Services.AddFluentUIComponents();
+
+// Localization
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+// Theme service — centralized game-type-based theming
+builder.Services.AddScoped<ThemeService>();
 
 builder.Services.AddOutputCache();
 
@@ -249,6 +256,15 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Localization — French default
+var supportedCultures = new[] { new CultureInfo("fr"), new CultureInfo("en") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("fr"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 app.UseAntiforgery();
 

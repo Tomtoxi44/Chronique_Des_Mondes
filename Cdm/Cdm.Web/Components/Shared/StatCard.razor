@@ -1,0 +1,13 @@
+@* StatCard — Dashboard stat card with icon, value and label *@
+
+<div class="cdm-stat-card">
+    <div class="cdm-stat-icon">@Icon</div>
+    <div class="cdm-stat-value">@Value</div>
+    <div class="cdm-stat-label">@Label</div>
+</div>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "📊";
+    [Parameter] public string Value { get; set; } = "0";
+    [Parameter] public string Label { get; set; } = "";
+}

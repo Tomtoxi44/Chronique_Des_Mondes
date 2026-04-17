@@ -1,194 +1,132 @@
 @page "/characters/create"
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Shared.DTOs.Models
-@using Microsoft.AspNetCore.Components.Authorization
 @using System.ComponentModel.DataAnnotations
 @layout MainLayout
 @rendermode InteractiveServer
+@inject IStringLocalizer<AppStrings> L
 
-<PageTitle>Creer un Personnage - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Characters_Create"] — @L["AppName"]</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-    <!-- Breadcrumb -->
-    <FluentBreadcrumb>
-        <FluentBreadcrumbItem Href="/characters">Personnages</FluentBreadcrumbItem>
-        <FluentBreadcrumbItem>Nouveau personnage</FluentBreadcrumbItem>
-    </FluentBreadcrumb>
+<PageHeader Title="@L["Characters_Create"]" Subtitle="@L["Characters_CreateSubtitle"]">
+    <Actions>
+        <FluentButton Appearance="Appearance.Outline" Href="/characters"
+                      IconStart="@(new Icons.Regular.Size20.ArrowLeft())">
+            @L["Common_Back"]
+        </FluentButton>
+    </Actions>
+</PageHeader>
 
-    <!-- Page Header -->
-    <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-        <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Creer un Personnage</FluentLabel>
-        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">Donnez vie a un nouveau heros pour vos aventures</FluentLabel>
-    </FluentStack>
+<AuthorizeView>
+    <Authorized Context="authContext">
+        <div class="cdm-content-card" style="max-width: 800px;">
+            <EditForm Model="@FormModel" OnValidSubmit="@HandleSubmitAsync">
+                <DataAnnotationsValidator />
+                <div class="auth-form">
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <FluentMessageBar Title="@L["Common_Error"]" Intent="MessageIntent.Error" Style="width: 100%;">
+                            @ErrorMessage
+                        </FluentMessageBar>
+                    }
 
-    <AuthorizeView>
-        <Authorized Context="authContext">
-            <FluentCard Style="max-width: 800px;">
-                <EditForm Model="@FormModel" OnValidSubmit="@HandleSubmitAsync">
-                    <DataAnnotationsValidator />
-                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-                        
-                        @if (!string.IsNullOrEmpty(ErrorMessage))
+                    <!-- Identity Section -->
+                    <div class="cdm-section">
+                        <h4 style="display: flex; align-items: center; gap: 8px; margin: 0 0 16px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Accent" />
+                            @L["Characters_Identity"]
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="auth-form-group">
+                                <FluentTextField @bind-Value="FormModel.FirstName"
+                                                 Label="@L["Characters_FirstName"]"
+                                                 Placeholder="@L["Characters_FirstName"]"
+                                                 Disabled="@IsSubmitting"
+                                                 Style="width: 100%;" />
+                                <FluentValidationMessage For="@(() => FormModel.FirstName)" />
+                            </div>
+                            <div class="auth-form-group">
+                                <FluentTextField @bind-Value="FormModel.Name"
+                                                 Label="@($"{L["Characters_Name"]} *")"
+                                                 Placeholder="@L["Characters_Name"]"
+                                                 Required="true"
+                                                 Disabled="@IsSubmitting"
+                                                 Style="width: 100%;" />
+                                <FluentValidationMessage For="@(() => FormModel.Name)" />
+                            </div>
+                        </div>
+                        <div class="auth-form-group" style="max-width: 200px;">
+                            <FluentNumberField @bind-Value="FormModel.Age"
+                                               Label="@L["Characters_Age"]"
+                                               Min="0" Max="9999"
+                                               Disabled="@IsSubmitting"
+                                               Style="width: 100%;" />
+                            <FluentValidationMessage For="@(() => FormModel.Age)" />
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="cdm-section">
+                        <h4 style="display: flex; align-items: center; gap: 8px; margin: 0 0 16px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.DocumentText())" Color="Color.Accent" />
+                            @L["Characters_Description"]
+                        </h4>
+                        <div class="auth-form-group">
+                            <FluentTextArea @bind-Value="FormModel.Description"
+                                            Label="@L["Characters_Description"]"
+                                            Placeholder="@L["Characters_DescriptionPlaceholder"]"
+                                            Rows="5"
+                                            Disabled="@IsSubmitting"
+                                            Style="width: 100%;" />
+                            <FluentValidationMessage For="@(() => FormModel.Description)" />
+                        </div>
+                    </div>
+
+                    <!-- Avatar Section -->
+                    <div class="cdm-section">
+                        <h4 style="display: flex; align-items: center; gap: 8px; margin: 0 0 16px;">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Image())" Color="Color.Accent" />
+                            @L["Characters_Avatar"]
+                        </h4>
+                        <div class="auth-form-group">
+                            <FluentTextField @bind-Value="FormModel.AvatarUrl"
+                                             Label="@L["Characters_AvatarUrl"]"
+                                             Placeholder="https://exemple.com/avatar.jpg"
+                                             TextFieldType="TextFieldType.Url"
+                                             Disabled="@IsSubmitting"
+                                             Style="width: 100%;" />
+                            <FluentValidationMessage For="@(() => FormModel.AvatarUrl)" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(FormModel.AvatarUrl))
                         {
-                            <FluentMessageBar Title="Erreur" Intent="MessageIntent.Error" Style="width: 100%;">
-                                @ErrorMessage
-                            </FluentMessageBar>
+                            <div style="display: flex; justify-content: center; margin-top: 12px;">
+                                <FluentPersona Image="@FormModel.AvatarUrl" Name="Aperçu" ImageSize="120px" />
+                            </div>
                         }
+                    </div>
 
-                        <!-- Identity Section -->
-                        <FluentCard Style="background: var(--neutral-layer-2);">
-                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Accent" />
-                                    <FluentLabel Typo="Typography.H6">Identite</FluentLabel>
-                                </FluentStack>
-
-                                <FluentGrid Spacing="3">
-                                    <FluentGridItem xs="12" md="6">
-                                        <FluentTextField @bind-Value="FormModel.FirstName"
-                                                         Label="Prenom"
-                                                         Placeholder="Prenom du personnage"
-                                                         Disabled="@IsSubmitting"
-                                                         Style="width: 100%;">
-                                            <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Slot="start" />
-                                        </FluentTextField>
-                                        <FluentValidationMessage For="@(() => FormModel.FirstName)" />
-                                    </FluentGridItem>
-
-                                    <FluentGridItem xs="12" md="6">
-                                        <FluentTextField @bind-Value="FormModel.Name"
-                                                         Label="Nom *"
-                                                         Placeholder="Nom du personnage"
-                                                         Required="true"
-                                                         Disabled="@IsSubmitting"
-                                                         Style="width: 100%;">
-                                            <FluentIcon Value="@(new Icons.Regular.Size20.PersonCircle())" Slot="start" />
-                                        </FluentTextField>
-                                        <FluentValidationMessage For="@(() => FormModel.Name)" />
-                                    </FluentGridItem>
-                                </FluentGrid>
-
-                                <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px; max-width: 200px;">
-                                    <FluentNumberField @bind-Value="FormModel.Age"
-                                                       Label="Age"
-                                                       Placeholder="Age"
-                                                       Min="0"
-                                                       Max="9999"
-                                                       Disabled="@IsSubmitting"
-                                                       Style="width: 100%;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size20.Calendar())" Slot="start" />
-                                    </FluentNumberField>
-                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; font-size: 12px;">
-                                        Laissez vide si inconnu
-                                    </FluentLabel>
-                                    <FluentValidationMessage For="@(() => FormModel.Age)" />
-                                </FluentStack>
-                            </FluentStack>
-                        </FluentCard>
-
-                        <!-- Description Section -->
-                        <FluentCard Style="background: var(--neutral-layer-2);">
-                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.DocumentText())" Color="Color.Accent" />
-                                    <FluentLabel Typo="Typography.H6">Description</FluentLabel>
-                                </FluentStack>
-
-                                <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-                                    <FluentTextArea @bind-Value="FormModel.Description"
-                                                    Label="Histoire & Description"
-                                                    Placeholder="Decrivez l'apparence, la personnalite et l'histoire de votre personnage..."
-                                                    Rows="5"
-                                                    Disabled="@IsSubmitting"
-                                                    Style="width: 100%;" />
-                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; font-size: 12px;">
-                                        Decrivez l'apparence physique, les traits de caractere, et l'histoire de votre personnage
-                                    </FluentLabel>
-                                    <FluentValidationMessage For="@(() => FormModel.Description)" />
-                                </FluentStack>
-                            </FluentStack>
-                        </FluentCard>
-
-                        <!-- Avatar Section -->
-                        <FluentCard Style="background: var(--neutral-layer-2);">
-                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Image())" Color="Color.Accent" />
-                                    <FluentLabel Typo="Typography.H6">Avatar</FluentLabel>
-                                </FluentStack>
-
-                                <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-                                    <FluentTextField @bind-Value="FormModel.AvatarUrl"
-                                                     Label="URL de l'avatar"
-                                                     Placeholder="https://exemple.com/avatar.jpg"
-                                                     TextFieldType="TextFieldType.Url"
-                                                     Disabled="@IsSubmitting"
-                                                     Style="width: 100%;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size20.Link())" Slot="start" />
-                                    </FluentTextField>
-                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; font-size: 12px;">
-                                        Entrez l'URL d'une image pour l'avatar de votre personnage
-                                    </FluentLabel>
-                                    <FluentValidationMessage For="@(() => FormModel.AvatarUrl)" />
-                                </FluentStack>
-
-                                @if (!string.IsNullOrEmpty(FormModel.AvatarUrl))
-                                {
-                                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center">
-                                        <FluentPersona Image="@FormModel.AvatarUrl"
-                                                       Name="Apercu"
-                                                       ImageSize="120px" />
-                                    </FluentStack>
-                                }
-                            </FluentStack>
-                        </FluentCard>
-
-                        <!-- Form Actions -->
-                        <FluentStack Orientation="Orientation.Horizontal" 
-                                     HorizontalAlignment="HorizontalAlignment.End"
-                                     Style="gap: 12px; padding-top: 16px;">
-                            <FluentButton Appearance="Appearance.Outline" 
-                                          Href="/characters"
-                                          IconStart="@(new Icons.Regular.Size20.Dismiss())">
-                                Annuler
-                            </FluentButton>
-                            <FluentButton Type="ButtonType.Submit"
-                                          Appearance="Appearance.Accent"
-                                          Loading="@IsSubmitting"
-                                          Disabled="@IsSubmitting"
-                                          IconStart="@(new Icons.Regular.Size20.Checkmark())">
-                                @if (IsSubmitting)
-                                {
-                                    <span>Creation...</span>
-                                }
-                                else
-                                {
-                                    <span>Creer le personnage</span>
-                                }
-                            </FluentButton>
-                        </FluentStack>
-                    </FluentStack>
-                </EditForm>
-            </FluentCard>
-        </Authorized>
-        
-        <NotAuthorized>
-            <FluentCard>
-                <FluentStack Orientation="Orientation.Vertical" 
-                             HorizontalAlignment="HorizontalAlignment.Center"
-                             Style="padding: 48px; gap: 16px;">
-                    <FluentIcon Value="@(new Icons.Regular.Size48.LockClosed())" Color="Color.Error" />
-                    <FluentLabel Typo="Typography.H6">Connexion requise</FluentLabel>
-                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center;">
-                        Vous devez etre connecte pour creer un personnage.
-                    </FluentLabel>
-                    <FluentButton Appearance="Appearance.Accent" 
-                                  IconStart="@(new Icons.Regular.Size20.ArrowEnter())"
-                                  Href="/login">
-                        Se connecter
-                    </FluentButton>
-                </FluentStack>
-            </FluentCard>
-        </NotAuthorized>
-    </AuthorizeView>
-</FluentStack>
+                    <!-- Form Actions -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px;">
+                        <FluentButton Appearance="Appearance.Outline" 
+                                      Href="/characters"
+                                      IconStart="@(new Icons.Regular.Size20.Dismiss())">
+                            @L["Common_Cancel"]
+                        </FluentButton>
+                        <FluentButton Type="ButtonType.Submit"
+                                      Appearance="Appearance.Accent"
+                                      Loading="@IsSubmitting"
+                                      Disabled="@IsSubmitting"
+                                      IconStart="@(new Icons.Regular.Size20.Checkmark())">
+                            @(IsSubmitting ? L["Common_Saving"] : L["Characters_Create"])
+                        </FluentButton>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </Authorized>
+    
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>

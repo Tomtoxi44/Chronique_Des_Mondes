@@ -10,134 +10,75 @@
 @inject WorldApiClient WorldApiClient
 @inject NavigationManager NavigationManager
 @inject IMessageService MessageService
+@inject IStringLocalizer<AppStrings> L
 @rendermode InteractiveServer
 
-<PageTitle>Modifier @(_world?.Name ?? "Monde") - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Common_Edit"] @(_world?.Name ?? L["Worlds_Title"]) — @L["AppName"]</PageTitle>
 
 @if (_isLoading)
 {
-    <FluentStack Orientation="Orientation.Vertical" 
-                 HorizontalAlignment="HorizontalAlignment.Center"
-                 Style="padding: 48px; gap: 16px;">
-        <FluentProgressRing Style="width: 48px; height: 48px;" />
-        <FluentLabel Typo="Typography.Body">Chargement...</FluentLabel>
-    </FluentStack>
+    <LoadingState Message="@L["Common_Loading"]" />
 }
 else if (_world == null)
 {
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" 
-                     HorizontalAlignment="HorizontalAlignment.Center"
-                     Style="padding: 48px; gap: 16px;">
-            <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Color="Color.Error" />
-            <FluentLabel Typo="Typography.H5">Monde introuvable</FluentLabel>
-            <FluentButton Appearance="Appearance.Accent" 
-                          OnClick="@(() => NavigationManager.NavigateTo("/worlds"))">
-                Retour aux mondes
-            </FluentButton>
-        </FluentStack>
-    </FluentCard>
+    <ErrorState Title="@L["Worlds_NotFound"]" 
+                Message="@L["Worlds_NotFoundMessage"]" 
+                OnRetry="@(() => NavigationManager.NavigateTo("/worlds"))" />
 }
 else
 {
-    <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; max-width: 800px; margin: 0 auto;">
-        <!-- Breadcrumbs -->
-        <FluentBreadcrumb>
-            <FluentBreadcrumbItem Href="/">
-                <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem Href="/worlds">
-                Mondes
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem Href="@($"/worlds/{Id}")">
-                @_world.Name
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem>
-                Modifier
-            </FluentBreadcrumbItem>
-        </FluentBreadcrumb>
+    <div style="max-width: 800px; margin: 0 auto;">
+        <PageHeader Title="@L["Worlds_Edit"]" Subtitle="@L["Worlds_EditSubtitle"]" />
 
-        <!-- Page Header -->
-        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-            <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Modifier le Monde</FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">Mettez à jour les informations de votre monde</FluentLabel>
-        </FluentStack>
+        <div class="cdm-content-card">
+            <EditForm Model="@_model" OnValidSubmit="HandleSubmit" class="auth-form">
+                <DataAnnotationsValidator />
+                
+                <div class="auth-form-group">
+                    <FluentTextField @bind-Value="_model.Name"
+                                     Label="@L["Worlds_Name"]"
+                                     Placeholder="Ex: Le Royaume Oublié"
+                                     Required
+                                     Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _model.Name)" />
+                </div>
 
-        <!-- Form Card -->
-        <FluentCard>
-            <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; padding: 8px;">
-                <EditForm Model="@_model" OnValidSubmit="HandleSubmit">
-                    <DataAnnotationsValidator />
-                    
-                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 20px;">
-                        <!-- Name -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Nom du monde <span style="color: var(--color-error-500);">*</span>
-                            </FluentLabel>
-                            <FluentTextField @bind-Value="_model.Name"
-                                             Placeholder="Ex: Le Royaume Oublié"
-                                             Required
-                                             Style="width: 100%;" />
-                            <ValidationMessage For="@(() => _model.Name)" />
-                        </FluentStack>
+                <div class="auth-form-group">
+                    <FluentTextArea @bind-Value="_model.Description"
+                                    Label="Description"
+                                    Placeholder="Décrivez votre monde..."
+                                    Rows="5"
+                                    Style="width: 100%;" />
+                </div>
 
-                        <!-- Description -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Description
-                            </FluentLabel>
-                            <FluentTextArea @bind-Value="_model.Description"
-                                            Placeholder="Décrivez votre monde..."
-                                            Rows="5"
-                                            Style="width: 100%;" />
-                            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
-                                Une brève description de votre univers (optionnel)
-                            </FluentLabel>
-                        </FluentStack>
+                <div class="auth-form-group" style="display: flex; align-items: center; gap: 12px;">
+                    <FluentCheckbox @bind-Value="_model.IsActive" Label="Monde actif" />
+                    <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
+                        Les mondes inactifs ne sont pas visibles aux joueurs
+                    </FluentLabel>
+                </div>
 
-                        <!-- Is Active -->
-                        <FluentStack Orientation="Orientation.Horizontal" 
-                                     VerticalAlignment="VerticalAlignment.Center"
-                                     Style="gap: 12px;">
-                            <FluentCheckbox @bind-Value="_model.IsActive" />
-                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 2px;">
-                                <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                    Monde actif
-                                </FluentLabel>
-                                <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
-                                    Les mondes inactifs ne sont pas visibles aux joueurs
-                                </FluentLabel>
-                            </FluentStack>
-                        </FluentStack>
+                <FluentMessageBar Title="Information" Intent="MessageIntent.Info" Style="margin-bottom: var(--spacing-md);">
+                    Le type de jeu ne peut pas être modifié après la création. Monde actuel: <strong>@GetGameTypeDisplay()</strong>
+                </FluentMessageBar>
 
-                        <!-- Info: GameType cannot be changed -->
-                        <FluentMessageBar Title="Information" Intent="MessageIntent.Info">
-                            Le type de jeu ne peut pas être modifié après la création. Monde actuel: <strong>@GetGameTypeDisplay()</strong>
-                        </FluentMessageBar>
-
-                        <!-- Action Buttons -->
-                        <FluentStack Orientation="Orientation.Horizontal" 
-                                     HorizontalAlignment="HorizontalAlignment.End"
-                                     Style="gap: 12px; margin-top: 8px;">
-                            <FluentButton Appearance="Appearance.Outline"
-                                          OnClick="@(() => NavigationManager.NavigateTo($"/worlds/{Id}"))"
-                                          Disabled="@_isSubmitting">
-                                Annuler
-                            </FluentButton>
-                            <FluentButton Appearance="Appearance.Accent"
-                                          Type="ButtonType.Submit"
-                                          Loading="@_isSubmitting"
-                                          Disabled="@_isSubmitting"
-                                          IconStart="@(new Icons.Regular.Size20.Save())">
-                                Enregistrer
-                            </FluentButton>
-                        </FluentStack>
-                    </FluentStack>
-                </EditForm>
-            </FluentStack>
-        </FluentCard>
-    </FluentStack>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: var(--spacing-md);">
+                    <FluentButton Appearance="Appearance.Outline"
+                                  OnClick="@(() => NavigationManager.NavigateTo($"/worlds/{Id}"))"
+                                  Disabled="@_isSubmitting">
+                        @L["Common_Cancel"]
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent"
+                                  Type="ButtonType.Submit"
+                                  Loading="@_isSubmitting"
+                                  Disabled="@_isSubmitting"
+                                  IconStart="@(new Icons.Regular.Size20.Save())">
+                        @L["Common_Save"]
+                    </FluentButton>
+                </div>
+            </EditForm>
+        </div>
+    </div>
 }
 
 @code {

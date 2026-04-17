@@ -4,90 +4,71 @@
 @using Cdm.Web.Components.Layout
 @layout AuthLayout
 
-<PageTitle>Connexion - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Auth_Login"] — @L["AppName"]</PageTitle>
 
-<FluentCard Style="width: 100%; padding: 32px;">
-    <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 8px;">
-            <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Connexion</FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">Bon retour, aventurier !</FluentLabel>
-        </FluentStack>
+<div class="auth-card-header">
+    <h3 class="auth-card-title">@L["Auth_Login"]</h3>
+    <p class="auth-card-subtitle">Bon retour, aventurier !</p>
+</div>
 
-        @if (!string.IsNullOrEmpty(ErrorMessage))
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <FluentMessageBar Title="@L["Common_Error"]" Intent="MessageIntent.Error" Style="width: 100%; margin-bottom: 16px;">
+        @ErrorMessage
+    </FluentMessageBar>
+}
+
+<EditForm Model="@LoginModel" OnValidSubmit="@HandleLoginAsync" class="auth-form">
+    <DataAnnotationsValidator />
+    
+    <div class="auth-form-group">
+        <FluentTextField @bind-Value="LoginModel.Email"
+                         Label="@L["Auth_Email"]"
+                         TextFieldType="TextFieldType.Email"
+                         Placeholder="votre@email.com"
+                         Required="true"
+                         Disabled="@IsLoading"
+                         Style="width: 100%;">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Mail())" Slot="start" />
+        </FluentTextField>
+        <FluentValidationMessage For="@(() => LoginModel.Email)" />
+    </div>
+
+    <div class="auth-form-group">
+        <FluentTextField @bind-Value="LoginModel.Password"
+                         Label="@L["Auth_Password"]"
+                         TextFieldType="@(ShowPassword ? TextFieldType.Text : TextFieldType.Password)"
+                         Placeholder="Votre mot de passe"
+                         Required="true"
+                         Disabled="@IsLoading"
+                         Style="width: 100%;">
+            <FluentIcon Value="@(new Icons.Regular.Size20.LockClosed())" Slot="start" />
+            <FluentButton Slot="end" 
+                          Appearance="Appearance.Stealth"
+                          IconStart="@(ShowPassword ? new Icons.Regular.Size20.EyeOff() : new Icons.Regular.Size20.Eye())"
+                          OnClick="@TogglePasswordVisibility" />
+        </FluentTextField>
+        <FluentValidationMessage For="@(() => LoginModel.Password)" />
+    </div>
+
+    <FluentButton Type="ButtonType.Submit"
+                  Appearance="Appearance.Accent"
+                  Loading="@IsLoading"
+                  Disabled="@IsLoading"
+                  Style="width: 100%; height: 44px;">
+        @if (IsLoading)
         {
-            <FluentMessageBar Title="Erreur" Intent="MessageIntent.Error" Style="width: 100%;">
-                @ErrorMessage
-            </FluentMessageBar>
+            <span>@L["Auth_Login"]...</span>
         }
+        else
+        {
+            <FluentIcon Value="@(new Icons.Regular.Size20.ArrowEnter())" Slot="start" />
+            <span>@L["Auth_LoginButton"]</span>
+        }
+    </FluentButton>
+</EditForm>
 
-        <EditForm Model="@LoginModel" OnValidSubmit="@HandleLoginAsync" style="width: 100%;">
-            <DataAnnotationsValidator />
-            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px; width: 100%;">
-                
-                <FluentTextField @bind-Value="LoginModel.Email"
-                                 Label="Email"
-                                 TextFieldType="TextFieldType.Email"
-                                 Placeholder="votre@email.com"
-                                 Required="true"
-                                 Disabled="@IsLoading"
-                                 Style="width: 100%;">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Mail())" Slot="start" />
-                </FluentTextField>
-                <FluentValidationMessage For="@(() => LoginModel.Email)" />
-
-                <FluentTextField @bind-Value="LoginModel.Password"
-                                 Label="Mot de passe"
-                                 TextFieldType="@(ShowPassword ? TextFieldType.Text : TextFieldType.Password)"
-                                 Placeholder="Votre mot de passe"
-                                 Required="true"
-                                 Disabled="@IsLoading"
-                                 Style="width: 100%;">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.LockClosed())" Slot="start" />
-                    <FluentButton Slot="end" 
-                                  Appearance="Appearance.Stealth"
-                                  IconStart="@(ShowPassword ? new Icons.Regular.Size20.EyeOff() : new Icons.Regular.Size20.Eye())"
-                                  OnClick="@TogglePasswordVisibility"
-                                  Title="@(ShowPassword ? "Masquer" : "Afficher")" />
-                </FluentTextField>
-                <FluentValidationMessage For="@(() => LoginModel.Password)" />
-
-                <FluentStack Orientation="Orientation.Horizontal" 
-                             VerticalAlignment="VerticalAlignment.Center" 
-                             HorizontalAlignment="HorizontalAlignment.SpaceBetween"
-                             Style="width: 100%;">
-                    <FluentCheckbox @bind-Value="@RememberMe" Label="Se souvenir de moi" />
-                    <FluentAnchor Href="/forgot-password" Appearance="Appearance.Hypertext">
-                        Mot de passe oublie ?
-                    </FluentAnchor>
-                </FluentStack>
-
-                <FluentButton Type="ButtonType.Submit"
-                              Appearance="Appearance.Accent"
-                              Loading="@IsLoading"
-                              Disabled="@IsLoading"
-                              Style="width: 100%; height: 44px;">
-                    @if (IsLoading)
-                    {
-                        <span>Connexion...</span>
-                    }
-                    else
-                    {
-                        <FluentIcon Value="@(new Icons.Regular.Size20.ArrowEnter())" Slot="start" />
-                        <span>Se connecter</span>
-                    }
-                </FluentButton>
-            </FluentStack>
-        </EditForm>
-
-        <FluentDivider Style="width: 100%;" />
-
-        <FluentStack Orientation="Orientation.Horizontal" 
-                     HorizontalAlignment="HorizontalAlignment.Center"
-                     Style="gap: 8px;">
-            <FluentLabel>Pas encore de compte ?</FluentLabel>
-            <FluentAnchor Href="/register" Appearance="Appearance.Hypertext">
-                Creer un compte
-            </FluentAnchor>
-        </FluentStack>
-    </FluentStack>
-</FluentCard>
+<div class="auth-card-footer">
+    <span class="auth-card-footer-text">@L["Auth_NoAccount"]</span>
+    <a href="/register" class="auth-card-footer-link">@L["Auth_Register"]</a>
+</div>

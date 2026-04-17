@@ -1,80 +1,73 @@
 @inherits LayoutComponentBase
 @using Cdm.Web.Components.Shared
 @using Cdm.Web.Services.State
-@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
 @inject CustomAuthStateProvider AuthStateProvider
+@inject ThemeService ThemeService
+@inject IStringLocalizer<AppStrings> L
 
-<div class="app-layout @(isDarkTheme ? "dark-theme" : "light-theme")">
+<div class="app-layout @(ThemeService.IsDarkMode ? "" : "light-theme")">
     <!-- Sidebar Navigation -->
     <aside class="sidebar @(isCollapsed ? "collapsed" : "") @(isMobileOpen ? "open" : "")" id="sidebar">
         <div class="sidebar-header">
             <a href="/" class="sidebar-logo">
                 <div class="sidebar-logo-icon">
-                    <img src="/images/LogoCdm.svg" alt="CDM" style="width: 32px; height: 32px;" />
+                    <img src="/images/LogoCdm.svg" alt="CDM" />
                 </div>
-                @if (!isCollapsed)
-                {
-                    <div class="sidebar-logo-text">
-                        <span class="sidebar-logo-title">Chronique</span>
-                        <span class="sidebar-logo-subtitle">des Mondes</span>
-                    </div>
-                }
+                <div class="sidebar-logo-text">
+                    <span class="sidebar-logo-title">Chronique</span>
+                    <span class="sidebar-logo-subtitle">@L["AppTagline"]</span>
+                </div>
             </a>
         </div>
 
         <nav class="sidebar-nav">
             <div class="sidebar-nav-section">
-                @if (!isCollapsed)
-                {
-                    <span class="sidebar-nav-section-title">NAVIGATION</span>
-                }
+                <span class="sidebar-nav-section-title">@L["Nav_Navigation"]</span>
                 
-                <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")" title="Accueil">
-                    <i class="bi bi-house-door"></i>
-                    @if (!isCollapsed) { <span>Accueil</span> }
+                <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")" title="@L["Nav_Home"]">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Home())" Class="nav-icon" />
+                    <span class="nav-label">@L["Nav_Home"]</span>
                 </a>
                 
-                <a href="/worlds" class="sidebar-nav-item @(IsActive("/worlds") ? "active" : "")" title="Mondes">
-                    <i class="bi bi-globe"></i>
-                    @if (!isCollapsed) { <span>Mondes</span> }
+                <a href="/worlds" class="sidebar-nav-item @(IsActive("/worlds") ? "active" : "")" title="@L["Nav_Worlds"]">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Globe())" Class="nav-icon" />
+                    <span class="nav-label">@L["Nav_Worlds"]</span>
                 </a>
                 
-                <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")" title="Campagnes">
-                    <i class="bi bi-map"></i>
-                    @if (!isCollapsed) { <span>Campagnes</span> }
+                <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")" title="@L["Nav_Campaigns"]">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Map())" Class="nav-icon" />
+                    <span class="nav-label">@L["Nav_Campaigns"]</span>
                 </a>
                 
-                <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")" title="Personnages">
-                    <i class="bi bi-people"></i>
-                    @if (!isCollapsed) { <span>Personnages</span> }
+                <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")" title="@L["Nav_Characters"]">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.People())" Class="nav-icon" />
+                    <span class="nav-label">@L["Nav_Characters"]</span>
                 </a>
             </div>
             
             <div class="sidebar-divider"></div>
             
             <div class="sidebar-nav-section">
-                @if (!isCollapsed)
-                {
-                    <span class="sidebar-nav-section-title">COMPTE</span>
-                }
+                <span class="sidebar-nav-section-title">@L["Nav_Account"]</span>
                 
-                <a href="/profile" class="sidebar-nav-item @(IsActive("/profile") ? "active" : "")" title="Profil">
-                    <i class="bi bi-person-circle"></i>
-                    @if (!isCollapsed) { <span>Mon Profil</span> }
+                <a href="/profile" class="sidebar-nav-item @(IsActive("/profile") ? "active" : "")" title="@L["Nav_Profile"]">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Class="nav-icon" />
+                    <span class="nav-label">@L["Nav_Profile"]</span>
                 </a>
                 
-                <a href="/settings" class="sidebar-nav-item @(IsActive("/settings") ? "active" : "")" title="Paramètres">
-                    <i class="bi bi-gear"></i>
-                    @if (!isCollapsed) { <span>Paramètres</span> }
+                <a href="/settings" class="sidebar-nav-item @(IsActive("/settings") ? "active" : "")" title="@L["Nav_Settings"]">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" Class="nav-icon" />
+                    <span class="nav-label">@L["Nav_Settings"]</span>
                 </a>
             </div>
         </nav>
 
         <div class="sidebar-footer">
-            <button class="sidebar-toggle-btn" @onclick="ToggleSidebar" title="@(isCollapsed ? "Agrandir le menu" : "Réduire le menu")">
-                <i class="bi bi-chevron-@(isCollapsed ? "right" : "left")"></i>
-                @if (!isCollapsed) { <span>Réduire</span> }
+            <button class="sidebar-toggle-btn" @onclick="ToggleSidebar" 
+                    title="@(isCollapsed ? L["Nav_Expand"] : L["Nav_Collapse"])">
+                <FluentIcon Value="@((Icon)(isCollapsed ? new Icons.Regular.Size16.ChevronRight() : new Icons.Regular.Size16.ChevronLeft()))" />
+                <span class="toggle-label">@L["Nav_Collapse"]</span>
             </button>
         </div>
     </aside>
@@ -82,7 +75,7 @@
     <!-- Mobile Overlay -->
     @if (isMobileOpen)
     {
-        <div class="sidebar-overlay" @onclick="CloseMobileSidebar"></div>
+        <div class="sidebar-overlay visible" @onclick="CloseMobileSidebar"></div>
     }
 
     <!-- Main Content Area -->
@@ -91,21 +84,21 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="topbar-menu-btn" @onclick="ToggleMobileSidebar" aria-label="Toggle Menu">
-                    <i class="bi bi-list"></i>
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Navigation())" />
                 </button>
             </div>
             
             <div class="topbar-center">
-                <div class="topbar-logo">
-                    <img src="/images/LogoCdm.svg" alt="CDM Logo" style="width: 48px; height: 48px; object-fit: contain;" />
-                    <span>Chronique des Mondes</span>
-                </div>
+                @* Breadcrumb space — will be populated by pages *@
             </div>
             
             <div class="topbar-right">
-                <button class="topbar-icon-btn" @onclick="ToggleTheme" title="@(isDarkTheme ? "Mode clair" : "Mode sombre")">
-                    <i class="bi bi-@(isDarkTheme ? "sun" : "moon-stars")"></i>
-                </button>
+                <FluentSwitch @bind-Value="@darkModeSwitch"
+                              @bind-Value:after="OnThemeToggled"
+                              Class="theme-toggle"
+                              title="@(ThemeService.IsDarkMode ? L["Settings_LightMode"] : L["Settings_DarkMode"])">
+                    <FluentIcon Value="@((Icon)(ThemeService.IsDarkMode ? new Icons.Regular.Size16.WeatherMoon() : new Icons.Regular.Size16.WeatherSunny()))" slot="checked-indicator" />
+                </FluentSwitch>
                 
                 <NotificationBell />
                 
@@ -123,7 +116,19 @@
 @code {
     private bool isCollapsed = false;
     private bool isMobileOpen = false;
-    private bool isDarkTheme = true;
+    private bool darkModeSwitch = true;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        darkModeSwitch = ThemeService.IsDarkMode;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        isMobileOpen = false;
+        InvokeAsync(StateHasChanged);
+    }
 
     private void ToggleSidebar()
     {
@@ -140,9 +145,9 @@
         isMobileOpen = false;
     }
 
-    private void ToggleTheme()
+    private void OnThemeToggled()
     {
-        isDarkTheme = !isDarkTheme;
+        ThemeService.ToggleDarkMode();
     }
 
     private bool IsActive(string href)
@@ -159,5 +164,10 @@
         }
         
         return relativePath.StartsWith(href, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }

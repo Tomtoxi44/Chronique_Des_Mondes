@@ -8,124 +8,102 @@
 @using Cdm.Business.Abstraction.DTOs
 @using Cdm.Common.Enums
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Services.ApiClients
 @using Microsoft.AspNetCore.Authorization
 @layout MainLayout
 @attribute [Authorize]
 @inject CampaignApiClient CampaignApiClient
 @inject NavigationManager NavigationManager
+@inject IStringLocalizer<AppStrings> L
 @rendermode InteractiveServer
 
-<PageTitle>Mes Campagnes - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Campaigns_Title"] — @L["AppName"]</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
-    <!-- Page Header -->
-    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Style="flex-wrap: wrap; gap: 16px;">
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
-            <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">
-                Mes Campagnes
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
-                Gerez vos aventures et vos sessions de jeu
-            </FluentLabel>
-        </FluentStack>
-        
-        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
-            <FluentButton Appearance="Appearance.Outline"
-                          IconStart="@(new Icons.Regular.Size20.PersonAdd())"
-                          OnClick="@(() => NavigationManager.NavigateTo("/campaigns/join"))">
-                Rejoindre
-            </FluentButton>
-            <FluentButton Appearance="Appearance.Accent" 
-                          IconStart="@(new Icons.Regular.Size20.Add())"
-                          OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
-                Nouvelle Campagne
-            </FluentButton>
-        </FluentStack>
-    </FluentStack>
+<PageHeader Title="@L["Campaigns_Title"]" Subtitle="@L["Campaigns_Subtitle"]">
+    <Actions>
+        <FluentButton Appearance="Appearance.Outline"
+                      IconStart="@(new Icons.Regular.Size20.PersonAdd())"
+                      OnClick="@(() => NavigationManager.NavigateTo("/campaigns/join"))">
+            @L["Campaigns_Join"]
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Accent" 
+                      IconStart="@(new Icons.Regular.Size20.Add())"
+                      OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
+            @L["Campaigns_Create"]
+        </FluentButton>
+    </Actions>
+</PageHeader>
 
-    <!-- Filters -->
-    <FluentCard Style="padding: 16px;">
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="flex-wrap: wrap;">
-            <FluentSearch Placeholder="Rechercher une campagne..." @bind-Value="_searchTerm" Style="min-width: 250px;" />
-            <FluentSelect TOption="string" @bind-Value="_statusFilter" Style="min-width: 150px;">
-                <FluentOption Value="">Tous les statuts</FluentOption>
-                <FluentOption Value="Planning">En planification</FluentOption>
-                <FluentOption Value="Active">En cours</FluentOption>
-                <FluentOption Value="OnHold">En pause</FluentOption>
-                <FluentOption Value="Completed">Terminees</FluentOption>
-                <FluentOption Value="Cancelled">Annulees</FluentOption>
-            </FluentSelect>
-        </FluentStack>
-    </FluentCard>
+<!-- Filters -->
+<div class="cdm-content-card" style="margin-bottom: var(--spacing-lg);">
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <FluentSearch Placeholder="@L["Common_Search"]" @bind-Value="_searchTerm" Style="min-width: 250px;" />
+        <FluentSelect TOption="string" @bind-Value="_statusFilter" Style="min-width: 150px;">
+            <FluentOption Value="">Tous les statuts</FluentOption>
+            <FluentOption Value="Planning">@L["Campaigns_Status_Planning"]</FluentOption>
+            <FluentOption Value="Active">@L["Campaigns_Status_Active"]</FluentOption>
+            <FluentOption Value="OnHold">@L["Campaigns_Status_OnHold"]</FluentOption>
+            <FluentOption Value="Completed">@L["Campaigns_Status_Completed"]</FluentOption>
+            <FluentOption Value="Cancelled">@L["Campaigns_Status_Cancelled"]</FluentOption>
+        </FluentSelect>
+    </div>
+</div>
 
-    @if (_isLoading)
-    {
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 48px; gap: 16px;">
-            <FluentProgressRing Style="width: 48px; height: 48px;" />
-            <FluentLabel Typo="Typography.Body">Chargement des campagnes...</FluentLabel>
-        </FluentStack>
-    }
-    <!-- Empty State -->
-    else if (!FilteredCampaigns.Any())
-    {
-        <FluentCard Style="padding: 48px; text-align: center;">
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16" HorizontalAlignment="HorizontalAlignment.Center">
-                <FluentIcon Value="@(new Icons.Regular.Size48.Briefcase())" Style="color: var(--cdm-gold); opacity: 0.5;" />
-                <FluentLabel Typo="Typography.H4" Style="color: var(--cdm-text-primary);">
-                    Aucune campagne pour le moment
-                </FluentLabel>
-                <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); max-width: 400px;">
-                    Les campagnes sont des aventures que vous menez avec vos joueurs. Creez votre premiere campagne ou rejoignez-en une !
-                </FluentLabel>
-                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px; margin-top: 8px;">
-                    <FluentButton Appearance="Appearance.Outline"
-                                  IconStart="@(new Icons.Regular.Size20.PersonAdd())"
-                                  OnClick="@(() => NavigationManager.NavigateTo("/campaigns/join"))">
-                        Rejoindre une campagne
-                    </FluentButton>
-                    <FluentButton Appearance="Appearance.Accent" 
-                                  IconStart="@(new Icons.Regular.Size20.Add())"
-                                  OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
-                        Creer ma premiere campagne
-                    </FluentButton>
-                </FluentStack>
-            </FluentStack>
-        </FluentCard>
-    }
-    else
-    {
-        <!-- Campaigns Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
-            @foreach (var campaign in FilteredCampaigns)
-            {
-                <FluentCard Style="padding: 0; overflow: hidden; cursor: pointer;" @onclick="@(() => NavigationManager.NavigateTo($"/campaigns/{campaign.Id}"))">
-                    <div style="height: 140px; background: url('@(campaign.CoverImageUrl ?? "images/campaigns/default-cover.png")') center/cover; position: relative;">
-                        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 12px; background: linear-gradient(transparent, rgba(0,0,0,0.8));">
-                            <FluentBadge Appearance="@GetStatusAppearance(campaign.Status)">@GetStatusLabel(campaign.Status)</FluentBadge>
-                        </div>
+@if (_isLoading)
+{
+    <LoadingState Message="@L["Common_Loading"]" />
+}
+else if (!FilteredCampaigns.Any())
+{
+    <EmptyState Icon="📜" Title="@L["Campaigns_Empty"]" Message="@L["Campaigns_EmptyMessage"]">
+        <Action>
+            <div style="display: flex; gap: 8px;">
+                <FluentButton Appearance="Appearance.Outline"
+                              IconStart="@(new Icons.Regular.Size20.PersonAdd())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/campaigns/join"))">
+                    @L["Campaigns_Join"]
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Accent" 
+                              IconStart="@(new Icons.Regular.Size20.Add())"
+                              OnClick="@(() => NavigationManager.NavigateTo("/campaigns/create"))">
+                    @L["Campaigns_Create"]
+                </FluentButton>
+            </div>
+        </Action>
+    </EmptyState>
+}
+else
+{
+    <div class="cdm-grid-cards">
+        @foreach (var campaign in FilteredCampaigns)
+        {
+            <div class="cdm-content-card" style="padding: 0; overflow: hidden; cursor: pointer;" @onclick="@(() => NavigationManager.NavigateTo($"/campaigns/{campaign.Id}"))">
+                <div style="height: 140px; background: url('@(campaign.CoverImageUrl ?? "images/campaigns/default-cover.png")') center/cover; position: relative;">
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 12px; background: linear-gradient(transparent, rgba(0,0,0,0.8));">
+                        <FluentBadge Appearance="@GetStatusAppearance(campaign.Status)">@GetStatusLabel(campaign.Status)</FluentBadge>
                     </div>
-                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="8" Style="padding: 16px;">
-                        <FluentLabel Typo="Typography.H5" Style="color: var(--cdm-text-primary);">@campaign.Name</FluentLabel>
-                        <FluentLabel Typo="Typography.Body" Style="color: var(--cdm-text-muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            @(campaign.Description ?? "Aucune description")
-                        </FluentLabel>
-                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Style="margin-top: 8px; color: var(--cdm-text-muted); font-size: 13px;">
-                            <span>
-                                <FluentIcon Value="@(new Icons.Regular.Size16.People())" Style="margin-right: 4px;" />
-                                Max @campaign.MaxPlayers joueurs
-                            </span>
-                            <span>
-                                <FluentIcon Value="@(new Icons.Regular.Size16.Games())" Style="margin-right: 4px;" />
-                                @GetGameTypeLabel(campaign.GameType)
-                            </span>
-                        </FluentStack>
-                    </FluentStack>
-                </FluentCard>
-            }
-        </div>
-    }
-</FluentStack>
+                </div>
+                <div style="padding: 16px;">
+                    <FluentLabel Typo="Typography.H5" Style="color: var(--color-text-primary); margin-bottom: 8px;">@campaign.Name</FluentLabel>
+                    <p style="color: var(--color-text-muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0 0 8px;">
+                        @(campaign.Description ?? "Aucune description")
+                    </p>
+                    <div style="display: flex; gap: 16px; color: var(--color-text-muted); font-size: 13px;">
+                        <span>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.People())" Style="margin-right: 4px;" />
+                            Max @campaign.MaxPlayers joueurs
+                        </span>
+                        <span>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Games())" Style="margin-right: 4px;" />
+                            @GetGameTypeLabel(campaign.GameType)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
 
 @code {
     private List<CampaignDto> _campaigns = new();

@@ -1,196 +1,115 @@
 @page "/characters/{Id:int}"
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Shared.DTOs.Models
-@using Microsoft.AspNetCore.Components.Authorization
 @layout MainLayout
 @rendermode InteractiveServer
+@inject IStringLocalizer<AppStrings> L
 
-<PageTitle>@(Character?.Name ?? "Personnage") - Chronique des Mondes</PageTitle>
+<PageTitle>@(Character?.Name ?? L["Common_Loading"]) — @L["AppName"]</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-    <!-- Breadcrumb -->
-    <FluentBreadcrumb>
-        <FluentBreadcrumbItem Href="/characters">Personnages</FluentBreadcrumbItem>
-        <FluentBreadcrumbItem>@(Character?.Name ?? "Chargement...")</FluentBreadcrumbItem>
-    </FluentBreadcrumb>
-
-    <AuthorizeView>
-        <Authorized>
-            @if (IsLoading)
-            {
-                <FluentCard>
-                    <FluentStack Orientation="Orientation.Vertical" 
-                                 HorizontalAlignment="HorizontalAlignment.Center"
-                                 Style="padding: 48px; gap: 16px;">
-                        <FluentProgressRing />
-                        <FluentLabel>Chargement du personnage...</FluentLabel>
-                    </FluentStack>
-                </FluentCard>
-            }
-            else if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <FluentMessageBar Title="Erreur" Intent="MessageIntent.Error" Style="width: 100%;">
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
-                        <span>@ErrorMessage</span>
-                        <FluentButton Appearance="Appearance.Outline" 
-                                      IconStart="@(new Icons.Regular.Size20.ArrowLeft())"
-                                      Href="/characters">
-                            Retour
-                        </FluentButton>
-                    </FluentStack>
-                </FluentMessageBar>
-            }
-            else if (Character != null)
-            {
-                <!-- Character Header Card -->
-                <FluentCard>
-                    <FluentStack Orientation="Orientation.Horizontal" 
-                                 VerticalAlignment="VerticalAlignment.Top"
-                                 Wrap="true"
-                                 Style="gap: 24px;">
-                        <!-- Avatar -->
-                        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
-                            @if (!string.IsNullOrEmpty(Character.AvatarUrl))
-                            {
-                                <FluentPersona Image="@Character.AvatarUrl" 
-                                               Name="@GetCharacterFullName()"
-                                               ImageSize="150px" />
-                            }
-                            else
-                            {
-                                <FluentPersona Name="@GetCharacterFullName()"
-                                               ImageSize="150px" />
-                            }
-                        </FluentStack>
-                        
-                        <!-- Info -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 12px; flex: 1;">
-                            <FluentLabel Typo="Typography.H3">@GetCharacterFullName()</FluentLabel>
-                            
-                            @if (Character.Age.HasValue)
-                            {
-                                <FluentBadge Appearance="Appearance.Accent">
-                                    <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" Style="margin-right: 4px;" />
-                                    @Character.Age ans
-                                </FluentBadge>
-                            }
-                            
-                            <FluentStack Orientation="Orientation.Horizontal" Wrap="true" Style="gap: 16px; opacity: 0.7;">
-                                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 4px;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size16.Clock())" />
-                                    <FluentLabel Typo="Typography.Body" Style="font-size: 12px;">
-                                        Cree le @Character.CreatedAt.ToString("dd MMMM yyyy")
-                                    </FluentLabel>
-                                </FluentStack>
-                                @if (Character.UpdatedAt.HasValue)
-                                {
-                                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 4px;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
-                                        <FluentLabel Typo="Typography.Body" Style="font-size: 12px;">
-                                            Modifie le @Character.UpdatedAt.Value.ToString("dd MMMM yyyy")
-                                        </FluentLabel>
-                                    </FluentStack>
-                                }
-                            </FluentStack>
-                        </FluentStack>
-                        
-                        <!-- Actions -->
-                        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
-                            <FluentButton Appearance="Appearance.Accent" 
-                                          IconStart="@(new Icons.Regular.Size20.Edit())"
-                                          Href="@($"/characters/{Id}/edit")">
-                                Modifier
-                            </FluentButton>
-                            <FluentButton Appearance="Appearance.Outline" 
-                                          IconStart="@(new Icons.Regular.Size20.Delete())"
-                                          OnClick="@ConfirmDelete"
-                                          Style="color: var(--error); border-color: var(--error);">
-                                Supprimer
-                            </FluentButton>
-                        </FluentStack>
-                    </FluentStack>
-                </FluentCard>
-
-                <!-- Description Section -->
-                @if (!string.IsNullOrEmpty(Character.Description))
-                {
-                    <FluentCard>
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.DocumentText())" Color="Color.Accent" />
-                                <FluentLabel Typo="Typography.H5">Description</FluentLabel>
-                            </FluentStack>
-                            <FluentLabel Typo="Typography.Body" Style="white-space: pre-wrap; line-height: 1.6;">
-                                @Character.Description
-                            </FluentLabel>
-                        </FluentStack>
-                    </FluentCard>
-                }
-
-                <!-- Future Features Section -->
-                <FluentCard>
-                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
-                            <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
-                            <FluentLabel Typo="Typography.H5">Fonctionnalites a venir</FluentLabel>
-                        </FluentStack>
-                        
-                        <FluentGrid Spacing="3">
-                            <FluentGridItem xs="6" md="3">
-                                <FluentCard Style="background: var(--neutral-layer-2); text-align: center; padding: 24px;">
-                                    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 8px;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size32.HeartPulse())" Color="Color.Neutral" />
-                                        <FluentLabel>Caracteristiques</FluentLabel>
-                                    </FluentStack>
-                                </FluentCard>
-                            </FluentGridItem>
-                            <FluentGridItem xs="6" md="3">
-                                <FluentCard Style="background: var(--neutral-layer-2); text-align: center; padding: 24px;">
-                                    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 8px;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size32.Sparkle())" Color="Color.Neutral" />
-                                        <FluentLabel>Competences</FluentLabel>
-                                    </FluentStack>
-                                </FluentCard>
-                            </FluentGridItem>
-                            <FluentGridItem xs="6" md="3">
-                                <FluentCard Style="background: var(--neutral-layer-2); text-align: center; padding: 24px;">
-                                    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 8px;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size32.Backpack())" Color="Color.Neutral" />
-                                        <FluentLabel>Inventaire</FluentLabel>
-                                    </FluentStack>
-                                </FluentCard>
-                            </FluentGridItem>
-                            <FluentGridItem xs="6" md="3">
-                                <FluentCard Style="background: var(--neutral-layer-2); text-align: center; padding: 24px;">
-                                    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="gap: 8px;">
-                                        <FluentIcon Value="@(new Icons.Regular.Size32.Book())" Color="Color.Neutral" />
-                                        <FluentLabel>Journal</FluentLabel>
-                                    </FluentStack>
-                                </FluentCard>
-                            </FluentGridItem>
-                        </FluentGrid>
-                    </FluentStack>
-                </FluentCard>
-            }
-        </Authorized>
-        
-        <NotAuthorized>
-            <FluentCard>
-                <FluentStack Orientation="Orientation.Vertical" 
-                             HorizontalAlignment="HorizontalAlignment.Center"
-                             Style="padding: 48px; gap: 16px;">
-                    <FluentIcon Value="@(new Icons.Regular.Size48.LockClosed())" Color="Color.Error" />
-                    <FluentLabel Typo="Typography.H6">Connexion requise</FluentLabel>
-                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center;">
-                        Vous devez etre connecte pour acceder a ce personnage.
-                    </FluentLabel>
+<AuthorizeView>
+    <Authorized>
+        @if (IsLoading)
+        {
+            <LoadingState Message="@L["Common_Loading"]" />
+        }
+        else if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <ErrorState Title="@L["Common_Error"]" Message="@ErrorMessage" />
+        }
+        else if (Character != null)
+        {
+            <PageHeader Title="@GetCharacterFullName()">
+                <Actions>
                     <FluentButton Appearance="Appearance.Accent" 
-                                  IconStart="@(new Icons.Regular.Size20.ArrowEnter())"
-                                  Href="/login">
-                        Se connecter
+                                  IconStart="@(new Icons.Regular.Size20.Edit())"
+                                  Href="@($"/characters/{Id}/edit")">
+                        @L["Common_Edit"]
                     </FluentButton>
-                </FluentStack>
-            </FluentCard>
-        </NotAuthorized>
-    </AuthorizeView>
-</FluentStack>
+                    <FluentButton Appearance="Appearance.Outline" 
+                                  IconStart="@(new Icons.Regular.Size20.Delete())"
+                                  OnClick="@ConfirmDelete"
+                                  Style="color: var(--color-error); border-color: var(--color-error);">
+                        @L["Common_Delete"]
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline"
+                                  IconStart="@(new Icons.Regular.Size20.ArrowLeft())"
+                                  Href="/characters">
+                        @L["Common_Back"]
+                    </FluentButton>
+                </Actions>
+            </PageHeader>
+
+            <!-- Character Header Card -->
+            <div class="cdm-content-card" style="margin-bottom: var(--spacing-lg);">
+                <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        @if (!string.IsNullOrEmpty(Character.AvatarUrl))
+                        {
+                            <FluentPersona Image="@Character.AvatarUrl" 
+                                           Name="@GetCharacterFullName()"
+                                           ImageSize="150px" />
+                        }
+                        else
+                        {
+                            <FluentPersona Name="@GetCharacterFullName()"
+                                           ImageSize="150px" />
+                        }
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+                        @if (Character.Age.HasValue)
+                        {
+                            <FluentBadge Appearance="Appearance.Accent" Style="width: fit-content;">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" Style="margin-right: 4px;" />
+                                @Character.Age ans
+                            </FluentBadge>
+                        }
+                        <div style="display: flex; gap: 16px; opacity: 0.7; flex-wrap: wrap; font-size: 12px;">
+                            <span style="display: flex; align-items: center; gap: 4px;">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Clock())" />
+                                @L["Common_CreatedAt"] @Character.CreatedAt.ToString("dd MMMM yyyy")
+                            </span>
+                            @if (Character.UpdatedAt.HasValue)
+                            {
+                                <span style="display: flex; align-items: center; gap: 4px;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
+                                    @L["Common_UpdatedAt"] @Character.UpdatedAt.Value.ToString("dd MMMM yyyy")
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Character.Description))
+            {
+                <div class="cdm-content-card" style="margin-bottom: var(--spacing-lg);">
+                    <h4 style="display: flex; align-items: center; gap: 8px; margin: 0 0 16px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentText())" Color="Color.Accent" />
+                        @L["Characters_Description"]
+                    </h4>
+                    <p style="white-space: pre-wrap; line-height: 1.6; margin: 0;">@Character.Description</p>
+                </div>
+            }
+
+            <!-- Future Features -->
+            <div class="cdm-content-card">
+                <h4 style="display: flex; align-items: center; gap: 8px; margin: 0 0 16px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Sparkle())" Color="Color.Accent" />
+                    @L["Characters_FutureFeatures"]
+                </h4>
+                <div class="cdm-grid-stats">
+                    <StatCard Icon="❤️" Value="—" Label="@L["Characters_Stats"]" />
+                    <StatCard Icon="✨" Value="—" Label="@L["Characters_Skills"]" />
+                    <StatCard Icon="🎒" Value="—" Label="@L["Characters_Inventory"]" />
+                    <StatCard Icon="📖" Value="—" Label="@L["Characters_Journal"]" />
+                </div>
+            </div>
+        }
+    </Authorized>
+    
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>

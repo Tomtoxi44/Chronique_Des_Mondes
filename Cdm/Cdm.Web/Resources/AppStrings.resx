@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Navigation -->
+  <data name="AppName" xml:space="preserve"><value>Chronique des Mondes</value></data>
+  <data name="AppTagline" xml:space="preserve"><value>Forgez votre destinée</value></data>
+  <data name="Nav_Home" xml:space="preserve"><value>Accueil</value></data>
+  <data name="Nav_Worlds" xml:space="preserve"><value>Mondes</value></data>
+  <data name="Nav_Campaigns" xml:space="preserve"><value>Campagnes</value></data>
+  <data name="Nav_Characters" xml:space="preserve"><value>Personnages</value></data>
+  <data name="Nav_Profile" xml:space="preserve"><value>Mon Profil</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Paramètres</value></data>
+  <data name="Nav_Logout" xml:space="preserve"><value>Déconnexion</value></data>
+  <data name="Nav_Navigation" xml:space="preserve"><value>NAVIGATION</value></data>
+  <data name="Nav_Account" xml:space="preserve"><value>COMPTE</value></data>
+  <data name="Nav_Collapse" xml:space="preserve"><value>Réduire</value></data>
+  <data name="Nav_Expand" xml:space="preserve"><value>Agrandir le menu</value></data>
+  <data name="Nav_BackToWorlds" xml:space="preserve"><value>Retour aux mondes</value></data>
+
+  <!-- Auth -->
+  <data name="Auth_Login" xml:space="preserve"><value>Connexion</value></data>
+  <data name="Auth_Register" xml:space="preserve"><value>Inscription</value></data>
+  <data name="Auth_Email" xml:space="preserve"><value>Adresse e-mail</value></data>
+  <data name="Auth_Password" xml:space="preserve"><value>Mot de passe</value></data>
+  <data name="Auth_ConfirmPassword" xml:space="preserve"><value>Confirmer le mot de passe</value></data>
+  <data name="Auth_Nickname" xml:space="preserve"><value>Pseudo</value></data>
+  <data name="Auth_LoginButton" xml:space="preserve"><value>Se connecter</value></data>
+  <data name="Auth_RegisterButton" xml:space="preserve"><value>Créer un compte</value></data>
+  <data name="Auth_NoAccount" xml:space="preserve"><value>Pas encore de compte ?</value></data>
+  <data name="Auth_HasAccount" xml:space="preserve"><value>Déjà un compte ?</value></data>
+  <data name="Auth_LoginError" xml:space="preserve"><value>Email ou mot de passe incorrect.</value></data>
+  <data name="Auth_RegisterError" xml:space="preserve"><value>Erreur lors de l'inscription. Veuillez réessayer.</value></data>
+  <data name="Auth_RegisterSuccess" xml:space="preserve"><value>Compte créé avec succès !</value></data>
+  <data name="Auth_PasswordRequirements" xml:space="preserve"><value>8 caractères minimum, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial</value></data>
+
+  <!-- Home -->
+  <data name="Home_Welcome" xml:space="preserve"><value>Bienvenue, {0} !</value></data>
+  <data name="Home_WelcomeDefault" xml:space="preserve"><value>Bienvenue, Aventurier !</value></data>
+  <data name="Home_Subtitle" xml:space="preserve"><value>Votre tableau de bord d'aventure</value></data>
+  <data name="Home_LastWorld" xml:space="preserve"><value>Dernier monde consulté</value></data>
+  <data name="Home_LastCharacter" xml:space="preserve"><value>Dernier personnage utilisé</value></data>
+  <data name="Home_Stats_Worlds" xml:space="preserve"><value>Mondes</value></data>
+  <data name="Home_Stats_Characters" xml:space="preserve"><value>Personnages</value></data>
+  <data name="Home_Stats_Campaigns" xml:space="preserve"><value>Campagnes</value></data>
+  <data name="Home_Stats_Notifications" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Home_QuickActions" xml:space="preserve"><value>Actions rapides</value></data>
+  <data name="Home_CreateWorld" xml:space="preserve"><value>Créer un monde</value></data>
+  <data name="Home_CreateCharacter" xml:space="preserve"><value>Créer un personnage</value></data>
+  <data name="Home_ViewCampaigns" xml:space="preserve"><value>Voir mes campagnes</value></data>
+  <data name="Home_RecentActivity" xml:space="preserve"><value>Activité récente</value></data>
+
+  <!-- Worlds -->
+  <data name="Worlds_Title" xml:space="preserve"><value>Mes Mondes</value></data>
+  <data name="Worlds_Subtitle" xml:space="preserve"><value>Explorez et gérez vos univers de jeu</value></data>
+  <data name="Worlds_Create" xml:space="preserve"><value>Créer un monde</value></data>
+  <data name="Worlds_CreateSubtitle" xml:space="preserve"><value>Définissez votre univers de jeu et commencez votre aventure</value></data>
+  <data name="Worlds_Edit" xml:space="preserve"><value>Modifier le monde</value></data>
+  <data name="Worlds_EditSubtitle" xml:space="preserve"><value>Mettez à jour les informations de votre monde</value></data>
+  <data name="Worlds_NotFound" xml:space="preserve"><value>Monde introuvable</value></data>
+  <data name="Worlds_NotFoundMessage" xml:space="preserve"><value>Ce monde n'existe pas ou vous n'avez pas l'autorisation d'y accéder.</value></data>
+  <data name="Worlds_Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Worlds_DeleteConfirm" xml:space="preserve"><value>Êtes-vous sûr de vouloir supprimer ce monde ? Cette action est irréversible.</value></data>
+  <data name="Worlds_DeleteConfirmTitle" xml:space="preserve"><value>Confirmer la suppression</value></data>
+  <data name="Worlds_Empty" xml:space="preserve"><value>Aucun monde créé</value></data>
+  <data name="Worlds_EmptyMessage" xml:space="preserve"><value>Commencez votre aventure en créant votre premier monde !</value></data>
+  <data name="Worlds_Name" xml:space="preserve"><value>Nom du monde</value></data>
+  <data name="Worlds_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Worlds_GameType" xml:space="preserve"><value>Type de jeu</value></data>
+  <data name="Worlds_Campaigns" xml:space="preserve"><value>Campagnes</value></data>
+  <data name="Worlds_Characters" xml:space="preserve"><value>Personnages</value></data>
+  <data name="Worlds_Information" xml:space="preserve"><value>Informations</value></data>
+  <data name="Worlds_CreatedAt" xml:space="preserve"><value>Créé le</value></data>
+  <data name="Worlds_UpdatedAt" xml:space="preserve"><value>Modifié le</value></data>
+  <data name="Worlds_CampaignCount" xml:space="preserve"><value>{0} campagne(s)</value></data>
+  <data name="Worlds_LaunchSession" xml:space="preserve"><value>Lancer une session</value></data>
+  <data name="Worlds_SelectCampaign" xml:space="preserve"><value>Sélectionner une campagne</value></data>
+  <data name="Worlds_SelectCharacters" xml:space="preserve"><value>Sélectionner les personnages</value></data>
+
+  <!-- Campaigns -->
+  <data name="Campaigns_Title" xml:space="preserve"><value>Mes Campagnes</value></data>
+  <data name="Campaigns_Subtitle" xml:space="preserve"><value>Gérez vos aventures et vos sessions de jeu</value></data>
+  <data name="Campaigns_Create" xml:space="preserve"><value>Créer une campagne</value></data>
+  <data name="Campaigns_Edit" xml:space="preserve"><value>Modifier la campagne</value></data>
+  <data name="Campaigns_Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Campaigns_DeleteConfirm" xml:space="preserve"><value>Êtes-vous sûr de vouloir supprimer cette campagne ?</value></data>
+  <data name="Campaigns_Empty" xml:space="preserve"><value>Aucune campagne</value></data>
+  <data name="Campaigns_EmptyMessage" xml:space="preserve"><value>Créez une campagne dans un monde pour commencer à jouer.</value></data>
+  <data name="Campaigns_Name" xml:space="preserve"><value>Nom de la campagne</value></data>
+  <data name="Campaigns_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Campaigns_Status" xml:space="preserve"><value>Statut</value></data>
+  <data name="Campaigns_MaxPlayers" xml:space="preserve"><value>Joueurs maximum</value></data>
+  <data name="Campaigns_Visibility" xml:space="preserve"><value>Visibilité</value></data>
+  <data name="Campaigns_Invite" xml:space="preserve"><value>Inviter des joueurs</value></data>
+  <data name="Campaigns_InviteToken" xml:space="preserve"><value>Lien d'invitation</value></data>
+  <data name="Campaigns_Join" xml:space="preserve"><value>Rejoindre</value></data>
+  <data name="Campaigns_Chapters" xml:space="preserve"><value>Chapitres</value></data>
+  <data name="Campaigns_Status_Planning" xml:space="preserve"><value>Planification</value></data>
+  <data name="Campaigns_Status_Active" xml:space="preserve"><value>En cours</value></data>
+  <data name="Campaigns_Status_OnHold" xml:space="preserve"><value>En pause</value></data>
+  <data name="Campaigns_Status_Completed" xml:space="preserve"><value>Terminée</value></data>
+  <data name="Campaigns_Status_Cancelled" xml:space="preserve"><value>Annulée</value></data>
+  <data name="Campaigns_CreateSubtitle" xml:space="preserve"><value>Donnez vie à votre prochaine aventure épique</value></data>
+  <data name="Campaigns_CreateSuccess" xml:space="preserve"><value>Campagne créée avec succès ! Redirection en cours...</value></data>
+  <data name="Campaigns_JoinTitle" xml:space="preserve"><value>Rejoindre une campagne</value></data>
+  <data name="Campaigns_JoinSubtitle" xml:space="preserve"><value>Entrez un code d'invitation pour rejoindre une aventure</value></data>
+  <data name="Campaigns_InviteCode" xml:space="preserve"><value>Code d'invitation</value></data>
+  <data name="Campaigns_InvitePlaceholder" xml:space="preserve"><value>Collez le lien ou le code d'invitation</value></data>
+  <data name="Campaigns_Players" xml:space="preserve"><value>Joueurs</value></data>
+  <data name="Campaigns_CoverImage" xml:space="preserve"><value>Image de couverture</value></data>
+  <data name="Campaigns_EditSubtitle" xml:space="preserve"><value>Mettez à jour les informations de votre campagne</value></data>
+  <data name="Common_Success" xml:space="preserve"><value>Succès</value></data>
+  <data name="Campaigns_NotFound" xml:space="preserve"><value>Campagne introuvable</value></data>
+  <data name="Campaigns_NotFoundMessage" xml:space="preserve"><value>Cette campagne n'existe pas ou vous n'avez pas l'autorisation d'y accéder.</value></data>
+
+  <!-- Chapters -->
+  <data name="Chapters_Title" xml:space="preserve"><value>Chapitres</value></data>
+  <data name="Chapters_Create" xml:space="preserve"><value>Nouveau chapitre</value></data>
+  <data name="Chapters_Edit" xml:space="preserve"><value>Modifier le chapitre</value></data>
+  <data name="Chapters_Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Chapters_ChapterNumber" xml:space="preserve"><value>Chapitre {0}</value></data>
+  <data name="Chapters_Content" xml:space="preserve"><value>Contenu</value></data>
+  <data name="Chapters_Start" xml:space="preserve"><value>Démarrer le chapitre</value></data>
+  <data name="Chapters_Complete" xml:space="preserve"><value>Terminer le chapitre</value></data>
+  <data name="Chapters_Active" xml:space="preserve"><value>En cours</value></data>
+  <data name="Chapters_Completed" xml:space="preserve"><value>Terminé</value></data>
+  <data name="Chapters_Empty" xml:space="preserve"><value>Aucun chapitre</value></data>
+  <data name="Chapters_EmptyMessage" xml:space="preserve"><value>Créez le premier chapitre de cette campagne.</value></data>
+
+  <!-- Characters -->
+  <data name="Characters_Title" xml:space="preserve"><value>Mes Personnages</value></data>
+  <data name="Characters_Subtitle" xml:space="preserve"><value>Gérez vos héros et leurs aventures</value></data>
+  <data name="Characters_Create" xml:space="preserve"><value>Créer un personnage</value></data>
+  <data name="Characters_CreateSubtitle" xml:space="preserve"><value>Donnez vie à un nouveau héros pour vos aventures</value></data>
+  <data name="Characters_Edit" xml:space="preserve"><value>Modifier le personnage</value></data>
+  <data name="Characters_Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Characters_DeleteConfirm" xml:space="preserve"><value>Êtes-vous sûr de vouloir supprimer ce personnage ?</value></data>
+  <data name="Characters_Empty" xml:space="preserve"><value>Aucun personnage créé</value></data>
+  <data name="Characters_EmptyMessage" xml:space="preserve"><value>Créez votre premier personnage pour rejoindre des aventures !</value></data>
+  <data name="Characters_Name" xml:space="preserve"><value>Nom</value></data>
+  <data name="Characters_FirstName" xml:space="preserve"><value>Prénom</value></data>
+  <data name="Characters_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Characters_Age" xml:space="preserve"><value>Âge</value></data>
+  <data name="Characters_Avatar" xml:space="preserve"><value>Avatar</value></data>
+  <data name="Characters_GameProfile" xml:space="preserve"><value>Profil de jeu</value></data>
+  <data name="Characters_Level" xml:space="preserve"><value>Niveau</value></data>
+  <data name="Characters_Health" xml:space="preserve"><value>Points de vie</value></data>
+  <data name="Characters_Identity" xml:space="preserve"><value>Identité</value></data>
+  <data name="Characters_DescriptionPlaceholder" xml:space="preserve"><value>Décrivez l'apparence, la personnalité et l'histoire de votre personnage...</value></data>
+  <data name="Characters_AvatarUrl" xml:space="preserve"><value>URL de l'avatar</value></data>
+  <data name="Characters_EditSubtitle" xml:space="preserve"><value>Mettez à jour les informations de votre héros</value></data>
+  <data name="Characters_FutureFeatures" xml:space="preserve"><value>Fonctionnalités à venir</value></data>
+  <data name="Characters_Stats" xml:space="preserve"><value>Caractéristiques</value></data>
+  <data name="Characters_Skills" xml:space="preserve"><value>Compétences</value></data>
+  <data name="Characters_Inventory" xml:space="preserve"><value>Inventaire</value></data>
+  <data name="Characters_Journal" xml:space="preserve"><value>Journal</value></data>
+
+  <!-- Profile -->
+  <data name="Profile_Title" xml:space="preserve"><value>Mon Profil</value></data>
+  <data name="Profile_Nickname" xml:space="preserve"><value>Pseudo</value></data>
+  <data name="Profile_Username" xml:space="preserve"><value>Nom d'utilisateur</value></data>
+  <data name="Profile_Email" xml:space="preserve"><value>Adresse e-mail</value></data>
+  <data name="Profile_Avatar" xml:space="preserve"><value>Photo de profil</value></data>
+  <data name="Profile_ChangeAvatar" xml:space="preserve"><value>Changer la photo</value></data>
+  <data name="Profile_Roles" xml:space="preserve"><value>Rôles</value></data>
+  <data name="Profile_MemberSince" xml:space="preserve"><value>Membre depuis</value></data>
+  <data name="Profile_Save" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="Profile_SaveSuccess" xml:space="preserve"><value>Profil mis à jour avec succès !</value></data>
+  <data name="Profile_SaveError" xml:space="preserve"><value>Erreur lors de la mise à jour du profil.</value></data>
+
+  <!-- Settings -->
+  <data name="Settings_Title" xml:space="preserve"><value>Paramètres</value></data>
+  <data name="Settings_Language" xml:space="preserve"><value>Langue</value></data>
+  <data name="Settings_LanguageDescription" xml:space="preserve"><value>Choisissez la langue de l'interface</value></data>
+  <data name="Settings_Theme" xml:space="preserve"><value>Thème</value></data>
+  <data name="Settings_ThemeDescription" xml:space="preserve"><value>Basculer entre le mode clair et sombre</value></data>
+  <data name="Settings_DarkMode" xml:space="preserve"><value>Mode sombre</value></data>
+  <data name="Settings_LightMode" xml:space="preserve"><value>Mode clair</value></data>
+  <data name="Settings_Preferences" xml:space="preserve"><value>Préférences</value></data>
+  <data name="Settings_Appearance" xml:space="preserve"><value>Apparence</value></data>
+
+  <!-- Common -->
+  <data name="Common_Save" xml:space="preserve"><value>Enregistrer</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Annuler</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Supprimer</value></data>
+  <data name="Common_Edit" xml:space="preserve"><value>Modifier</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>Créer</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Retour</value></data>
+  <data name="Common_Confirm" xml:space="preserve"><value>Confirmer</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>Chargement...</value></data>
+  <data name="Common_Error" xml:space="preserve"><value>Une erreur est survenue</value></data>
+  <data name="Common_ErrorMessage" xml:space="preserve"><value>Une erreur inattendue s'est produite. Veuillez réessayer.</value></data>
+  <data name="Common_Retry" xml:space="preserve"><value>Réessayer</value></data>
+  <data name="Common_NoData" xml:space="preserve"><value>Aucune donnée disponible</value></data>
+  <data name="Common_Search" xml:space="preserve"><value>Rechercher...</value></data>
+  <data name="Common_Yes" xml:space="preserve"><value>Oui</value></data>
+  <data name="Common_No" xml:space="preserve"><value>Non</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Fermer</value></data>
+  <data name="Common_Copyright" xml:space="preserve"><value>© {0} Chronique des Mondes — Tous droits réservés</value></data>
+  <data name="Common_View" xml:space="preserve"><value>Voir</value></data>
+  <data name="Common_Details" xml:space="preserve"><value>Détails</value></data>
+  <data name="Common_Saving" xml:space="preserve"><value>Enregistrement...</value></data>
+  <data name="Common_CreatedAt" xml:space="preserve"><value>Créé le</value></data>
+  <data name="Common_UpdatedAt" xml:space="preserve"><value>Modifié le</value></data>
+
+  <!-- Game Types -->
+  <data name="GameType_Empty" xml:space="preserve"><value>Aucun</value></data>
+  <data name="GameType_Generic" xml:space="preserve"><value>Générique</value></data>
+  <data name="GameType_DnD5e" xml:space="preserve"><value>Donjons &amp; Dragons 5e</value></data>
+  <data name="GameType_Pathfinder" xml:space="preserve"><value>Pathfinder</value></data>
+  <data name="GameType_CallOfCthulhu" xml:space="preserve"><value>L'Appel de Cthulhu</value></data>
+  <data name="GameType_Warhammer" xml:space="preserve"><value>Warhammer</value></data>
+  <data name="GameType_Cyberpunk" xml:space="preserve"><value>Cyberpunk</value></data>
+  <data name="GameType_Skyrim" xml:space="preserve"><value>Skyrim</value></data>
+  <data name="GameType_Custom" xml:space="preserve"><value>Personnalisé</value></data>
+
+  <!-- Session -->
+  <data name="Session_Launch" xml:space="preserve"><value>Lancer une session</value></data>
+  <data name="Session_SelectCampaign" xml:space="preserve"><value>Choisir la campagne</value></data>
+  <data name="Session_SelectCharacters" xml:space="preserve"><value>Personnages conviés</value></data>
+  <data name="Session_Preparation" xml:space="preserve"><value>Cette fonctionnalité est en cours de préparation. La sélection sera sauvegardée dans une prochaine version.</value></data>
+
+  <!-- Visibility -->
+  <data name="Visibility_Private" xml:space="preserve"><value>Privé</value></data>
+  <data name="Visibility_Public" xml:space="preserve"><value>Public</value></data>
+</root>

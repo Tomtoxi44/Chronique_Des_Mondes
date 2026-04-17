@@ -1,51 +1,78 @@
 @page "/"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Cdm.Web.Services.ApiClients
+@inject IStringLocalizer<AppStrings> L
+@inject NavigationManager NavigationManager
 
-<PageTitle>Accueil - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Nav_Home"] — @L["AppName"]</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <div class="home-page">
-            <div class="welcome-section">
-                <h1>Bienvenue, @context.User.Identity?.Name !</h1>
-                <p>Votre nouvelle application redesignée</p>
+        <PageHeader Title="@string.Format(L["Home_Welcome"], context.User.Identity?.Name ?? L["Home_WelcomeDefault"])"
+                    Subtitle="@L["Home_Subtitle"]" />
+
+        <!-- Stats -->
+        <div class="cdm-grid-stats" style="margin-bottom: var(--spacing-xl);">
+            <StatCard Icon="🌍" Value="@worldCount.ToString()" Label="@L["Home_Stats_Worlds"]" />
+            <StatCard Icon="⚔️" Value="@characterCount.ToString()" Label="@L["Home_Stats_Characters"]" />
+            <StatCard Icon="📜" Value="@campaignCount.ToString()" Label="@L["Home_Stats_Campaigns"]" />
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="cdm-section">
+            <FluentLabel Typo="Typography.H5" Class="cdm-section-title">@L["Home_QuickActions"]</FluentLabel>
+            <div class="cdm-grid-actions">
+                <a href="/worlds/create" class="cdm-action-card">
+                    <span class="cdm-action-card-icon">🌍</span>
+                    <span class="cdm-action-card-text">@L["Home_CreateWorld"]</span>
+                </a>
+                <a href="/characters/create" class="cdm-action-card">
+                    <span class="cdm-action-card-icon">⚔️</span>
+                    <span class="cdm-action-card-text">@L["Home_CreateCharacter"]</span>
+                </a>
+                <a href="/campaigns" class="cdm-action-card">
+                    <span class="cdm-action-card-icon">📜</span>
+                    <span class="cdm-action-card-text">@L["Home_ViewCampaigns"]</span>
+                </a>
             </div>
         </div>
     </Authorized>
     
     <NotAuthorized>
-        <div class="home-page">
-            <div class="welcome-section">
-                <h1>Chronique des Mondes</h1>
-                <p>Veuillez vous connecter pour continuer</p>
-            </div>
-        </div>
+        <RedirectToLogin />
     </NotAuthorized>
 </AuthorizeView>
 
-<style>
-    .home-page {
-        padding: 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .welcome-section {
-        text-align: center;
-        padding: 4rem 2rem;
-    }
-
-    .welcome-section h1 {
-        font-size: 2.5rem;
-        color: var(--color-text-primary);
-        margin-bottom: 1rem;
-    }
-
-    .welcome-section p {
-        font-size: 1.125rem;
-        color: var(--color-text-secondary);
-    }
-</style>
-
 @code {
+    private int worldCount = 0;
+    private int characterCount = 0;
+    private int campaignCount = 0;
+
+    [Inject] private WorldApiClient WorldApi { get; set; } = default!;
+    [Inject] private CharacterApiClient CharacterApi { get; set; } = default!;
+    [Inject] private CampaignApiClient CampaignApi { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var worlds = await WorldApi.GetMyWorldsAsync();
+            worldCount = worlds?.Count() ?? 0;
+        }
+        catch { /* graceful fallback */ }
+
+        try
+        {
+            var characters = await CharacterApi.GetMyCharactersAsync();
+            characterCount = characters?.Count() ?? 0;
+        }
+        catch { }
+
+        try
+        {
+            var campaigns = await CampaignApi.GetMyCampaignsAsync();
+            campaignCount = campaigns?.Count() ?? 0;
+        }
+        catch { }
+    }
 }

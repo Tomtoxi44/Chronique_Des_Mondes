@@ -1,168 +1,103 @@
 @page "/characters"
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Shared.DTOs.Models
-@using Microsoft.AspNetCore.Components.Authorization
 @layout MainLayout
 @rendermode InteractiveServer
+@inject IStringLocalizer<AppStrings> L
 
-<PageTitle>Mes Personnages - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Characters_Title"] — @L["AppName"]</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-    <!-- Page Header -->
-    <FluentStack Orientation="Orientation.Horizontal" 
-                 VerticalAlignment="VerticalAlignment.Center"
-                 HorizontalAlignment="HorizontalAlignment.SpaceBetween"
-                 Wrap="true">
-        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-            <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Mes Personnages</FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">Gerez vos heros et leurs aventures</FluentLabel>
-        </FluentStack>
+<PageHeader Title="@L["Characters_Title"]" Subtitle="@L["Characters_Subtitle"]">
+    <Actions>
         <FluentButton Appearance="Appearance.Accent" 
                       IconStart="@(new Icons.Regular.Size20.Add())"
                       Href="/characters/create">
-            Nouveau Personnage
+            @L["Characters_Create"]
         </FluentButton>
-    </FluentStack>
+    </Actions>
+</PageHeader>
 
-    <AuthorizeView>
-        <Authorized>
-            @if (IsLoading)
-            {
-                <FluentCard>
-                    <FluentStack Orientation="Orientation.Vertical" 
-                                 HorizontalAlignment="HorizontalAlignment.Center"
-                                 Style="padding: 48px; gap: 16px;">
-                        <FluentProgressRing />
-                        <FluentLabel>Chargement des personnages...</FluentLabel>
-                    </FluentStack>
-                </FluentCard>
-            }
-            else if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <FluentMessageBar Title="Erreur de chargement" Intent="MessageIntent.Error" Style="width: 100%;">
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
-                        <span>@ErrorMessage</span>
-                        <FluentButton Appearance="Appearance.Outline" 
-                                      IconStart="@(new Icons.Regular.Size20.ArrowClockwise())"
-                                      OnClick="@LoadCharactersAsync">
-                            Reessayer
-                        </FluentButton>
-                    </FluentStack>
-                </FluentMessageBar>
-            }
-            else if (Characters == null || !Characters.Any())
-            {
-                <FluentCard>
-                    <FluentStack Orientation="Orientation.Vertical" 
-                                 HorizontalAlignment="HorizontalAlignment.Center"
-                                 Style="padding: 48px; gap: 16px;">
-                        <FluentIcon Value="@(new Icons.Regular.Size48.Person())" Color="Color.Neutral" />
-                        <FluentLabel Typo="Typography.H6">Aucun personnage</FluentLabel>
-                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center;">
-                            Vous n'avez pas encore cree de personnage.<br/>
-                            Commencez votre aventure en creant votre premier heros !
-                        </FluentLabel>
-                        <FluentButton Appearance="Appearance.Accent" 
-                                      IconStart="@(new Icons.Regular.Size20.Add())"
-                                      Href="/characters/create">
-                            Creer mon premier personnage
-                        </FluentButton>
-                    </FluentStack>
-                </FluentCard>
-            }
-            else
-            {
-                <FluentGrid Spacing="3">
-                    @foreach (var character in Characters)
-                    {
-                        <FluentGridItem xs="12" sm="6" md="4" lg="3">
-                            <FluentCard Style="height: 100%; cursor: pointer;" @onclick="() => ViewCharacter(character.Id)">
-                                <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                                    <!-- Avatar -->
-                                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center">
-                                        @if (!string.IsNullOrEmpty(character.AvatarUrl))
-                                        {
-                                            <FluentPersona Image="@character.AvatarUrl" 
-                                                           Name="@GetCharacterFullName(character)"
-                                                           ImageSize="80px" />
-                                        }
-                                        else
-                                        {
-                                            <FluentPersona Name="@GetCharacterFullName(character)"
-                                                           ImageSize="80px" />
-                                        }
-                                    </FluentStack>
-                                    
-                                    <!-- Info -->
-                                    <FluentStack Orientation="Orientation.Vertical" 
-                                                 HorizontalAlignment="HorizontalAlignment.Center"
-                                                 Style="gap: 4px;">
-                                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold" Style="text-align: center;">
-                                            @GetCharacterFullName(character)
-                                        </FluentLabel>
-                                        @if (character.Age.HasValue)
-                                        {
-                                            <FluentBadge Appearance="Appearance.Neutral">
-                                                @character.Age ans
-                                            </FluentBadge>
-                                        }
-                                        @if (!string.IsNullOrEmpty(character.Description))
-                                        {
-                                            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; font-size: 12px;">
-                                                @TruncateDescription(character.Description)
-                                            </FluentLabel>
-                                        }
-                                    </FluentStack>
-                                    
-                                    <!-- Actions -->
-                                    <FluentDivider />
-                                    <FluentStack Orientation="Orientation.Horizontal" 
-                                                 HorizontalAlignment="HorizontalAlignment.SpaceBetween"
-                                                 VerticalAlignment="VerticalAlignment.Center"
-                                                 Style="width: 100%;">
-                                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; font-size: 12px;">
-                                            @character.CreatedAt.ToString("dd/MM/yyyy")
-                                        </FluentLabel>
-                                        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 4px;">
-                                            <div @onclick:stopPropagation="true">
-                                                <FluentButton Appearance="Appearance.Stealth"
-                                                              IconStart="@(new Icons.Regular.Size16.Edit())"
-                                                              Title="Modifier"
-                                                              OnClick="@(() => EditCharacter(character.Id))" />
-                                            </div>
-                                            <div @onclick:stopPropagation="true">
-                                                <FluentButton Appearance="Appearance.Stealth"
-                                                              IconStart="@(new Icons.Regular.Size16.Delete())"
-                                                              Title="Supprimer"
-                                                              OnClick="@(() => ConfirmDelete(character))" />
-                                            </div>
-                                        </FluentStack>
-                                    </FluentStack>
-                                </FluentStack>
-                            </FluentCard>
-                        </FluentGridItem>
-                    }
-                </FluentGrid>
-            }
-        </Authorized>
-        
-        <NotAuthorized>
-            <FluentCard>
-                <FluentStack Orientation="Orientation.Vertical" 
-                             HorizontalAlignment="HorizontalAlignment.Center"
-                             Style="padding: 48px; gap: 16px;">
-                    <FluentIcon Value="@(new Icons.Regular.Size48.LockClosed())" Color="Color.Error" />
-                    <FluentLabel Typo="Typography.H6">Connexion requise</FluentLabel>
-                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center;">
-                        Vous devez etre connecte pour acceder a vos personnages.
-                    </FluentLabel>
+<AuthorizeView>
+    <Authorized>
+        @if (IsLoading)
+        {
+            <LoadingState Message="@L["Common_Loading"]" />
+        }
+        else if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <ErrorState Title="@L["Common_Error"]" Message="@ErrorMessage" OnRetry="@LoadCharactersAsync" />
+        }
+        else if (Characters == null || !Characters.Any())
+        {
+            <EmptyState Icon="⚔️" Title="@L["Characters_Empty"]" Message="@L["Characters_EmptyMessage"]">
+                <Action>
                     <FluentButton Appearance="Appearance.Accent" 
-                                  IconStart="@(new Icons.Regular.Size20.ArrowEnter())"
-                                  Href="/login">
-                        Se connecter
+                                  IconStart="@(new Icons.Regular.Size20.Add())"
+                                  Href="/characters/create">
+                        @L["Characters_Create"]
                     </FluentButton>
-                </FluentStack>
-            </FluentCard>
-        </NotAuthorized>
-    </AuthorizeView>
-</FluentStack>
+                </Action>
+            </EmptyState>
+        }
+        else
+        {
+            <div class="cdm-grid-cards">
+                @foreach (var character in Characters)
+                {
+                    <div class="cdm-content-card" style="cursor: pointer;" @onclick="() => ViewCharacter(character.Id)">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: var(--spacing-md);">
+                            @if (!string.IsNullOrEmpty(character.AvatarUrl))
+                            {
+                                <FluentPersona Image="@character.AvatarUrl" 
+                                               Name="@GetCharacterFullName(character)"
+                                               ImageSize="80px" />
+                            }
+                            else
+                            {
+                                <FluentPersona Name="@GetCharacterFullName(character)"
+                                               ImageSize="80px" />
+                            }
+                            
+                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold" Style="text-align: center;">
+                                @GetCharacterFullName(character)
+                            </FluentLabel>
+                            @if (character.Age.HasValue)
+                            {
+                                <FluentBadge Appearance="Appearance.Neutral">@character.Age ans</FluentBadge>
+                            }
+                            @if (!string.IsNullOrEmpty(character.Description))
+                            {
+                                <p style="opacity: 0.7; text-align: center; font-size: 12px; margin: 0;">
+                                    @TruncateDescription(character.Description)
+                                </p>
+                            }
+                        </div>
+                        <FluentDivider />
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px var(--spacing-md);">
+                            <span style="opacity: 0.6; font-size: 12px;">@character.CreatedAt.ToString("dd/MM/yyyy")</span>
+                            <div style="display: flex; gap: 4px;">
+                                <div @onclick:stopPropagation="true">
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconStart="@(new Icons.Regular.Size16.Edit())"
+                                                  Title="@L["Common_Edit"]"
+                                                  OnClick="@(() => EditCharacter(character.Id))" />
+                                </div>
+                                <div @onclick:stopPropagation="true">
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconStart="@(new Icons.Regular.Size16.Delete())"
+                                                  Title="@L["Common_Delete"]"
+                                                  OnClick="@(() => ConfirmDelete(character))" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </Authorized>
+    
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>

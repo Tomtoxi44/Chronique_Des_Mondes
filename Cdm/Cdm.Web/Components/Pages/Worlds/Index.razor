@@ -9,147 +9,85 @@
 @using Cdm.Web.Components.Layout
 @using Cdm.Web.Components.Shared
 @using Cdm.Web.Services.ApiClients
-@using Microsoft.AspNetCore.Components.Authorization
 @layout MainLayout
 @inject WorldApiClient WorldApiClient
 @inject NavigationManager NavigationManager
 @inject IMessageService MessageService
+@inject IStringLocalizer<AppStrings> L
 
-<PageTitle>Mes Mondes - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Worlds_Title"] — @L["AppName"]</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-            <!-- Header -->
-            <FluentStack Orientation="Orientation.Horizontal" 
-                         VerticalAlignment="VerticalAlignment.Center"
-                         HorizontalAlignment="HorizontalAlignment.SpaceBetween"
-                         Wrap="true"
-                         Style="gap: 16px;">
-                <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-                    <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Mes Mondes</FluentLabel>
-                    <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
-                        Gérez vos univers de jeu et consultez ceux où vous jouez
-                    </FluentLabel>
-                </FluentStack>
-                
+        <PageHeader Title="@L["Worlds_Title"]" Subtitle="@L["Worlds_Subtitle"]">
+            <Actions>
                 <FluentButton Appearance="Appearance.Accent" 
                               IconStart="@(new Icons.Regular.Size20.Add())"
                               OnClick="@(() => NavigationManager.NavigateTo("/worlds/create"))">
-                    Nouveau Monde
+                    @L["Worlds_Create"]
                 </FluentButton>
-            </FluentStack>
+            </Actions>
+        </PageHeader>
 
-            <!-- Tabs: GM worlds vs player worlds -->
-            <FluentTabs @bind-ActiveTabId="_activeTab">
-                <FluentTab Id="gm" Label="Mes créations">
-                    @if (_isLoading)
-                    {
-                        <FluentStack Orientation="Orientation.Vertical" 
-                                     HorizontalAlignment="HorizontalAlignment.Center"
-                                     Style="padding: 48px; gap: 16px;">
-                            <FluentProgressRing Style="width: 48px; height: 48px;" />
-                            <FluentLabel Typo="Typography.Body">Chargement...</FluentLabel>
-                        </FluentStack>
-                    }
-                    else if (!_myWorlds.Any())
-                    {
-                        <FluentCard>
-                            <FluentStack Orientation="Orientation.Vertical" 
-                                         HorizontalAlignment="HorizontalAlignment.Center"
-                                         Style="padding: 48px; gap: 16px;">
-                                <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.Neutral" />
-                                <FluentLabel Typo="Typography.H6">Aucun monde créé</FluentLabel>
-                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; max-width: 500px;">
-                                    Créez votre premier univers de jeu pour commencer votre aventure.
-                                </FluentLabel>
-                                <FluentButton Appearance="Appearance.Accent" 
-                                              IconStart="@(new Icons.Regular.Size20.Add())"
-                                              OnClick="@(() => NavigationManager.NavigateTo("/worlds/create"))">
-                                    Créer mon premier monde
-                                </FluentButton>
-                            </FluentStack>
-                        </FluentCard>
-                    }
-                    else
-                    {
-                        <FluentGrid Spacing="3" Justify="JustifyContent.FlexStart" Style="margin-top: 16px;">
-                            @foreach (var world in _myWorlds)
-                            {
-                                <FluentGridItem xs="12" sm="6" md="4" lg="3">
-                                    <WorldCard World="@world" 
-                                               CampaignCount="0" 
-                                               CharacterCount="0"
-                                               ShowActions="true"
-                                               OnDelete="HandleDeleteWorld" />
-                                </FluentGridItem>
-                            }
-                        </FluentGrid>
-                        <FluentCard Style="margin-top: 16px;">
-                            <FluentStack Orientation="Orientation.Horizontal" 
-                                         VerticalAlignment="VerticalAlignment.Center"
-                                         Style="gap: 24px; padding: 8px;">
-                                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
-                                    <FluentIcon Value="@(new Icons.Regular.Size20.Globe())" Color="Color.Accent" />
-                                    <FluentLabel Typo="Typography.Body">
-                                        <strong>@_myWorlds.Count</strong> @(_myWorlds.Count == 1 ? "monde" : "mondes")
-                                    </FluentLabel>
-                                </FluentStack>
-                                <FluentDivider Orientation="Orientation.Vertical" Style="height: 24px;" />
-                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 14px;">
-                                    Actifs : @_myWorlds.Count(w => w.IsActive)
-                                </FluentLabel>
-                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 14px;">
-                                    Inactifs : @_myWorlds.Count(w => !w.IsActive)
-                                </FluentLabel>
-                            </FluentStack>
-                        </FluentCard>
-                    }
-                </FluentTab>
+        <!-- Tabs: GM worlds vs player worlds -->
+        <FluentTabs @bind-ActiveTabId="_activeTab" Style="margin-bottom: var(--spacing-lg);">
+            <FluentTab Id="gm" Label="Mes créations">
+                @if (_isLoading)
+                {
+                    <LoadingState Message="@L["Common_Loading"]" />
+                }
+                else if (!_myWorlds.Any())
+                {
+                    <EmptyState Icon="🌍" Title="@L["Worlds_Empty"]" Message="@L["Worlds_EmptyMessage"]">
+                        <Action>
+                            <FluentButton Appearance="Appearance.Accent" 
+                                          IconStart="@(new Icons.Regular.Size20.Add())"
+                                          OnClick="@(() => NavigationManager.NavigateTo("/worlds/create"))">
+                                @L["Worlds_Create"]
+                            </FluentButton>
+                        </Action>
+                    </EmptyState>
+                }
+                else
+                {
+                    <div class="cdm-grid-cards" style="margin-top: var(--spacing-md);">
+                        @foreach (var world in _myWorlds)
+                        {
+                            <WorldCard World="@world" 
+                                       CampaignCount="0" 
+                                       CharacterCount="0"
+                                       ShowActions="true"
+                                       OnDelete="HandleDeleteWorld" />
+                        }
+                    </div>
+                }
+            </FluentTab>
 
-                <FluentTab Id="player" Label="Je suis joueur">
-                    @if (_isLoading)
-                    {
-                        <FluentStack Orientation="Orientation.Vertical" 
-                                     HorizontalAlignment="HorizontalAlignment.Center"
-                                     Style="padding: 48px; gap: 16px;">
-                            <FluentProgressRing Style="width: 48px; height: 48px;" />
-                            <FluentLabel Typo="Typography.Body">Chargement...</FluentLabel>
-                        </FluentStack>
-                    }
-                    else if (!_playerWorlds.Any())
-                    {
-                        <FluentCard>
-                            <FluentStack Orientation="Orientation.Vertical" 
-                                         HorizontalAlignment="HorizontalAlignment.Center"
-                                         Style="padding: 48px; gap: 16px;">
-                                <FluentIcon Value="@(new Icons.Regular.Size48.People())" Color="Color.Neutral" />
-                                <FluentLabel Typo="Typography.H6">Aucun monde rejoint</FluentLabel>
-                                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; text-align: center; max-width: 500px;">
-                                    Vous n'avez pas encore rejoint de monde en tant que joueur. 
-                                    Demandez à un MJ de vous inviter dans sa campagne.
-                                </FluentLabel>
-                            </FluentStack>
-                        </FluentCard>
-                    }
-                    else
-                    {
-                        <FluentGrid Spacing="3" Justify="JustifyContent.FlexStart" Style="margin-top: 16px;">
-                            @foreach (var world in _playerWorlds)
-                            {
-                                <FluentGridItem xs="12" sm="6" md="4" lg="3">
-                                    <WorldCard World="@world" 
-                                               CampaignCount="0" 
-                                               CharacterCount="0"
-                                               ShowActions="false"
-                                               OnDelete="HandleDeleteWorld" />
-                                </FluentGridItem>
-                            }
-                        </FluentGrid>
-                    }
-                </FluentTab>
-            </FluentTabs>
-        </FluentStack>
+            <FluentTab Id="player" Label="Je suis joueur">
+                @if (_isLoading)
+                {
+                    <LoadingState Message="@L["Common_Loading"]" />
+                }
+                else if (!_playerWorlds.Any())
+                {
+                    <EmptyState Icon="🎭" Title="Aucun monde rejoint" 
+                                Message="Demandez à un MJ de vous inviter dans sa campagne." />
+                }
+                else
+                {
+                    <div class="cdm-grid-cards" style="margin-top: var(--spacing-md);">
+                        @foreach (var world in _playerWorlds)
+                        {
+                            <WorldCard World="@world" 
+                                       CampaignCount="0" 
+                                       CharacterCount="0"
+                                       ShowActions="false"
+                                       OnDelete="HandleDeleteWorld" />
+                        }
+                    </div>
+                }
+            </FluentTab>
+        </FluentTabs>
     </Authorized>
     
     <NotAuthorized>
@@ -176,7 +114,6 @@
         var myWorlds = await WorldApiClient.GetMyWorldsAsync();
 
         _myWorlds = myWorlds;
-        // Player worlds = all - GM worlds
         var myWorldIds = myWorlds.Select(w => w.Id).ToHashSet();
         _playerWorlds = allWorlds.Where(w => !myWorldIds.Contains(w.Id)).ToList();
 

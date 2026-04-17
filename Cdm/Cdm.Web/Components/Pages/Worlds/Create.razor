@@ -10,109 +10,73 @@
 @inject WorldApiClient WorldApiClient
 @inject NavigationManager NavigationManager
 @inject IMessageService MessageService
+@inject IStringLocalizer<AppStrings> L
 @rendermode InteractiveServer
 
-<PageTitle>Nouveau Monde - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Worlds_Create"] — @L["AppName"]</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; max-width: 800px; margin: 0 auto;">
-    <!-- Breadcrumbs -->
-    <FluentBreadcrumb>
-        <FluentBreadcrumbItem Href="/">
-            <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
-        </FluentBreadcrumbItem>
-        <FluentBreadcrumbItem Href="/worlds">
-            Mondes
-        </FluentBreadcrumbItem>
-        <FluentBreadcrumbItem>
-            Nouveau
-        </FluentBreadcrumbItem>
-    </FluentBreadcrumb>
+<div style="max-width: 800px; margin: 0 auto;">
+    <PageHeader Title="@L["Worlds_Create"]" Subtitle="@L["Worlds_CreateSubtitle"]" />
 
-    <!-- Page Header -->
-    <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-        <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Créer un Nouveau Monde</FluentLabel>
-        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">Définissez votre univers de jeu et commencez votre aventure</FluentLabel>
-    </FluentStack>
+    <div class="cdm-content-card">
+        <EditForm Model="@_model" OnValidSubmit="HandleSubmit" class="auth-form">
+            <DataAnnotationsValidator />
+            
+            <div class="auth-form-group">
+                <FluentTextField @bind-Value="_model.Name"
+                                 Label="@L["Worlds_Name"]"
+                                 Placeholder="Ex: Le Royaume Oublié"
+                                 Required
+                                 Style="width: 100%;" />
+                <ValidationMessage For="@(() => _model.Name)" />
+            </div>
 
-    <!-- Form Card -->
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; padding: 8px;">
-            <EditForm Model="@_model" OnValidSubmit="HandleSubmit">
-                <DataAnnotationsValidator />
-                
-                <FluentStack Orientation="Orientation.Vertical" Style="gap: 20px;">
-                    <!-- Name -->
-                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                            Nom du monde <span style="color: var(--color-error-500);">*</span>
-                        </FluentLabel>
-                        <FluentTextField @bind-Value="_model.Name"
-                                         Placeholder="Ex: Le Royaume Oublié"
-                                         Required
-                                         Style="width: 100%;" />
-                        <ValidationMessage For="@(() => _model.Name)" />
-                    </FluentStack>
+            <div class="auth-form-group">
+                <FluentSelect TOption="string" 
+                              Label="@L["Worlds_GameType"]"
+                              Value="@(_model.GameType.ToString())"
+                              ValueChanged="@((string value) => _model.GameType = Enum.Parse<GameType>(value))"
+                              Style="width: 100%;">
+                    <FluentOption Value="@GameType.Empty.ToString()">🌍 Monde vide (lobby)</FluentOption>
+                    <FluentOption Value="@GameType.Generic.ToString()">⚔️ Générique</FluentOption>
+                    <FluentOption Value="@GameType.DnD5e.ToString()">🎲 D&D 5e</FluentOption>
+                    <FluentOption Value="@GameType.Pathfinder.ToString()">📚 Pathfinder</FluentOption>
+                    <FluentOption Value="@GameType.CallOfCthulhu.ToString()">🐙 Call of Cthulhu</FluentOption>
+                    <FluentOption Value="@GameType.Warhammer.ToString()">⚔️ Warhammer</FluentOption>
+                    <FluentOption Value="@GameType.Cyberpunk.ToString()">🤖 Cyberpunk</FluentOption>
+                    <FluentOption Value="@GameType.Skyrim.ToString()">🐉 Skyrim</FluentOption>
+                    <FluentOption Value="@GameType.Custom.ToString()">✨ Personnalisé</FluentOption>
+                </FluentSelect>
+                <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px; margin-top: 4px;">
+                    @GetGameTypeHelp()
+                </FluentLabel>
+            </div>
 
-                    <!-- Game Type -->
-                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                            Type de jeu <span style="color: var(--color-error-500);">*</span>
-                        </FluentLabel>
-                        <FluentSelect TOption="string" 
-                                      Value="@(_model.GameType.ToString())"
-                                      ValueChanged="@((string value) => _model.GameType = Enum.Parse<GameType>(value))"
-                                      Style="width: 100%;">
-                            <FluentOption Value="@GameType.Empty.ToString()">🌍 Monde vide (lobby)</FluentOption>
-                            <FluentOption Value="@GameType.Generic.ToString()">⚔️ Générique</FluentOption>
-                            <FluentOption Value="@GameType.DnD5e.ToString()">🎲 D&D 5e</FluentOption>
-                            <FluentOption Value="@GameType.Pathfinder.ToString()">📚 Pathfinder</FluentOption>
-                            <FluentOption Value="@GameType.CallOfCthulhu.ToString()">🐙 Call of Cthulhu</FluentOption>
-                            <FluentOption Value="@GameType.Warhammer.ToString()">⚔️ Warhammer</FluentOption>
-                            <FluentOption Value="@GameType.Cyberpunk.ToString()">🤖 Cyberpunk</FluentOption>
-                            <FluentOption Value="@GameType.Skyrim.ToString()">🐉 Skyrim</FluentOption>
-                            <FluentOption Value="@GameType.Custom.ToString()">✨ Personnalisé</FluentOption>
-                        </FluentSelect>
-                        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
-                            @GetGameTypeHelp()
-                        </FluentLabel>
-                    </FluentStack>
+            <div class="auth-form-group">
+                <FluentTextArea @bind-Value="_model.Description"
+                                Label="Description"
+                                Placeholder="Décrivez votre monde..."
+                                Rows="5"
+                                Style="width: 100%;" />
+            </div>
 
-                    <!-- Description -->
-                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                            Description
-                        </FluentLabel>
-                        <FluentTextArea @bind-Value="_model.Description"
-                                        Placeholder="Décrivez votre monde..."
-                                        Rows="5"
-                                        Style="width: 100%;" />
-                        <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
-                            Une brève description de votre univers (optionnel)
-                        </FluentLabel>
-                    </FluentStack>
-
-                    <!-- Action Buttons -->
-                    <FluentStack Orientation="Orientation.Horizontal" 
-                                 HorizontalAlignment="HorizontalAlignment.End"
-                                 Style="gap: 12px; margin-top: 8px;">
-                        <FluentButton Appearance="Appearance.Outline"
-                                      OnClick="@(() => NavigationManager.NavigateTo("/worlds"))"
-                                      Disabled="@_isSubmitting">
-                            Annuler
-                        </FluentButton>
-                        <FluentButton Appearance="Appearance.Accent"
-                                      Type="ButtonType.Submit"
-                                      Loading="@_isSubmitting"
-                                      Disabled="@_isSubmitting"
-                                      IconStart="@(new Icons.Regular.Size20.Add())">
-                            Créer le monde
-                        </FluentButton>
-                    </FluentStack>
-                </FluentStack>
-            </EditForm>
-        </FluentStack>
-    </FluentCard>
-</FluentStack>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: var(--spacing-md);">
+                <FluentButton Appearance="Appearance.Outline"
+                              OnClick="@(() => NavigationManager.NavigateTo("/worlds"))"
+                              Disabled="@_isSubmitting">
+                    @L["Common_Cancel"]
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Accent"
+                              Type="ButtonType.Submit"
+                              Loading="@_isSubmitting"
+                              Disabled="@_isSubmitting"
+                              IconStart="@(new Icons.Regular.Size20.Add())">
+                    @L["Worlds_Create"]
+                </FluentButton>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
     private CreateWorldModel _model = new();

@@ -2,6 +2,7 @@
 @using Cdm.Business.Abstraction.DTOs
 @using Cdm.Common.Enums
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Services.ApiClients
 @using Microsoft.AspNetCore.Authorization
 @layout MainLayout
@@ -9,181 +10,80 @@
 @inject WorldApiClient WorldApiClient
 @inject NavigationManager NavigationManager
 @inject IMessageService MessageService
+@inject IStringLocalizer<AppStrings> L
 @rendermode InteractiveServer
 
-<PageTitle>@(_world?.Name ?? "Monde") - Chronique des Mondes</PageTitle>
+<PageTitle>@(_world?.Name ?? L["Worlds_Title"]) — @L["AppName"]</PageTitle>
 
 @if (_isLoading)
 {
-    <FluentStack Orientation="Orientation.Vertical" 
-                 HorizontalAlignment="HorizontalAlignment.Center"
-                 Style="padding: 48px; gap: 16px;">
-        <FluentProgressRing Style="width: 48px; height: 48px;" />
-        <FluentLabel Typo="Typography.Body">Chargement du monde...</FluentLabel>
-    </FluentStack>
+    <LoadingState Message="@L["Common_Loading"]" />
 }
 else if (_world == null)
 {
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" 
-                     HorizontalAlignment="HorizontalAlignment.Center"
-                     Style="padding: 48px; gap: 16px;">
-            <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Color="Color.Error" />
-            <FluentLabel Typo="Typography.H5">Monde introuvable</FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary); text-align: center;">
-                Ce monde n'existe pas ou vous n'avez pas l'autorisation d'y accéder.
-            </FluentLabel>
-            <FluentButton Appearance="Appearance.Accent" 
-                          OnClick="@(() => NavigationManager.NavigateTo("/worlds"))">
-                Retour aux mondes
-            </FluentButton>
-        </FluentStack>
-    </FluentCard>
+    <ErrorState Title="@L["Worlds_NotFound"]" 
+                Message="@L["Worlds_NotFoundMessage"]" 
+                OnRetry="@(() => NavigationManager.NavigateTo("/worlds"))" />
 }
 else
 {
-    <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-        <!-- Breadcrumbs -->
-        <FluentBreadcrumb>
-            <FluentBreadcrumbItem Href="/">
-                <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem Href="/worlds">
-                Mondes
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem>
-                @_world.Name
-            </FluentBreadcrumbItem>
-        </FluentBreadcrumb>
+    <PageHeader Title="@_world.Name" Subtitle="@($"Créé le {_world.CreatedAt:dd/MM/yyyy}")">
+        <Actions>
+            <GameTypeBadge GameType="@_world.GameType" />
+            <FluentButton Appearance="Appearance.Outline"
+                          IconStart="@(new Icons.Regular.Size20.Edit())"
+                          OnClick="@(() => NavigationManager.NavigateTo($"/worlds/edit/{_world.Id}"))">
+                @L["Common_Edit"]
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Outline"
+                          IconStart="@(new Icons.Regular.Size20.Delete())"
+                          Color="Color.Error"
+                          OnClick="HandleDelete">
+                @L["Common_Delete"]
+            </FluentButton>
+        </Actions>
+    </PageHeader>
 
-        <!-- Header with Actions -->
-        <FluentStack Orientation="Orientation.Horizontal" 
-                     VerticalAlignment="VerticalAlignment.Center"
-                     HorizontalAlignment="HorizontalAlignment.SpaceBetween"
-                     Wrap="true"
-                     Style="gap: 16px;">
-            <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 12px;">
-                    <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">@_world.Name</FluentLabel>
-                    <FluentBadge Appearance="Appearance.Lightweight" BackgroundColor="@GetGameTypeColor()">
-                        @GetGameTypeDisplay()
-                    </FluentBadge>
-                </FluentStack>
-                <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">
-                    Créé le @_world.CreatedAt.ToString("dd/MM/yyyy")
-                </FluentLabel>
-            </FluentStack>
+    <!-- Stats -->
+    <div class="cdm-grid-stats" style="margin-bottom: var(--spacing-xl);">
+        <StatCard Icon="📜" Value="@_world.CampaignCount.ToString()" Label="@L["Home_Stats_Campaigns"]" />
+        <StatCard Icon="⚔️" Value="@_world.CharacterCount.ToString()" Label="@L["Home_Stats_Characters"]" />
+        <StatCard Icon="@(_world.IsActive ? "✅" : "⏸️")" Value="@(_world.IsActive ? "Actif" : "Inactif")" Label="Statut" />
+    </div>
 
-            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
-                <FluentButton Appearance="Appearance.Outline"
-                              IconStart="@(new Icons.Regular.Size20.Edit())"
-                              OnClick="@(() => NavigationManager.NavigateTo($"/worlds/edit/{_world.Id}"))">
-                    Modifier
-                </FluentButton>
-                <FluentButton Appearance="Appearance.Outline"
-                              IconStart="@(new Icons.Regular.Size20.Delete())"
-                              Color="Color.Error"
-                              OnClick="HandleDelete">
-                    Supprimer
-                </FluentButton>
-            </FluentStack>
-        </FluentStack>
+    <!-- Description -->
+    @if (!string.IsNullOrEmpty(_world.Description))
+    {
+        <div class="cdm-content-card" style="margin-bottom: var(--spacing-lg);">
+            <FluentLabel Typo="Typography.H5" Style="margin-bottom: var(--spacing-sm);">Description</FluentLabel>
+            <p style="color: var(--color-text-secondary); line-height: 1.6; margin: 0;">@_world.Description</p>
+        </div>
+    }
 
-        <!-- Stats Cards -->
-        <FluentGrid Spacing="3">
-            <FluentGridItem xs="12" sm="6" md="4">
-                <FluentCard Style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: white;">
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
-                        <FluentIcon Value="@(new Icons.Regular.Size32.Briefcase())" Style="opacity: 0.9;" />
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-                            <FluentLabel Typo="Typography.H4" Style="margin: 0; color: white;">@_world.CampaignCount</FluentLabel>
-                            <FluentLabel Typo="Typography.Body" Style="color: rgba(255,255,255,0.9); font-size: 14px;">
-                                @(_world.CampaignCount == 1 ? "Campagne" : "Campagnes")
-                            </FluentLabel>
-                        </FluentStack>
-                    </FluentStack>
-                </FluentCard>
-            </FluentGridItem>
+    <!-- Characters -->
+    <div class="cdm-content-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+            <FluentLabel Typo="Typography.H5">@L["Characters_Title"]</FluentLabel>
+            <FluentButton Appearance="Appearance.Outline"
+                          IconStart="@(new Icons.Regular.Size20.Add())"
+                          OnClick="@(() => NavigationManager.NavigateTo("/characters/create"))">
+                @L["Characters_Create"]
+            </FluentButton>
+        </div>
 
-            <FluentGridItem xs="12" sm="6" md="4">
-                <FluentCard Style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%); color: white;">
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
-                        <FluentIcon Value="@(new Icons.Regular.Size32.People())" Style="opacity: 0.9;" />
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-                            <FluentLabel Typo="Typography.H4" Style="margin: 0; color: white;">@_world.CharacterCount</FluentLabel>
-                            <FluentLabel Typo="Typography.Body" Style="color: rgba(255,255,255,0.9); font-size: 14px;">
-                                @(_world.CharacterCount == 1 ? "Personnage" : "Personnages")
-                            </FluentLabel>
-                        </FluentStack>
-                    </FluentStack>
-                </FluentCard>
-            </FluentGridItem>
-
-            <FluentGridItem xs="12" sm="6" md="4">
-                <FluentCard>
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 16px;">
-                        <FluentIcon Value="@(new Icons.Regular.Size32.CheckmarkCircle())" Color="@(_world.IsActive ? Color.Success : Color.Neutral)" />
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-                            <FluentLabel Typo="Typography.H6" Style="margin: 0;">Statut</FluentLabel>
-                            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary); font-size: 14px;">
-                                @(_world.IsActive ? "Actif" : "Inactif")
-                            </FluentLabel>
-                        </FluentStack>
-                    </FluentStack>
-                </FluentCard>
-            </FluentGridItem>
-        </FluentGrid>
-
-        <!-- Description -->
-        @if (!string.IsNullOrEmpty(_world.Description))
+        @if (_isLoadingCharacters)
         {
-            <FluentCard>
-                <FluentStack Orientation="Orientation.Vertical" Style="gap: 12px;">
-                    <FluentLabel Typo="Typography.H5">Description</FluentLabel>
-                    <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary); line-height: 1.6;">
-                        @_world.Description
-                    </FluentLabel>
-                </FluentStack>
-            </FluentCard>
+            <LoadingState Message="@L["Common_Loading"]" />
         }
-
-        <!-- Characters in World -->
-        <FluentCard>
-            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px;">
-                <FluentStack Orientation="Orientation.Horizontal" 
-                             VerticalAlignment="VerticalAlignment.Center"
-                             HorizontalAlignment="HorizontalAlignment.SpaceBetween">
-                    <FluentLabel Typo="Typography.H5">Personnages dans ce monde</FluentLabel>
-                    <FluentButton Appearance="Appearance.Outline"
-                                  IconStart="@(new Icons.Regular.Size20.Add())"
-                                  OnClick="@(() => NavigationManager.NavigateTo("/characters/create"))">
-                        Nouveau personnage
-                    </FluentButton>
-                </FluentStack>
-
-                @if (_isLoadingCharacters)
-                {
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px; padding: 24px;">
-                        <FluentProgressRing Style="width: 24px; height: 24px;" />
-                        <FluentLabel>Chargement...</FluentLabel>
-                    </FluentStack>
-                }
-                else if (_characters == null || !_characters.Any())
-                {
-                    <FluentStack Orientation="Orientation.Vertical" 
-                                 HorizontalAlignment="HorizontalAlignment.Center"
-                                 Style="padding: 32px; gap: 12px;">
-                        <FluentIcon Value="@(new Icons.Regular.Size48.People())" Color="Color.Neutral" />
-                        <FluentLabel Style="color: var(--color-text-muted);">Aucun personnage dans ce monde</FluentLabel>
-                    </FluentStack>
-                }
-                else
-                {
-                    <FluentLabel>@_characters.Count personnage(s) trouvé(s)</FluentLabel>
-                }
-            </FluentStack>
-        </FluentCard>
-    </FluentStack>
+        else if (_characters == null || !_characters.Any())
+        {
+            <EmptyState Icon="⚔️" Title="Aucun personnage" Message="Aucun personnage dans ce monde" />
+        }
+        else
+        {
+            <FluentLabel>@_characters.Count personnage(s) trouvé(s)</FluentLabel>
+        }
+    </div>
 }
 
 @code {
@@ -239,7 +139,6 @@ else
     {
         if (_world == null) return;
 
-        // Simple confirmation without MessageService.ShowConfirmAsync
         var success = await WorldApiClient.DeleteWorldAsync(_world.Id);
         if (success)
         {
@@ -250,42 +149,5 @@ else
         {
             MessageService.ShowMessageBar("Erreur lors de la suppression", MessageIntent.Error);
         }
-    }
-
-    private string GetGameTypeDisplay()
-    {
-        if (_world == null) return string.Empty;
-        
-        return _world.GameType switch
-        {
-            GameType.Generic => "Générique",
-            GameType.DnD5e => "D&D 5e",
-            GameType.Skyrim => "Skyrim",
-            GameType.Custom => "Personnalisé",
-            GameType.Empty => "Vide",
-            GameType.Pathfinder => "Pathfinder",
-            GameType.CallOfCthulhu => "Call of Cthulhu",
-            GameType.Warhammer => "Warhammer",
-            GameType.Cyberpunk => "Cyberpunk",
-            _ => _world.GameType.ToString()
-        };
-    }
-
-    private string GetGameTypeColor()
-    {
-        if (_world == null) return "#059669";
-        
-        return _world.GameType switch
-        {
-            GameType.DnD5e => "#8B0000",
-            GameType.Skyrim => "#4A5568",
-            GameType.Pathfinder => "#8B4513",
-            GameType.CallOfCthulhu => "#2C3E50",
-            GameType.Warhammer => "#4B0082",
-            GameType.Cyberpunk => "#FF1493",
-            GameType.Custom => "#6366F1",
-            GameType.Empty => "#9CA3AF",
-            _ => "#059669"
-        };
     }
 }

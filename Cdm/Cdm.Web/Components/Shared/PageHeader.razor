@@ -1,0 +1,23 @@
+@* PageHeader — Reusable page header with title, subtitle, and optional actions slot *@
+
+<div class="cdm-page-header">
+    <div class="cdm-page-header-text">
+        <FluentLabel Typo="Typography.PageTitle" Class="cdm-page-title">@Title</FluentLabel>
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <FluentLabel Typo="Typography.Body" Class="cdm-page-subtitle">@Subtitle</FluentLabel>
+        }
+    </div>
+    @if (Actions != null)
+    {
+        <div class="cdm-page-header-actions">
+            @Actions
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

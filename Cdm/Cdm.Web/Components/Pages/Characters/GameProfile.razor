@@ -1,5 +1,6 @@
 @page "/characters/{CharacterId:int}/game-profile"
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Services.ApiClients
 @using Cdm.Web.Shared.DTOs.Models
 @using System.Text.Json
@@ -7,113 +8,94 @@
 @rendermode InteractiveServer
 @inject CharacterApiClient CharacterClient
 @inject NavigationManager NavigationManager
+@inject IStringLocalizer<AppStrings> L
 
-<PageTitle>Profil de jeu - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Characters_GameProfile"] — @L["AppName"]</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" Style="gap: 24px;">
-    <FluentBreadcrumb>
-        <FluentBreadcrumbItem Href="/characters">Personnages</FluentBreadcrumbItem>
-        <FluentBreadcrumbItem Href="@($"/characters/{CharacterId}")">@_character?.Name</FluentBreadcrumbItem>
-        <FluentBreadcrumbItem>Profil de jeu</FluentBreadcrumbItem>
-    </FluentBreadcrumb>
+<PageHeader Title="@L["Characters_GameProfile"]" Subtitle="@(_character?.Name ?? "")">
+    <Actions>
+        <FluentButton Appearance="Appearance.Outline" Href="@($"/characters/{CharacterId}")"
+                      IconStart="@(new Icons.Regular.Size20.ArrowLeft())">
+            @L["Common_Back"]
+        </FluentButton>
+    </Actions>
+</PageHeader>
 
-    @if (_isLoading)
+@if (_isLoading)
+{
+    <LoadingState Message="@L["Common_Loading"]" />
+}
+else
+{
+    @if (!string.IsNullOrEmpty(_error))
     {
-        <FluentCard>
-            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 48px; gap: 16px;">
-                <FluentProgressRing />
-                <FluentLabel>Chargement...</FluentLabel>
-            </FluentStack>
-        </FluentCard>
+        <FluentMessageBar Title="@L["Common_Error"]" Intent="MessageIntent.Error" Style="width: 100%; margin-bottom: 16px;">@_error</FluentMessageBar>
     }
-    else
+
+    @if (!string.IsNullOrEmpty(_success))
     {
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <FluentMessageBar Title="Erreur" Intent="MessageIntent.Error" Style="width: 100%;">@_error</FluentMessageBar>
-        }
+        <FluentMessageBar Title="@L["Common_Success"]" Intent="MessageIntent.Success" Style="width: 100%; margin-bottom: 16px;">@_success</FluentMessageBar>
+    }
 
-        @if (!string.IsNullOrEmpty(_success))
-        {
-            <FluentMessageBar Title="Succès" Intent="MessageIntent.Success" Style="width: 100%;">@_success</FluentMessageBar>
-        }
+    <!-- Campaign selector -->
+    <div class="cdm-content-card" style="margin-bottom: var(--spacing-lg);">
+        <h4 style="margin: 0 0 16px;">Sélectionner une campagne</h4>
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+            <div style="flex: 1;">
+                <FluentNumberField @bind-Value="_campaignId" Label="ID de la campagne" Min="1" Style="width: 100%;" />
+            </div>
+            <FluentButton Appearance="Appearance.Accent" @onclick="LoadProfile" Disabled="@(_campaignId <= 0)">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Search())" />
+                Charger le profil
+            </FluentButton>
+        </div>
+    </div>
 
-        <!-- Campaign selector -->
-        <FluentCard>
-            <FluentStack Orientation="Orientation.Vertical" Style="gap: 16px; padding: 8px;">
-                <FluentLabel Weight="FontWeight.Bold" Style="font-size: 16px;">Sélectionner une campagne</FluentLabel>
-                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 12px; align-items: flex-end;">
-                    <div style="flex: 1;">
-                        <FluentNumberField @bind-Value="_campaignId" Label="ID de la campagne" Min="1" Style="width: 100%;" />
-                    </div>
-                    <FluentButton Appearance="Appearance.Accent" @onclick="LoadProfile" Disabled="@(_campaignId <= 0)">
-                        <FluentIcon Value="@(new Icons.Regular.Size16.Search())" />
-                        Charger le profil
-                    </FluentButton>
-                </FluentStack>
-                <FluentLabel Style="font-size: 12px; color: var(--neutral-foreground-hint);">
-                    Entrez l'ID de la campagne pour voir ou créer votre profil de jeu dans ce monde.
-                </FluentLabel>
-            </FluentStack>
-        </FluentCard>
+    @if (_profileLoaded)
+    {
+        <div class="cdm-content-card" style="margin-bottom: var(--spacing-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Accent" />
+                    Profil de jeu — Campagne #@_campaignId
+                </h4>
+                <FluentBadge Appearance="Appearance.Neutral">@(_profileExists ? "Profil existant" : "Nouveau profil")</FluentBadge>
+            </div>
 
-        @if (_profileLoaded)
-        {
-            <FluentCard>
-                <FluentStack Orientation="Orientation.Vertical" Style="gap: 20px; padding: 8px;">
-                    <FluentStack Orientation="Orientation.Horizontal" Style="justify-content: space-between; align-items: center;">
-                        <FluentLabel Weight="FontWeight.Bold" Style="font-size: 18px;">
-                            <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Style="margin-right: 8px;" />
-                            Profil de jeu — Campagne #@_campaignId
-                        </FluentLabel>
-                        <FluentBadge Appearance="Appearance.Neutral">@(_profileExists ? "Profil existant" : "Nouveau profil")</FluentBadge>
-                    </FluentStack>
+            <FluentDivider Style="margin-bottom: 16px;" />
 
-                    <FluentDivider />
-
-                    <FluentLabel Weight="FontWeight.Bold">Données du profil (JSON)</FluentLabel>
+            <div class="auth-form">
+                <div class="auth-form-group">
                     <FluentTextArea @bind-Value="_profileJson"
+                                    Label="Données du profil (JSON)"
                                     Rows="12"
                                     Style="width: 100%; font-family: 'Courier New', monospace; font-size: 13px;"
                                     Placeholder='{"level": 1, "hp": 10, "maxHp": 10, "class": "Guerrier"}' />
-                    <FluentLabel Style="font-size: 12px; color: var(--neutral-foreground-hint);">
-                        Entrez les données de votre personnage en JSON selon le système de jeu de la campagne.
-                    </FluentLabel>
+                </div>
 
-                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 12px;">
-                        <FluentButton Appearance="Appearance.Accent"
-                                      @onclick="SaveProfile"
-                                      Disabled="@_isSaving">
-                            @if (_isSaving)
-                            {
-                                <FluentProgressRing Width="16px" />
-                                <span style="margin-left: 8px;">Sauvegarde...</span>
-                            }
-                            else
-                            {
-                                <FluentIcon Value="@(new Icons.Regular.Size16.Save())" />
-                                <span style="margin-left: 8px;">@(_profileExists ? "Mettre à jour" : "Créer le profil")</span>
-                            }
-                        </FluentButton>
-                        <FluentButton Appearance="Appearance.Outline" @onclick="ResetJson">
-                            Réinitialiser
-                        </FluentButton>
-                    </FluentStack>
-                </FluentStack>
-            </FluentCard>
-        }
-
-        @if (_profileExists && !string.IsNullOrEmpty(_profileDisplayJson))
-        {
-            <FluentCard>
-                <FluentStack Orientation="Orientation.Vertical" Style="gap: 12px; padding: 8px;">
-                    <FluentLabel Weight="FontWeight.Bold">Données actuelles du profil</FluentLabel>
-                    <pre style="background: var(--neutral-layer-3, #1a1f2e); padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; color: var(--neutral-foreground-rest); margin: 0;">@_profileDisplayJson</pre>
-                </FluentStack>
-            </FluentCard>
-        }
+                <div style="display: flex; gap: 12px;">
+                    <FluentButton Appearance="Appearance.Accent"
+                                  @onclick="SaveProfile"
+                                  Disabled="@_isSaving"
+                                  IconStart="@(new Icons.Regular.Size16.Save())">
+                        @(_isSaving ? L["Common_Saving"] : (_profileExists ? L["Common_Save"] : L["Common_Create"]))
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" @onclick="ResetJson">
+                        @L["Common_Cancel"]
+                    </FluentButton>
+                </div>
+            </div>
+        </div>
     }
-</FluentStack>
+
+    @if (_profileExists && !string.IsNullOrEmpty(_profileDisplayJson))
+    {
+        <div class="cdm-content-card">
+            <h4 style="margin: 0 0 12px;">Données actuelles du profil</h4>
+            <pre style="background: var(--color-bg-secondary); padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin: 0;">@_profileDisplayJson</pre>
+        </div>
+    }
+}
 
 @code {
     [Parameter] public int CharacterId { get; set; }

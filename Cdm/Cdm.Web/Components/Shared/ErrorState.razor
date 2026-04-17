@@ -1,0 +1,23 @@
+@* ErrorState — Error display with optional retry button *@
+
+<div class="cdm-error-state">
+    <div class="cdm-error-icon">⚠️</div>
+    <FluentLabel Typo="Typography.H5" Class="cdm-error-title">@Title</FluentLabel>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <FluentLabel Typo="Typography.Body" Class="cdm-error-message">@Message</FluentLabel>
+    }
+    @if (OnRetry.HasDelegate)
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="@OnRetry">
+            @RetryLabel
+        </FluentButton>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Une erreur est survenue";
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string RetryLabel { get; set; } = "Réessayer";
+    [Parameter] public EventCallback OnRetry { get; set; }
+}

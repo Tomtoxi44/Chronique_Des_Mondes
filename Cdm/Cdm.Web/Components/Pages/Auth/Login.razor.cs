@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
+using Cdm.Web.Resources;
 using Cdm.Web.Services.ApiClients.Base;
 using Cdm.Web.Shared.DTOs.Models;
 using Cdm.Web.Shared.DTOs.ViewModels;
@@ -13,6 +15,7 @@ public partial class Login
     [Inject] private LoginHandler Handler { get; set; } = default!;
     [Inject] private ILogger<Login> Logger { get; set; } = default!;
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
     
     private LoginRequest LoginModel { get; set; } = new();
     private string? ErrorMessage { get; set; }

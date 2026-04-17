@@ -3,6 +3,7 @@
 @using Cdm.Business.Abstraction.DTOs
 @using Cdm.Common.Enums
 @using Cdm.Web.Components.Layout
+@using Cdm.Web.Components.Shared
 @using Cdm.Web.Services.ApiClients
 @using Microsoft.AspNetCore.Authorization
 @layout MainLayout
@@ -10,166 +11,113 @@
 @inject CampaignApiClient CampaignApiClient
 @inject NavigationManager NavigationManager
 @inject IMessageService MessageService
+@inject IStringLocalizer<AppStrings> L
 @rendermode InteractiveServer
 
-<PageTitle>Modifier @(_campaign?.Name ?? "Campagne") - Chronique des Mondes</PageTitle>
+<PageTitle>@L["Campaigns_Edit"] — @L["AppName"]</PageTitle>
 
 @if (_isLoading)
 {
-    <FluentStack Orientation="Orientation.Vertical" 
-                 HorizontalAlignment="HorizontalAlignment.Center"
-                 Style="padding: 48px; gap: 16px;">
-        <FluentProgressRing Style="width: 48px; height: 48px;" />
-        <FluentLabel Typo="Typography.Body">Chargement...</FluentLabel>
-    </FluentStack>
+    <LoadingState Message="@L["Common_Loading"]" />
 }
 else if (_campaign == null)
 {
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" 
-                     HorizontalAlignment="HorizontalAlignment.Center"
-                     Style="padding: 48px; gap: 16px;">
-            <FluentIcon Value="@(new Icons.Regular.Size48.ErrorCircle())" Color="Color.Error" />
-            <FluentLabel Typo="Typography.H5">Campagne introuvable</FluentLabel>
-            <FluentButton Appearance="Appearance.Accent" 
-                          OnClick="@(() => NavigationManager.NavigateTo("/campaigns"))">
-                Retour aux campagnes
-            </FluentButton>
-        </FluentStack>
-    </FluentCard>
+    <ErrorState Title="@L["Campaigns_NotFound"]" Message="@L["Campaigns_NotFoundMessage"]" OnRetry="@(() => NavigationManager.NavigateTo("/campaigns"))" />
 }
 else
 {
-    <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; max-width: 800px; margin: 0 auto;">
-        <!-- Breadcrumbs -->
-        <FluentBreadcrumb>
-            <FluentBreadcrumbItem Href="/">
-                <FluentIcon Value="@(new Icons.Regular.Size16.Home())" Style="margin-right: 4px;" /> Accueil
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem Href="/campaigns">
-                Campagnes
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem Href="@($"/campaigns/{Id}")">
-                @_campaign.Name
-            </FluentBreadcrumbItem>
-            <FluentBreadcrumbItem>
-                Modifier
-            </FluentBreadcrumbItem>
-        </FluentBreadcrumb>
+    <PageHeader Title="@L["Campaigns_Edit"]" Subtitle="@L["Campaigns_EditSubtitle"]">
+        <Actions>
+            <FluentButton Appearance="Appearance.Outline" Href="@($"/campaigns/{Id}")"
+                          IconStart="@(new Icons.Regular.Size20.ArrowLeft())">
+                @L["Common_Back"]
+            </FluentButton>
+        </Actions>
+    </PageHeader>
 
-        <!-- Page Header -->
-        <FluentStack Orientation="Orientation.Vertical" Style="gap: 4px;">
-            <FluentLabel Typo="Typography.H3" Style="color: var(--color-text-primary);">Modifier la Campagne</FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-secondary);">Mettez à jour les informations de votre campagne</FluentLabel>
-        </FluentStack>
+    <div class="cdm-content-card" style="max-width: 800px;">
+        <EditForm Model="@_model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+            <div class="auth-form">
+                <!-- Name -->
+                <div class="auth-form-group">
+                    <FluentTextField @bind-Value="_model.Name"
+                                     Label="@($"{L["Campaigns_Name"]} *")"
+                                     Placeholder="Ex: La Légende du Dragon"
+                                     Required
+                                     Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _model.Name)" />
+                </div>
 
-        <!-- Form Card -->
-        <FluentCard>
-            <FluentStack Orientation="Orientation.Vertical" Style="gap: 24px; padding: 8px;">
-                <EditForm Model="@_model" OnValidSubmit="HandleSubmit">
-                    <DataAnnotationsValidator />
-                    
-                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 20px;">
-                        <!-- Name -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Nom de la campagne <span style="color: var(--color-error-500);">*</span>
-                            </FluentLabel>
-                            <FluentTextField @bind-Value="_model.Name"
-                                             Placeholder="Ex: La Légende du Dragon"
-                                             Required
-                                             Style="width: 100%;" />
-                            <ValidationMessage For="@(() => _model.Name)" />
-                        </FluentStack>
+                <!-- Description -->
+                <div class="auth-form-group">
+                    <FluentTextArea @bind-Value="_model.Description"
+                                    Label="@L["Campaigns_Description"]"
+                                    Placeholder="Décrivez votre campagne..."
+                                    Rows="5"
+                                    Style="width: 100%;" />
+                </div>
 
-                        <!-- Description -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Description
-                            </FluentLabel>
-                            <FluentTextArea @bind-Value="_model.Description"
-                                            Placeholder="Décrivez votre campagne..."
-                                            Rows="5"
-                                            Style="width: 100%;" />
-                            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
-                                Une brève description de votre aventure (optionnel)
-                            </FluentLabel>
-                        </FluentStack>
+                <!-- Status -->
+                <div class="auth-form-group">
+                    <FluentSelect TOption="string" 
+                                  Label="@($"{L["Campaigns_Status"]} *")"
+                                  Value="@(_model.Status.ToString())"
+                                  ValueChanged="@((string value) => _model.Status = Enum.Parse<CampaignStatus>(value))"
+                                  Style="width: 100%;">
+                        <FluentOption Value="@CampaignStatus.Planning.ToString()">📋 @L["Campaigns_Status_Planning"]</FluentOption>
+                        <FluentOption Value="@CampaignStatus.Active.ToString()">✅ @L["Campaigns_Status_Active"]</FluentOption>
+                        <FluentOption Value="@CampaignStatus.OnHold.ToString()">⏸️ @L["Campaigns_Status_OnHold"]</FluentOption>
+                        <FluentOption Value="@CampaignStatus.Completed.ToString()">🏁 @L["Campaigns_Status_Completed"]</FluentOption>
+                        <FluentOption Value="@CampaignStatus.Cancelled.ToString()">❌ @L["Campaigns_Status_Cancelled"]</FluentOption>
+                    </FluentSelect>
+                </div>
 
-                        <!-- Status -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Statut <span style="color: var(--color-error-500);">*</span>
-                            </FluentLabel>
-                            <FluentSelect TOption="string" 
-                                          Value="@(_model.Status.ToString())"
-                                          ValueChanged="@((string value) => _model.Status = Enum.Parse<CampaignStatus>(value))"
-                                          Style="width: 100%;">
-                                <FluentOption Value="@CampaignStatus.Planning.ToString()">📋 En planification</FluentOption>
-                                <FluentOption Value="@CampaignStatus.Active.ToString()">✅ Active</FluentOption>
-                                <FluentOption Value="@CampaignStatus.OnHold.ToString()">⏸️ En pause</FluentOption>
-                                <FluentOption Value="@CampaignStatus.Completed.ToString()">🏁 Terminée</FluentOption>
-                                <FluentOption Value="@CampaignStatus.Cancelled.ToString()">❌ Annulée</FluentOption>
-                            </FluentSelect>
-                        </FluentStack>
+                <!-- Visibility -->
+                <div class="auth-form-group">
+                    <FluentSelect TOption="string" 
+                                  Label="@($"{L["Campaigns_Visibility"]} *")"
+                                  Value="@(_model.Visibility.ToString())"
+                                  ValueChanged="@((string value) => _model.Visibility = Enum.Parse<Visibility>(value))"
+                                  Style="width: 100%;">
+                        <FluentOption Value="@Visibility.Private.ToString()">🔒 Privée</FluentOption>
+                        <FluentOption Value="@Visibility.Public.ToString()">🌍 Publique</FluentOption>
+                    </FluentSelect>
+                </div>
 
-                        <!-- Visibility -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Visibilité <span style="color: var(--color-error-500);">*</span>
-                            </FluentLabel>
-                            <FluentSelect TOption="string" 
-                                          Value="@(_model.Visibility.ToString())"
-                                          ValueChanged="@((string value) => _model.Visibility = Enum.Parse<Visibility>(value))"
-                                          Style="width: 100%;">
-                                <FluentOption Value="@Visibility.Private.ToString()">🔒 Privée (sur invitation uniquement)</FluentOption>
-                                <FluentOption Value="@Visibility.Public.ToString()">🌍 Publique (visible par tous)</FluentOption>
-                            </FluentSelect>
-                        </FluentStack>
+                <!-- Max Players -->
+                <div class="auth-form-group" style="max-width: 200px;">
+                    <FluentNumberField @bind-Value="_model.MaxPlayers"
+                                       Label="@($"{L["Campaigns_MaxPlayers"]} *")"
+                                       Min="1" Max="20"
+                                       Required
+                                       Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _model.MaxPlayers)" />
+                </div>
 
-                        <!-- Max Players -->
-                        <FluentStack Orientation="Orientation.Vertical" Style="gap: 8px;">
-                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">
-                                Nombre maximum de joueurs <span style="color: var(--color-error-500);">*</span>
-                            </FluentLabel>
-                            <FluentNumberField @bind-Value="_model.MaxPlayers"
-                                               Min="1"
-                                               Max="20"
-                                               Required
-                                               Style="width: 200px;" />
-                            <FluentLabel Typo="Typography.Body" Style="color: var(--color-text-muted); font-size: 12px;">
-                                Nombre maximum de joueurs (1-20)
-                            </FluentLabel>
-                            <ValidationMessage For="@(() => _model.MaxPlayers)" />
-                        </FluentStack>
+                <!-- Info -->
+                <FluentMessageBar Title="Information" Intent="MessageIntent.Info">
+                    Le type de jeu ne peut pas être modifié après la création. Type actuel: <strong>@GetGameTypeDisplay()</strong>
+                </FluentMessageBar>
 
-                        <!-- Info: GameType cannot be changed -->
-                        <FluentMessageBar Title="Information" Intent="MessageIntent.Info">
-                            Le type de jeu ne peut pas être modifié après la création. Type actuel: <strong>@GetGameTypeDisplay()</strong>
-                        </FluentMessageBar>
-
-                        <!-- Action Buttons -->
-                        <FluentStack Orientation="Orientation.Horizontal" 
-                                     HorizontalAlignment="HorizontalAlignment.End"
-                                     Style="gap: 12px; margin-top: 8px;">
-                            <FluentButton Appearance="Appearance.Outline"
-                                          OnClick="@(() => NavigationManager.NavigateTo($"/campaigns/{Id}"))"
-                                          Disabled="@_isSubmitting">
-                                Annuler
-                            </FluentButton>
-                            <FluentButton Appearance="Appearance.Accent"
-                                          Type="ButtonType.Submit"
-                                          Loading="@_isSubmitting"
-                                          Disabled="@_isSubmitting"
-                                          IconStart="@(new Icons.Regular.Size20.Save())">
-                                Enregistrer
-                            </FluentButton>
-                        </FluentStack>
-                    </FluentStack>
-                </EditForm>
-            </FluentStack>
-        </FluentCard>
-    </FluentStack>
+                <!-- Action Buttons -->
+                <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px;">
+                    <FluentButton Appearance="Appearance.Outline"
+                                  OnClick="@(() => NavigationManager.NavigateTo($"/campaigns/{Id}"))"
+                                  Disabled="@_isSubmitting">
+                        @L["Common_Cancel"]
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent"
+                                  Type="ButtonType.Submit"
+                                  Loading="@_isSubmitting"
+                                  Disabled="@_isSubmitting"
+                                  IconStart="@(new Icons.Regular.Size20.Save())">
+                        @L["Common_Save"]
+                    </FluentButton>
+                </div>
+            </div>
+        </EditForm>
+    </div>
 }
 
 @code {
