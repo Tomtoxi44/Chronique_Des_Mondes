@@ -1,51 +1,33 @@
 @page "/"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.FluentUI.AspNetCore.Components
 
 <PageTitle>Accueil - Chronique des Mondes</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <div class="home-page">
-            <div class="welcome-section">
-                <h1>Bienvenue, @context.User.Identity?.Name !</h1>
-                <p>Votre nouvelle application redesignée</p>
-            </div>
-        </div>
+        <FluentStack Orientation="Orientation.Vertical"
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     Style="padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; text-align: center;">
+            <FluentLabel Typo="Typography.PageTitle" Style="margin-bottom: 1rem;">
+                Bienvenue, @context.User.Identity?.Name !
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">
+                Votre aventure commence ici.
+            </FluentLabel>
+        </FluentStack>
     </Authorized>
-    
+
     <NotAuthorized>
-        <div class="home-page">
-            <div class="welcome-section">
-                <h1>Chronique des Mondes</h1>
-                <p>Veuillez vous connecter pour continuer</p>
-            </div>
-        </div>
+        <FluentStack Orientation="Orientation.Vertical"
+                     HorizontalAlignment="HorizontalAlignment.Center"
+                     Style="padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; text-align: center;">
+            <FluentLabel Typo="Typography.PageTitle" Style="margin-bottom: 1rem;">
+                Chronique des Mondes
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">
+                Veuillez vous connecter pour continuer
+            </FluentLabel>
+        </FluentStack>
     </NotAuthorized>
 </AuthorizeView>
-
-<style>
-    .home-page {
-        padding: 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .welcome-section {
-        text-align: center;
-        padding: 4rem 2rem;
-    }
-
-    .welcome-section h1 {
-        font-size: 2.5rem;
-        color: var(--color-text-primary);
-        margin-bottom: 1rem;
-    }
-
-    .welcome-section p {
-        font-size: 1.125rem;
-        color: var(--color-text-secondary);
-    }
-</style>
-
-@code {
-}

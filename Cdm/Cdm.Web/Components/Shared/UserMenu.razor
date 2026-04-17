@@ -1,52 +1,64 @@
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.FluentUI.AspNetCore.Components
 @using Cdm.Web.Services.State
 @rendermode InteractiveServer
 
-<div class="user-menu">
-    <AuthorizeView>
-        <Authorized>
-            <div class="user-menu-trigger" @onclick="ToggleDropdown">
-                <i class="bi bi-person-circle"></i>
-                <span class="user-menu-name">@context.User.Identity?.Name</span>
-                <i class="bi bi-chevron-down"></i>
-            </div>
-            
-            @if (isDropdownOpen)
+<AuthorizeView>
+    <Authorized>
+        <div style="position: relative; display: inline-flex;" @onclick:stopPropagation>
+            <FluentButton Id="user-menu-btn" Appearance="Appearance.Stealth" OnClick="ToggleDropdown"
+                          Title="@context.User.Identity?.Name">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 8px;">
+                    <FluentPersona Name="@context.User.Identity?.Name"
+                                   Initials="@GetInitials(context)"
+                                   Size="28px" />
+                    <FluentIcon Value="@(new Icons.Regular.Size12.ChevronDown())" />
+                </FluentStack>
+            </FluentButton>
+
+            @if (_isOpen)
             {
-                <div class="user-menu-dropdown">
-                    <div class="user-menu-header">
-                        <strong>@context.User.Identity?.Name</strong>
-                        <small>@GetUserEmail(context)</small>
-                    </div>
-                    
-                    <div class="user-menu-divider"></div>
-                    
-                    <a href="/profile" class="user-menu-item" @onclick="CloseDropdown">
-                        <i class="bi bi-person"></i>
-                        <span>Mon Profil</span>
-                    </a>
-                    
-                    <a href="/settings" class="user-menu-item" @onclick="CloseDropdown">
-                        <i class="bi bi-gear"></i>
-                        <span>Paramètres</span>
-                    </a>
-                    
-                    <div class="user-menu-divider"></div>
-                    
-                    <button class="user-menu-item user-menu-logout" @onclick="HandleLogout">
-                        <i class="bi bi-box-arrow-right"></i>
-                        <span>Déconnexion</span>
-                    </button>
-                </div>
-                
-                <div class="user-menu-overlay" @onclick="CloseDropdown"></div>
+                <FluentCard Style="position: absolute; top: calc(100% + 4px); right: 0; min-width: 220px; z-index: 10500; padding: 8px 0;">
+                    <FluentStack Orientation="Orientation.Vertical" Style="gap: 0; width: 100%;">
+                        <!-- User info -->
+                        <FluentStack Orientation="Orientation.Vertical" Style="padding: 12px 16px; gap: 2px;">
+                            <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@context.User.Identity?.Name</FluentLabel>
+                            <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; font-size: 12px;">@GetUserEmail(context)</FluentLabel>
+                        </FluentStack>
+
+                        <FluentDivider Style="width: 100%;" />
+
+                        <!-- Menu items -->
+                        <FluentAnchor Href="/profile" Appearance="Appearance.Stealth" Style="width: 100%; justify-content: flex-start;">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Slot="start" />
+                            Mon Profil
+                        </FluentAnchor>
+                        <FluentAnchor Href="/settings" Appearance="Appearance.Stealth" Style="width: 100%; justify-content: flex-start;">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Settings())" Slot="start" />
+                            Paramètres
+                        </FluentAnchor>
+
+                        <FluentDivider Style="width: 100%;" />
+
+                        <FluentButton Appearance="Appearance.Stealth" OnClick="HandleLogout"
+                                      Style="width: 100%; justify-content: flex-start; color: var(--color-error-500);">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.ArrowExit())" Slot="start" Color="Color.Error" />
+                            Déconnexion
+                        </FluentButton>
+                    </FluentStack>
+                </FluentCard>
             }
-        </Authorized>
-        <NotAuthorized>
-            <div class="user-menu-auth-buttons">
-                <a href="/login" class="btn btn-outline-primary btn-sm">Connexion</a>
-                <a href="/register" class="btn btn-primary btn-sm">Inscription</a>
-            </div>
-        </NotAuthorized>
-    </AuthorizeView>
-</div>
+        </div>
+
+        @if (_isOpen)
+        {
+            <div style="position: fixed; inset: 0; z-index: 10499;" @onclick="CloseDropdown"></div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+            <FluentAnchor Href="/login" Appearance="Appearance.Outline">Connexion</FluentAnchor>
+            <FluentAnchor Href="/register" Appearance="Appearance.Accent">Inscription</FluentAnchor>
+        </FluentStack>
+    </NotAuthorized>
+</AuthorizeView>

@@ -1,278 +1,124 @@
 @using Cdm.Business.Abstraction.DTOs
 @using Cdm.Web.Services.ApiClients
 @using Cdm.Common.Enums
+@using Microsoft.FluentUI.AspNetCore.Components
 @inject NotificationApiClient NotificationClient
 @inject NavigationManager NavigationManager
 
-<div class="notification-bell-wrapper" @onclick:stopPropagation>
-    <button class="topbar-icon-btn notification-bell-btn" @onclick="TogglePanel" title="Notifications">
-        <i class="bi bi-bell@(unreadCount > 0 ? "-fill" : "")"></i>
+<div style="position: relative; display: inline-flex;" @onclick:stopPropagation>
+    <FluentButton Appearance="Appearance.Stealth" OnClick="TogglePanel" Title="Notifications">
         @if (unreadCount > 0)
         {
-            <span class="notification-badge">@(unreadCount > 99 ? "99+" : unreadCount.ToString())</span>
+            <FluentIcon Value="@(new Icons.Filled.Size20.Alert())" />
         }
-    </button>
+        else
+        {
+            <FluentIcon Value="@(new Icons.Regular.Size20.Alert())" />
+        }
+        @if (unreadCount > 0)
+        {
+            <FluentBadge Appearance="Appearance.Accent"
+                         Style="position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; font-size: 10px; padding: 0 4px;">
+                @(unreadCount > 99 ? "99+" : unreadCount.ToString())
+            </FluentBadge>
+        }
+    </FluentButton>
 
     @if (isOpen)
     {
-        <div class="notification-panel">
-            <div class="notification-panel-header">
-                <span class="notification-panel-title">Notifications</span>
+        <FluentCard Style="position: absolute; top: calc(100% + 8px); right: 0; width: 380px; max-height: 480px; z-index: 9999; display: flex; flex-direction: column; overflow: hidden;">
+            <!-- Header -->
+            <FluentStack Orientation="Orientation.Horizontal"
+                         VerticalAlignment="VerticalAlignment.Center"
+                         HorizontalAlignment="HorizontalAlignment.SpaceBetween"
+                         Style="padding: 12px 16px; border-bottom: 1px solid var(--neutral-stroke-divider-rest);">
+                <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">Notifications</FluentLabel>
                 @if (unreadCount > 0)
                 {
-                    <button class="notification-mark-all-btn" @onclick="MarkAllAsRead" disabled="@isLoading">
+                    <FluentButton Appearance="Appearance.Stealth" OnClick="MarkAllAsRead" Disabled="@isLoading"
+                                  Style="font-size: 12px;">
                         Tout marquer comme lu
-                    </button>
+                    </FluentButton>
                 }
-            </div>
+            </FluentStack>
 
-            <div class="notification-list">
+            <!-- List -->
+            <div style="overflow-y: auto; flex: 1;">
                 @if (isLoading)
                 {
-                    <div class="notification-empty">
-                        <i class="bi bi-hourglass-split"></i>
-                        <span>Chargement...</span>
-                    </div>
+                    <FluentStack Orientation="Orientation.Vertical"
+                                 HorizontalAlignment="HorizontalAlignment.Center"
+                                 VerticalAlignment="VerticalAlignment.Center"
+                                 Style="padding: 40px 16px; gap: 8px;">
+                        <FluentProgress />
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; font-size: 12px;">Chargement...</FluentLabel>
+                    </FluentStack>
                 }
                 else if (!notifications.Any())
                 {
-                    <div class="notification-empty">
-                        <i class="bi bi-bell-slash"></i>
-                        <span>Aucune notification</span>
-                    </div>
+                    <FluentStack Orientation="Orientation.Vertical"
+                                 HorizontalAlignment="HorizontalAlignment.Center"
+                                 VerticalAlignment="VerticalAlignment.Center"
+                                 Style="padding: 40px 16px; gap: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Alert())" Color="Color.Neutral" Style="opacity: 0.4;" />
+                        <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; font-size: 12px;">Aucune notification</FluentLabel>
+                    </FluentStack>
                 }
                 else
                 {
                     @foreach (var notif in notifications)
                     {
-                        <div class="notification-item @(notif.IsRead ? "" : "unread")" @onclick="() => OnNotificationClick(notif)">
-                            <div class="notification-item-icon @GetTypeClass(notif.Type)">
-                                <i class="bi @GetTypeIcon(notif.Type)"></i>
-                            </div>
-                            <div class="notification-item-content">
-                                <div class="notification-item-title">@notif.Title</div>
-                                <div class="notification-item-message">@notif.Message</div>
-                                <div class="notification-item-time">@GetRelativeTime(notif.CreatedAt)</div>
-                            </div>
-                            <button class="notification-item-delete" @onclick:stopPropagation @onclick="() => DeleteNotification(notif.Id)" title="Supprimer">
-                                <i class="bi bi-x"></i>
-                            </button>
+                        <div class="notif-item @(notif.IsRead ? "" : "unread")" @onclick="() => OnNotificationClick(notif)">
+                            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 10px; padding: 12px 16px; align-items: flex-start;">
+                                @GetNotifIconFragment(notif.Type)
+                                <FluentStack Orientation="Orientation.Vertical" Style="flex: 1; min-width: 0; gap: 2px;">
+                                    <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold" Style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        @notif.Title
+                                    </FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7; font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        @notif.Message
+                                    </FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.5; font-size: 11px;">
+                                        @GetRelativeTime(notif.CreatedAt)
+                                    </FluentLabel>
+                                </FluentStack>
+                                <FluentButton Appearance="Appearance.Stealth" class="notif-delete"
+                                              OnClick="@(() => DeleteNotification(notif.Id))"
+                                              Title="Supprimer"
+                                              IconStart="@(new Icons.Regular.Size16.Dismiss())" />
+                            </FluentStack>
                         </div>
                     }
                 }
             </div>
-        </div>
+        </FluentCard>
     }
 </div>
 
 @if (isOpen)
 {
-    <div class="notification-overlay" @onclick="ClosePanel"></div>
+    <div style="position: fixed; inset: 0; z-index: 9998;" @onclick="ClosePanel"></div>
 }
 
 <style>
-    .notification-bell-wrapper {
-        position: relative;
-        display: inline-flex;
-    }
-
-    .notification-bell-btn {
-        position: relative;
-    }
-
-    .notification-badge {
-        position: absolute;
-        top: -2px;
-        right: -2px;
-        background: var(--color-danger, #e74c3c);
-        color: white;
-        font-size: 10px;
-        font-weight: 700;
-        min-width: 18px;
-        height: 18px;
-        border-radius: 9px;
-        padding: 0 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        pointer-events: none;
-    }
-
-    .notification-panel {
-        position: absolute;
-        top: calc(100% + 8px);
-        right: 0;
-        width: 360px;
-        max-height: 480px;
-        background: var(--card-bg, #1e2030);
-        border: 1px solid var(--border-color, #3a3f5c);
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-    .notification-panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--border-color, #3a3f5c);
-    }
-
-    .notification-panel-title {
-        font-weight: 700;
-        font-size: 15px;
-        color: var(--text-primary, #e2e8f0);
-    }
-
-    .notification-mark-all-btn {
-        background: none;
-        border: none;
-        color: var(--color-primary, #7c6ae8);
-        cursor: pointer;
-        font-size: 12px;
-        padding: 4px 8px;
-        border-radius: 6px;
-        transition: background 0.15s;
-    }
-
-    .notification-mark-all-btn:hover {
-        background: rgba(124, 106, 232, 0.1);
-    }
-
-    .notification-list {
-        overflow-y: auto;
-        flex: 1;
-    }
-
-    .notification-empty {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 40px 16px;
-        color: var(--text-muted, #718096);
-        font-size: 14px;
-    }
-
-    .notification-empty i {
-        font-size: 32px;
-        opacity: 0.5;
-    }
-
-    .notification-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border-color, #3a3f5c);
+    .notif-item {
         cursor: pointer;
         transition: background 0.15s;
+        border-bottom: 1px solid var(--neutral-stroke-divider-rest, rgba(255,255,255,0.08));
         position: relative;
     }
-
-    .notification-item:last-child {
-        border-bottom: none;
-    }
-
-    .notification-item:hover {
-        background: rgba(255,255,255,0.03);
-    }
-
-    .notification-item.unread {
-        background: rgba(124, 106, 232, 0.06);
-    }
-
-    .notification-item.unread::before {
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--neutral-fill-stealth-hover, rgba(255,255,255,0.04)); }
+    .notif-item.unread { background: var(--accent-fill-rest, rgba(99,102,241,0.06)); opacity: 1; }
+    .notif-item.unread::before {
         content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
+        position: absolute; left: 0; top: 0; bottom: 0;
         width: 3px;
-        background: var(--color-primary, #7c6ae8);
+        background: var(--accent-fill-rest);
         border-radius: 0 2px 2px 0;
     }
-
-    .notification-item-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
-    }
-
-    .notification-item-icon.type-info { background: rgba(52, 152, 219, 0.15); color: #3498db; }
-    .notification-item-icon.type-achievement { background: rgba(241, 196, 15, 0.15); color: #f1c40f; }
-    .notification-item-icon.type-campaign { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
-    .notification-item-icon.type-system { background: rgba(149, 165, 166, 0.15); color: #95a5a6; }
-
-    .notification-item-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .notification-item-title {
-        font-weight: 600;
-        font-size: 13px;
-        color: var(--text-primary, #e2e8f0);
-        margin-bottom: 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .notification-item-message {
-        font-size: 12px;
-        color: var(--text-muted, #718096);
-        line-height: 1.4;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
-
-    .notification-item-time {
-        font-size: 11px;
-        color: var(--text-muted, #718096);
-        margin-top: 4px;
-        opacity: 0.7;
-    }
-
-    .notification-item-delete {
-        background: none;
-        border: none;
-        color: var(--text-muted, #718096);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        font-size: 14px;
-        opacity: 0;
-        transition: opacity 0.15s, background 0.15s;
-        flex-shrink: 0;
-    }
-
-    .notification-item:hover .notification-item-delete {
-        opacity: 1;
-    }
-
-    .notification-item-delete:hover {
-        background: rgba(231, 76, 60, 0.15);
-        color: #e74c3c;
-    }
-
-    .notification-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 9998;
-    }
+    .notif-delete { opacity: 0; transition: opacity 0.15s; }
+    .notif-item:hover .notif-delete { opacity: 1; }
 </style>
 
 @code {
@@ -285,7 +131,6 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadUnreadCount();
-        // Refresh unread count every 60 seconds
         _refreshTimer = new System.Threading.Timer(async _ =>
         {
             await InvokeAsync(async () =>
@@ -313,10 +158,7 @@
         }
     }
 
-    private void ClosePanel()
-    {
-        isOpen = false;
-    }
+    private void ClosePanel() => isOpen = false;
 
     private async Task OnNotificationClick(NotificationDto notif)
     {
@@ -326,7 +168,6 @@
             notif.IsRead = true;
             unreadCount = Math.Max(0, unreadCount - 1);
         }
-
         if (!string.IsNullOrEmpty(notif.ActionUrl))
         {
             isOpen = false;
@@ -337,8 +178,7 @@
     private async Task MarkAllAsRead()
     {
         await NotificationClient.MarkAllAsReadAsync();
-        foreach (var n in notifications)
-            n.IsRead = true;
+        foreach (var n in notifications) n.IsRead = true;
         unreadCount = 0;
     }
 
@@ -349,25 +189,24 @@
         unreadCount = notifications.Count(n => !n.IsRead);
     }
 
-    private string GetTypeIcon(NotificationType type) => type switch
+    private RenderFragment GetNotifIconFragment(NotificationType type) => type switch
     {
-        NotificationType.CampaignInvite => "bi-map",
-        NotificationType.AchievementUnlocked => "bi-trophy",
-        NotificationType.SessionStarting => "bi-play-circle",
-        NotificationType.TradeProposed => "bi-arrow-left-right",
-        NotificationType.MessageMention => "bi-chat-quote",
-        NotificationType.CombatTurn => "bi-sword",
-        NotificationType.SystemAnnouncement => "bi-info-circle",
-        NotificationType.CharacterUpdate => "bi-person-badge",
-        _ => "bi-bell"
+        NotificationType.CampaignInvite => @<FluentIcon Value="@(new Icons.Regular.Size20.Map())" Color="Color.Success" Style="flex-shrink: 0; margin-top: 2px;" />,
+        NotificationType.AchievementUnlocked => @<FluentIcon Value="@(new Icons.Regular.Size20.Trophy())" Color="Color.Warning" Style="flex-shrink: 0; margin-top: 2px;" />,
+        NotificationType.SessionStarting => @<FluentIcon Value="@(new Icons.Regular.Size20.Play())" Color="Color.Info" Style="flex-shrink: 0; margin-top: 2px;" />,
+        NotificationType.TradeProposed => @<FluentIcon Value="@(new Icons.Regular.Size20.ArrowSwap())" Color="Color.Neutral" Style="flex-shrink: 0; margin-top: 2px;" />,
+        NotificationType.MessageMention => @<FluentIcon Value="@(new Icons.Regular.Size20.Chat())" Color="Color.Neutral" Style="flex-shrink: 0; margin-top: 2px;" />,
+        NotificationType.SystemAnnouncement => @<FluentIcon Value="@(new Icons.Regular.Size20.Info())" Color="Color.Info" Style="flex-shrink: 0; margin-top: 2px;" />,
+        NotificationType.CharacterUpdate => @<FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Neutral" Style="flex-shrink: 0; margin-top: 2px;" />,
+        _ => @<FluentIcon Value="@(new Icons.Regular.Size20.Alert())" Color="Color.Neutral" Style="flex-shrink: 0; margin-top: 2px;" />
     };
 
-    private string GetTypeClass(NotificationType type) => type switch
+    private Color GetNotifColor(NotificationType type) => type switch
     {
-        NotificationType.CampaignInvite => "type-campaign",
-        NotificationType.AchievementUnlocked => "type-achievement",
-        NotificationType.SessionStarting or NotificationType.CombatTurn => "type-info",
-        _ => "type-system"
+        NotificationType.CampaignInvite => Color.Success,
+        NotificationType.AchievementUnlocked => Color.Warning,
+        NotificationType.SessionStarting or NotificationType.CombatTurn => Color.Info,
+        _ => Color.Neutral
     };
 
     private string GetRelativeTime(DateTime dt)

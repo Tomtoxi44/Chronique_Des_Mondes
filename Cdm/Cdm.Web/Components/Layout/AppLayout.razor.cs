@@ -1,92 +1,50 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.FluentUI.AspNetCore.Components;
+using Cdm.Web.Services;
 
 namespace Cdm.Web.Components.Layout;
 
-/// <summary>
-/// Application layout component code-behind.
-/// </summary>
-public partial class AppLayout
+public partial class AppLayout : IDisposable
 {
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
-    private bool isCollapsed = false;
-    private bool isMobileOpen = false;
-    private bool isDarkTheme = true;
+    [Inject]
+    private ThemeStateService ThemeService { get; set; } = default!;
 
-    /// <summary>
-    /// Toggles the sidebar collapsed state.
-    /// </summary>
-    private void ToggleSidebar()
+    private bool _sidebarExpanded = true;
+    private bool _mobileOpen = false;
+    private DesignThemeModes _themeMode = DesignThemeModes.Dark;
+
+    protected override void OnInitialized()
     {
-        this.isCollapsed = !this.isCollapsed;
+        ThemeService.OnThemeChanged += OnThemeChanged;
     }
 
-    /// <summary>
-    /// Toggles the mobile sidebar visibility.
-    /// </summary>
-    private void ToggleMobileSidebar()
+    private void OnThemeChanged()
     {
-        this.isMobileOpen = !this.isMobileOpen;
+        InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>
-    /// Closes the mobile sidebar.
-    /// </summary>
-    private void CloseMobileSidebar()
-    {
-        this.isMobileOpen = false;
-    }
-
-    /// <summary>
-    /// Toggles the theme between dark and light.
-    /// </summary>
     private void ToggleTheme()
     {
-        this.isDarkTheme = !this.isDarkTheme;
+        _themeMode = _themeMode == DesignThemeModes.Dark
+            ? DesignThemeModes.Light
+            : DesignThemeModes.Dark;
     }
 
-    /// <summary>
-    /// Determines if the given path matches the current navigation path.
-    /// </summary>
-    /// <param name="href">The path to check.</param>
-    /// <returns>True if the path is active, false otherwise.</returns>
-    private bool IsActive(string href)
+    private void ToggleMobile()
     {
-        var currentUri = this.NavigationManager.Uri;
-        var baseUri = this.NavigationManager.BaseUri;
-        var relativePath = currentUri.Replace(baseUri, "/").TrimEnd('/');
-        
-        if (string.IsNullOrEmpty(relativePath)) relativePath = "/";
-        
-        if (href == "/")
-        {
-            return relativePath == "/";
-        }
-        
-        return relativePath.StartsWith(href, StringComparison.OrdinalIgnoreCase);
+        _mobileOpen = !_mobileOpen;
     }
 
-    /// <summary>
-    /// Gets the page title based on the current path.
-    /// </summary>
-    /// <returns>The page title string.</returns>
-    private string GetPageTitle()
+    private void CloseMobile()
     {
-        var currentUri = this.NavigationManager.Uri;
-        var baseUri = this.NavigationManager.BaseUri;
-        var relativePath = currentUri.Replace(baseUri, "/").TrimEnd('/').ToLower();
+        _mobileOpen = false;
+    }
 
-        return relativePath switch
-        {
-            "/" or "" => "Tableau de bord",
-            "/characters" => "Mes Personnages",
-            "/campaigns" => "Mes Campagnes",
-            "/campaigns/create" => "Nouvelle Campagne",
-            "/dice" => "Lanceur de Dés",
-            "/profile" => "Mon Profil",
-            "/settings" => "Paramètres",
-            _ => "Chronique des Mondes"
-        };
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= OnThemeChanged;
     }
 }

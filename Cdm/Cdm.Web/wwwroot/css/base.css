@@ -49,15 +49,11 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
   font-size: var(--font-size-h1);
   font-weight: var(--font-weight-bold);
-  background: var(--gradient-gold);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--neutral-foreground-rest);
 }
 
 h2 {
   font-size: var(--font-size-h2);
-  color: var(--color-gold-300);
 }
 
 h3 {
@@ -89,13 +85,13 @@ p {
 }
 
 a {
-  color: var(--color-gold-300);
+  color: var(--accent-foreground-rest, var(--color-primary));
   text-decoration: none;
   transition: color var(--duration-fast) var(--ease-out);
 }
 
 a:hover {
-  color: var(--color-gold-500);
+  color: var(--accent-foreground-hover, var(--color-primary-hover));
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -123,8 +119,8 @@ code {
    SÉLECTION DE TEXTE
    ============================================ */
 ::selection {
-  background-color: var(--color-gold-500);
-  color: var(--color-bg-primary);
+  background-color: var(--accent-fill-rest);
+  color: var(--foreground-on-accent-rest);
 }
 
 /* ============================================
@@ -135,7 +131,7 @@ code {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-gold-500);
+  outline: 2px solid var(--accent-fill-rest);
   outline-offset: 2px;
   box-shadow: var(--shadow-focus);
 }
@@ -153,19 +149,19 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-bronze-500);
+  background: var(--neutral-stroke-rest);
   border-radius: var(--border-radius-full);
   border: 2px solid var(--color-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gold-500);
+  background: var(--accent-fill-rest);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-bronze-500) var(--color-bg-secondary);
+  scrollbar-color: var(--neutral-stroke-rest) var(--color-bg-secondary);
 }
 
 /* ============================================
@@ -193,8 +189,7 @@ code {
 .text-secondary { color: var(--color-text-secondary) !important; }
 .text-tertiary { color: var(--color-text-tertiary) !important; }
 .text-muted { color: var(--color-text-muted) !important; }
-.text-gold { color: var(--color-gold-500) !important; }
-.text-crimson { color: var(--color-crimson-500) !important; }
+.text-accent { color: var(--accent-fill-rest) !important; }
 .text-success { color: var(--color-success-500) !important; }
 .text-warning { color: var(--color-warning-500) !important; }
 .text-error { color: var(--color-error-500) !important; }

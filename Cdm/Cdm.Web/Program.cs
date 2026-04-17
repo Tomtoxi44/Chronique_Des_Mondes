@@ -20,6 +20,8 @@ builder.Services.AddRazorComponents()
 // Add Fluent UI
 builder.Services.AddFluentUIComponents();
 
+builder.Services.AddScoped<ThemeStateService>();
+
 builder.Services.AddOutputCache();
 
 // Authentication & Authorization
