@@ -17,6 +17,7 @@ public partial class MainLayout : IDisposable
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private bool IsCollapsed = false;
+    private bool _wasAutoCollapsed = false;
     private bool IsMobileOpen = false;
     private bool IsDarkMode = true;
     private bool IsDropdownOpen = false;
@@ -56,12 +57,23 @@ public partial class MainLayout : IDisposable
 
     private void OnContextChanged()
     {
+        if (NavContext.HasContext && !IsCollapsed)
+        {
+            IsCollapsed = true;
+            _wasAutoCollapsed = true;
+        }
+        else if (!NavContext.HasContext && _wasAutoCollapsed)
+        {
+            IsCollapsed = false;
+            _wasAutoCollapsed = false;
+        }
         InvokeAsync(StateHasChanged);
     }
 
     private void ToggleSidebar()
     {
         IsCollapsed = !IsCollapsed;
+        _wasAutoCollapsed = false; // user manual override clears auto flag
         if (IsMobileOpen) IsMobileOpen = false;
     }
 

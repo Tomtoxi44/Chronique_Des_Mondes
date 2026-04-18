@@ -51,6 +51,11 @@ public partial class WorldDetail : IDisposable
     private bool ShowNewChapterForm = false;
     private CreateChapterDto NewChapter = new();
 
+    // New campaign (inline)
+    private bool ShowNewCampaignForm = false;
+    private CreateCampaignDto NewCampaign = new();
+    private string? CampaignCreateError;
+
     // Chapter detail
     private ChapterDto? SelectedChapter;
     private string ChapterContentDraft = string.Empty;
@@ -133,6 +138,8 @@ public partial class WorldDetail : IDisposable
 
         if (Section == "description")
             DescriptionDraft = World.Description ?? string.Empty;
+
+        ShowNewCampaignForm = Section == "new-campaign";
 
         if (Section == "events" && !IsLoadingEvents && WorldEvents.Count == 0)
             await LoadEventsAsync();
@@ -240,7 +247,7 @@ public partial class WorldDetail : IDisposable
 
         items.Add(new SecondaryNavItem(
             L["Campaigns_Create"],
-            $"/campaigns/create?worldId={WorldId}",
+            $"/worlds/{WorldId}?section=new-campaign",
             "bi-plus-circle"
         ));
 
@@ -351,6 +358,28 @@ public partial class WorldDetail : IDisposable
             ShowNewChapterForm = false;
             NewChapter = new CreateChapterDto();
             SetSecondaryNav();
+        }
+        IsSaving = false;
+    }
+
+    private async Task CreateCampaignInline()
+    {
+        if (World == null) return;
+        IsSaving = true;
+        CampaignCreateError = null;
+        NewCampaign.WorldId = WorldId;
+        var result = await CampaignClient.CreateCampaignAsync(NewCampaign);
+        if (result != null)
+        {
+            Campaigns.Add(result);
+            ShowNewCampaignForm = false;
+            NewCampaign = new CreateCampaignDto();
+            SetSecondaryNav();
+            Nav.NavigateTo($"/worlds/{WorldId}?campaignId={result.Id}");
+        }
+        else
+        {
+            CampaignCreateError = "Erreur lors de la création de la campagne.";
         }
         IsSaving = false;
     }

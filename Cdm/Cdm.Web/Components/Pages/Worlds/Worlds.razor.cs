@@ -42,6 +42,8 @@ public partial class Worlds
         }
     }
 
+    private void NavigateToWorld(int worldId) => Nav.NavigateTo($"/worlds/{worldId}");
+
     private void ConfirmDelete(WorldDto world)
     {
         WorldToDelete = world;
