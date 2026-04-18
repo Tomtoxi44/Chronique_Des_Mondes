@@ -71,30 +71,33 @@ public class AuthService : IAuthService
 
             this.logger.LogInformation("User registered successfully with ID: {UserId}", user.Id);
 
-            // Assign default "Player" role
-            var playerRole = await this.context.Roles.FirstOrDefaultAsync(r => r.Name == "Player");
-            if (playerRole != null)
-            {
-                var userRole = new UserRole
-                {
-                    UserId = user.Id,
-                    RoleId = playerRole.Id,
-                    AssignedAt = DateTime.UtcNow
-                };
-                this.context.UserRoles.Add(userRole);
-                await this.context.SaveChangesAsync();
-                this.logger.LogInformation("Player role assigned to user {UserId}", user.Id);
-            }
-
-            // Get user roles for JWT token
-            var roles = await this.context.UserRoles
-                .Where(ur => ur.UserId == user.Id)
-                .Include(ur => ur.Role)
-                .Select(ur => ur.Role.Name)
+            // Assign default roles: Player + GameMaster (all registered users can manage their own campaigns)
+            var roles = await this.context.Roles
+                .Where(r => r.Name == "Player" || r.Name == "GameMaster")
                 .ToListAsync();
 
+            foreach (var role in roles)
+            {
+                this.context.UserRoles.Add(new UserRole
+                {
+                    UserId = user.Id,
+                    RoleId = role.Id,
+                    AssignedAt = DateTime.UtcNow
+                });
+            }
+
+            if (roles.Count > 0)
+            {
+                await this.context.SaveChangesAsync();
+                this.logger.LogInformation("Roles [{Roles}] assigned to user {UserId}",
+                    string.Join(", ", roles.Select(r => r.Name)), user.Id);
+            }
+
+            // Reuse already-loaded roles to generate JWT token (avoids a second DB query)
+            var roleNames = roles.Select(r => r.Name).ToList();
+
             // Generate JWT token with roles
-            var token = this.jwtService.GenerateToken(user.Id, user.Email, roles);
+            var token = this.jwtService.GenerateToken(user.Id, user.Email, roleNames);
 
             // Send welcome email (optional)
             if (this.emailService != null)
