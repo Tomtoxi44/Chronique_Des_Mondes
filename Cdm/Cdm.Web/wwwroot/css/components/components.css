@@ -1163,6 +1163,59 @@ textarea.form-control {
   border-color: var(--theme-card-border, var(--color-border));
 }
 
+/* Drag-and-drop chapter list */
+.chapter-drag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chapter-drag-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+  cursor: grab;
+}
+
+.chapter-drag-row:active {
+  cursor: grabbing;
+}
+
+.chapter-drag-row.drag-over {
+  border-color: var(--theme-primary, var(--color-primary));
+  background: var(--theme-badge-bg, rgba(99, 102, 241, 0.1));
+}
+
+.drag-handle {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  padding: var(--spacing-sm) var(--spacing-xs) var(--spacing-sm) var(--spacing-sm);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.chapter-drag-row:hover .drag-handle {
+  opacity: 1;
+}
+
+.chapter-drag-link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 0;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.chapter-drag-link:hover {
+  color: var(--color-text-primary);
+}
+
 /* Invite section */
 .invite-row {
   display: flex;

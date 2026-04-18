@@ -354,7 +354,13 @@ else
                 <!-- Chapitres -->
                 <div class="cdm-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                        <h3 class="card-title">Chapitres</h3>
+                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                            <h3 class="card-title">Chapitres</h3>
+                            @if (IsReordering)
+                            {
+                                <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Enregistrement...</span>
+                            }
+                        </div>
                         <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
                             <i class="bi bi-plus"></i>
                             @L["Chapters_Create"]
@@ -363,22 +369,37 @@ else
 
                     @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var chapters) && chapters.Count > 0)
                     {
-                        @foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
-                        {
-                            var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
-                            <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&chapterId=@ch.Id" class="chapter-list-row">
-                                <i class="bi @chIcon" style="color: @(ch.IsCompleted ? "var(--color-success)" : ch.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-text-muted)");"></i>
-                                <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
-                                @if (ch.IsCompleted)
-                                {
-                                    <span class="status-badge status-completed">Terminé</span>
-                                }
-                                else if (ch.IsActive)
-                                {
-                                    <span class="status-badge status-active">En cours</span>
-                                }
-                            </a>
-                        }
+                        <div class="chapter-drag-list">
+                            @foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
+                            {
+                                var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
+                                var isDragOver = _dragOverChapterId == ch.Id;
+                                <div class="chapter-drag-row @(isDragOver ? "drag-over" : "")"
+                                     draggable="true"
+                                     @ondragstart="() => OnChapterDragStart(ch)"
+                                     @ondragover:preventDefault
+                                     @ondragover="() => OnChapterDragOver(ch)"
+                                     @ondragleave="OnChapterDragLeave"
+                                     @ondrop="() => OnChapterDrop(ch)">
+                                    <i class="bi bi-grip-vertical drag-handle"></i>
+                                    <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&chapterId=@ch.Id" class="chapter-drag-link">
+                                        <i class="bi @chIcon" style="color: @(ch.IsCompleted ? "var(--color-success)" : ch.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-text-muted)");"></i>
+                                        <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
+                                        @if (ch.IsCompleted)
+                                        {
+                                            <span class="status-badge status-completed">Terminé</span>
+                                        }
+                                        else if (ch.IsActive)
+                                        {
+                                            <span class="status-badge status-active">En cours</span>
+                                        }
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-sm);">
+                            <i class="bi bi-grip-vertical"></i> Glisser-déposer pour réordonner
+                        </p>
                     }
                     else
                     {
@@ -402,9 +423,15 @@ else
 
             <div style="max-width: 480px;">
                 <div class="cdm-card">
-                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                        <label class="form-label">Titre du chapitre *</label>
-                        <input type="text" class="form-control" @bind="NewChapter.Title" placeholder="Titre du chapitre..." />
+                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                        <div class="form-group">
+                            <label class="form-label">N°</label>
+                            <input type="number" class="form-control" @bind="NewChapter.ChapterNumber" min="1" style="text-align: center;" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Titre du chapitre *</label>
+                            <input type="text" class="form-control" @bind="NewChapter.Title" placeholder="Titre du chapitre..." />
+                        </div>
                     </div>
                     <div style="display: flex; gap: var(--spacing-sm);">
                         <button class="btn btn-primary" @onclick="CreateChapter" disabled="@IsSaving">

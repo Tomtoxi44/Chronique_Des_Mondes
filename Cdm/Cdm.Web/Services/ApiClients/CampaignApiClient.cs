@@ -35,7 +35,7 @@ public class CampaignApiClient
         try
         {
             await AddAuthHeaderAsync();
-            var response = await _httpClient.GetAsync("api/campaigns/my");
+            var response = await _httpClient.GetAsync("api/campaigns");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<CampaignDto>>() ?? new List<CampaignDto>();
         }
