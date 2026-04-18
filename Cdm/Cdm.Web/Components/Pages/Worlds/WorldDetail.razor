@@ -236,12 +236,19 @@ else
             }
             else
             {
-                <AppPageHeader Title="@SelectedCampaign.Name"
-                               Subtitle="@SelectedCampaign.Description"
+                <AppPageHeader Title="@(IsCampaignEditing ? "Modifier la campagne" : SelectedCampaign.Name)"
+                               Subtitle="@(IsCampaignEditing ? null : SelectedCampaign.Description)"
                                Icon="bi-map"
                                Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(SelectedCampaign.Name) })">
                     <Actions>
-                        <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
+                        @if (!IsCampaignEditing)
+                        {
+                            <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
+                            <button class="btn btn-ghost" @onclick="() => IsCampaignEditing = true">
+                                <i class="bi bi-pencil"></i>
+                                Modifier
+                            </button>
+                        }
                         <button class="btn btn-ghost" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
                             <i class="bi bi-trash3"></i>
                             @L["Common_Delete"]
@@ -249,8 +256,32 @@ else
                     </Actions>
                 </AppPageHeader>
 
-                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                    <h3 class="card-title">Informations</h3>
+                @if (IsCampaignEditing)
+                {
+                    <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                        <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Modifier la campagne</h3>
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-control" @bind="CampaignEditName" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3" @bind="CampaignEditDescription" placeholder="Décrivez cette campagne..."></textarea>
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                            <button class="btn btn-primary btn-sm" @onclick="SaveCampaignEdit" disabled="@IsSaving">
+                                <i class="bi bi-floppy"></i> Enregistrer
+                            </button>
+                            <button class="btn btn-ghost btn-sm" @onclick="() => { IsCampaignEditing = false; CampaignEditName = SelectedCampaign.Name; CampaignEditDescription = SelectedCampaign.Description ?? string.Empty; }">
+                                @L["Common_Cancel"]
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                        <h3 class="card-title">Informations</h3>
                     <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
                         <div>
                             <span class="info-label">Visibilité</span>
@@ -265,7 +296,8 @@ else
                             <span class="info-value">@SelectedCampaign.CreatedAt.ToString("d MMM yyyy")</span>
                         </div>
                     </div>
-                </div>
+                    </div>
+                }
 
                 <!-- Chapitres -->
                 <div class="cdm-card">

@@ -207,6 +207,6 @@ public class WorldApiClient
 
 // Request DTOs (to match backend)
 public record CreateWorldRequest(string Name, string Description, GameType GameType);
-public record UpdateWorldRequest(string Name, string Description, bool IsActive);
+public record UpdateWorldRequest(string Name, string Description, bool IsActive, GameType GameType = GameType.Generic);
 public record UploadImageResponse(string ImageUrl);
 file record ErrorResponse(string? Error);

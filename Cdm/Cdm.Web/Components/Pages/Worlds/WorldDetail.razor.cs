@@ -50,6 +50,9 @@ public partial class WorldDetail : IDisposable
     private CampaignDto? SelectedCampaign;
     private bool ShowNewChapterForm = false;
     private CreateChapterDto NewChapter = new();
+    private bool IsCampaignEditing = false;
+    private string CampaignEditName = string.Empty;
+    private string CampaignEditDescription = string.Empty;
 
     // New campaign (inline)
     private bool ShowNewCampaignForm = false;
@@ -113,6 +116,11 @@ public partial class WorldDetail : IDisposable
         SelectedCampaign = SelectedCampaignId.HasValue
             ? Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId.Value)
             : null;
+
+        // Reset edit mode when navigating to a different campaign
+        IsCampaignEditing = false;
+        CampaignEditName = SelectedCampaign?.Name ?? string.Empty;
+        CampaignEditDescription = SelectedCampaign?.Description ?? string.Empty;
 
         if (SelectedCampaignId.HasValue)
         {
@@ -288,7 +296,7 @@ public partial class WorldDetail : IDisposable
         SaveMessage = null;
         try
         {
-            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(World.Name, DescriptionDraft, World.IsActive));
+            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(World.Name, DescriptionDraft, World.IsActive, World.GameType));
             if (result != null)
             {
                 World = result;
@@ -357,6 +365,28 @@ public partial class WorldDetail : IDisposable
             CampaignChapters[SelectedCampaignId.Value].Add(result);
             ShowNewChapterForm = false;
             NewChapter = new CreateChapterDto();
+            SetSecondaryNav();
+        }
+        IsSaving = false;
+    }
+
+    private async Task SaveCampaignEdit()
+    {
+        if (SelectedCampaign == null) return;
+        IsSaving = true;
+        var request = new UpdateCampaignRequest(
+            CampaignEditName.Trim(),
+            CampaignEditDescription,
+            SelectedCampaign.Visibility,
+            SelectedCampaign.MaxPlayers,
+            SelectedCampaign.Status);
+        var result = await CampaignClient.UpdateCampaignAsync(SelectedCampaign.Id, request);
+        if (result != null)
+        {
+            SelectedCampaign = result;
+            var idx = Campaigns.FindIndex(c => c.Id == result.Id);
+            if (idx >= 0) Campaigns[idx] = result;
+            IsCampaignEditing = false;
             SetSecondaryNav();
         }
         IsSaving = false;
