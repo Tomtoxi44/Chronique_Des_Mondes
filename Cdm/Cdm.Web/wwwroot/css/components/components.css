@@ -8,7 +8,7 @@
    ============================================ */
 .cdm-card {
   background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--theme-card-border, var(--color-border));
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: var(--spacing-lg);
@@ -17,8 +17,8 @@
 }
 
 .cdm-card:hover {
-  border-color: var(--color-border-hover);
-  box-shadow: var(--shadow-md);
+  border-color: var(--theme-card-border, var(--color-border-hover));
+  box-shadow: var(--theme-glow, var(--shadow-md));
 }
 
 .cdm-card-header {
@@ -69,7 +69,7 @@
    ============================================ */
 .stat-card {
   background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--theme-card-border, var(--color-border));
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   display: flex;
@@ -81,8 +81,8 @@
 }
 
 .stat-card:hover {
-  border-color: var(--color-border-hover);
-  box-shadow: var(--shadow-md);
+  border-color: var(--theme-card-border, var(--color-border-hover));
+  box-shadow: var(--theme-glow, var(--shadow-md));
   color: inherit;
 }
 
@@ -237,7 +237,7 @@
 }
 
 .page-title {
-  font-family: var(--font-heading);
+  font-family: var(--theme-heading-font, var(--font-heading));
   font-size: var(--font-size-h3);
   font-weight: 700;
   color: var(--color-text-primary);
@@ -286,14 +286,14 @@
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: var(--theme-gradient, var(--gradient-primary));
   color: #fff;
   border-color: transparent;
   box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  box-shadow: var(--theme-glow, 0 4px 16px rgba(99, 102, 241, 0.35));
   opacity: 0.92;
 }
 
@@ -687,7 +687,7 @@ textarea.form-control {
 .cdm-card:hover .card-actions { opacity: 1; }
 
 .card-title {
-  font-family: var(--font-heading);
+  font-family: var(--theme-heading-font, var(--font-heading));
   font-size: var(--font-size-h5);
   font-weight: 700;
   color: var(--color-text-primary);

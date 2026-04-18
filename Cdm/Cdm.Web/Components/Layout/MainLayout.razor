@@ -62,7 +62,7 @@
     <!-- SIDEBAR SECONDAIRE (contextuelle) -->
     @if (NavContext.HasContext)
     {
-        <aside class="app-secondary-sidebar @(GetSecondaryLeft())" id="secondary-sidebar"
+        <aside class="app-secondary-sidebar @ContextThemeClass @(GetSecondaryLeft())" id="secondary-sidebar"
                style="left: @(IsCollapsed ? "var(--sidebar-collapsed-width)" : "var(--sidebar-width)")">
             <div class="secondary-sidebar-header">
                 @if (!string.IsNullOrEmpty(NavContext.BackHref))

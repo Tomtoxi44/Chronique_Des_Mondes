@@ -107,10 +107,26 @@ public partial class MainLayout : IDisposable
         if (IsCollapsed) classes.Add("sidebar-collapsed");
         else classes.Add("sidebar-normal");
         if (NavContext.HasContext) classes.Add("has-secondary");
+        var themeClass = ContextThemeClass;
+        if (!string.IsNullOrEmpty(themeClass)) classes.Add(themeClass);
         return string.Join(" ", classes);
     }
 
     private string GetSecondaryLeft() => IsCollapsed ? "sidebar-after-collapsed" : "sidebar-after-normal";
+
+    private string ContextThemeClass => NavContext.HasContext && NavContext.GameType.HasValue
+        ? NavContext.GameType.Value switch
+        {
+            Cdm.Common.Enums.GameType.DnD5e         => "theme-dnd5e",
+            Cdm.Common.Enums.GameType.Pathfinder    => "theme-pathfinder",
+            Cdm.Common.Enums.GameType.CallOfCthulhu => "theme-callofcthulhu",
+            Cdm.Common.Enums.GameType.Warhammer     => "theme-warhammer",
+            Cdm.Common.Enums.GameType.Cyberpunk     => "theme-cyberpunk",
+            Cdm.Common.Enums.GameType.Skyrim        => "theme-skyrim",
+            Cdm.Common.Enums.GameType.Custom        => "theme-custom",
+            _                                        => "theme-generic"
+        }
+        : "";
 
     private string ActiveClass(string href)
     {
