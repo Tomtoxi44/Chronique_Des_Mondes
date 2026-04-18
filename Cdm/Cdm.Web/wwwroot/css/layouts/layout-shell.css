@@ -552,6 +552,20 @@
 }
 
 /* ============================================
+   MOBILE MENU BUTTON (topbar hamburger)
+   ============================================ */
+.mobile-menu-btn {
+  display: none; /* hidden on desktop */
+}
+
+/* ============================================
+   MOBILE CONTEXT NAV STRIP
+   ============================================ */
+.mobile-context-nav {
+  display: none; /* hidden on desktop */
+}
+
+/* ============================================
    RESPONSIVE MOBILE
    ============================================ */
 @media (max-width: 768px) {
@@ -579,6 +593,78 @@
 
   .app-content {
     padding: var(--spacing-md);
+  }
+
+  /* Hamburger visible on mobile */
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  /* Topbar padding réduit sur mobile */
+  .app-topbar {
+    padding: 0 var(--spacing-sm);
+  }
+
+  /* Breadcrumb topbar : tronquer pour ne pas déborder */
+  .topbar-breadcrumb {
+    max-width: calc(100vw - 130px);
+    overflow: hidden;
+    flex-wrap: nowrap;
+  }
+
+  .topbar-breadcrumb-item.active {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
+
+  /* Masquer les items intermédiaires du breadcrumb sauf premier et dernier */
+  .topbar-breadcrumb-item:not(:first-child):not(.active),
+  .topbar-breadcrumb-sep:not(:last-of-type) {
+    display: none;
+  }
+
+  /* Mobile context nav strip (onglets secondaires contextuels) */
+  .mobile-context-nav {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 var(--spacing-xs);
+    gap: 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: var(--topbar-height);
+    z-index: 50;
+  }
+
+  .mobile-context-nav::-webkit-scrollbar { display: none; }
+
+  .mobile-context-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.5rem var(--spacing-sm);
+    white-space: nowrap;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    flex-shrink: 0;
+    transition: color var(--duration-fast), border-color var(--duration-fast);
+  }
+
+  .mobile-context-item.active {
+    color: var(--theme-primary, var(--color-primary-light));
+    border-bottom-color: var(--theme-primary, var(--color-primary));
+  }
+
+  .mobile-context-item:hover {
+    color: var(--color-text-primary);
   }
 }
 

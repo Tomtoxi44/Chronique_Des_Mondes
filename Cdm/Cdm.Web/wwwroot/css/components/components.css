@@ -656,6 +656,73 @@ textarea.form-control {
 @media (max-width: 768px) {
   .hide-mobile { display: none !important; }
   .cdm-card-grid { grid-template-columns: 1fr; }
+
+  /* Cards grid : 1 seule colonne sur mobile étroit */
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Info grid : passage en 1 colonne */
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Page header : wrap titre + actions */
+  .page-header-content {
+    flex-wrap: wrap;
+  }
+
+  .page-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* Grille d'accueil 2 colonnes → 1 */
+  .home-two-col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Game-type grid : 3 colonnes sur mobile */
+  .game-type-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Cards padding réduit */
+  .cdm-card {
+    padding: var(--spacing-md);
+  }
+
+  /* Stat cards */
+  .stat-card {
+    padding: var(--spacing-md);
+  }
+
+  /* Profile layout : sidebar avatar en dessus sur mobile */
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Two-column form row → 1 colonne */
+  .form-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  /* Form actions empilées */
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: var(--spacing-sm);
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Dropdown topbar : ne pas déborder à gauche */
+  .topbar-dropdown-menu {
+    right: -8px;
+    min-width: 160px;
+  }
 }
 
 /* ============================================
@@ -665,6 +732,15 @@ textarea.form-control {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--spacing-lg);
+}
+
+/* ============================================
+   HOME TWO-COL GRID
+   ============================================ */
+.home-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
 }
 
 /* ============================================
@@ -824,6 +900,13 @@ textarea.form-control {
   align-items: center;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-lg);
+}
+
+/* Two-column form row (collapses to 1 on mobile) */
+.form-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
 }
 
 .form-error {
@@ -1000,6 +1083,16 @@ textarea.form-control {
 .skeleton-title { height: 1.5em; width: 55%; margin-bottom: var(--spacing-sm); }
 .skeleton-badge { height: 1.4em; width: 30%; border-radius: var(--radius-full); }
 .skeleton-card  { min-height: 160px; border-radius: var(--radius-lg); }
+
+/* ============================================
+   PROFILE LAYOUT
+   ============================================ */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--spacing-xl);
+  max-width: 900px;
+}
 
 /* ============================================
    PROFILE AVATAR

@@ -126,8 +126,8 @@
         <!-- TOPBAR -->
         <header class="app-topbar">
             <div class="topbar-left">
-                <button class="topbar-icon-btn" @onclick="ToggleMobile"
-                        style="display: none;" id="mobile-toggle">
+                <button class="topbar-icon-btn mobile-menu-btn" @onclick="ToggleMobile"
+                        title="Menu" id="mobile-toggle">
                     <i class="bi bi-list"></i>
                 </button>
                 @if (NavContext.TopbarBreadcrumbs?.Count > 0)
@@ -189,6 +189,22 @@
             </div>
         </header>
 
+        <!-- MOBILE CONTEXT NAV (visible uniquement sur mobile quand context actif) -->
+        @if (NavContext.HasContext)
+        {
+            <nav class="mobile-context-nav" aria-label="Navigation contextuelle mobile">
+                @foreach (var item in NavContext.Items.Where(i => !i.IsSection))
+                {
+                    <a href="@item.Href"
+                       class="mobile-context-item @(item.IsActive ? "active" : "")"
+                       title="@item.Label">
+                        <i class="bi @item.Icon"></i>
+                        <span>@item.Label</span>
+                    </a>
+                }
+            </nav>
+        }
+
         <!-- CONTENU -->
         <main class="app-content">
             @Body
@@ -196,18 +212,5 @@
     </div>
 </div>
 
-<!-- Script pour le toggle mobile topbar button -->
-<script>
-    window.initMobileToggle = function() {
-        var btn = document.getElementById('mobile-toggle');
-        if (btn && window.innerWidth <= 768) {
-            btn.style.display = 'flex';
-        }
-    };
-    window.addEventListener('resize', function() {
-        var btn = document.getElementById('mobile-toggle');
-        if (btn) {
-            btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
-        }
-    });
-</script>
+<!-- Aucun script JS nécessaire pour la navigation : tout est géré en C# / CSS -->
+
