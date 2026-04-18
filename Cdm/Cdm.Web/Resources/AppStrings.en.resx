@@ -47,6 +47,7 @@
   <data name="Nav_Collapse" xml:space="preserve"><value>Collapse</value></data>
   <data name="Nav_Expand" xml:space="preserve"><value>Expand menu</value></data>
   <data name="Nav_BackToWorlds" xml:space="preserve"><value>Back to worlds</value></data>
+  <data name="Nav_Sessions" xml:space="preserve"><value>Sessions</value></data>
 
   <!-- Auth -->
   <data name="Auth_Login" xml:space="preserve"><value>Login</value></data>

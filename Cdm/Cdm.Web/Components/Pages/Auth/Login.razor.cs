@@ -1,64 +1,67 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Localization;
 using Cdm.Web.Resources;
+using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.ApiClients.Base;
+using Cdm.Web.Services.State;
 using Cdm.Web.Shared.DTOs.Models;
-using Cdm.Web.Shared.DTOs.ViewModels;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Localization;
 
 namespace Cdm.Web.Components.Pages.Auth;
 
-/// <summary>
-/// Login component for user authentication.
-/// </summary>
 public partial class Login
 {
-    [Inject] private LoginHandler Handler { get; set; } = default!;
-    [Inject] private ILogger<Login> Logger { get; set; } = default!;
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private IAuthApiClient AuthClient { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
-    
-    private LoginRequest LoginModel { get; set; } = new();
-    private string? ErrorMessage { get; set; }
-    private bool IsLoading { get; set; }
-    private bool ShowPassword { get; set; }
-    private bool RememberMe { get; set; }
-    
-    /// <summary>
-    /// Toggles password visibility.
-    /// </summary>
-    private void TogglePasswordVisibility()
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    private string? ReturnUrl { get; set; }
+
+    private LoginRequest Model { get; set; } = new();
+    private bool IsLoading = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        ShowPassword = !ShowPassword;
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+            Nav.NavigateTo("/");
     }
-    
-    /// <summary>
-    /// Handles the login form submission.
-    /// </summary>
-    private async Task HandleLoginAsync()
+
+    private async Task HandleLogin()
     {
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+
         try
         {
-            IsLoading = true;
-            ErrorMessage = null;
-            
-            var response = await Handler.HandleLoginAsync(LoginModel);
-            
-            if (response != null)
+            var response = await AuthClient.LoginAsync(Model);
+
+            if (response != null && !string.IsNullOrEmpty(response.Token))
             {
-                // Wait a bit longer to ensure auth state is fully propagated
-                await Task.Delay(300);
-                NavigationManager.NavigateTo("/characters", forceLoad: false);
+                var provider = (CustomAuthStateProvider)AuthProvider;
+                await provider.MarkUserAsAuthenticatedAsync(
+                    response.UserId, response.Email, response.Nickname, response.Token);
+
+                var target = !string.IsNullOrEmpty(ReturnUrl)
+                    ? Uri.UnescapeDataString(ReturnUrl)
+                    : "/";
+                Nav.NavigateTo(target);
+            }
+            else
+            {
+                ErrorMessage = L["Auth_LoginError"];
             }
         }
         catch (ApiException ex)
         {
-            Logger.LogError(ex, "Login failed for: {Email}", LoginModel.Email);
             ErrorMessage = ex.Message;
         }
-        catch (Exception ex)
+        catch
         {
-            Logger.LogError(ex, "Unexpected error during login");
-            ErrorMessage = "An unexpected error occurred. Please try again.";
+            ErrorMessage = L["Auth_LoginError"];
         }
         finally
         {

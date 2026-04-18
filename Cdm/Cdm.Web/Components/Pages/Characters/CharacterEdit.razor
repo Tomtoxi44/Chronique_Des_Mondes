@@ -1,0 +1,87 @@
+@page "/characters/{CharacterId:int}/edit"
+@attribute [Authorize]
+
+<PageTitle>@L["Characters_Edit"] — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@L["Characters_Edit"]"
+               Subtitle="@L["Characters_EditSubtitle"]"
+               Icon="bi-pencil"
+               Breadcrumbs="@Breadcrumbs" />
+
+@if (IsLoading)
+{
+    <AppLoadingSpinner Label="@L["Common_Loading"]" />
+}
+else if (!string.IsNullOrEmpty(ErrorMessage) && Character == null)
+{
+    <div class="alert alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        @ErrorMessage
+    </div>
+}
+else
+{
+    <div style="max-width: 680px;">
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-error" style="margin-bottom: var(--spacing-lg);">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                @ErrorMessage
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(SuccessMessage))
+        {
+            <div class="alert alert-success" style="margin-bottom: var(--spacing-lg);">
+                <i class="bi bi-check-circle-fill"></i>
+                @SuccessMessage
+            </div>
+        }
+
+        <EditForm Model="Model" OnValidSubmit="HandleSave" FormName="character-edit">
+            <DataAnnotationsValidator />
+
+            <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                <h3 class="card-title" style="margin-bottom: var(--spacing-md);">@L["Characters_Identity"]</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+                    <div class="form-group">
+                        <label class="form-label">@L["Characters_Name"] *</label>
+                        <InputText @bind-Value="Model.Name" class="form-control" />
+                        <ValidationMessage For="() => Model.Name" class="form-error" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">@L["Characters_FirstName"]</label>
+                        <InputText @bind-Value="Model.FirstName" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@L["Characters_Age"]</label>
+                    <InputNumber @bind-Value="Model.Age" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@L["Characters_Description"]</label>
+                    <InputTextArea @bind-Value="Model.Description" class="form-control" rows="4" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@L["Characters_AvatarUrl"]</label>
+                    <InputText @bind-Value="Model.AvatarUrl" class="form-control" type="url" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/characters" class="btn btn-ghost">
+                    <i class="bi bi-arrow-left"></i>
+                    @L["Common_Back"]
+                </a>
+                <button type="submit" class="btn btn-primary" disabled="@IsSaving">
+                    @if (IsSaving) { <AppLoadingSpinner Inline="true" Size="sm" /> }
+                    else { <i class="bi bi-check-circle"></i> }
+                    @(IsSaving ? L["Common_Saving"] : L["Common_Save"])
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}

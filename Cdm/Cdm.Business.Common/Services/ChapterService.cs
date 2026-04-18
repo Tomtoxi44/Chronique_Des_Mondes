@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------
 // <copyright file="ChapterService.cs" company="ANGIBAUD Tommy">
 // Copyright (c) ANGIBAUD Tommy. All rights reserved.
 // </copyright>
@@ -28,8 +28,6 @@ public class ChapterService(
     /// <inheritdoc/>
     public async Task<ChapterDto?> CreateChapterAsync(CreateChapterDto dto, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -84,7 +82,6 @@ public class ChapterService(
             this.dbContext.Chapters.Add(chapter);
             await this.dbContext.SaveChangesAsync();
 
-            await transaction.CommitAsync();
 
             this.logger.LogInformation(
                 "Successfully created chapter {ChapterId} '{Title}'",
@@ -95,7 +92,6 @@ public class ChapterService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
 
             this.logger.LogError(
                 ex,
@@ -221,8 +217,6 @@ public class ChapterService(
     /// <inheritdoc/>
     public async Task<ChapterDto?> UpdateChapterAsync(int chapterId, CreateChapterDto request, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -261,7 +255,6 @@ public class ChapterService(
             chapter.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             this.logger.LogInformation("Successfully updated chapter {ChapterId}", chapterId);
 
@@ -269,7 +262,6 @@ public class ChapterService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
 
             this.logger.LogError(
                 ex,
@@ -283,8 +275,6 @@ public class ChapterService(
     /// <inheritdoc/>
     public async Task<bool> DeleteChapterAsync(int chapterId, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -319,7 +309,6 @@ public class ChapterService(
             chapter.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             this.logger.LogInformation("Successfully deleted chapter {ChapterId}", chapterId);
 
@@ -327,7 +316,6 @@ public class ChapterService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
 
             this.logger.LogError(
                 ex,
@@ -355,8 +343,6 @@ public class ChapterService(
     /// </summary>
     private async Task<ChapterDto?> SetChapterStatusAsync(int chapterId, int userId, bool isCompleted, bool isStarting)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             var action = isCompleted ? "completing" : (isStarting ? "starting" : "updating");
@@ -397,7 +383,6 @@ public class ChapterService(
             }
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             this.logger.LogInformation(
                 "Successfully {Action} chapter {ChapterId}",
@@ -408,7 +393,6 @@ public class ChapterService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
 
             this.logger.LogError(
                 ex,

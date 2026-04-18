@@ -1,0 +1,62 @@
+@page "/sessions"
+@attribute [Authorize]
+
+<PageTitle>Sessions — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@L["Nav_Sessions"]"
+               Subtitle="Lancez et gérez vos sessions de jeu"
+               Icon="bi-play-circle" />
+
+@if (IsLoading)
+{
+    <div class="cards-grid">
+        @for (int i = 0; i < 2; i++) { <AppSkeletonCard /> }
+    </div>
+}
+else if (ActiveCampaigns.Count == 0)
+{
+    <AppEmptyState Icon="bi-play-circle"
+                   Title="Aucune campagne active"
+                   Message="Créez et activez une campagne pour pouvoir lancer des sessions.">
+        <ActionContent>
+            <a href="/campaigns/create" class="btn btn-primary">
+                <i class="bi bi-plus"></i>
+                @L["Campaigns_Create"]
+            </a>
+        </ActionContent>
+    </AppEmptyState>
+}
+else
+{
+    <p style="color: var(--color-text-muted); margin-bottom: var(--spacing-lg); font-size: var(--font-size-sm);">
+        Sélectionnez une campagne active pour lancer une session.
+    </p>
+
+    <div class="cards-grid">
+        @foreach (var campaign in ActiveCampaigns)
+        {
+            <AppThemeWrapper GameType="@campaign.GameType">
+                <div class="cdm-card">
+                    <div class="card-header-row">
+                        <AppGameBadge GameType="@campaign.GameType" />
+                        <span class="status-badge status-active">@L["Campaigns_Status_Active"]</span>
+                    </div>
+                    <h3 class="card-title">@campaign.Name</h3>
+                    @if (!string.IsNullOrEmpty(campaign.Description))
+                    {
+                        <p class="card-description">@campaign.Description</p>
+                    }
+                    <div class="card-meta">
+                        <span><i class="bi bi-people"></i> @campaign.MaxPlayers joueurs max</span>
+                    </div>
+                    <div style="margin-top: var(--spacing-md);">
+                        <a href="/campaigns/@campaign.Id" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">
+                            <i class="bi bi-play-fill"></i>
+                            Ouvrir la campagne
+                        </a>
+                    </div>
+                </div>
+            </AppThemeWrapper>
+        }
+    </div>
+}

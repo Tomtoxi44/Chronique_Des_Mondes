@@ -1,8 +1,9 @@
-@inject NavigationManager Navigation
+@inject NavigationManager Nav
 
 @code {
     protected override void OnInitialized()
     {
-        Navigation.NavigateTo("/login", forceLoad: false);
+        var currentUri = Uri.EscapeDataString(Nav.Uri);
+        Nav.NavigateTo($"/login?returnUrl={currentUri}", forceLoad: false);
     }
 }

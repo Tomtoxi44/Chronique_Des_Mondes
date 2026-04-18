@@ -1,73 +1,51 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Localization;
 using Cdm.Web.Resources;
+using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.ApiClients.Base;
 using Cdm.Web.Shared.DTOs.Models;
-using Cdm.Web.Shared.DTOs.ViewModels;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Localization;
 
 namespace Cdm.Web.Components.Pages.Auth;
 
-/// <summary>
-/// Registration component for new user accounts.
-/// </summary>
 public partial class Register
 {
-    [Inject] private RegisterHandler Handler { get; set; } = default!;
-    [Inject] private ILogger<Register> Logger { get; set; } = default!;
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private IAuthApiClient AuthClient { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
-    
-    private RegisterRequest RegisterModel { get; set; } = new();
-    private string? ErrorMessage { get; set; }
-    private bool IsLoading { get; set; }
-    private bool ShowPassword { get; set; }
-    private bool AcceptTerms { get; set; }
-    
-    /// <summary>
-    /// Toggles password visibility.
-    /// </summary>
-    private void TogglePasswordVisibility()
+
+    private RegisterRequest Model { get; set; } = new();
+    private bool IsLoading = false;
+    private bool RegisterSuccess = false;
+    private string ErrorMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
+
+    private async Task HandleRegister()
     {
-        ShowPassword = !ShowPassword;
-    }
-    
-    /// <summary>
-    /// Handles the registration form submission.
-    /// </summary>
-    private async Task HandleRegisterAsync()
-    {
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+
         try
         {
-            IsLoading = true;
-            ErrorMessage = null;
-            
-            var response = await Handler.HandleRegisterAsync(RegisterModel);
-            
+            var response = await AuthClient.RegisterAsync(Model);
             if (response != null)
             {
-                // Wait a bit longer to ensure auth state is fully propagated
-                await Task.Delay(300);
-                NavigationManager.NavigateTo("/characters", forceLoad: false);
+                SuccessMessage = L["Auth_RegisterSuccess"];
+                RegisterSuccess = true;
+                await Task.Delay(2000);
+                Nav.NavigateTo("/login");
+            }
+            else
+            {
+                ErrorMessage = L["Auth_RegisterError"];
             }
         }
         catch (ApiException ex)
         {
-            Logger.LogError(ex, "Registration failed for: {Email}", RegisterModel.Email);
-            
-            if (ex.ValidationErrors != null && ex.ValidationErrors.Any())
-            {
-                var firstError = ex.ValidationErrors.First();
-                ErrorMessage = $"{firstError.Key}: {string.Join(", ", firstError.Value)}";
-            }
-            else
-            {
-                ErrorMessage = ex.Message;
-            }
+            ErrorMessage = ex.Message;
         }
-        catch (Exception ex)
+        catch
         {
-            Logger.LogError(ex, "Unexpected error during registration");
-            ErrorMessage = "An unexpected error occurred. Please try again.";
+            ErrorMessage = L["Auth_RegisterError"];
         }
         finally
         {

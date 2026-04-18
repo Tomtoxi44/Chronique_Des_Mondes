@@ -29,8 +29,6 @@ public class WorldService(
     /// <inheritdoc/>
     public async Task<WorldDto?> CreateWorldAsync(CreateWorldDto dto, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -53,8 +51,6 @@ public class WorldService(
             this.dbContext.Worlds.Add(world);
             await this.dbContext.SaveChangesAsync();
 
-            await transaction.CommitAsync();
-
             this.logger.LogInformation(
                 "Successfully created world {WorldId} '{WorldName}'",
                 world.Id,
@@ -64,8 +60,6 @@ public class WorldService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-
             this.logger.LogError(
                 ex,
                 "Error creating world '{WorldName}' for user {UserId}",
@@ -201,8 +195,6 @@ public class WorldService(
     /// <inheritdoc/>
     public async Task<WorldDto?> UpdateWorldAsync(int worldId, CreateWorldDto request, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -218,7 +210,6 @@ public class WorldService(
                 return null;
             }
 
-            // Only GM can update
             if (world.UserId != userId)
             {
                 this.logger.LogWarning(
@@ -234,7 +225,6 @@ public class WorldService(
             world.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             this.logger.LogInformation("Successfully updated world {WorldId}", worldId);
 
@@ -242,8 +232,6 @@ public class WorldService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-
             this.logger.LogError(
                 ex,
                 "Error updating world {WorldId} for user {UserId}",
@@ -257,8 +245,6 @@ public class WorldService(
     /// <inheritdoc/>
     public async Task<bool> DeleteWorldAsync(int worldId, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -274,7 +260,6 @@ public class WorldService(
                 return false;
             }
 
-            // Only GM can delete
             if (world.UserId != userId)
             {
                 this.logger.LogWarning(
@@ -284,12 +269,10 @@ public class WorldService(
                 return false;
             }
 
-            // Soft delete
             world.IsActive = false;
             world.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             this.logger.LogInformation("Successfully deleted world {WorldId}", worldId);
 
@@ -297,8 +280,6 @@ public class WorldService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-
             this.logger.LogError(
                 ex,
                 "Error deleting world {WorldId} for user {UserId}",

@@ -7,6 +7,8 @@
 namespace Cdm.Web.Services.ApiClients;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Web.Services.Storage;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 /// <summary>
@@ -16,14 +18,23 @@ public class NotificationApiClient
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<NotificationApiClient> logger;
+    private readonly ILocalStorageService localStorage;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NotificationApiClient"/> class.
     /// </summary>
-    public NotificationApiClient(HttpClient httpClient, ILogger<NotificationApiClient> logger)
+    public NotificationApiClient(HttpClient httpClient, ILogger<NotificationApiClient> logger, ILocalStorageService localStorage)
     {
         this.httpClient = httpClient;
         this.logger = logger;
+        this.localStorage = localStorage;
+    }
+
+    private async Task AddAuthHeaderAsync()
+    {
+        var token = await this.localStorage.GetItemAsync("auth_token");
+        if (!string.IsNullOrEmpty(token))
+            this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     /// <summary>Gets the current user's notifications.</summary>
@@ -31,6 +42,7 @@ public class NotificationApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync("/api/notifications");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<NotificationDto>>() ?? new();
@@ -49,6 +61,7 @@ public class NotificationApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync("/api/notifications/unread-count");
             if (response.IsSuccessStatusCode)
             {
@@ -69,6 +82,7 @@ public class NotificationApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PutAsync($"/api/notifications/{id}/read", null);
             return response.IsSuccessStatusCode;
         }
@@ -84,6 +98,7 @@ public class NotificationApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PutAsync("/api/notifications/read-all", null);
             return response.IsSuccessStatusCode;
         }
@@ -99,6 +114,7 @@ public class NotificationApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.DeleteAsync($"/api/notifications/{id}");
             return response.IsSuccessStatusCode;
         }

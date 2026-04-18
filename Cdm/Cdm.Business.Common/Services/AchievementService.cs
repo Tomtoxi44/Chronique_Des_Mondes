@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------
 // <copyright file="AchievementService.cs" company="ANGIBAUD Tommy">
 // Copyright (c) ANGIBAUD Tommy. All rights reserved.
 // </copyright>
@@ -32,8 +32,6 @@ public class AchievementService(
     /// <inheritdoc/>
     public async Task<AchievementDto?> CreateAchievementAsync(CreateAchievementDto dto, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -73,7 +71,6 @@ public class AchievementService(
             this.dbContext.Achievements.Add(achievement);
             await this.dbContext.SaveChangesAsync();
 
-            await transaction.CommitAsync();
 
             this.logger.LogInformation(
                 "Successfully created achievement {AchievementId} '{Name}'",
@@ -84,7 +81,6 @@ public class AchievementService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
 
             this.logger.LogError(
                 ex,
@@ -256,8 +252,6 @@ public class AchievementService(
     /// <inheritdoc/>
     public async Task<AchievementDto?> UpdateAchievementAsync(int achievementId, CreateAchievementDto request, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -300,13 +294,11 @@ public class AchievementService(
             achievement.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             return this.MapToDto(achievement);
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             this.logger.LogError(ex, "Error updating achievement {AchievementId}", achievementId);
             return null;
         }
@@ -315,8 +307,6 @@ public class AchievementService(
     /// <inheritdoc/>
     public async Task<bool> DeleteAchievementAsync(int achievementId, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -348,13 +338,11 @@ public class AchievementService(
             achievement.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             return true;
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             this.logger.LogError(ex, "Error deleting achievement {AchievementId}", achievementId);
             return false;
         }
@@ -363,8 +351,6 @@ public class AchievementService(
     /// <inheritdoc/>
     public async Task<UserAchievementDto?> AwardAchievementAsync(int achievementId, int targetUserId, int gmUserId, string? message = null)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -432,7 +418,6 @@ public class AchievementService(
             this.dbContext.UserAchievements.Add(userAchievement);
             await this.dbContext.SaveChangesAsync();
 
-            await transaction.CommitAsync();
 
             this.logger.LogInformation(
                 "Successfully awarded achievement {AchievementId} to user {TargetUserId}",
@@ -467,7 +452,6 @@ public class AchievementService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             this.logger.LogError(
                 ex,
                 "Error awarding achievement {AchievementId} to user {TargetUserId}",
@@ -619,8 +603,6 @@ public class AchievementService(
     /// <inheritdoc/>
     public async Task<bool> RevokeAchievementAsync(int userAchievementId, int gmUserId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -659,7 +641,6 @@ public class AchievementService(
             this.dbContext.UserAchievements.Remove(userAchievement);
             await this.dbContext.SaveChangesAsync();
 
-            await transaction.CommitAsync();
 
             this.logger.LogInformation(
                 "Successfully revoked user achievement {UserAchievementId}",
@@ -669,7 +650,6 @@ public class AchievementService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             this.logger.LogError(
                 ex,
                 "Error revoking user achievement {UserAchievementId}",

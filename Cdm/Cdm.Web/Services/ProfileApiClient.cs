@@ -2,7 +2,8 @@ namespace Cdm.Web.Services;
 
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Cdm.Web.Models;
+using Cdm.Business.Abstraction.DTOs.Models;
+using Cdm.Business.Abstraction.DTOs.ViewModels;
 using Cdm.Web.Services.Storage;
 using Microsoft.AspNetCore.Components.Forms;
 

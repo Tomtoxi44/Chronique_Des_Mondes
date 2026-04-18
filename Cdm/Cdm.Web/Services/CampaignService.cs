@@ -3,7 +3,7 @@ namespace Cdm.Web.Services;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Cdm.Common.Enums;
-using Cdm.Web.Components.Campaigns;
+using Cdm.Web.Models;
 using Cdm.Web.Services.Storage;
 
 /// <summary>
@@ -22,7 +22,7 @@ public class CampaignService(
     private readonly ILogger<CampaignService> logger = logger;
 
     /// <inheritdoc/>
-    public async Task<CampaignResponse?> CreateCampaignAsync(CampaignForm.CreateCampaignModel model)
+    public async Task<CampaignResponse?> CreateCampaignAsync(CreateCampaignModel model)
     {
         try
         {

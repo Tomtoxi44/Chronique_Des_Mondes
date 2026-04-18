@@ -1,0 +1,86 @@
+@page "/worlds"
+@attribute [Authorize]
+
+<PageTitle>@L["Worlds_Title"] — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@L["Worlds_Title"]" Subtitle="@L["Worlds_Subtitle"]" Icon="bi-globe2">
+    <Actions>
+        <a href="/worlds/create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            @L["Worlds_Create"]
+        </a>
+    </Actions>
+</AppPageHeader>
+
+@if (IsLoading)
+{
+    <div class="cards-grid">
+        @for (int i = 0; i < 3; i++) { <AppSkeletonCard /> }
+    </div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        @ErrorMessage
+    </div>
+}
+else if (WorldsList.Count == 0)
+{
+    <AppEmptyState Icon="bi-globe2"
+                   Title="@L["Worlds_Empty"]"
+                   Message="@L["Worlds_EmptyMessage"]">
+        <ActionContent>
+            <a href="/worlds/create" class="btn btn-primary">
+                <i class="bi bi-plus"></i>
+                @L["Worlds_Create"]
+            </a>
+        </ActionContent>
+    </AppEmptyState>
+}
+else
+{
+    <div class="cards-grid">
+        @foreach (var world in WorldsList)
+        {
+            <AppThemeWrapper GameType="@world.GameType">
+                <div class="cdm-card world-card">
+                    <div class="card-header-row">
+                        <AppGameBadge GameType="@world.GameType" />
+                        <div class="card-actions">
+                            <a href="/worlds/@world.Id" class="btn btn-ghost btn-icon" title="@L["Common_Details"]">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                            <button class="btn btn-ghost btn-icon danger" @onclick="() => ConfirmDelete(world)"
+                                    title="@L["Common_Delete"]">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 class="card-title">@world.Name</h3>
+                    @if (!string.IsNullOrEmpty(world.Description))
+                    {
+                        <p class="card-description">@world.Description</p>
+                    }
+                    <div class="card-meta">
+                        <span>
+                            <i class="bi bi-map"></i>
+                            @world.CampaignCount @L["Nav_Campaigns"].ToString().ToLower()
+                        </span>
+                        <span>
+                            <i class="bi bi-people"></i>
+                            @world.CharacterCount @L["Nav_Characters"].ToString().ToLower()
+                        </span>
+                    </div>
+                </div>
+            </AppThemeWrapper>
+        }
+    </div>
+}
+
+<AppConfirmDialog @ref="DeleteDialog"
+                  Title="@L["Worlds_DeleteConfirmTitle"]"
+                  Message="@L["Worlds_DeleteConfirm"]"
+                  ConfirmLabel="@L["Common_Delete"]"
+                  CancelLabel="@L["Common_Cancel"]"
+                  OnConfirm="DeleteWorld" />

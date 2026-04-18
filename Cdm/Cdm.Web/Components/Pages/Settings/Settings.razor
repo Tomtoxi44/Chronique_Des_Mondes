@@ -1,0 +1,59 @@
+@page "/settings"
+@attribute [Authorize]
+
+<PageTitle>@L["Settings_Title"] — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@L["Settings_Title"]" Icon="bi-gear" />
+
+<div style="max-width: 600px; display: flex; flex-direction: column; gap: var(--spacing-lg);">
+
+    <!-- Apparence -->
+    <div class="cdm-card">
+        <h3 class="card-title" style="margin-bottom: var(--spacing-md);">@L["Settings_Appearance"]</h3>
+
+        <div class="settings-row">
+            <div>
+                <span class="settings-label">@L["Settings_Theme"]</span>
+                <span class="settings-description">@L["Settings_ThemeDescription"]</span>
+            </div>
+            <button class="btn btn-outline btn-sm" @onclick="ToggleTheme">
+                <i class="bi @(IsDarkMode ? "bi-sun" : "bi-moon-stars")"></i>
+                @(IsDarkMode ? L["Settings_LightMode"] : L["Settings_DarkMode"])
+            </button>
+        </div>
+    </div>
+
+    <!-- Langue -->
+    <div class="cdm-card">
+        <h3 class="card-title" style="margin-bottom: var(--spacing-md);">@L["Settings_Language"]</h3>
+
+        <div class="settings-row">
+            <div>
+                <span class="settings-label">@L["Settings_Language"]</span>
+                <span class="settings-description">@L["Settings_LanguageDescription"]</span>
+            </div>
+            <div style="display: flex; gap: var(--spacing-sm);">
+                <button class="btn @(CurrentCulture == "fr" ? "btn-primary" : "btn-ghost") btn-sm"
+                        @onclick='() => SetLanguage("fr")'>
+                    Français
+                </button>
+                <button class="btn @(CurrentCulture == "en" ? "btn-primary" : "btn-ghost") btn-sm"
+                        @onclick='() => SetLanguage("en")'>
+                    English
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- À propos -->
+    <div class="cdm-card">
+        <h3 class="card-title" style="margin-bottom: var(--spacing-md);">À propos</h3>
+        <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: 1.6;">
+            <strong>Chronique des Mondes</strong> — Application de gestion de campagnes et de personnages de jeu de rôle.<br />
+            Conçue pour les maîtres de jeu et les joueurs souhaitant organiser leurs aventures.
+        </p>
+        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-md);">
+            @string.Format(L["Common_Copyright"], DateTime.UtcNow.Year)
+        </p>
+    </div>
+</div>

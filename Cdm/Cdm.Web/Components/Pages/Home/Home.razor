@@ -1,0 +1,85 @@
+@page "/"
+@attribute [Authorize]
+
+<PageTitle>Accueil — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@WelcomeTitle" Subtitle="@L["Home_Subtitle"]" Icon="bi-house" />
+
+@if (IsLoading)
+{
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
+        <AppSkeletonCard />
+        <AppSkeletonCard />
+        <AppSkeletonCard />
+        <AppSkeletonCard />
+    </div>
+}
+else
+{
+    <!-- Statistiques -->
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
+        <AppStatCard Value="@WorldCount.ToString()" Label="@L["Home_Stats_Worlds"]" Icon="bi-globe2" Href="/worlds" />
+        <AppStatCard Value="@CharacterCount.ToString()" Label="@L["Home_Stats_Characters"]" Icon="bi-people" Href="/characters" />
+        <AppStatCard Value="@CampaignCount.ToString()" Label="@L["Home_Stats_Campaigns"]" Icon="bi-map" Href="/campaigns" />
+    </div>
+
+    <!-- Actions rapides & Derniers éléments -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-xl);">
+
+        <!-- Actions rapides -->
+        <div class="cdm-card">
+            <h3 class="card-title">@L["Home_QuickActions"]</h3>
+            <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                <a href="/worlds/create" class="btn btn-outline">
+                    <i class="bi bi-plus-circle"></i>
+                    @L["Home_CreateWorld"]
+                </a>
+                <a href="/characters/create" class="btn btn-outline">
+                    <i class="bi bi-person-plus"></i>
+                    @L["Home_CreateCharacter"]
+                </a>
+                <a href="/campaigns" class="btn btn-outline">
+                    <i class="bi bi-map"></i>
+                    @L["Home_ViewCampaigns"]
+                </a>
+            </div>
+        </div>
+
+        <!-- Dernier monde -->
+        <div class="cdm-card">
+            <h3 class="card-title">@L["Home_LastWorld"]</h3>
+            @if (LastWorld != null)
+            {
+                <AppThemeWrapper GameType="@LastWorld.GameType" AdditionalClass="world-preview">
+                    <div style="margin-top: var(--spacing-md);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-sm);">
+                            <span class="card-title" style="font-size: var(--font-size-base);">@LastWorld.Name</span>
+                            <AppGameBadge GameType="@LastWorld.GameType" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(LastWorld.Description))
+                        {
+                            <p class="card-description">@LastWorld.Description</p>
+                        }
+                        <a href="/worlds/@LastWorld.Id" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-sm);">
+                            <i class="bi bi-arrow-right"></i>
+                            @L["Common_View"]
+                        </a>
+                    </div>
+                </AppThemeWrapper>
+            }
+            else if (!IsLoading)
+            {
+                <AppEmptyState Icon="bi-globe2"
+                               Title="@L["Worlds_Empty"]"
+                               Message="">
+                    <ActionContent>
+                        <a href="/worlds/create" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus"></i>
+                            @L["Home_CreateWorld"]
+                        </a>
+                    </ActionContent>
+                </AppEmptyState>
+            }
+        </div>
+    </div>
+}

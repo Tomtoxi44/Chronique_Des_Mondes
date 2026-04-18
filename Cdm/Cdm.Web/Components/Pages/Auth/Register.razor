@@ -1,103 +1,103 @@
 @page "/register"
-@using Cdm.Web.Shared.DTOs.Models
-@using Cdm.Web.Shared.DTOs.ViewModels
-@using Cdm.Web.Components.Layout
-@layout AuthLayout
+@layout Layout.BlankLayout
 
-<PageTitle>@L["Auth_Register"] — @L["AppName"]</PageTitle>
+<PageTitle>Inscription — Chronique des Mondes</PageTitle>
 
-<div class="auth-card-header">
-    <h3 class="auth-card-title">@L["Auth_Register"]</h3>
-    <p class="auth-card-subtitle">Rejoignez l'aventure</p>
-</div>
-
-@if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <FluentMessageBar Title="@L["Common_Error"]" Intent="MessageIntent.Error" Style="width: 100%; margin-bottom: 16px;">
-        @ErrorMessage
-    </FluentMessageBar>
-}
-
-<EditForm Model="@RegisterModel" OnValidSubmit="@HandleRegisterAsync" class="auth-form">
-    <DataAnnotationsValidator />
-    
-    <div class="auth-form-group">
-        <FluentTextField @bind-Value="RegisterModel.Email"
-                         Label="@L["Auth_Email"]"
-                         TextFieldType="TextFieldType.Email"
-                         Placeholder="votre@email.com"
-                         Required="true"
-                         Disabled="@IsLoading"
-                         Style="width: 100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.Mail())" Slot="start" />
-        </FluentTextField>
-        <FluentValidationMessage For="@(() => RegisterModel.Email)" />
+<div class="auth-card">
+    <div class="auth-branding">
+        <img src="/images/LogoCdm.svg" alt="Logo Chronique des Mondes" class="auth-logo" />
+        <div class="auth-app-name">@L["AppName"]</div>
+        <div class="auth-tagline">@L["AppTagline"]</div>
     </div>
 
-    <div class="auth-form-group">
-        <FluentTextField @bind-Value="RegisterModel.Nickname"
-                         Label="@L["Auth_Nickname"]"
-                         Placeholder="Votre nom d'aventurier"
-                         Required="true"
-                         Disabled="@IsLoading"
-                         MaxLength="50"
-                         Style="width: 100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Slot="start" />
-        </FluentTextField>
-        <FluentValidationMessage For="@(() => RegisterModel.Nickname)" />
+    <h2 class="auth-title">@L["Auth_Register"]</h2>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-error" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            @ErrorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <div class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            @SuccessMessage
+        </div>
+    }
+
+    @if (!RegisterSuccess)
+    {
+        <EditForm Model="Model" OnValidSubmit="HandleRegister" FormName="register-form">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label for="nickname" class="form-label">@L["Auth_Nickname"]</label>
+                <div class="input-with-icon">
+                    <i class="bi bi-person input-icon"></i>
+                    <InputText id="nickname" @bind-Value="Model.Nickname" class="form-control with-icon"
+                               placeholder="MonPseudo" autocomplete="nickname" />
+                </div>
+                <ValidationMessage For="() => Model.Nickname" class="form-error" />
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">@L["Auth_Email"]</label>
+                <div class="input-with-icon">
+                    <i class="bi bi-envelope input-icon"></i>
+                    <InputText id="email" @bind-Value="Model.Email" class="form-control with-icon"
+                               type="email" placeholder="votre@email.com" autocomplete="email" />
+                </div>
+                <ValidationMessage For="() => Model.Email" class="form-error" />
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">@L["Auth_Password"]</label>
+                <div class="input-with-icon">
+                    <i class="bi bi-lock input-icon"></i>
+                    <InputText id="password" @bind-Value="Model.Password" class="form-control with-icon"
+                               type="password" placeholder="••••••••" autocomplete="new-password" />
+                </div>
+                <ValidationMessage For="() => Model.Password" class="form-error" />
+                <span class="form-hint">@L["Auth_PasswordRequirements"]</span>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm-password" class="form-label">@L["Auth_ConfirmPassword"]</label>
+                <div class="input-with-icon">
+                    <i class="bi bi-lock-fill input-icon"></i>
+                    <InputText id="confirm-password" @bind-Value="Model.ConfirmPassword" class="form-control with-icon"
+                               type="password" placeholder="••••••••" autocomplete="new-password" />
+                </div>
+                <ValidationMessage For="() => Model.ConfirmPassword" class="form-error" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" disabled="@IsLoading">
+                @if (IsLoading)
+                {
+                    <AppLoadingSpinner Inline="true" Size="sm" />
+                }
+                else
+                {
+                    <i class="bi bi-person-plus"></i>
+                }
+                @(IsLoading ? L["Common_Loading"] : L["Auth_RegisterButton"])
+            </button>
+        </EditForm>
+    }
+    else
+    {
+        <div style="text-align: center; padding: var(--spacing-lg) 0;">
+            <a href="/login" class="btn btn-primary btn-full">
+                <i class="bi bi-box-arrow-in-right"></i>
+                @L["Auth_Login"]
+            </a>
+        </div>
+    }
+
+    <div class="auth-footer-link">
+        @L["Auth_HasAccount"] <a href="/login">@L["Auth_Login"]</a>
     </div>
-
-    <div class="auth-form-group">
-        <FluentTextField @bind-Value="RegisterModel.Password"
-                         Label="@L["Auth_Password"]"
-                         TextFieldType="@(ShowPassword ? TextFieldType.Text : TextFieldType.Password)"
-                         Placeholder="Choisissez un mot de passe"
-                         Required="true"
-                         Disabled="@IsLoading"
-                         Style="width: 100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.LockClosed())" Slot="start" />
-            <FluentButton Slot="end" 
-                          Appearance="Appearance.Stealth"
-                          IconStart="@(ShowPassword ? new Icons.Regular.Size20.EyeOff() : new Icons.Regular.Size20.Eye())"
-                          OnClick="@TogglePasswordVisibility" />
-        </FluentTextField>
-        <FluentLabel Typo="Typography.Body" Style="opacity: 0.6; margin-top: 4px; font-size: 12px;">
-            @L["Auth_PasswordRequirements"]
-        </FluentLabel>
-        <FluentValidationMessage For="@(() => RegisterModel.Password)" />
-    </div>
-
-    <div class="auth-form-group">
-        <FluentTextField @bind-Value="RegisterModel.ConfirmPassword"
-                         Label="@L["Auth_ConfirmPassword"]"
-                         TextFieldType="@(ShowPassword ? TextFieldType.Text : TextFieldType.Password)"
-                         Placeholder="Confirmez votre mot de passe"
-                         Required="true"
-                         Disabled="@IsLoading"
-                         Style="width: 100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.LockClosed())" Slot="start" />
-        </FluentTextField>
-        <FluentValidationMessage For="@(() => RegisterModel.ConfirmPassword)" />
-    </div>
-
-    <FluentButton Type="ButtonType.Submit"
-                  Appearance="Appearance.Accent"
-                  Loading="@IsLoading"
-                  Disabled="@IsLoading"
-                  Style="width: 100%; height: 44px;">
-        @if (IsLoading)
-        {
-            <span>@L["Auth_Register"]...</span>
-        }
-        else
-        {
-            <FluentIcon Value="@(new Icons.Regular.Size20.PersonAdd())" Slot="start" />
-            <span>@L["Auth_RegisterButton"]</span>
-        }
-    </FluentButton>
-</EditForm>
-
-<div class="auth-card-footer">
-    <span class="auth-card-footer-text">@L["Auth_HasAccount"]</span>
-    <a href="/login" class="auth-card-footer-link">@L["Auth_Login"]</a>
 </div>

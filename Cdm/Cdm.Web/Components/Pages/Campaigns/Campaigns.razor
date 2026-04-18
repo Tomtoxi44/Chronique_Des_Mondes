@@ -1,0 +1,78 @@
+@page "/campaigns"
+@attribute [Authorize]
+
+<PageTitle>@L["Campaigns_Title"] — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@L["Campaigns_Title"]" Subtitle="@L["Campaigns_Subtitle"]" Icon="bi-map">
+    <Actions>
+        <a href="/campaigns/create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            @L["Campaigns_Create"]
+        </a>
+    </Actions>
+</AppPageHeader>
+
+@if (IsLoading)
+{
+    <div class="cards-grid">
+        @for (int i = 0; i < 3; i++) { <AppSkeletonCard /> }
+    </div>
+}
+else if (CampaignList.Count == 0)
+{
+    <AppEmptyState Icon="bi-map"
+                   Title="@L["Campaigns_Empty"]"
+                   Message="@L["Campaigns_EmptyMessage"]">
+        <ActionContent>
+            <a href="/campaigns/create" class="btn btn-primary">
+                <i class="bi bi-plus"></i>
+                @L["Campaigns_Create"]
+            </a>
+        </ActionContent>
+    </AppEmptyState>
+}
+else
+{
+    <div class="cards-grid">
+        @foreach (var campaign in CampaignList)
+        {
+            <AppThemeWrapper GameType="@campaign.GameType">
+                <div class="cdm-card">
+                    <div class="card-header-row">
+                        <AppGameBadge GameType="@campaign.GameType" />
+                        <div class="card-actions">
+                            <a href="/campaigns/@campaign.Id" class="btn btn-ghost btn-icon" title="@L["Common_Details"]">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                            <button class="btn btn-ghost btn-icon danger" @onclick="() => ConfirmDelete(campaign)"
+                                    title="@L["Common_Delete"]">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 class="card-title">@campaign.Name</h3>
+                    @if (!string.IsNullOrEmpty(campaign.Description))
+                    {
+                        <p class="card-description">@campaign.Description</p>
+                    }
+                    <div class="card-meta">
+                        <span class="status-badge @GetStatusClass(campaign.Status)">
+                            @GetStatusLabel(campaign.Status)
+                        </span>
+                        <span>
+                            <i class="bi bi-people"></i>
+                            @campaign.MaxPlayers max
+                        </span>
+                    </div>
+                </div>
+            </AppThemeWrapper>
+        }
+    </div>
+}
+
+<AppConfirmDialog @ref="DeleteDialog"
+                  Title="@L["Common_Confirm"]"
+                  Message="@L["Campaigns_DeleteConfirm"]"
+                  ConfirmLabel="@L["Common_Delete"]"
+                  CancelLabel="@L["Common_Cancel"]"
+                  OnConfirm="DeleteCampaign" />

@@ -1,0 +1,40 @@
+@* Composant badge pour afficher le type de jeu *@
+
+@if (GameType.HasValue && GameType != Cdm.Common.Enums.GameType.Empty)
+{
+    <span class="game-badge" style="--badge-bg: var(--theme-badge-bg, var(--color-bg-card)); --badge-color: var(--theme-badge-text, var(--color-text-secondary));">
+        <i class="bi @IconClass"></i>
+        @DisplayName
+    </span>
+}
+
+@code {
+    [Parameter] public GameType? GameType { get; set; }
+    [Parameter] public string? CustomLabel { get; set; }
+
+    private string IconClass => GameType switch
+    {
+        Cdm.Common.Enums.GameType.DnD5e => "bi-shield-fill",
+        Cdm.Common.Enums.GameType.Pathfinder => "bi-shield-fill-check",
+        Cdm.Common.Enums.GameType.CallOfCthulhu => "bi-eye-fill",
+        Cdm.Common.Enums.GameType.Warhammer => "bi-hammer",
+        Cdm.Common.Enums.GameType.Cyberpunk => "bi-cpu-fill",
+        Cdm.Common.Enums.GameType.Skyrim => "bi-snow2",
+        Cdm.Common.Enums.GameType.Generic => "bi-globe2",
+        Cdm.Common.Enums.GameType.Custom => "bi-stars",
+        _ => "bi-question-circle"
+    };
+
+    private string DisplayName => CustomLabel ?? GameType switch
+    {
+        Cdm.Common.Enums.GameType.DnD5e => "D&D 5e",
+        Cdm.Common.Enums.GameType.Pathfinder => "Pathfinder",
+        Cdm.Common.Enums.GameType.CallOfCthulhu => "Cthulhu",
+        Cdm.Common.Enums.GameType.Warhammer => "Warhammer",
+        Cdm.Common.Enums.GameType.Cyberpunk => "Cyberpunk",
+        Cdm.Common.Enums.GameType.Skyrim => "Skyrim",
+        Cdm.Common.Enums.GameType.Generic => "Générique",
+        Cdm.Common.Enums.GameType.Custom => "Personnalisé",
+        _ => string.Empty
+    };
+}

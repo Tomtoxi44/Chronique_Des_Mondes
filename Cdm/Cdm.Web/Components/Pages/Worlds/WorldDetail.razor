@@ -1,0 +1,100 @@
+@page "/worlds/{WorldId:int}"
+@attribute [Authorize]
+@implements IDisposable
+
+<PageTitle>@(World?.Name ?? "Monde") — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="padding: var(--spacing-xl);">
+        <AppLoadingSpinner Label="@L["Common_Loading"]" />
+    </div>
+}
+else if (World == null)
+{
+    <AppEmptyState Icon="bi-globe2"
+                   Title="@L["Worlds_NotFound"]"
+                   Message="@L["Worlds_NotFoundMessage"]">
+        <ActionContent>
+            <a href="/worlds" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i>
+                @L["Common_Back"]
+            </a>
+        </ActionContent>
+    </AppEmptyState>
+}
+else
+{
+    <AppThemeWrapper GameType="@World.GameType">
+        <AppPageHeader Title="@World.Name"
+                       Subtitle="@World.Description"
+                       Icon="bi-globe2"
+                       Breadcrumbs="@Breadcrumbs">
+            <Actions>
+                <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
+                    <i class="bi bi-trash3"></i>
+                    @L["Common_Delete"]
+                </button>
+            </Actions>
+        </AppPageHeader>
+
+        <!-- Méta-informations -->
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
+            <AppStatCard Value="@World.CampaignCount.ToString()" Label="@L["Worlds_Campaigns"]" Icon="bi-map" />
+            <AppStatCard Value="@World.CharacterCount.ToString()" Label="@L["Worlds_Characters"]" Icon="bi-people" />
+        </div>
+
+        <!-- Informations détaillées -->
+        <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+            <h3 class="card-title">@L["Worlds_Information"]</h3>
+            <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                <div>
+                    <span class="info-label">Type de jeu</span>
+                    <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
+                </div>
+                <div>
+                    <span class="info-label">@L["Worlds_CreatedAt"]</span>
+                    <span class="info-value">@World.CreatedAt.ToString("d MMM yyyy")</span>
+                </div>
+                @if (World.UpdatedAt.HasValue)
+                {
+                    <div>
+                        <span class="info-label">@L["Worlds_UpdatedAt"]</span>
+                        <span class="info-value">@World.UpdatedAt.Value.ToString("d MMM yyyy")</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Campagnes de ce monde -->
+        @if (Campaigns.Count > 0)
+        {
+            <div class="cdm-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                    <h3 class="card-title">@L["Worlds_Campaigns"]</h3>
+                    <a href="/campaigns/create?worldId=@World.Id" class="btn btn-ghost btn-sm">
+                        <i class="bi bi-plus"></i>
+                        @L["Campaigns_Create"]
+                    </a>
+                </div>
+                @foreach (var campaign in Campaigns)
+                {
+                    <a href="/campaigns/@campaign.Id" class="campaign-row">
+                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                            <i class="bi bi-map" style="color: var(--color-text-muted);"></i>
+                            <span>@campaign.Name</span>
+                        </div>
+                        <span class="status-badge @GetStatusClass(campaign.Status)">@GetStatusLabel(campaign.Status)</span>
+                    </a>
+                }
+            </div>
+        }
+    </AppThemeWrapper>
+}
+
+<AppConfirmDialog @ref="DeleteDialog"
+                  Title="@L["Worlds_DeleteConfirmTitle"]"
+                  Message="@L["Worlds_DeleteConfirm"]"
+                  ConfirmLabel="@L["Common_Delete"]"
+                  CancelLabel="@L["Common_Cancel"]"
+                  OnConfirm="DeleteWorldAsync" />

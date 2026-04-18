@@ -1,259 +1,105 @@
-/* 
- * Auth Layout - Chronique des Mondes
- * Design System v4.0
+/*
+ * auth-layout.css — Chronique des Mondes
+ * Layout pour les pages d'authentification (login, register)
  */
 
-/* ============================================
-   AUTH LAYOUT CONTAINER
-   ============================================ */
-.auth-layout {
+.auth-shell {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
   background: var(--color-bg-primary);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-md);
   position: relative;
   overflow: hidden;
 }
 
-.auth-layout::before {
+/* Décoration de fond */
+.auth-shell::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+  top: -200px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
   pointer-events: none;
 }
 
-.auth-layout::after {
+.auth-shell::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--gradient-primary);
-  opacity: 0.8;
+  bottom: -200px;
+  left: -200px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-/* ============================================
-   AUTH CONTAINER
-   ============================================ */
-.auth-container {
+.auth-card {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
   width: 100%;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
   position: relative;
   z-index: 1;
-  animation: fadeInUp var(--duration-slow) var(--ease-out);
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ============================================
-   AUTH BRANDING
-   ============================================ */
 .auth-branding {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.auth-logo {
-  width: 72px;
-  height: 72px;
-  filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.25));
-  margin-bottom: var(--spacing-xs);
-}
-
-.auth-title {
-  font-family: var(--font-family-heading) !important;
-  background: var(--gradient-primary) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-  letter-spacing: 0.03em;
-}
-
-.auth-subtitle {
-  color: var(--color-text-muted) !important;
-  font-size: var(--font-size-small) !important;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-/* ============================================
-   AUTH CARD
-   ============================================ */
-.auth-card {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-2xl);
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: var(--spacing-xl);
-  right: var(--spacing-xl);
-  height: 2px;
-  background: var(--gradient-primary);
-  border-radius: 0 0 2px 2px;
-}
-
-/* Auth card sections */
-.auth-card-header {
   text-align: center;
   margin-bottom: var(--spacing-xl);
 }
 
-.auth-card-title {
-  font-family: var(--font-family-heading);
+.auth-logo {
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--spacing-md);
+}
+
+.auth-app-name {
+  font-family: var(--font-heading);
   font-size: var(--font-size-h4);
-  font-weight: var(--font-weight-semibold);
+  font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
+  margin-bottom: var(--spacing-xs);
 }
 
-.auth-card-subtitle {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin: 0;
+.auth-tagline {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.auth-card-body {
-  position: relative;
-  z-index: 1;
-}
-
-.auth-card-footer {
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border);
+.auth-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h5);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
   text-align: center;
 }
 
-.auth-card-footer-text {
-  font-size: var(--font-size-small);
-  color: var(--color-text-secondary);
+.auth-footer-link {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-lg);
 }
 
-.auth-card-footer-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  transition: color var(--duration-fast) var(--ease-out);
-}
-
-.auth-card-footer-link:hover {
+.auth-footer-link a {
   color: var(--color-primary-light);
-  text-decoration: underline;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--duration-fast);
 }
 
-/* ============================================
-   AUTH FORM ELEMENTS
-   ============================================ */
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.auth-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.auth-form-label {
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-}
-
-/* ============================================
-   AUTH ALERTS
-   ============================================ */
-.auth-alert {
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-small);
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
-}
-
-.auth-alert-error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: var(--color-error-300);
-}
-
-.auth-alert-success {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  color: var(--color-success-300);
-}
-
-/* ============================================
-   AUTH FOOTER (PAGE LEVEL)
-   ============================================ */
-.auth-footer {
-  text-align: center !important;
-  color: var(--color-text-muted) !important;
-  font-size: var(--font-size-xs) !important;
-}
-
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-@media (max-width: 640px) {
-  .auth-layout {
-    padding: var(--spacing-md);
-    align-items: flex-start;
-    padding-top: var(--spacing-2xl);
-  }
-  
-  .auth-container {
-    max-width: 100%;
-    gap: var(--spacing-lg);
-  }
-
-  .auth-card {
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-  }
-}
-
-/* ============================================
-   LIGHT THEME ADJUSTMENTS
-   ============================================ */
-.light-theme .auth-layout::before {
-  background: 
-    radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.04) 0%, transparent 50%);
-}
-
-.light-theme .auth-card {
-  box-shadow: var(--shadow-lg);
+.auth-footer-link a:hover {
+  color: var(--color-primary-hover);
 }

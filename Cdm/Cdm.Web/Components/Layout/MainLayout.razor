@@ -1,173 +1,182 @@
 @inherits LayoutComponentBase
-@using Cdm.Web.Components.Shared
-@using Cdm.Web.Services.State
-@inject NavigationManager NavigationManager
-@inject CustomAuthStateProvider AuthStateProvider
-@inject ThemeService ThemeService
-@inject IStringLocalizer<AppStrings> L
 
-<div class="app-layout @(ThemeService.IsDarkMode ? "" : "light-theme")">
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar @(isCollapsed ? "collapsed" : "") @(isMobileOpen ? "open" : "")" id="sidebar">
+<div class="app-shell" id="app-root">
+
+    <!-- SIDEBAR PRINCIPALE -->
+    <aside class="app-sidebar @(IsCollapsed ? "collapsed" : "") @(IsMobileOpen ? "mobile-open" : "")" id="main-sidebar">
         <div class="sidebar-header">
-            <a href="/" class="sidebar-logo">
-                <div class="sidebar-logo-icon">
-                    <img src="/images/LogoCdm.svg" alt="CDM" />
-                </div>
-                <div class="sidebar-logo-text">
-                    <span class="sidebar-logo-title">Chronique</span>
-                    <span class="sidebar-logo-subtitle">@L["AppTagline"]</span>
-                </div>
+            <a href="/" class="sidebar-brand d-flex align-items-center gap-sm text-decoration-none">
+                <img src="/images/LogoCdm.svg" alt="CDM" class="sidebar-logo" />
+                <span class="sidebar-brand">@L["AppName"]</span>
             </a>
         </div>
 
-        <nav class="sidebar-nav">
-            <div class="sidebar-nav-section">
-                <span class="sidebar-nav-section-title">@L["Nav_Navigation"]</span>
-                
-                <a href="/" class="sidebar-nav-item @(IsActive("/") ? "active" : "")" title="@L["Nav_Home"]">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Home())" Class="nav-icon" />
-                    <span class="nav-label">@L["Nav_Home"]</span>
-                </a>
-                
-                <a href="/worlds" class="sidebar-nav-item @(IsActive("/worlds") ? "active" : "")" title="@L["Nav_Worlds"]">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Globe())" Class="nav-icon" />
-                    <span class="nav-label">@L["Nav_Worlds"]</span>
-                </a>
-                
-                <a href="/campaigns" class="sidebar-nav-item @(IsActive("/campaigns") ? "active" : "")" title="@L["Nav_Campaigns"]">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Map())" Class="nav-icon" />
-                    <span class="nav-label">@L["Nav_Campaigns"]</span>
-                </a>
-                
-                <a href="/characters" class="sidebar-nav-item @(IsActive("/characters") ? "active" : "")" title="@L["Nav_Characters"]">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.People())" Class="nav-icon" />
-                    <span class="nav-label">@L["Nav_Characters"]</span>
-                </a>
-            </div>
-            
-            <div class="sidebar-divider"></div>
-            
-            <div class="sidebar-nav-section">
-                <span class="sidebar-nav-section-title">@L["Nav_Account"]</span>
-                
-                <a href="/profile" class="sidebar-nav-item @(IsActive("/profile") ? "active" : "")" title="@L["Nav_Profile"]">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Class="nav-icon" />
-                    <span class="nav-label">@L["Nav_Profile"]</span>
-                </a>
-                
-                <a href="/settings" class="sidebar-nav-item @(IsActive("/settings") ? "active" : "")" title="@L["Nav_Settings"]">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" Class="nav-icon" />
-                    <span class="nav-label">@L["Nav_Settings"]</span>
-                </a>
-            </div>
+        <nav class="sidebar-nav" aria-label="Navigation principale">
+            <span class="nav-section-label">@L["Nav_Navigation"]</span>
+
+            <a href="/" class="nav-item @ActiveClass("/")" title="@L["Nav_Home"]">
+                <i class="bi bi-house nav-icon"></i>
+                <span class="nav-label">@L["Nav_Home"]</span>
+            </a>
+            <a href="/worlds" class="nav-item @ActiveClass("/worlds")" title="@L["Nav_Worlds"]">
+                <i class="bi bi-globe2 nav-icon"></i>
+                <span class="nav-label">@L["Nav_Worlds"]</span>
+            </a>
+            <a href="/campaigns" class="nav-item @ActiveClass("/campaigns")" title="@L["Nav_Campaigns"]">
+                <i class="bi bi-map nav-icon"></i>
+                <span class="nav-label">@L["Nav_Campaigns"]</span>
+            </a>
+            <a href="/characters" class="nav-item @ActiveClass("/characters")" title="@L["Nav_Characters"]">
+                <i class="bi bi-people nav-icon"></i>
+                <span class="nav-label">@L["Nav_Characters"]</span>
+            </a>
+            <a href="/sessions" class="nav-item @ActiveClass("/sessions")" title="@L["Nav_Sessions"]">
+                <i class="bi bi-play-circle nav-icon"></i>
+                <span class="nav-label">@L["Nav_Sessions"]</span>
+            </a>
+
+            <div class="nav-divider"></div>
+            <span class="nav-section-label">@L["Nav_Account"]</span>
+
+            <a href="/profile" class="nav-item @ActiveClass("/profile")" title="@L["Nav_Profile"]">
+                <i class="bi bi-person nav-icon"></i>
+                <span class="nav-label">@L["Nav_Profile"]</span>
+            </a>
+            <a href="/settings" class="nav-item @ActiveClass("/settings")" title="@L["Nav_Settings"]">
+                <i class="bi bi-gear nav-icon"></i>
+                <span class="nav-label">@L["Nav_Settings"]</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
-            <button class="sidebar-toggle-btn" @onclick="ToggleSidebar" 
-                    title="@(isCollapsed ? L["Nav_Expand"] : L["Nav_Collapse"])">
-                <FluentIcon Value="@((Icon)(isCollapsed ? new Icons.Regular.Size16.ChevronRight() : new Icons.Regular.Size16.ChevronLeft()))" />
-                <span class="toggle-label">@L["Nav_Collapse"]</span>
+            <button class="sidebar-collapse-btn" @onclick="ToggleSidebar"
+                    title="@(IsCollapsed ? L["Nav_Expand"] : L["Nav_Collapse"])">
+                <i class="bi @(IsCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></i>
+                <span class="nav-label" style="font-size: var(--font-size-xs)">
+                    @(IsCollapsed ? "" : L["Nav_Collapse"])
+                </span>
             </button>
         </div>
     </aside>
 
-    <!-- Mobile Overlay -->
-    @if (isMobileOpen)
+    <!-- SIDEBAR SECONDAIRE (contextuelle) -->
+    @if (NavContext.HasContext)
     {
-        <div class="sidebar-overlay visible" @onclick="CloseMobileSidebar"></div>
+        <aside class="app-secondary-sidebar @(GetSecondaryLeft())" id="secondary-sidebar"
+               style="left: @(IsCollapsed ? "var(--sidebar-collapsed-width)" : "var(--sidebar-width)")">
+            <div class="secondary-sidebar-header">
+                @if (!string.IsNullOrEmpty(NavContext.BackHref))
+                {
+                    <a href="@NavContext.BackHref" class="secondary-back-btn">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>@NavContext.BackLabel</span>
+                    </a>
+                }
+                <span class="secondary-section-title">@NavContext.SectionTitle</span>
+            </div>
+
+            <nav class="secondary-nav" aria-label="Navigation contextuelle">
+                @foreach (var item in NavContext.Items)
+                {
+                    <a href="@item.Href"
+                       class="secondary-nav-item @(item.IsActive ? "active" : "")"
+                       title="@item.Label">
+                        <i class="bi @item.Icon"></i>
+                        @item.Label
+                    </a>
+                    @if (item.Children != null)
+                    {
+                        foreach (var child in item.Children)
+                        {
+                            <a href="@child.Href"
+                               class="secondary-nav-item @(child.IsActive ? "active" : "")"
+                               style="padding-left: calc(var(--spacing-md) + 1.5rem);"
+                               title="@child.Label">
+                                <i class="bi @child.Icon"></i>
+                                @child.Label
+                            </a>
+                        }
+                    }
+                }
+            </nav>
+        </aside>
     }
 
-    <!-- Main Content Area -->
-    <div class="app-main">
-        <!-- Top Bar -->
-        <header class="topbar">
+    <!-- OVERLAY MOBILE -->
+    @if (IsMobileOpen)
+    {
+        <div class="sidebar-overlay visible" @onclick="CloseMobile"></div>
+    }
+
+    <!-- ZONE PRINCIPALE -->
+    <div class="app-main-wrapper @GetMainClass()" id="main-content">
+
+        <!-- TOPBAR -->
+        <header class="app-topbar">
             <div class="topbar-left">
-                <button class="topbar-menu-btn" @onclick="ToggleMobileSidebar" aria-label="Toggle Menu">
-                    <FluentIcon Value="@(new Icons.Regular.Size24.Navigation())" />
+                <button class="topbar-icon-btn" @onclick="ToggleMobile"
+                        style="display: none;" id="mobile-toggle">
+                    <i class="bi bi-list"></i>
                 </button>
             </div>
-            
-            <div class="topbar-center">
-                @* Breadcrumb space — will be populated by pages *@
-            </div>
-            
+
             <div class="topbar-right">
-                <FluentSwitch @bind-Value="@darkModeSwitch"
-                              @bind-Value:after="OnThemeToggled"
-                              Class="theme-toggle"
-                              title="@(ThemeService.IsDarkMode ? L["Settings_LightMode"] : L["Settings_DarkMode"])">
-                    <FluentIcon Value="@((Icon)(ThemeService.IsDarkMode ? new Icons.Regular.Size16.WeatherMoon() : new Icons.Regular.Size16.WeatherSunny()))" slot="checked-indicator" />
-                </FluentSwitch>
-                
-                <NotificationBell />
-                
-                <UserMenu />
+                <button class="topbar-icon-btn" @onclick="ToggleTheme"
+                        title="@(IsDarkMode ? L["Settings_LightMode"] : L["Settings_DarkMode"])">
+                    <i class="bi @(IsDarkMode ? "bi-sun" : "bi-moon-stars")"></i>
+                </button>
+
+                <div class="topbar-dropdown @(IsDropdownOpen ? "open" : "")" id="user-dropdown">
+                    <button class="topbar-avatar" @onclick="ToggleDropdown"
+                            title="@UserInitials" aria-label="Menu utilisateur">
+                        @UserInitials
+                    </button>
+
+                    <div class="topbar-dropdown-menu">
+                        @if (!string.IsNullOrEmpty(UserName))
+                        {
+                            <div style="padding: var(--spacing-sm) var(--spacing-md); font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                @UserName
+                            </div>
+                            <div class="dropdown-divider"></div>
+                        }
+                        <a href="/profile" class="dropdown-item">
+                            <i class="bi bi-person"></i>
+                            @L["Nav_Profile"]
+                        </a>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="bi bi-gear"></i>
+                            @L["Nav_Settings"]
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item danger" @onclick="Logout">
+                            <i class="bi bi-box-arrow-right"></i>
+                            @L["Nav_Logout"]
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- Page Content -->
+        <!-- CONTENU -->
         <main class="app-content">
             @Body
         </main>
     </div>
 </div>
 
-@code {
-    private bool isCollapsed = false;
-    private bool isMobileOpen = false;
-    private bool darkModeSwitch = true;
-
-    protected override void OnInitialized()
-    {
-        NavigationManager.LocationChanged += OnLocationChanged;
-        darkModeSwitch = ThemeService.IsDarkMode;
-    }
-
-    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        isMobileOpen = false;
-        InvokeAsync(StateHasChanged);
-    }
-
-    private void ToggleSidebar()
-    {
-        isCollapsed = !isCollapsed;
-    }
-
-    private void ToggleMobileSidebar()
-    {
-        isMobileOpen = !isMobileOpen;
-    }
-
-    private void CloseMobileSidebar()
-    {
-        isMobileOpen = false;
-    }
-
-    private void OnThemeToggled()
-    {
-        ThemeService.ToggleDarkMode();
-    }
-
-    private bool IsActive(string href)
-    {
-        var currentUri = NavigationManager.Uri;
-        var baseUri = NavigationManager.BaseUri;
-        var relativePath = currentUri.Replace(baseUri, "/").TrimEnd('/');
-        
-        if (string.IsNullOrEmpty(relativePath)) relativePath = "/";
-        
-        if (href == "/")
-        {
-            return relativePath == "/";
+<!-- Script pour le toggle mobile topbar button -->
+<script>
+    window.initMobileToggle = function() {
+        var btn = document.getElementById('mobile-toggle');
+        if (btn && window.innerWidth <= 768) {
+            btn.style.display = 'flex';
         }
-        
-        return relativePath.StartsWith(href, StringComparison.OrdinalIgnoreCase);
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
-}
+    };
+    window.addEventListener('resize', function() {
+        var btn = document.getElementById('mobile-toggle');
+        if (btn) {
+            btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+        }
+    });
+</script>

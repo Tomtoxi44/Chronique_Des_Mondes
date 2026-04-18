@@ -7,6 +7,8 @@
 namespace Cdm.Web.Services.ApiClients;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Web.Services.Storage;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 /// <summary>
@@ -16,14 +18,23 @@ public class AchievementApiClient
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<AchievementApiClient> logger;
+    private readonly ILocalStorageService localStorage;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AchievementApiClient"/> class.
     /// </summary>
-    public AchievementApiClient(HttpClient httpClient, ILogger<AchievementApiClient> logger)
+    public AchievementApiClient(HttpClient httpClient, ILogger<AchievementApiClient> logger, ILocalStorageService localStorage)
     {
         this.httpClient = httpClient;
         this.logger = logger;
+        this.localStorage = localStorage;
+    }
+
+    private async Task AddAuthHeaderAsync()
+    {
+        var token = await this.localStorage.GetItemAsync("auth_token");
+        if (!string.IsNullOrEmpty(token))
+            this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     /// <summary>Gets all achievements for a world.</summary>
@@ -31,6 +42,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/achievements/world/{worldId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<AchievementDto>>() ?? new();
@@ -49,6 +61,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/achievements/campaign/{campaignId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<AchievementDto>>() ?? new();
@@ -67,6 +80,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/achievements/chapter/{chapterId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<AchievementDto>>() ?? new();
@@ -85,6 +99,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/achievements/{id}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<AchievementDto>();
@@ -103,6 +118,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PostAsJsonAsync("/api/achievements", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<AchievementDto>();
@@ -121,6 +137,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PutAsJsonAsync($"/api/achievements/{id}", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<AchievementDto>();
@@ -139,6 +156,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.DeleteAsync($"/api/achievements/{id}");
             return response.IsSuccessStatusCode;
         }
@@ -154,6 +172,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PostAsJsonAsync(
                 $"/api/achievements/{achievementId}/award",
                 new { TargetUserId = targetUserId, Message = message });
@@ -174,6 +193,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync("/api/achievements/user");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<UserAchievementDto>>() ?? new();
@@ -192,6 +212,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/achievements/user/{userId}/world/{worldId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<UserAchievementDto>>() ?? new();
@@ -210,6 +231,7 @@ public class AchievementApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.DeleteAsync($"/api/achievements/user/{userAchievementId}");
             return response.IsSuccessStatusCode;
         }

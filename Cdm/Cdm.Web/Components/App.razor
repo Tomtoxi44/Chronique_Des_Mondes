@@ -1,26 +1,44 @@
-﻿<!DOCTYPE html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Chronique des Mondes — Votre outil de gestion de campagnes de jeu de rôle" />
     <base href="/" />
+    <title>Chronique des Mondes</title>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Fluent UI Blazor — styles de base -->
     <link rel="stylesheet" href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" />
+
+    <!-- Design System CDM -->
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/themes/themes.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="@Assets["Cdm.Web.styles.css"]" />
+
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
 </head>
 
 <body>
-    <FluentToastProvider />
-    <FluentDialogProvider />
-    <FluentTooltipProvider />
-    <FluentMessageBarProvider />
     <Routes />
-    <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script>
+        // Initialise le thème depuis localStorage si disponible
+        (function() {
+            var theme = localStorage.getItem('cdm-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </body>
 
 </html>

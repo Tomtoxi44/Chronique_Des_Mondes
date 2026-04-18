@@ -1,0 +1,180 @@
+/*
+ * themes.css — Chronique des Mondes
+ * Chaque classe .theme-{name} surcharge les tokens --theme-*.
+ * Appliqué sur n'importe quel wrapper via <AppThemeWrapper GameType="..." />.
+ */
+
+/* ============================================
+   THEME PAR DÉFAUT (générique)
+   ============================================ */
+:root {
+  --theme-primary:      var(--color-indigo-500);
+  --theme-secondary:    var(--color-violet-500);
+  --theme-accent:       var(--color-rose-500);
+  --theme-heading-font: var(--font-heading);
+  --theme-card-border:  var(--color-border);
+  --theme-badge-bg:     rgba(99, 102, 241, 0.15);
+  --theme-badge-text:   var(--color-indigo-300);
+  --theme-gradient:     linear-gradient(135deg, var(--color-indigo-600) 0%, var(--color-violet-600) 100%);
+  --theme-glow:         0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+/* ============================================
+   THEME: EMPTY — Gris neutre
+   ============================================ */
+.theme-empty {
+  --theme-primary:      #6b7280;
+  --theme-secondary:    #9ca3af;
+  --theme-accent:       #d1d5db;
+  --theme-heading-font: var(--font-body);
+  --theme-card-border:  rgba(107, 114, 128, 0.2);
+  --theme-badge-bg:     rgba(107, 114, 128, 0.12);
+  --theme-badge-text:   #9ca3af;
+  --theme-gradient:     linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+  --theme-glow:         none;
+}
+
+/* ============================================
+   THEME: GENERIC — Indigo / Violet (défaut)
+   ============================================ */
+.theme-generic {
+  --theme-primary:      #6366f1;
+  --theme-secondary:    #8b5cf6;
+  --theme-accent:       #f43f5e;
+  --theme-heading-font: var(--font-heading);
+  --theme-card-border:  rgba(99, 102, 241, 0.25);
+  --theme-badge-bg:     rgba(99, 102, 241, 0.15);
+  --theme-badge-text:   #a5b4fc;
+  --theme-gradient:     linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --theme-glow:         0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+/* ============================================
+   THEME: D&D 5e — Fantasy noble
+   ============================================ */
+.theme-dnd5e {
+  --theme-primary:      #b8860b;
+  --theme-secondary:    #8b0000;
+  --theme-accent:       #daa520;
+  --theme-heading-font: 'Cinzel', Georgia, serif;
+  --theme-card-border:  rgba(184, 134, 11, 0.3);
+  --theme-badge-bg:     rgba(184, 134, 11, 0.15);
+  --theme-badge-text:   #daa520;
+  --theme-gradient:     linear-gradient(135deg, #b8860b 0%, #8b0000 100%);
+  --theme-glow:         0 0 20px rgba(184, 134, 11, 0.25);
+}
+
+/* ============================================
+   THEME: PATHFINDER — Aventure bronze
+   ============================================ */
+.theme-pathfinder {
+  --theme-primary:      #cd7f32;
+  --theme-secondary:    #2d5a27;
+  --theme-accent:       #8b6914;
+  --theme-heading-font: 'Cinzel', Georgia, serif;
+  --theme-card-border:  rgba(205, 127, 50, 0.3);
+  --theme-badge-bg:     rgba(205, 127, 50, 0.15);
+  --theme-badge-text:   #cd7f32;
+  --theme-gradient:     linear-gradient(135deg, #cd7f32 0%, #2d5a27 100%);
+  --theme-glow:         0 0 20px rgba(205, 127, 50, 0.2);
+}
+
+/* ============================================
+   THEME: CALL OF CTHULHU — Horreur lovecraftienne
+   ============================================ */
+.theme-callofcthulhu {
+  --theme-primary:      #2d5a3d;
+  --theme-secondary:    #1a1a2e;
+  --theme-accent:       #4a7c59;
+  --theme-heading-font: 'Cinzel', Georgia, serif;
+  --theme-card-border:  rgba(45, 90, 61, 0.35);
+  --theme-badge-bg:     rgba(45, 90, 61, 0.2);
+  --theme-badge-text:   #4a7c59;
+  --theme-gradient:     linear-gradient(135deg, #2d5a3d 0%, #1a1a2e 100%);
+  --theme-glow:         0 0 20px rgba(45, 90, 61, 0.3);
+}
+
+/* ============================================
+   THEME: WARHAMMER — Grimdark brutal
+   ============================================ */
+.theme-warhammer {
+  --theme-primary:      #8b0000;
+  --theme-secondary:    #2d2d2d;
+  --theme-accent:       #ffd700;
+  --theme-heading-font: 'Cinzel', Georgia, serif;
+  --theme-card-border:  rgba(139, 0, 0, 0.35);
+  --theme-badge-bg:     rgba(139, 0, 0, 0.18);
+  --theme-badge-text:   #ffd700;
+  --theme-gradient:     linear-gradient(135deg, #8b0000 0%, #2d2d2d 100%);
+  --theme-glow:         0 0 20px rgba(139, 0, 0, 0.3);
+}
+
+/* ============================================
+   THEME: CYBERPUNK — Néon et technologie
+   ============================================ */
+.theme-cyberpunk {
+  --theme-primary:      #00e5ff;
+  --theme-secondary:    #e040fb;
+  --theme-accent:       #ffea00;
+  --theme-heading-font: 'Orbitron', 'Inter', sans-serif;
+  --theme-card-border:  rgba(0, 229, 255, 0.3);
+  --theme-badge-bg:     rgba(0, 229, 255, 0.12);
+  --theme-badge-text:   #00e5ff;
+  --theme-gradient:     linear-gradient(135deg, #00e5ff 0%, #e040fb 100%);
+  --theme-glow:         0 0 24px rgba(0, 229, 255, 0.35);
+}
+
+/* ============================================
+   THEME: SKYRIM — Nordique sobre
+   ============================================ */
+.theme-skyrim {
+  --theme-primary:      #5b8fa8;
+  --theme-secondary:    #8b8680;
+  --theme-accent:       #c0c0c0;
+  --theme-heading-font: 'Cinzel', Georgia, serif;
+  --theme-card-border:  rgba(91, 143, 168, 0.3);
+  --theme-badge-bg:     rgba(91, 143, 168, 0.15);
+  --theme-badge-text:   #5b8fa8;
+  --theme-gradient:     linear-gradient(135deg, #5b8fa8 0%, #8b8680 100%);
+  --theme-glow:         0 0 20px rgba(91, 143, 168, 0.2);
+}
+
+/* ============================================
+   THEME: CUSTOM — Personnalisé
+   ============================================ */
+.theme-custom {
+  --theme-primary:      #8b5cf6;
+  --theme-secondary:    #4f46e5;
+  --theme-accent:       #ec4899;
+  --theme-heading-font: var(--font-heading);
+  --theme-card-border:  rgba(139, 92, 246, 0.3);
+  --theme-badge-bg:     rgba(139, 92, 246, 0.15);
+  --theme-badge-text:   #c4b5fd;
+  --theme-gradient:     linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%);
+  --theme-glow:         0 0 20px rgba(139, 92, 246, 0.25);
+}
+
+/* ============================================
+   APPLICATIF — Zones themed
+   ============================================ */
+.theme-border {
+  border-color: var(--theme-card-border) !important;
+}
+
+.theme-heading {
+  font-family: var(--theme-heading-font);
+  background: var(--theme-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-badge {
+  background: var(--theme-badge-bg);
+  color: var(--theme-badge-text);
+  border: 1px solid var(--theme-card-border);
+}
+
+.theme-card-glow {
+  box-shadow: var(--theme-glow);
+}

@@ -1,0 +1,78 @@
+@page "/worlds/create"
+@attribute [Authorize]
+
+<PageTitle>@L["Worlds_Create"] — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@L["Worlds_Create"]"
+               Subtitle="@L["Worlds_CreateSubtitle"]"
+               Icon="bi-plus-circle"
+               Breadcrumbs="@Breadcrumbs" />
+
+<div style="max-width: 680px;">
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-error" style="margin-bottom: var(--spacing-lg);">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            @ErrorMessage
+        </div>
+    }
+
+    <EditForm Model="Model" OnValidSubmit="HandleCreate" FormName="world-create">
+        <DataAnnotationsValidator />
+
+        <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+            <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Informations</h3>
+
+            <div class="form-group">
+                <label class="form-label" for="world-name">@L["Worlds_Name"] *</label>
+                <InputText id="world-name" @bind-Value="Model.Name"
+                           class="form-control" placeholder="Le Monde des Éclats..." />
+                <ValidationMessage For="() => Model.Name" class="form-error" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="world-desc">@L["Worlds_Description"]</label>
+                <InputTextArea id="world-desc" @bind-Value="Model.Description"
+                               class="form-control" rows="4"
+                               placeholder="Décrivez votre univers, son histoire, son ambiance..." />
+                <ValidationMessage For="() => Model.Description" class="form-error" />
+            </div>
+        </div>
+
+        <!-- Sélection du type de jeu -->
+        <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+            <h3 class="card-title" style="margin-bottom: var(--spacing-md);">@L["Worlds_GameType"]</h3>
+            <div class="game-type-grid">
+                @foreach (var gt in GameTypeOptions)
+                {
+                    <AppThemeWrapper GameType="@gt.Value">
+                        <button type="button"
+                                class="game-type-card @(Model.GameType == gt.Value ? "selected" : "")"
+                                @onclick="() => Model.GameType = gt.Value">
+                            <i class="bi @gt.Icon game-type-icon"></i>
+                            <span class="game-type-label">@gt.Label</span>
+                        </button>
+                    </AppThemeWrapper>
+                }
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="/worlds" class="btn btn-ghost">
+                <i class="bi bi-arrow-left"></i>
+                @L["Common_Cancel"]
+            </a>
+            <button type="submit" class="btn btn-primary" disabled="@IsLoading">
+                @if (IsLoading)
+                {
+                    <AppLoadingSpinner Inline="true" Size="sm" />
+                }
+                else
+                {
+                    <i class="bi bi-check-circle"></i>
+                }
+                @(IsLoading ? L["Common_Saving"] : L["Common_Create"])
+            </button>
+        </div>
+    </EditForm>
+</div>

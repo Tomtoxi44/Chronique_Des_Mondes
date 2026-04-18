@@ -85,3 +85,8 @@ secrets.json
 .aspire/
 
 wwwroot/lib/
+
+# Playwright
+Cdm/.playwright/node_modules/
+Cdm/.playwright/test-results/
+

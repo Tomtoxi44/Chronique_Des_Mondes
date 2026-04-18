@@ -1,0 +1,57 @@
+@* Dialogue de confirmation *@
+
+@if (IsVisible)
+{
+    <div class="dialog-backdrop" @onclick="Cancel">
+        <div class="dialog-panel" @onclick:stopPropagation="true" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+            <div class="dialog-header">
+                <h3 id="dialog-title">@Title</h3>
+                <button class="dialog-close" @onclick="Cancel" aria-label="Fermer">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="dialog-body">
+                <p>@Message</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn btn-ghost" @onclick="Cancel">@CancelLabel</button>
+                <button class="btn btn-danger" @onclick="Confirm" disabled="@IsProcessing">
+                    @if (IsProcessing)
+                    {
+                        <AppLoadingSpinner Inline="true" Size="sm" />
+                    }
+                    @ConfirmLabel
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Confirmer";
+    [Parameter] public string Message { get; set; } = "Êtes-vous sûr ?";
+    [Parameter] public string ConfirmLabel { get; set; } = "Confirmer";
+    [Parameter] public string CancelLabel { get; set; } = "Annuler";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    public bool IsVisible { get; private set; } = false;
+    private bool IsProcessing = false;
+
+    public void Show() { IsVisible = true; StateHasChanged(); }
+    public void Hide() { IsVisible = false; StateHasChanged(); }
+
+    private async Task Confirm()
+    {
+        IsProcessing = true;
+        await OnConfirm.InvokeAsync();
+        IsProcessing = false;
+        Hide();
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+        Hide();
+    }
+}

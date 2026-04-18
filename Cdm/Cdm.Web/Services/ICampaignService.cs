@@ -6,7 +6,7 @@
 
 namespace Cdm.Web.Services;
 
-using Cdm.Web.Components.Campaigns;
+using Cdm.Web.Models;
 
 /// <summary>
 /// Service for managing campaigns from the client side.
@@ -18,7 +18,7 @@ public interface ICampaignService
     /// </summary>
     /// <param name="model">The campaign creation model.</param>
     /// <returns>The created campaign response, or null if creation failed.</returns>
-    Task<CampaignResponse?> CreateCampaignAsync(CampaignForm.CreateCampaignModel model);
+    Task<CampaignResponse?> CreateCampaignAsync(CreateCampaignModel model);
 }
 
 /// <summary>

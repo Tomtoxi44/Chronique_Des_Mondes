@@ -1,6 +1,11 @@
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Common.Enums;
+using Cdm.Web.Services.ApiClients.Base;
+using Cdm.Web.Services.Storage;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Cdm.Web.Services.ApiClients;
 
@@ -8,11 +13,20 @@ public class WorldApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<WorldApiClient> _logger;
+    private readonly ILocalStorageService _localStorage;
 
-    public WorldApiClient(HttpClient httpClient, ILogger<WorldApiClient> logger)
+    public WorldApiClient(HttpClient httpClient, ILogger<WorldApiClient> logger, ILocalStorageService localStorage)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _localStorage = localStorage;
+    }
+
+    private async Task AddAuthHeaderAsync()
+    {
+        var token = await _localStorage.GetItemAsync("auth_token");
+        if (!string.IsNullOrEmpty(token))
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     /// <summary>
@@ -22,6 +36,7 @@ public class WorldApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.GetAsync("api/worlds");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<WorldDto>>() ?? new List<WorldDto>();
@@ -40,6 +55,7 @@ public class WorldApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.GetAsync("api/worlds/all");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<WorldDto>>() ?? new List<WorldDto>();
@@ -58,6 +74,7 @@ public class WorldApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.GetAsync($"api/worlds/{id}");
             
             if (!response.IsSuccessStatusCode)
@@ -82,6 +99,7 @@ public class WorldApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.GetAsync($"api/worlds/{worldId}/characters");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<object>>() ?? new List<object>();
@@ -93,22 +111,34 @@ public class WorldApiClient
         }
     }
 
+    private async Task<ApiException> ReadApiErrorAsync(HttpResponseMessage response)
+    {
+        var statusCode = (int)response.StatusCode;
+        var content = await response.Content.ReadAsStringAsync();
+        try
+        {
+            var err = JsonSerializer.Deserialize<ErrorResponse>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return new ApiException(statusCode, err?.Error ?? content);
+        }
+        catch
+        {
+            return new ApiException(statusCode, string.IsNullOrWhiteSpace(content) ? "Erreur serveur" : content);
+        }
+    }
+
     /// <summary>
     /// Create a new world
     /// </summary>
     public async Task<WorldDto?> CreateWorldAsync(CreateWorldRequest request)
     {
-        try
+        await AddAuthHeaderAsync();
+        var response = await _httpClient.PostAsJsonAsync("api/worlds", request);
+        if (!response.IsSuccessStatusCode)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/worlds", request);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<WorldDto>();
+            _logger.LogError("Error creating world: {StatusCode}", response.StatusCode);
+            throw await ReadApiErrorAsync(response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating world");
-            return null;
-        }
+        return await response.Content.ReadFromJsonAsync<WorldDto>();
     }
 
     /// <summary>
@@ -118,6 +148,7 @@ public class WorldApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.PutAsJsonAsync($"api/worlds/{id}", request);
             
             if (!response.IsSuccessStatusCode)
@@ -142,6 +173,7 @@ public class WorldApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.DeleteAsync($"api/worlds/{id}");
             return response.IsSuccessStatusCode;
         }
@@ -159,6 +191,7 @@ public class WorldApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.PostAsync($"api/worlds/{id}/upload-image", content);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadFromJsonAsync<UploadImageResponse>();
@@ -176,3 +209,4 @@ public class WorldApiClient
 public record CreateWorldRequest(string Name, string Description, GameType GameType);
 public record UpdateWorldRequest(string Name, string Description, bool IsActive);
 public record UploadImageResponse(string ImageUrl);
+file record ErrorResponse(string? Error);

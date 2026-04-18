@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------
 // <copyright file="CampaignService.cs" company="ANGIBAUD Tommy">
 // Copyright (c) ANGIBAUD Tommy. All rights reserved.
 // </copyright>
@@ -36,103 +36,102 @@ public class CampaignService(
     /// <inheritdoc/>
     public async Task<CampaignDto?> CreateCampaignAsync(CreateCampaignDto dto, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
-        try
+        return await this.dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            this.logger.LogInformation(
-                "Creating campaign '{CampaignName}' for user {UserId}",
-                dto.Name,
-                userId);
-
-            // Handle image upload if provided
-            string? coverImageUrl = null;
-            if (!string.IsNullOrWhiteSpace(dto.CoverImageBase64))
+            try
             {
-                this.logger.LogDebug("Uploading cover image for campaign '{CampaignName}'", dto.Name);
+                this.logger.LogInformation(
+                    "Creating campaign '{CampaignName}' for user {UserId}",
+                    dto.Name,
+                    userId);
 
-                // Upload image (campaignId will be 0 initially, so we'll use a temporary ID)
-                coverImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
-                    dto.CoverImageBase64,
-                    0); // Temporary ID
+                // Handle image upload if provided
+                string? coverImageUrl = null;
+                if (!string.IsNullOrWhiteSpace(dto.CoverImageBase64))
+                {
+                    this.logger.LogDebug("Uploading cover image for campaign '{CampaignName}'", dto.Name);
 
-                if (coverImageUrl == null)
+                    // Upload image (campaignId will be 0 initially, so we'll use a temporary ID)
+                    coverImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
+                        dto.CoverImageBase64,
+                        0); // Temporary ID
+
+                    if (coverImageUrl == null)
+                    {
+                        this.logger.LogWarning(
+                            "Failed to upload cover image for campaign '{CampaignName}'",
+                            dto.Name);
+                        return null;
+                    }
+                }
+
+                // Verify world exists
+                var world = await this.dbContext.Worlds.FindAsync(dto.WorldId);
+                if (world == null)
                 {
                     this.logger.LogWarning(
-                        "Failed to upload cover image for campaign '{CampaignName}'",
-                        dto.Name);
+                        "World {WorldId} not found for campaign creation",
+                        dto.WorldId);
                     return null;
                 }
-            }
 
-            // Verify world exists
-            var world = await this.dbContext.Worlds.FindAsync(dto.WorldId);
-            if (world == null)
+                // Create campaign entity
+                var campaign = new Campaign
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    WorldId = dto.WorldId,
+                    Visibility = dto.Visibility,
+                    MaxPlayers = dto.MaxPlayers,
+                    CoverImageUrl = coverImageUrl,
+                    CreatedBy = userId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    IsActive = true,
+                    IsDeleted = false
+                };
+
+                this.dbContext.Campaigns.Add(campaign);
+                await this.dbContext.SaveChangesAsync();
+
+                // If we uploaded an image with temporary ID, rename it with actual campaign ID
+                if (coverImageUrl != null)
+                {
+                    var actualImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
+                        dto.CoverImageBase64,
+                        campaign.Id);
+
+                    if (actualImageUrl != null)
+                    {
+                        // Delete old temporary file
+                        await this.imageStorageService.DeleteCampaignCoverAsync(coverImageUrl);
+
+                        // Update campaign with new URL
+                        campaign.CoverImageUrl = actualImageUrl;
+                        await this.dbContext.SaveChangesAsync();
+                    }
+                }
+
+
+                this.logger.LogInformation(
+                    "Successfully created campaign {CampaignId} '{CampaignName}'",
+                    campaign.Id,
+                    campaign.Name);
+
+                return this.MapToDto(campaign);
+            }
+            catch (Exception ex)
             {
-                this.logger.LogWarning(
-                    "World {WorldId} not found for campaign creation",
-                    dto.WorldId);
+
+                this.logger.LogError(
+                    ex,
+                    "Error creating campaign '{CampaignName}' for user {UserId}",
+                    dto.Name,
+                    userId);
+
                 return null;
             }
-
-            // Create campaign entity
-            var campaign = new Campaign
-            {
-                Name = dto.Name,
-                Description = dto.Description,
-                WorldId = dto.WorldId,
-                Visibility = dto.Visibility,
-                MaxPlayers = dto.MaxPlayers,
-                CoverImageUrl = coverImageUrl,
-                CreatedBy = userId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                IsActive = true,
-                IsDeleted = false
-            };
-
-            this.dbContext.Campaigns.Add(campaign);
-            await this.dbContext.SaveChangesAsync();
-
-            // If we uploaded an image with temporary ID, rename it with actual campaign ID
-            if (coverImageUrl != null)
-            {
-                var actualImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
-                    dto.CoverImageBase64,
-                    campaign.Id);
-
-                if (actualImageUrl != null)
-                {
-                    // Delete old temporary file
-                    await this.imageStorageService.DeleteCampaignCoverAsync(coverImageUrl);
-
-                    // Update campaign with new URL
-                    campaign.CoverImageUrl = actualImageUrl;
-                    await this.dbContext.SaveChangesAsync();
-                }
-            }
-
-            await transaction.CommitAsync();
-
-            this.logger.LogInformation(
-                "Successfully created campaign {CampaignId} '{CampaignName}'",
-                campaign.Id,
-                campaign.Name);
-
-            return this.MapToDto(campaign);
-        }
-        catch (Exception ex)
-        {
-            await transaction.RollbackAsync();
-
-            this.logger.LogError(
-                ex,
-                "Error creating campaign '{CampaignName}' for user {UserId}",
-                dto.Name,
-                userId);
-
-            return null;
-        }
+        });
     }
 
     /// <inheritdoc/>
@@ -212,8 +211,6 @@ public class CampaignService(
     /// <inheritdoc/>
     public async Task<CampaignDto?> UpdateCampaignAsync(int campaignId, CreateCampaignDto dto, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -286,7 +283,6 @@ public class CampaignService(
             campaign.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             this.logger.LogInformation(
                 "Successfully updated campaign {CampaignId}",
@@ -296,7 +292,6 @@ public class CampaignService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
 
             this.logger.LogError(
                 ex,

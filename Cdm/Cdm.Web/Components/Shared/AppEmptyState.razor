@@ -1,0 +1,28 @@
+@* État vide générique *@
+
+<div class="empty-state">
+    @if (!string.IsNullOrEmpty(Icon))
+    {
+        <div class="empty-state-icon">
+            <i class="bi @Icon"></i>
+        </div>
+    }
+    <h3 class="empty-state-title">@Title</h3>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="empty-state-message">@Message</p>
+    }
+    @if (ActionContent != null)
+    {
+        <div class="empty-state-action">
+            @ActionContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "bi-inbox";
+    [Parameter] public string Title { get; set; } = "Aucune donnée";
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ActionContent { get; set; }
+}

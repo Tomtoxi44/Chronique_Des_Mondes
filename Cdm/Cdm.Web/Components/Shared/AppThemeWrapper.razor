@@ -1,0 +1,24 @@
+@* Wrapper appliquant la classe thème CSS selon le GameType *@
+
+<div class="@ThemeClass @AdditionalClass">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public GameType? GameType { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? AdditionalClass { get; set; }
+
+    private string ThemeClass => GameType switch
+    {
+        Cdm.Common.Enums.GameType.DnD5e => "theme-dnd5e",
+        Cdm.Common.Enums.GameType.Pathfinder => "theme-pathfinder",
+        Cdm.Common.Enums.GameType.CallOfCthulhu => "theme-callofcthulhu",
+        Cdm.Common.Enums.GameType.Warhammer => "theme-warhammer",
+        Cdm.Common.Enums.GameType.Cyberpunk => "theme-cyberpunk",
+        Cdm.Common.Enums.GameType.Skyrim => "theme-skyrim",
+        Cdm.Common.Enums.GameType.Generic => "theme-generic",
+        Cdm.Common.Enums.GameType.Custom => "theme-custom",
+        _ => "theme-generic"
+    };
+}

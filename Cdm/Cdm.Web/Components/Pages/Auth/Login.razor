@@ -1,74 +1,62 @@
 @page "/login"
-@using Cdm.Web.Shared.DTOs.Models
-@using Cdm.Web.Shared.DTOs.ViewModels
-@using Cdm.Web.Components.Layout
-@layout AuthLayout
+@layout Layout.BlankLayout
 
-<PageTitle>@L["Auth_Login"] — @L["AppName"]</PageTitle>
+<PageTitle>Connexion — Chronique des Mondes</PageTitle>
 
-<div class="auth-card-header">
-    <h3 class="auth-card-title">@L["Auth_Login"]</h3>
-    <p class="auth-card-subtitle">Bon retour, aventurier !</p>
-</div>
-
-@if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <FluentMessageBar Title="@L["Common_Error"]" Intent="MessageIntent.Error" Style="width: 100%; margin-bottom: 16px;">
-        @ErrorMessage
-    </FluentMessageBar>
-}
-
-<EditForm Model="@LoginModel" OnValidSubmit="@HandleLoginAsync" class="auth-form">
-    <DataAnnotationsValidator />
-    
-    <div class="auth-form-group">
-        <FluentTextField @bind-Value="LoginModel.Email"
-                         Label="@L["Auth_Email"]"
-                         TextFieldType="TextFieldType.Email"
-                         Placeholder="votre@email.com"
-                         Required="true"
-                         Disabled="@IsLoading"
-                         Style="width: 100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.Mail())" Slot="start" />
-        </FluentTextField>
-        <FluentValidationMessage For="@(() => LoginModel.Email)" />
+<div class="auth-card">
+    <div class="auth-branding">
+        <img src="/images/LogoCdm.svg" alt="Logo Chronique des Mondes" class="auth-logo" />
+        <div class="auth-app-name">@L["AppName"]</div>
+        <div class="auth-tagline">@L["AppTagline"]</div>
     </div>
 
-    <div class="auth-form-group">
-        <FluentTextField @bind-Value="LoginModel.Password"
-                         Label="@L["Auth_Password"]"
-                         TextFieldType="@(ShowPassword ? TextFieldType.Text : TextFieldType.Password)"
-                         Placeholder="Votre mot de passe"
-                         Required="true"
-                         Disabled="@IsLoading"
-                         Style="width: 100%;">
-            <FluentIcon Value="@(new Icons.Regular.Size20.LockClosed())" Slot="start" />
-            <FluentButton Slot="end" 
-                          Appearance="Appearance.Stealth"
-                          IconStart="@(ShowPassword ? new Icons.Regular.Size20.EyeOff() : new Icons.Regular.Size20.Eye())"
-                          OnClick="@TogglePasswordVisibility" />
-        </FluentTextField>
-        <FluentValidationMessage For="@(() => LoginModel.Password)" />
+    <h2 class="auth-title">@L["Auth_Login"]</h2>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-error" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            @ErrorMessage
+        </div>
+    }
+
+    <EditForm Model="Model" OnValidSubmit="HandleLogin" FormName="login-form">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="email" class="form-label">@L["Auth_Email"]</label>
+            <div class="input-with-icon">
+                <i class="bi bi-envelope input-icon"></i>
+                <InputText id="email" @bind-Value="Model.Email" class="form-control with-icon"
+                           type="email" placeholder="votre@email.com" autocomplete="email" />
+            </div>
+            <ValidationMessage For="() => Model.Email" class="form-error" />
+        </div>
+
+        <div class="form-group">
+            <label for="password" class="form-label">@L["Auth_Password"]</label>
+            <div class="input-with-icon">
+                <i class="bi bi-lock input-icon"></i>
+                <InputText id="password" @bind-Value="Model.Password" class="form-control with-icon"
+                           type="password" placeholder="••••••••" autocomplete="current-password" />
+            </div>
+            <ValidationMessage For="() => Model.Password" class="form-error" />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" disabled="@IsLoading">
+            @if (IsLoading)
+            {
+                <AppLoadingSpinner Inline="true" Size="sm" />
+            }
+            else
+            {
+                <i class="bi bi-box-arrow-in-right"></i>
+            }
+            @(IsLoading ? L["Common_Loading"] : L["Auth_LoginButton"])
+        </button>
+    </EditForm>
+
+    <div class="auth-footer-link">
+        @L["Auth_NoAccount"] <a href="/register">@L["Auth_Register"]</a>
     </div>
-
-    <FluentButton Type="ButtonType.Submit"
-                  Appearance="Appearance.Accent"
-                  Loading="@IsLoading"
-                  Disabled="@IsLoading"
-                  Style="width: 100%; height: 44px;">
-        @if (IsLoading)
-        {
-            <span>@L["Auth_Login"]...</span>
-        }
-        else
-        {
-            <FluentIcon Value="@(new Icons.Regular.Size20.ArrowEnter())" Slot="start" />
-            <span>@L["Auth_LoginButton"]</span>
-        }
-    </FluentButton>
-</EditForm>
-
-<div class="auth-card-footer">
-    <span class="auth-card-footer-text">@L["Auth_NoAccount"]</span>
-    <a href="/register" class="auth-card-footer-link">@L["Auth_Register"]</a>
 </div>

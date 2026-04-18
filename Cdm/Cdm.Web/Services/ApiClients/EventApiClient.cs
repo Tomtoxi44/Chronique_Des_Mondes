@@ -7,6 +7,8 @@
 namespace Cdm.Web.Services.ApiClients;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Web.Services.Storage;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 /// <summary>
@@ -16,14 +18,23 @@ public class EventApiClient
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<EventApiClient> logger;
+    private readonly ILocalStorageService localStorage;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EventApiClient"/> class.
     /// </summary>
-    public EventApiClient(HttpClient httpClient, ILogger<EventApiClient> logger)
+    public EventApiClient(HttpClient httpClient, ILogger<EventApiClient> logger, ILocalStorageService localStorage)
     {
         this.httpClient = httpClient;
         this.logger = logger;
+        this.localStorage = localStorage;
+    }
+
+    private async Task AddAuthHeaderAsync()
+    {
+        var token = await this.localStorage.GetItemAsync("auth_token");
+        if (!string.IsNullOrEmpty(token))
+            this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     /// <summary>Gets all events for a world.</summary>
@@ -31,6 +42,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/events/world/{worldId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<EventDto>>() ?? new();
@@ -49,6 +61,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/events/campaign/{campaignId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<EventDto>>() ?? new();
@@ -67,6 +80,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/events/chapter/{chapterId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<EventDto>>() ?? new();
@@ -85,6 +99,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.GetAsync($"/api/events/{id}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<EventDto>();
@@ -103,6 +118,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PostAsJsonAsync("/api/events", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<EventDto>();
@@ -121,6 +137,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PutAsJsonAsync($"/api/events/{id}", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<EventDto>();
@@ -139,6 +156,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.DeleteAsync($"/api/events/{id}");
             return response.IsSuccessStatusCode;
         }
@@ -154,6 +172,7 @@ public class EventApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await this.httpClient.PutAsJsonAsync($"/api/events/{id}/active", new { IsActive = isActive });
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<EventDto>();

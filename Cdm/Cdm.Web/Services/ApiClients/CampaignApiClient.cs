@@ -1,6 +1,8 @@
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Common.Enums;
+using Cdm.Web.Services.Storage;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace Cdm.Web.Services.ApiClients;
@@ -9,11 +11,20 @@ public class CampaignApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<CampaignApiClient> _logger;
+    private readonly ILocalStorageService _localStorage;
 
-    public CampaignApiClient(HttpClient httpClient, ILogger<CampaignApiClient> logger)
+    public CampaignApiClient(HttpClient httpClient, ILogger<CampaignApiClient> logger, ILocalStorageService localStorage)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _localStorage = localStorage;
+    }
+
+    private async Task AddAuthHeaderAsync()
+    {
+        var token = await _localStorage.GetItemAsync("auth_token");
+        if (!string.IsNullOrEmpty(token))
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     /// <summary>
@@ -23,6 +34,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.GetAsync("api/campaigns/my");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<CampaignDto>>() ?? new List<CampaignDto>();
@@ -41,6 +53,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.GetAsync($"api/campaigns/{id}");
             
             if (!response.IsSuccessStatusCode)
@@ -65,6 +78,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.PutAsJsonAsync($"api/campaigns/{id}", request);
             
             if (!response.IsSuccessStatusCode)
@@ -89,6 +103,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.DeleteAsync($"api/campaigns/{id}");
             return response.IsSuccessStatusCode;
         }
@@ -106,6 +121,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.PostAsJsonAsync("api/campaigns", dto);
             if (!response.IsSuccessStatusCode)
             {
@@ -128,6 +144,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.PostAsync($"api/campaigns/{campaignId}/invite", null);
             if (!response.IsSuccessStatusCode)
             {
@@ -151,6 +168,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.PostAsJsonAsync("api/campaigns/join", new { InviteToken = inviteToken });
             if (!response.IsSuccessStatusCode)
             {
@@ -173,6 +191,7 @@ public class CampaignApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             var response = await _httpClient.PatchAsJsonAsync($"api/campaigns/{campaignId}/status", new { Status = status });
             if (!response.IsSuccessStatusCode)
             {

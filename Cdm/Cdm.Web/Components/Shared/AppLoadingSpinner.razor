@@ -1,0 +1,22 @@
+@* Spinner de chargement centré *@
+
+<div class="spinner-wrapper @(Inline ? "inline" : "")" role="status" aria-label="Chargement">
+    <div class="cdm-spinner @SizeClass"></div>
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <span class="spinner-label">@Label</span>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Inline { get; set; } = false;
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Size { get; set; } = "md"; // sm, md, lg
+
+    private string SizeClass => Size switch
+    {
+        "sm" => "spinner-sm",
+        "lg" => "spinner-lg",
+        _ => ""
+    };
+}

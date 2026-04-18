@@ -1,0 +1,25 @@
+@* Carte statistique avec valeur, label, icône *@
+
+<div class="stat-card @(Href != null ? "clickable" : "")" @onclick="Navigate">
+    <div class="stat-icon">
+        <i class="bi @Icon"></i>
+    </div>
+    <div class="stat-content">
+        <div class="stat-value">@Value</div>
+        <div class="stat-label">@Label</div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = "0";
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = "bi-bar-chart";
+    [Parameter] public string? Href { get; set; }
+
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private void Navigate()
+    {
+        if (Href != null) Nav.NavigateTo(Href);
+    }
+}

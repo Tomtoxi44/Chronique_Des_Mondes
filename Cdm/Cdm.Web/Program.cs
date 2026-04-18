@@ -1,10 +1,11 @@
 using Cdm.Web;
 using Cdm.Web.Components;
-using Cdm.Web.Components.Pages.Auth;
 using Cdm.Web.Services;
 using Cdm.Web.Services.Storage;
 using Cdm.Web.Services.State;
 using Cdm.Web.Services.ApiClients;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.FluentUI.AspNetCore.Components;
 using System.Globalization;
@@ -18,57 +19,34 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add Fluent UI
+// Fluent UI Blazor
 builder.Services.AddFluentUIComponents();
 
-// Localization
-builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+// Localization — co-located .resx files + shared AppStrings
+builder.Services.AddLocalization(options => options.ResourcesPath = "");
 
 // Theme service — centralized game-type-based theming
 builder.Services.AddScoped<ThemeService>();
 
+// Navigation context — communicates deep nav context between pages and MainLayout
+builder.Services.AddScoped<NavigationContextService>();
+
+// Toast notification service
+builder.Services.AddScoped<Cdm.Web.Services.ToastService>();
+
 builder.Services.AddOutputCache();
 
 // Authentication & Authorization
-// We need AddAuthentication for the middleware, but we disable automatic redirects
-// The CustomAuthStateProvider handles authentication state based on localStorage JWT
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = "Cookies";
-})
-.AddCookie("Cookies", options =>
-{
-    // Disable automatic redirects - let Blazor handle navigation
-    options.LoginPath = null;
-    options.LogoutPath = null;
-    options.AccessDeniedPath = null;
-    options.Events.OnRedirectToLogin = context =>
-    {
-        // Don't redirect, just return 401
-        context.Response.StatusCode = 401;
-        return Task.CompletedTask;
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        // Don't redirect, just return 403
-        context.Response.StatusCode = 403;
-        return Task.CompletedTask;
-    };
-});
-
+// CustomAuthStateProvider handles auth state based on localStorage JWT
+// BlazorAuthorizationMiddlewareResultHandler prevents HTTP 401 so Blazor can render
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorizationCore();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BlazorAuthorizationMiddlewareResultHandler>();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => 
     sp.GetRequiredService<CustomAuthStateProvider>());
-
-// Handlers - Component-Handler-Service pattern
-builder.Services.AddScoped<LoginHandler>();
-builder.Services.AddScoped<RegisterHandler>();
-
-// JWT auth handler - automatically injects Bearer token into all API requests
-builder.Services.AddTransient<AuthTokenHandler>();
 
 // Get API Base URL from configuration (supports Aspire in Dev, real URL in Production)
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https+http://apiservice";
@@ -156,7 +134,7 @@ builder.Services.AddScoped<WorldApiClient>(sp =>
     var httpClient = httpClientFactory.CreateClient("WorldApiClient");
     var localStorage = sp.GetRequiredService<ILocalStorageService>();
     var logger = sp.GetRequiredService<ILogger<WorldApiClient>>();
-    return new WorldApiClient(httpClient, logger);
+    return new WorldApiClient(httpClient, logger, localStorage);
 });
 
 builder.Services.AddHttpClient("WorldApiClient", client =>
@@ -164,15 +142,16 @@ builder.Services.AddHttpClient("WorldApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-}).AddHttpMessageHandler<AuthTokenHandler>();
+});
 
 // Register CampaignApiClient with scoped lifetime
 builder.Services.AddScoped<CampaignApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var httpClient = httpClientFactory.CreateClient("CampaignApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
     var logger = sp.GetRequiredService<ILogger<CampaignApiClient>>();
-    return new CampaignApiClient(httpClient, logger);
+    return new CampaignApiClient(httpClient, logger, localStorage);
 });
 
 builder.Services.AddHttpClient("CampaignApiClient", client =>
@@ -180,15 +159,16 @@ builder.Services.AddHttpClient("CampaignApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-}).AddHttpMessageHandler<AuthTokenHandler>();
+});
 
 // Register ChapterApiClient with scoped lifetime
 builder.Services.AddScoped<ChapterApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var httpClient = httpClientFactory.CreateClient("ChapterApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
     var logger = sp.GetRequiredService<ILogger<ChapterApiClient>>();
-    return new ChapterApiClient(httpClient, logger);
+    return new ChapterApiClient(httpClient, logger, localStorage);
 });
 
 builder.Services.AddHttpClient("ChapterApiClient", client =>
@@ -196,15 +176,16 @@ builder.Services.AddHttpClient("ChapterApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-}).AddHttpMessageHandler<AuthTokenHandler>();
+});
 
 // Register EventApiClient with scoped lifetime
 builder.Services.AddScoped<EventApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var httpClient = httpClientFactory.CreateClient("EventApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
     var logger = sp.GetRequiredService<ILogger<EventApiClient>>();
-    return new EventApiClient(httpClient, logger);
+    return new EventApiClient(httpClient, logger, localStorage);
 });
 
 builder.Services.AddHttpClient("EventApiClient", client =>
@@ -212,15 +193,16 @@ builder.Services.AddHttpClient("EventApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-}).AddHttpMessageHandler<AuthTokenHandler>();
+});
 
 // Register AchievementApiClient with scoped lifetime
 builder.Services.AddScoped<AchievementApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var httpClient = httpClientFactory.CreateClient("AchievementApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
     var logger = sp.GetRequiredService<ILogger<AchievementApiClient>>();
-    return new AchievementApiClient(httpClient, logger);
+    return new AchievementApiClient(httpClient, logger, localStorage);
 });
 
 builder.Services.AddHttpClient("AchievementApiClient", client =>
@@ -228,15 +210,16 @@ builder.Services.AddHttpClient("AchievementApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-}).AddHttpMessageHandler<AuthTokenHandler>();
+});
 
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var httpClient = httpClientFactory.CreateClient("NotificationApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
     var logger = sp.GetRequiredService<ILogger<NotificationApiClient>>();
-    return new NotificationApiClient(httpClient, logger);
+    return new NotificationApiClient(httpClient, logger, localStorage);
 });
 
 builder.Services.AddHttpClient("NotificationApiClient", client =>
@@ -244,7 +227,7 @@ builder.Services.AddHttpClient("NotificationApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-}).AddHttpMessageHandler<AuthTokenHandler>();
+});
 
 var app = builder.Build();
 
@@ -268,9 +251,6 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 
 app.UseAntiforgery();
 
-// Enable authentication and authorization middleware
-// Authentication is handled by CustomAuthStateProvider (client-side JWT)
-// but middleware is required for UseAuthorization to work
 app.UseAuthentication();
 app.UseAuthorization();
 

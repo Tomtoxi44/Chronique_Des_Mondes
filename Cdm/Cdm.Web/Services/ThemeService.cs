@@ -88,13 +88,13 @@ public class ThemeService
 
     public static string GetGameTypeIcon(GameType gameType) => gameType switch
     {
-        GameType.DnD5e => "⚔️",
-        GameType.Pathfinder => "🗺️",
-        GameType.CallOfCthulhu => "🐙",
-        GameType.Warhammer => "🔨",
-        GameType.Cyberpunk => "🌃",
-        GameType.Skyrim => "🏔️",
-        GameType.Custom => "🎲",
-        _ => "🌍"
+        GameType.DnD5e => "bi-shield-fill",
+        GameType.Pathfinder => "bi-map-fill",
+        GameType.CallOfCthulhu => "bi-eye-fill",
+        GameType.Warhammer => "bi-hammer",
+        GameType.Cyberpunk => "bi-lightning-charge-fill",
+        GameType.Skyrim => "bi-snow",
+        GameType.Custom => "bi-dice-6-fill",
+        _ => "bi-globe2"
     };
 }

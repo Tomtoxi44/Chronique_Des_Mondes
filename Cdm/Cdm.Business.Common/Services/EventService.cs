@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------
 // <copyright file="EventService.cs" company="ANGIBAUD Tommy">
 // Copyright (c) ANGIBAUD Tommy. All rights reserved.
 // </copyright>
@@ -29,8 +29,6 @@ public class EventService(
     /// <inheritdoc/>
     public async Task<EventDto?> CreateEventAsync(CreateEventDto dto, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -69,7 +67,6 @@ public class EventService(
             this.dbContext.Events.Add(eventEntity);
             await this.dbContext.SaveChangesAsync();
 
-            await transaction.CommitAsync();
 
             this.logger.LogInformation(
                 "Successfully created event {EventId} '{Name}'",
@@ -80,7 +77,6 @@ public class EventService(
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
 
             this.logger.LogError(
                 ex,
@@ -257,8 +253,6 @@ public class EventService(
     /// <inheritdoc/>
     public async Task<EventDto?> UpdateEventAsync(int eventId, CreateEventDto request, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -300,13 +294,11 @@ public class EventService(
             eventEntity.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             return this.MapToDto(eventEntity);
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             this.logger.LogError(ex, "Error updating event {EventId}", eventId);
             return null;
         }
@@ -315,8 +307,6 @@ public class EventService(
     /// <inheritdoc/>
     public async Task<bool> DeleteEventAsync(int eventId, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             this.logger.LogInformation(
@@ -348,13 +338,11 @@ public class EventService(
             eventEntity.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             return true;
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             this.logger.LogError(ex, "Error deleting event {EventId}", eventId);
             return false;
         }
@@ -363,8 +351,6 @@ public class EventService(
     /// <inheritdoc/>
     public async Task<EventDto?> SetEventActiveAsync(int eventId, bool isActive, int userId)
     {
-        using var transaction = await this.dbContext.Database.BeginTransactionAsync();
-
         try
         {
             var eventEntity = await this.dbContext.Events
@@ -387,13 +373,11 @@ public class EventService(
             eventEntity.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             return this.MapToDto(eventEntity);
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             this.logger.LogError(ex, "Error setting event {EventId} active status", eventId);
             return null;
         }

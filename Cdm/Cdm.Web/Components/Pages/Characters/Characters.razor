@@ -1,0 +1,96 @@
+@page "/characters"
+@attribute [Authorize]
+
+<PageTitle>@L["Characters_Title"] — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="@L["Characters_Title"]" Subtitle="@L["Characters_Subtitle"]" Icon="bi-people">
+    <Actions>
+        <a href="/characters/create" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i>
+            @L["Characters_Create"]
+        </a>
+    </Actions>
+</AppPageHeader>
+
+@if (IsLoading)
+{
+    <div class="cards-grid">
+        @for (int i = 0; i < 3; i++) { <AppSkeletonCard /> }
+    </div>
+}
+else if (CharacterList.Count == 0)
+{
+    <AppEmptyState Icon="bi-people"
+                   Title="@L["Characters_Empty"]"
+                   Message="@L["Characters_EmptyMessage"]">
+        <ActionContent>
+            <a href="/characters/create" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i>
+                @L["Characters_Create"]
+            </a>
+        </ActionContent>
+    </AppEmptyState>
+}
+else
+{
+    <div class="cards-grid">
+        @foreach (var character in CharacterList)
+        {
+            <div class="cdm-card character-card">
+                <div class="card-header-row">
+                    <div class="character-avatar">
+                        @if (!string.IsNullOrEmpty(character.AvatarUrl))
+                        {
+                            <img src="@character.AvatarUrl" alt="@character.Name" class="avatar-img" />
+                        }
+                        else
+                        {
+                            <span class="avatar-initials">@GetInitials(character)</span>
+                        }
+                    </div>
+                    <div class="card-actions">
+                        <a href="/characters/@character.Id/edit" class="btn btn-ghost btn-icon" title="@L["Common_Edit"]">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button class="btn btn-ghost btn-icon danger" @onclick="() => ConfirmDelete(character)"
+                                title="@L["Common_Delete"]">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="card-title">
+                    @character.Name
+                    @if (!string.IsNullOrEmpty(character.FirstName))
+                    {
+                        <span style="font-weight: 400;"> @character.FirstName</span>
+                    }
+                </h3>
+
+                @if (character.Age.HasValue)
+                {
+                    <span class="card-meta-badge">@character.Age ans</span>
+                }
+
+                @if (!string.IsNullOrEmpty(character.Description))
+                {
+                    <p class="card-description">@character.Description</p>
+                }
+
+                <div class="card-meta">
+                    <span>
+                        <i class="bi bi-calendar3"></i>
+                        @character.CreatedAt.ToString("d MMM yyyy")
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<AppConfirmDialog @ref="DeleteDialog"
+                  Title="@L["Common_Confirm"]"
+                  Message="@L["Characters_DeleteConfirm"]"
+                  ConfirmLabel="@L["Common_Delete"]"
+                  CancelLabel="@L["Common_Cancel"]"
+                  OnConfirm="DeleteCharacter" />

@@ -7,6 +7,8 @@
 namespace Cdm.Web.Services.ApiClients;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Web.Services.Storage;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 /// <summary>
@@ -16,16 +18,23 @@ public class ChapterApiClient
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<ChapterApiClient> logger;
+    private readonly ILocalStorageService localStorage;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChapterApiClient"/> class.
     /// </summary>
-    /// <param name="httpClient">The HTTP client.</param>
-    /// <param name="logger">The logger.</param>
-    public ChapterApiClient(HttpClient httpClient, ILogger<ChapterApiClient> logger)
+    public ChapterApiClient(HttpClient httpClient, ILogger<ChapterApiClient> logger, ILocalStorageService localStorage)
     {
         this.httpClient = httpClient;
         this.logger = logger;
+        this.localStorage = localStorage;
+    }
+
+    private async Task AddAuthHeaderAsync()
+    {
+        var token = await this.localStorage.GetItemAsync("auth_token");
+        if (!string.IsNullOrEmpty(token))
+            this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     /// <summary>
@@ -37,6 +46,7 @@ public class ChapterApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             this.logger.LogInformation("Fetching chapters for campaign {CampaignId}", campaignId);
             var response = await this.httpClient.GetAsync($"/api/chapters/campaign/{campaignId}");
             
@@ -66,6 +76,7 @@ public class ChapterApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             this.logger.LogInformation("Fetching chapter {ChapterId}", id);
             var response = await this.httpClient.GetAsync($"/api/chapters/{id}");
             
@@ -93,6 +104,7 @@ public class ChapterApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             this.logger.LogInformation("Creating chapter '{Title}' for campaign {CampaignId}", 
                 createDto.Title, createDto.CampaignId);
             
@@ -123,6 +135,7 @@ public class ChapterApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             this.logger.LogInformation("Updating chapter {ChapterId}", id);
             
             var response = await this.httpClient.PutAsJsonAsync($"/api/chapters/{id}", updateDto);
@@ -152,6 +165,7 @@ public class ChapterApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             this.logger.LogInformation("Deleting chapter {ChapterId}", id);
             
             var response = await this.httpClient.DeleteAsync($"/api/chapters/{id}");
@@ -181,6 +195,7 @@ public class ChapterApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             this.logger.LogInformation("Starting chapter {ChapterId}", id);
             
             var response = await this.httpClient.PostAsync($"/api/chapters/{id}/start", null);
@@ -210,6 +225,7 @@ public class ChapterApiClient
     {
         try
         {
+            await AddAuthHeaderAsync();
             this.logger.LogInformation("Completing chapter {ChapterId}", id);
             
             var response = await this.httpClient.PostAsync($"/api/chapters/{id}/complete", null);
