@@ -343,6 +343,246 @@ else
         }
 
         @* ──────────────────────────────────────────────────────────
+           SECTION: ÉVÉNEMENTS
+           ────────────────────────────────────────────────────────── *@
+        @if (Section == "events")
+        {
+            <AppPageHeader Title="Événements"
+                           Icon="bi-lightning"
+                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new("Événements") })" />
+
+            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
+                Les événements sont des modificateurs actifs qui affectent tous les personnages de ce monde.
+            </p>
+
+            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md);">
+                <button class="btn btn-primary btn-sm" @onclick="() => ShowNewEventForm = !ShowNewEventForm">
+                    <i class="bi bi-plus"></i> Créer un événement
+                </button>
+            </div>
+
+            @if (ShowNewEventForm)
+            {
+                <div class="cdm-card" style="margin-bottom: var(--spacing-lg); border: 1px solid var(--theme-card-border, var(--color-border));">
+                    <h4 class="card-title" style="margin-bottom: var(--spacing-md);">Nouvel événement de monde</h4>
+                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                        <label class="form-label">Nom <span style="color:var(--color-error)">*</span></label>
+                        <input type="text" class="form-control" @bind="NewEvent.Name" placeholder="Nom de l'événement..." />
+                    </div>
+                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="NewEvent.Description" placeholder="Description narrative de l'événement..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                        <div class="form-group">
+                            <label class="form-label">Type d'effet</label>
+                            <select class="form-control" @bind="NewEvent.EffectType">
+                                <option value="@EventEffectType.Narrative">Narratif</option>
+                                <option value="@EventEffectType.StatModifier">Modificateur de stat</option>
+                                <option value="@EventEffectType.HealthModifier">Modificateur de PV</option>
+                                <option value="@EventEffectType.DiceModifier">Modificateur de dé</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Durée</label>
+                            <select class="form-control" @bind="NewEvent.IsPermanent">
+                                <option value="true">Permanent</option>
+                                <option value="false">Temporaire</option>
+                            </select>
+                        </div>
+                    </div>
+                    @if (NewEvent.EffectType != EventEffectType.Narrative)
+                    {
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                            <div class="form-group">
+                                <label class="form-label">Stat ciblée</label>
+                                <input type="text" class="form-control" @bind="NewEvent.TargetStat" placeholder="ex: Force, PV..." />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Valeur modificateur</label>
+                                <input type="number" class="form-control" @bind="NewEvent.ModifierValue" />
+                            </div>
+                        </div>
+                    }
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <button class="btn btn-primary btn-sm" @onclick="CreateEvent" disabled="@IsSaving">
+                            <i class="bi bi-check"></i> Créer
+                        </button>
+                        <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewEventForm = false">@L["Common_Cancel"]</button>
+                    </div>
+                </div>
+            }
+
+            @if (IsLoadingEvents)
+            {
+                <AppLoadingSpinner Label="Chargement des événements..." />
+            }
+            else if (WorldEvents.Count == 0)
+            {
+                <AppEmptyState Icon="bi-lightning"
+                               Title="Aucun événement"
+                               Message="Aucun événement actif dans ce monde pour l'instant." />
+            }
+            else
+            {
+                @foreach (var ev in WorldEvents.OrderByDescending(e => e.CreatedAt))
+                {
+                    <div class="cdm-card" style="margin-bottom: var(--spacing-sm); border-left: 3px solid @(ev.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-border)");">
+                        <div style="display: flex; align-items: flex-start; gap: var(--spacing-md);">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-xs);">
+                                    <span style="font-weight: 600; color: var(--color-text-primary);">@ev.Name</span>
+                                    @if (ev.IsActive)
+                                    {
+                                        <span class="status-badge status-active">Actif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-paused">Inactif</span>
+                                    }
+                                    <span class="status-badge" style="background: var(--color-bg-secondary);">@GetEffectLabel(ev.EffectType)</span>
+                                    <span class="status-badge" style="background: var(--color-bg-secondary);">@(ev.IsPermanent ? "Permanent" : "Temporaire")</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(ev.Description))
+                                {
+                                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0;">@ev.Description</p>
+                                }
+                                @if (ev.EffectType != EventEffectType.Narrative && ev.ModifierValue.HasValue)
+                                {
+                                    <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
+                                        @ev.TargetStat : @(ev.ModifierValue > 0 ? "+" : "")@ev.ModifierValue
+                                    </p>
+                                }
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
+                                <button class="btn btn-ghost btn-sm" @onclick="() => ToggleEventActive(ev)" title="@(ev.IsActive ? "Désactiver" : "Activer")">
+                                    <i class="bi @(ev.IsActive ? "bi-pause-circle" : "bi-play-circle")"></i>
+                                </button>
+                                <button class="btn btn-ghost btn-sm" @onclick="() => DeleteEvent(ev.Id)" style="color: var(--color-error);" title="Supprimer">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+
+        @* ──────────────────────────────────────────────────────────
+           SECTION: SUCCÈS
+           ────────────────────────────────────────────────────────── *@
+        @if (Section == "achievements")
+        {
+            <AppPageHeader Title="Succès"
+                           Icon="bi-trophy"
+                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new("Succès") })" />
+
+            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
+                Les succès récompensent les accomplissements des joueurs dans ce monde.
+            </p>
+
+            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md);">
+                <button class="btn btn-primary btn-sm" @onclick="() => ShowNewAchievementForm = !ShowNewAchievementForm">
+                    <i class="bi bi-plus"></i> Créer un succès
+                </button>
+            </div>
+
+            @if (ShowNewAchievementForm)
+            {
+                <div class="cdm-card" style="margin-bottom: var(--spacing-lg); border: 1px solid var(--theme-card-border, var(--color-border));">
+                    <h4 class="card-title" style="margin-bottom: var(--spacing-md);">Nouveau succès de monde</h4>
+                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                        <label class="form-label">Nom <span style="color:var(--color-error)">*</span></label>
+                        <input type="text" class="form-control" @bind="NewAchievement.Name" placeholder="Nom du succès..." />
+                    </div>
+                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                        <label class="form-label">Description <span style="color:var(--color-error)">*</span></label>
+                        <textarea class="form-control" rows="3" @bind="NewAchievement.Description" placeholder="Décrivez ce succès et comment l'obtenir..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                        <div class="form-group">
+                            <label class="form-label">Rareté</label>
+                            <select class="form-control" @bind="NewAchievement.Rarity">
+                                <option value="@AchievementRarity.Common">Commun</option>
+                                <option value="@AchievementRarity.Rare">Rare</option>
+                                <option value="@AchievementRarity.Epic">Épique</option>
+                                <option value="@AchievementRarity.Legendary">Légendaire</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Visibilité</label>
+                            <select class="form-control" @bind="NewAchievement.IsSecret">
+                                <option value="false">Visible</option>
+                                <option value="true">Secret</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                        <label class="form-label">Récompense (optionnel)</label>
+                        <input type="text" class="form-control" @bind="NewAchievement.RewardDescription" placeholder="Description de la récompense..." />
+                    </div>
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <button class="btn btn-primary btn-sm" @onclick="CreateAchievement" disabled="@IsSaving">
+                            <i class="bi bi-check"></i> Créer
+                        </button>
+                        <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewAchievementForm = false">@L["Common_Cancel"]</button>
+                    </div>
+                </div>
+            }
+
+            @if (IsLoadingAchievements)
+            {
+                <AppLoadingSpinner Label="Chargement des succès..." />
+            }
+            else if (WorldAchievements.Count == 0)
+            {
+                <AppEmptyState Icon="bi-trophy"
+                               Title="Aucun succès"
+                               Message="Aucun succès défini pour ce monde." />
+            }
+            else
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-md);">
+                    @foreach (var ach in WorldAchievements.OrderBy(a => a.Rarity).ThenBy(a => a.Name))
+                    {
+                        <div class="cdm-card" style="@GetRarityBorderStyle(ach.Rarity)">
+                            <div style="display: flex; align-items: flex-start; gap: var(--spacing-sm); justify-content: space-between;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing-xs); flex-wrap: wrap;">
+                                        <i class="bi bi-trophy" style="color: @GetRarityColor(ach.Rarity);"></i>
+                                        <span style="font-weight: 600; color: var(--color-text-primary); font-size: var(--font-size-sm);">@ach.Name</span>
+                                        <span class="status-badge @GetRarityClass(ach.Rarity)">@GetRarityLabel(ach.Rarity)</span>
+                                        @if (ach.IsSecret)
+                                        {
+                                            <span class="status-badge" style="background: var(--color-bg-secondary);"><i class="bi bi-eye-slash"></i> Secret</span>
+                                        }
+                                    </div>
+                                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-xs); margin: 0;">@ach.Description</p>
+                                    @if (!string.IsNullOrWhiteSpace(ach.RewardDescription))
+                                    {
+                                        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
+                                            <i class="bi bi-gift"></i> @ach.RewardDescription
+                                        </p>
+                                    }
+                                    @if (ach.UnlockCount > 0)
+                                    {
+                                        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
+                                            @ach.UnlockCount débloqué(s)
+                                        </p>
+                                    }
+                                </div>
+                                <button class="btn btn-ghost btn-sm" @onclick="() => DeleteAchievement(ach.Id)"
+                                        style="color: var(--color-error); flex-shrink: 0;" title="Supprimer">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+
+        @* ──────────────────────────────────────────────────────────
            SECTION: INVITATIONS
            ────────────────────────────────────────────────────────── *@
         @if (Section == "invitations")

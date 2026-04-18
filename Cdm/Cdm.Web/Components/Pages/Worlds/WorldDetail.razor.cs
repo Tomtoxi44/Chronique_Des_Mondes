@@ -15,6 +15,8 @@ public partial class WorldDetail : IDisposable
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
+    [Inject] private EventApiClient EventClient { get; set; } = default!;
+    [Inject] private AchievementApiClient AchievementClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
@@ -56,6 +58,18 @@ public partial class WorldDetail : IDisposable
 
     // Invite tokens
     private bool IsGeneratingToken = false;
+
+    // Events
+    private List<EventDto> WorldEvents = new();
+    private bool IsLoadingEvents = false;
+    private bool ShowNewEventForm = false;
+    private CreateEventDto NewEvent = new() { Level = EventLevel.World, EffectType = EventEffectType.Narrative, IsPermanent = true };
+
+    // Achievements
+    private List<AchievementDto> WorldAchievements = new();
+    private bool IsLoadingAchievements = false;
+    private bool ShowNewAchievementForm = false;
+    private CreateAchievementDto NewAchievement = new() { Level = AchievementLevel.World, Rarity = AchievementRarity.Common };
 
     private void OnDescriptionInput(ChangeEventArgs e)
     {
@@ -119,6 +133,12 @@ public partial class WorldDetail : IDisposable
 
         if (Section == "description")
             DescriptionDraft = World.Description ?? string.Empty;
+
+        if (Section == "events" && !IsLoadingEvents && WorldEvents.Count == 0)
+            await LoadEventsAsync();
+
+        if (Section == "achievements" && !IsLoadingAchievements && WorldAchievements.Count == 0)
+            await LoadAchievementsAsync();
 
         SetSecondaryNav();
     }
@@ -227,6 +247,18 @@ public partial class WorldDetail : IDisposable
         // Management section
         items.Add(new SecondaryNavItem("Gestion", "#", "bi-gear", IsSection: true));
         items.Add(new SecondaryNavItem(
+            "Événements",
+            $"/worlds/{WorldId}?section=events",
+            "bi-lightning",
+            IsActive: Section == "events"
+        ));
+        items.Add(new SecondaryNavItem(
+            "Succès",
+            $"/worlds/{WorldId}?section=achievements",
+            "bi-trophy",
+            IsActive: Section == "achievements"
+        ));
+        items.Add(new SecondaryNavItem(
             "Invitations",
             $"/worlds/{WorldId}?section=invitations",
             "bi-person-plus",
@@ -322,6 +354,115 @@ public partial class WorldDetail : IDisposable
         }
         IsSaving = false;
     }
+
+    private async Task LoadEventsAsync()
+    {
+        IsLoadingEvents = true;
+        WorldEvents = await EventClient.GetEventsByWorldAsync(WorldId);
+        IsLoadingEvents = false;
+    }
+
+    private async Task CreateEvent()
+    {
+        if (World == null) return;
+        IsSaving = true;
+        NewEvent.WorldId = WorldId;
+        NewEvent.Level = EventLevel.World;
+        var result = await EventClient.CreateEventAsync(NewEvent);
+        if (result != null)
+        {
+            WorldEvents.Insert(0, result);
+            ShowNewEventForm = false;
+            NewEvent = new() { Level = EventLevel.World, EffectType = EventEffectType.Narrative, IsPermanent = true };
+        }
+        IsSaving = false;
+    }
+
+    private async Task DeleteEvent(int eventId)
+    {
+        var ok = await EventClient.DeleteEventAsync(eventId);
+        if (ok)
+            WorldEvents.RemoveAll(e => e.Id == eventId);
+    }
+
+    private async Task ToggleEventActive(EventDto ev)
+    {
+        var result = await EventClient.SetEventActiveAsync(ev.Id, !ev.IsActive);
+        if (result != null)
+        {
+            var idx = WorldEvents.FindIndex(e => e.Id == result.Id);
+            if (idx >= 0) WorldEvents[idx] = result;
+        }
+    }
+
+    private async Task LoadAchievementsAsync()
+    {
+        IsLoadingAchievements = true;
+        WorldAchievements = await AchievementClient.GetAchievementsByWorldAsync(WorldId);
+        IsLoadingAchievements = false;
+    }
+
+    private async Task CreateAchievement()
+    {
+        if (World == null) return;
+        IsSaving = true;
+        NewAchievement.WorldId = WorldId;
+        NewAchievement.Level = AchievementLevel.World;
+        var result = await AchievementClient.CreateAchievementAsync(NewAchievement);
+        if (result != null)
+        {
+            WorldAchievements.Insert(0, result);
+            ShowNewAchievementForm = false;
+            NewAchievement = new() { Level = AchievementLevel.World, Rarity = AchievementRarity.Common };
+        }
+        IsSaving = false;
+    }
+
+    private async Task DeleteAchievement(int achievementId)
+    {
+        var ok = await AchievementClient.DeleteAchievementAsync(achievementId);
+        if (ok)
+            WorldAchievements.RemoveAll(a => a.Id == achievementId);
+    }
+
+    private static string GetRarityColor(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "var(--color-text-muted)",
+        AchievementRarity.Rare => "#3b82f6",
+        AchievementRarity.Epic => "#8b5cf6",
+        AchievementRarity.Legendary => "#f59e0b",
+        _ => "var(--color-border)"
+    };
+
+    private static string GetRarityBorderStyle(AchievementRarity rarity) =>
+        $"border-top: 3px solid {GetRarityColor(rarity)};";
+
+    private static string GetRarityClass(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "rarity-common",
+        AchievementRarity.Rare => "rarity-rare",
+        AchievementRarity.Epic => "rarity-epic",
+        AchievementRarity.Legendary => "rarity-legendary",
+        _ => ""
+    };
+
+    private static string GetRarityLabel(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "Commun",
+        AchievementRarity.Rare => "Rare",
+        AchievementRarity.Epic => "Épique",
+        AchievementRarity.Legendary => "Légendaire",
+        _ => rarity.ToString()
+    };
+
+    private static string GetEffectLabel(EventEffectType type) => type switch
+    {
+        EventEffectType.StatModifier => "Modificateur de stat",
+        EventEffectType.HealthModifier => "Modificateur de PV",
+        EventEffectType.DiceModifier => "Modificateur de dé",
+        EventEffectType.Narrative => "Narratif",
+        _ => type.ToString()
+    };
 
     private async Task GenerateInviteToken(int campaignId)
     {
