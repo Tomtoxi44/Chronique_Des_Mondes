@@ -130,6 +130,25 @@
                         style="display: none;" id="mobile-toggle">
                     <i class="bi bi-list"></i>
                 </button>
+                @if (NavContext.TopbarBreadcrumbs?.Count > 0)
+                {
+                    <nav class="topbar-breadcrumb" aria-label="Fil d'Ariane">
+                        @for (int i = 0; i < NavContext.TopbarBreadcrumbs.Count; i++)
+                        {
+                            var crumb = NavContext.TopbarBreadcrumbs[i];
+                            var isLast = i == NavContext.TopbarBreadcrumbs.Count - 1;
+                            if (isLast)
+                            {
+                                <span class="topbar-breadcrumb-item active">@crumb.Label</span>
+                            }
+                            else
+                            {
+                                <a href="@crumb.Href" class="topbar-breadcrumb-item">@crumb.Label</a>
+                                <span class="topbar-breadcrumb-sep"><i class="bi bi-chevron-right"></i></span>
+                            }
+                        }
+                    </nav>
+                }
             </div>
 
             <div class="topbar-right">

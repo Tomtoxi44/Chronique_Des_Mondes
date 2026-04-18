@@ -1,4 +1,5 @@
 using Cdm.Common.Enums;
+using Cdm.Web.Components.Shared;
 
 namespace Cdm.Web.Services;
 
@@ -13,6 +14,9 @@ public class NavigationContextService
     public string? BackLabel { get; private set; }
     public GameType? GameType { get; private set; }
     public List<SecondaryNavItem> Items { get; private set; } = new();
+
+    /// <summary>Breadcrumbs to display in the topbar left area.</summary>
+    public List<BreadcrumbItem>? TopbarBreadcrumbs { get; private set; }
 
     public bool HasContext => Items.Count > 0 || !string.IsNullOrEmpty(SectionTitle);
 
@@ -31,6 +35,18 @@ public class NavigationContextService
         BackLabel = backLabel;
         Items = items;
         GameType = gameType;
+        OnContextChanged?.Invoke();
+    }
+
+    public void SetTopbarBreadcrumbs(List<BreadcrumbItem>? breadcrumbs)
+    {
+        TopbarBreadcrumbs = breadcrumbs;
+        OnContextChanged?.Invoke();
+    }
+
+    public void ClearTopbarBreadcrumbs()
+    {
+        TopbarBreadcrumbs = null;
         OnContextChanged?.Invoke();
     }
 

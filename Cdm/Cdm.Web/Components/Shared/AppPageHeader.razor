@@ -1,28 +1,8 @@
-@* En-tête de page standard avec breadcrumb optionnel *@
+@* En-tête de page standard. Breadcrumbs sont affichés dans la topbar via NavigationContextService. *@
+@inject Cdm.Web.Services.NavigationContextService NavCtx
+@implements IDisposable
 
 <div class="page-header">
-    @if (Breadcrumbs != null && Breadcrumbs.Count > 0)
-    {
-        <nav class="breadcrumb" aria-label="Navigation fil d'Ariane">
-            @for (int i = 0; i < Breadcrumbs.Count; i++)
-            {
-                var crumb = Breadcrumbs[i];
-                var isLast = i == Breadcrumbs.Count - 1;
-                @if (isLast)
-                {
-                    <span class="breadcrumb-item active">@crumb.Label</span>
-                }
-                else
-                {
-                    <a href="@crumb.Href" class="breadcrumb-item">@crumb.Label</a>
-                    <span class="breadcrumb-separator">
-                        <i class="bi bi-chevron-right"></i>
-                    </span>
-                }
-            }
-        </nav>
-    }
-
     <div class="page-header-content">
         <div class="page-header-text">
             @if (!string.IsNullOrEmpty(Icon))
@@ -53,4 +33,14 @@
     [Parameter] public string Icon { get; set; } = string.Empty;
     [Parameter] public RenderFragment? Actions { get; set; }
     [Parameter] public List<BreadcrumbItem>? Breadcrumbs { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        NavCtx.SetTopbarBreadcrumbs(Breadcrumbs?.Count > 0 ? Breadcrumbs : null);
+    }
+
+    public void Dispose()
+    {
+        NavCtx.ClearTopbarBreadcrumbs();
+    }
 }

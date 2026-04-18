@@ -224,16 +224,18 @@
    ============================================ */
 .page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--spacing-xl);
   gap: var(--spacing-md);
-  flex-wrap: wrap;
 }
 
 .page-header-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
 }
 
 .page-title {
@@ -693,6 +695,17 @@ textarea.form-control {
   color: var(--color-text-primary);
   margin: 0 0 var(--spacing-xs);
   line-height: 1.25;
+}
+
+/* Non-heading section labels (inside cards, avoid Cinzel uppercase look) */
+.section-label {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--spacing-xs);
 }
 
 .card-description {

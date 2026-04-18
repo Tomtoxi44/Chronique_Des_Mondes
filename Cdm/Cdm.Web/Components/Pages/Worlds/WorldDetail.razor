@@ -30,7 +30,7 @@ else
         @* ──────────────────────────────────────────────────────────
            SECTION: VUE D'ENSEMBLE (par défaut)
            ────────────────────────────────────────────────────────── *@
-        @if ((Section == null || Section == "new-campaign") && !SelectedCampaignId.HasValue)
+        @if (Section == null && !SelectedCampaignId.HasValue)
         {
             <AppPageHeader Title="@World.Name"
                            Icon="bi-globe2"
@@ -139,56 +139,16 @@ else
                 </div>
             }
 
-            @if (Campaigns.Count > 0 || ShowNewCampaignForm)
+            @if (Campaigns.Count > 0)
             {
                 <div class="cdm-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
                         <h3 class="card-title">@L["Worlds_Campaigns"]</h3>
-                        <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewCampaignForm = !ShowNewCampaignForm">
+                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-ghost btn-sm">
                             <i class="bi bi-plus"></i>
                             @L["Campaigns_Create"]
-                        </button>
+                        </a>
                     </div>
-
-                    @if (ShowNewCampaignForm)
-                    {
-                        <div style="background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: var(--spacing-md); margin-bottom: var(--spacing-md); border: 1px solid var(--theme-card-border, var(--color-border));">
-                            <h4 style="margin: 0 0 var(--spacing-md); font-size: var(--font-size-sm); color: var(--color-text-secondary);">Nouvelle campagne</h4>
-                            @if (!string.IsNullOrEmpty(CampaignCreateError))
-                            {
-                                <div class="alert alert-error" style="margin-bottom: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md);">@CampaignCreateError</div>
-                            }
-                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                                <label class="form-label">Nom *</label>
-                                <input type="text" class="form-control" @bind="NewCampaign.Name" placeholder="La Quête des Éclats..." />
-                            </div>
-                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                                <label class="form-label">Description</label>
-                                <textarea class="form-control" rows="2" @bind="NewCampaign.Description" placeholder="Décrivez cette campagne..."></textarea>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
-                                <div class="form-group">
-                                    <label class="form-label">Visibilité</label>
-                                    <select class="form-control" @bind="NewCampaign.Visibility">
-                                        <option value="@Visibility.Private">Privée</option>
-                                        <option value="@Visibility.Public">Publique</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Joueurs max</label>
-                                    <input type="number" class="form-control" min="1" max="20" @bind="NewCampaign.MaxPlayers" />
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: var(--spacing-sm);">
-                                <button class="btn btn-primary btn-sm" @onclick="CreateCampaignInline" disabled="@IsSaving">
-                                    <i class="bi bi-check"></i> Créer
-                                </button>
-                                <button class="btn btn-ghost btn-sm" @onclick="() => { ShowNewCampaignForm = false; CampaignCreateError = null; }">
-                                    @L["Common_Cancel"]
-                                </button>
-                            </div>
-                        </div>
-                    }
 
                     @foreach (var campaign in Campaigns)
                     {
@@ -208,10 +168,10 @@ else
                                Title="Aucune campagne"
                                Message="Ce monde n'a pas encore de campagne.">
                     <ActionContent>
-                        <button class="btn btn-primary" @onclick="() => ShowNewCampaignForm = true">
+                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
                             <i class="bi bi-plus"></i>
                             @L["Campaigns_Create"]
-                        </button>
+                        </a>
                     </ActionContent>
                 </AppEmptyState>
             }
@@ -271,6 +231,52 @@ else
         }
 
         @* ──────────────────────────────────────────────────────────
+           SECTION: NOUVELLE CAMPAGNE (formulaire dédié)
+           ────────────────────────────────────────────────────────── *@
+        @if (Section == "new-campaign" && !SelectedCampaignId.HasValue)
+        {
+            <AppPageHeader Title="@L["Campaigns_Create"]"
+                           Icon="bi-map"
+                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(L["Campaigns_Create"]) })" />
+
+            <div style="max-width: 560px;">
+                @if (!string.IsNullOrEmpty(CampaignCreateError))
+                {
+                    <div class="alert alert-error" style="margin-bottom: var(--spacing-md);">@CampaignCreateError</div>
+                }
+                <div class="cdm-card">
+                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" class="form-control" @bind="NewCampaign.Name" placeholder="La Quête des Éclats..." />
+                    </div>
+                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="NewCampaign.Description" placeholder="Décrivez cette campagne..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                        <div class="form-group">
+                            <label class="form-label">Visibilité</label>
+                            <select class="form-control" @bind="NewCampaign.Visibility">
+                                <option value="@Visibility.Private">Privée</option>
+                                <option value="@Visibility.Public">Publique</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Joueurs max</label>
+                            <input type="number" class="form-control" min="1" max="20" @bind="NewCampaign.MaxPlayers" />
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <button class="btn btn-primary" @onclick="CreateCampaignInline" disabled="@IsSaving">
+                            <i class="bi bi-check"></i> @L["Common_Create"]
+                        </button>
+                        <a href="/worlds/@WorldId" class="btn btn-ghost">@L["Common_Cancel"]</a>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* ──────────────────────────────────────────────────────────
            SECTION: DÉTAIL CAMPAGNE
            ────────────────────────────────────────────────────────── *@
         @if (SelectedCampaignId.HasValue && SelectedChapterId == null && Section == null)
@@ -283,20 +289,19 @@ else
             }
             else
             {
-                <AppPageHeader Title="@(IsCampaignEditing ? "Modifier la campagne" : SelectedCampaign.Name)"
-                               Subtitle="@(IsCampaignEditing ? null : SelectedCampaign.Description)"
+                <AppPageHeader Title="@SelectedCampaign.Name"
                                Icon="bi-map"
                                Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(SelectedCampaign.Name) })">
                     <Actions>
+                        <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
                         @if (!IsCampaignEditing)
                         {
-                            <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
-                            <button class="btn btn-ghost" @onclick="() => IsCampaignEditing = true">
+                            <button class="btn btn-ghost btn-sm" @onclick="() => IsCampaignEditing = true">
                                 <i class="bi bi-pencil"></i>
                                 Modifier
                             </button>
                         }
-                        <button class="btn btn-ghost" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
+                        <button class="btn btn-ghost btn-sm" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
                             <i class="bi bi-trash3"></i>
                             @L["Common_Delete"]
                         </button>
@@ -350,29 +355,11 @@ else
                 <div class="cdm-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
                         <h3 class="card-title">Chapitres</h3>
-                        <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewChapterForm = !ShowNewChapterForm">
+                        <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
                             <i class="bi bi-plus"></i>
                             @L["Chapters_Create"]
-                        </button>
+                        </a>
                     </div>
-
-                    @if (ShowNewChapterForm)
-                    {
-                        <div style="background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: var(--spacing-md); margin-bottom: var(--spacing-md); border: 1px solid var(--theme-card-border, var(--color-border));">
-                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                                <label class="form-label">Titre du chapitre</label>
-                                <input type="text" class="form-control" @bind="NewChapter.Title" placeholder="Titre du chapitre..." />
-                            </div>
-                            <div style="display: flex; gap: var(--spacing-sm);">
-                                <button class="btn btn-primary btn-sm" @onclick="CreateChapter" disabled="@IsSaving">
-                                    <i class="bi bi-check"></i> Créer
-                                </button>
-                                <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewChapterForm = false">
-                                    @L["Common_Cancel"]
-                                </button>
-                            </div>
-                        </div>
-                    }
 
                     @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var chapters) && chapters.Count > 0)
                     {
@@ -401,6 +388,32 @@ else
                     }
                 </div>
             }
+        }
+
+        @* ──────────────────────────────────────────────────────────
+           SECTION: NOUVEAU CHAPITRE (formulaire dédié)
+           ────────────────────────────────────────────────────────── *@
+        @if (SelectedCampaignId.HasValue && Section == "new-chapter")
+        {
+            var parentCampaign = Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId.Value);
+            <AppPageHeader Title="@L["Chapters_Create"]"
+                           Icon="bi-book"
+                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(parentCampaign?.Name ?? "Campagne", $"/worlds/{WorldId}?campaignId={SelectedCampaignId}"), new(L["Chapters_Create"]) })" />
+
+            <div style="max-width: 480px;">
+                <div class="cdm-card">
+                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                        <label class="form-label">Titre du chapitre *</label>
+                        <input type="text" class="form-control" @bind="NewChapter.Title" placeholder="Titre du chapitre..." />
+                    </div>
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <button class="btn btn-primary" @onclick="CreateChapter" disabled="@IsSaving">
+                            <i class="bi bi-check"></i> @L["Common_Create"]
+                        </button>
+                        <a href="/worlds/@WorldId?campaignId=@SelectedCampaignId" class="btn btn-ghost">@L["Common_Cancel"]</a>
+                    </div>
+                </div>
+            </div>
         }
 
         @* ──────────────────────────────────────────────────────────

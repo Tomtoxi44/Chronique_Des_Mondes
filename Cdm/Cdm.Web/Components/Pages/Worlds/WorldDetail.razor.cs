@@ -53,14 +53,12 @@ public partial class WorldDetail : IDisposable
 
     // Campaign detail
     private CampaignDto? SelectedCampaign;
-    private bool ShowNewChapterForm = false;
     private CreateChapterDto NewChapter = new();
     private bool IsCampaignEditing = false;
     private string CampaignEditName = string.Empty;
     private string CampaignEditDescription = string.Empty;
 
     // New campaign (inline)
-    private bool ShowNewCampaignForm = false;
     private CreateCampaignDto NewCampaign = new();
     private string? CampaignCreateError;
 
@@ -164,7 +162,8 @@ public partial class WorldDetail : IDisposable
         if (Section == "description")
             DescriptionDraft = World.Description ?? string.Empty;
 
-        ShowNewCampaignForm = Section == "new-campaign";
+        if (Section == "new-chapter")
+            NewChapter = new CreateChapterDto();
 
         if (Section == "events" && !IsLoadingEvents && WorldEvents.Count == 0)
             await LoadEventsAsync();
@@ -254,8 +253,9 @@ public partial class WorldDetail : IDisposable
                 }
                 children.Add(new SecondaryNavItem(
                     L["Chapters_Create"],
-                    $"/worlds/{WorldId}?campaignId={campaign.Id}#new-chapter",
-                    "bi-plus-circle"
+                    $"/worlds/{WorldId}?campaignId={campaign.Id}&section=new-chapter",
+                    "bi-plus-circle",
+                    IsActive: Section == "new-chapter" && SelectedCampaignId == campaign.Id
                 ));
             }
 
@@ -273,7 +273,8 @@ public partial class WorldDetail : IDisposable
         items.Add(new SecondaryNavItem(
             L["Campaigns_Create"],
             $"/worlds/{WorldId}?section=new-campaign",
-            "bi-plus-circle"
+            "bi-plus-circle",
+            IsActive: Section == "new-campaign"
         ));
 
         // Management section
@@ -409,9 +410,9 @@ public partial class WorldDetail : IDisposable
             if (!CampaignChapters.ContainsKey(SelectedCampaignId.Value))
                 CampaignChapters[SelectedCampaignId.Value] = new();
             CampaignChapters[SelectedCampaignId.Value].Add(result);
-            ShowNewChapterForm = false;
             NewChapter = new CreateChapterDto();
             SetSecondaryNav();
+            Nav.NavigateTo($"/worlds/{WorldId}?campaignId={SelectedCampaignId.Value}&chapterId={result.Id}");
         }
         IsSaving = false;
     }
@@ -448,7 +449,6 @@ public partial class WorldDetail : IDisposable
         if (result != null)
         {
             Campaigns.Add(result);
-            ShowNewCampaignForm = false;
             NewCampaign = new CreateCampaignDto();
             SetSecondaryNav();
             Nav.NavigateTo($"/worlds/{WorldId}?campaignId={result.Id}");
