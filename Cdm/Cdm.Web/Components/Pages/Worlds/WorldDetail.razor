@@ -25,7 +25,7 @@ else if (World == null)
 }
 else
 {
-    <AppThemeWrapper GameType="@World.GameType">
+    <AppThemeWrapper GameType="@(IsWorldEditing ? WorldEditGameType : World.GameType)">
 
         @* ──────────────────────────────────────────────────────────
            SECTION: VUE D'ENSEMBLE (par défaut)
@@ -49,24 +49,71 @@ else
             </div>
 
             <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                <h3 class="card-title">@L["Worlds_Information"]</h3>
-                <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
-                    <div>
-                        <span class="info-label">@L["Worlds_GameType"]</span>
-                        <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
+                @if (IsWorldEditing)
+                {
+                    <div style="margin-bottom: var(--spacing-md); display: flex; justify-content: space-between; align-items: center;">
+                        <h3 class="card-title">Modifier les paramètres</h3>
+                        <button class="btn btn-ghost btn-sm" @onclick="() => IsWorldEditing = false">
+                            <i class="bi bi-x"></i>
+                        </button>
                     </div>
-                    <div>
-                        <span class="info-label">@L["Worlds_CreatedAt"]</span>
-                        <span class="info-value">@World.CreatedAt.ToString("d MMM yyyy")</span>
+
+                    <div class="form-group">
+                        <label class="form-label">Nom du monde *</label>
+                        <input type="text" class="form-control" @bind="WorldEditName" placeholder="Nom du monde..." />
                     </div>
-                    @if (World.UpdatedAt.HasValue)
-                    {
-                        <div>
-                            <span class="info-label">@L["Worlds_UpdatedAt"]</span>
-                            <span class="info-value">@World.UpdatedAt.Value.ToString("d MMM yyyy")</span>
+
+                    <div class="form-group" style="margin-top: var(--spacing-md);">
+                        <label class="form-label">@L["Worlds_GameType"]</label>
+                        <div class="game-type-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--spacing-sm); margin-top: var(--spacing-xs);">
+                            @foreach (var gt in GameTypeOptions)
+                            {
+                                <button type="button"
+                                        class="game-type-card @(WorldEditGameType == gt.Value ? "selected" : "")"
+                                        style="padding: var(--spacing-sm); @(WorldEditGameType == gt.Value ? "border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(99,102,241,0.1));" : "")"
+                                        @onclick="() => WorldEditGameType = gt.Value">
+                                    <i class="bi @gt.Icon game-type-icon" style="font-size: 1.2rem; @(WorldEditGameType == gt.Value ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
+                                    <span class="game-type-label" style="font-size: var(--font-size-xs);">@gt.Label</span>
+                                </button>
+                            }
                         </div>
-                    }
-                </div>
+                    </div>
+
+                    <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                        <button class="btn btn-primary btn-sm" @onclick="SaveWorldSettings" disabled="@(IsSaving || string.IsNullOrWhiteSpace(WorldEditName))">
+                            <i class="bi bi-floppy"></i> Enregistrer
+                        </button>
+                        <button class="btn btn-ghost btn-sm" @onclick="() => IsWorldEditing = false">
+                            @L["Common_Cancel"]
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3 class="card-title">@L["Worlds_Information"]</h3>
+                        <button class="btn btn-ghost btn-sm" @onclick="BeginWorldEdit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                    <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                        <div>
+                            <span class="info-label">@L["Worlds_GameType"]</span>
+                            <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
+                        </div>
+                        <div>
+                            <span class="info-label">@L["Worlds_CreatedAt"]</span>
+                            <span class="info-value">@World.CreatedAt.ToString("d MMM yyyy")</span>
+                        </div>
+                        @if (World.UpdatedAt.HasValue)
+                        {
+                            <div>
+                                <span class="info-label">@L["Worlds_UpdatedAt"]</span>
+                                <span class="info-value">@World.UpdatedAt.Value.ToString("d MMM yyyy")</span>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
 
             @if (!string.IsNullOrWhiteSpace(World.Description))

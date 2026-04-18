@@ -42,6 +42,11 @@ public partial class WorldDetail : IDisposable
     private string? SaveMessage;
     private bool SaveSuccess = false;
 
+    // World settings editor (inline in overview)
+    private bool IsWorldEditing = false;
+    private string WorldEditName = string.Empty;
+    private GameType WorldEditGameType = GameType.Generic;
+
     // Description editor
     private string DescriptionDraft = string.Empty;
     private bool DescriptionDirty = false;
@@ -78,6 +83,18 @@ public partial class WorldDetail : IDisposable
     private bool IsLoadingAchievements = false;
     private bool ShowNewAchievementForm = false;
     private CreateAchievementDto NewAchievement = new() { Level = AchievementLevel.World, Rarity = AchievementRarity.Common };
+
+    private static readonly List<(GameType Value, string Label, string Icon)> GameTypeOptions = new()
+    {
+        (GameType.Generic,       "Générique",          "bi-globe2"),
+        (GameType.DnD5e,         "D&D 5e",             "bi-shield-fill"),
+        (GameType.Pathfinder,    "Pathfinder",         "bi-shield-fill-check"),
+        (GameType.CallOfCthulhu, "L'Appel de Cthulhu", "bi-eye-fill"),
+        (GameType.Warhammer,     "Warhammer",          "bi-hammer"),
+        (GameType.Cyberpunk,     "Cyberpunk",          "bi-cpu-fill"),
+        (GameType.Skyrim,        "Skyrim",             "bi-snow2"),
+        (GameType.Custom,        "Personnalisé",       "bi-stars"),
+    };
 
     private void OnDescriptionInput(ChangeEventArgs e)
     {
@@ -303,6 +320,7 @@ public partial class WorldDetail : IDisposable
                 DescriptionDirty = false;
                 SaveSuccess = true;
                 SaveMessage = "Description sauvegardée.";
+                SetSecondaryNav();
             }
             else
             {
@@ -314,6 +332,34 @@ public partial class WorldDetail : IDisposable
         {
             IsSaving = false;
         }
+    }
+
+    private async Task SaveWorldSettings()
+    {
+        if (World == null || string.IsNullOrWhiteSpace(WorldEditName)) return;
+        IsSaving = true;
+        try
+        {
+            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(WorldEditName, World.Description ?? string.Empty, World.IsActive, WorldEditGameType));
+            if (result != null)
+            {
+                World = result;
+                IsWorldEditing = false;
+                SetSecondaryNav();
+            }
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private void BeginWorldEdit()
+    {
+        if (World == null) return;
+        WorldEditName = World.Name;
+        WorldEditGameType = World.GameType;
+        IsWorldEditing = true;
     }
 
     private async Task SaveChapterContent()
