@@ -26,75 +26,392 @@ else if (World == null)
 else
 {
     <AppThemeWrapper GameType="@World.GameType">
-        <AppPageHeader Title="@World.Name"
-                       Subtitle="@World.Description"
-                       Icon="bi-globe2"
-                       Breadcrumbs="@Breadcrumbs">
-            <Actions>
-                <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
-                    <i class="bi bi-trash3"></i>
-                    @L["Common_Delete"]
-                </button>
-            </Actions>
-        </AppPageHeader>
 
-        <!-- Méta-informations -->
-        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
-            <AppStatCard Value="@World.CampaignCount.ToString()" Label="@L["Worlds_Campaigns"]" Icon="bi-map" />
-            <AppStatCard Value="@World.CharacterCount.ToString()" Label="@L["Worlds_Characters"]" Icon="bi-people" />
-        </div>
-
-        <!-- Informations détaillées -->
-        <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-            <h3 class="card-title">@L["Worlds_Information"]</h3>
-            <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
-                <div>
-                    <span class="info-label">Type de jeu</span>
-                    <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
-                </div>
-                <div>
-                    <span class="info-label">@L["Worlds_CreatedAt"]</span>
-                    <span class="info-value">@World.CreatedAt.ToString("d MMM yyyy")</span>
-                </div>
-                @if (World.UpdatedAt.HasValue)
-                {
-                    <div>
-                        <span class="info-label">@L["Worlds_UpdatedAt"]</span>
-                        <span class="info-value">@World.UpdatedAt.Value.ToString("d MMM yyyy")</span>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Campagnes de ce monde -->
-        @if (Campaigns.Count > 0)
+        @* ──────────────────────────────────────────────────────────
+           SECTION: VUE D'ENSEMBLE (par défaut)
+           ────────────────────────────────────────────────────────── *@
+        @if (Section == null && !SelectedCampaignId.HasValue)
         {
-            <div class="cdm-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                    <h3 class="card-title">@L["Worlds_Campaigns"]</h3>
-                    <a href="/campaigns/create?worldId=@World.Id" class="btn btn-ghost btn-sm">
-                        <i class="bi bi-plus"></i>
-                        @L["Campaigns_Create"]
+            <AppPageHeader Title="@World.Name"
+                           Icon="bi-globe2"
+                           Breadcrumbs="@Breadcrumbs">
+                <Actions>
+                    <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
+                        <i class="bi bi-trash3"></i>
+                        @L["Common_Delete"]
+                    </button>
+                </Actions>
+            </AppPageHeader>
+
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
+                <AppStatCard Value="@Campaigns.Count.ToString()" Label="@L["Worlds_Campaigns"]" Icon="bi-map" />
+                <AppStatCard Value="@World.CharacterCount.ToString()" Label="@L["Worlds_Characters"]" Icon="bi-people" />
+            </div>
+
+            <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                <h3 class="card-title">@L["Worlds_Information"]</h3>
+                <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                    <div>
+                        <span class="info-label">@L["Worlds_GameType"]</span>
+                        <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
+                    </div>
+                    <div>
+                        <span class="info-label">@L["Worlds_CreatedAt"]</span>
+                        <span class="info-value">@World.CreatedAt.ToString("d MMM yyyy")</span>
+                    </div>
+                    @if (World.UpdatedAt.HasValue)
+                    {
+                        <div>
+                            <span class="info-label">@L["Worlds_UpdatedAt"]</span>
+                            <span class="info-value">@World.UpdatedAt.Value.ToString("d MMM yyyy")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(World.Description))
+            {
+                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                    <h3 class="card-title">Description</h3>
+                    <p style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: var(--spacing-md) 0 0;">@World.Description</p>
+                    <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-md);">
+                        <i class="bi bi-pencil"></i> Modifier
                     </a>
                 </div>
-                @foreach (var campaign in Campaigns)
-                {
-                    <a href="/campaigns/@campaign.Id" class="campaign-row">
-                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                            <i class="bi bi-map" style="color: var(--color-text-muted);"></i>
-                            <span>@campaign.Name</span>
-                        </div>
-                        <span class="status-badge @GetStatusClass(campaign.Status)">@GetStatusLabel(campaign.Status)</span>
-                    </a>
-                }
+            }
+            else
+            {
+                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <h3 class="card-title">Description</h3>
+                        <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm">
+                            <i class="bi bi-plus"></i> Ajouter une description
+                        </a>
+                    </div>
+                    <p style="color: var(--color-text-muted); font-style: italic; margin-top: var(--spacing-sm);">Aucune description. Cliquez pour écrire.</p>
+                </div>
+            }
+
+            @if (Campaigns.Count > 0)
+            {
+                <div class="cdm-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h3 class="card-title">@L["Worlds_Campaigns"]</h3>
+                        <a href="/campaigns/create?worldId=@World.Id" class="btn btn-ghost btn-sm">
+                            <i class="bi bi-plus"></i>
+                            @L["Campaigns_Create"]
+                        </a>
+                    </div>
+                    @foreach (var campaign in Campaigns)
+                    {
+                        <a href="/worlds/@WorldId?campaignId=@campaign.Id" class="campaign-row">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                <i class="bi bi-map" style="color: var(--color-text-muted);"></i>
+                                <span>@campaign.Name</span>
+                            </div>
+                            <span class="status-badge @GetStatusClass(campaign.Status)">@GetStatusLabel(campaign.Status)</span>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <AppEmptyState Icon="bi-map"
+                               Title="Aucune campagne"
+                               Message="Ce monde n'a pas encore de campagne.">
+                    <ActionContent>
+                        <a href="/campaigns/create?worldId=@World.Id" class="btn btn-primary">
+                            <i class="bi bi-plus"></i>
+                            @L["Campaigns_Create"]
+                        </a>
+                    </ActionContent>
+                </AppEmptyState>
+            }
+        }
+
+        @* ──────────────────────────────────────────────────────────
+           SECTION: DESCRIPTION EDITOR
+           ────────────────────────────────────────────────────────── *@
+        @if (Section == "description")
+        {
+            <div style="display: flex; flex-direction: column; height: calc(100vh - var(--topbar-height) - 2rem); padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);">
+                <div class="world-section-header">
+                    <div>
+                        <h2 class="world-section-title">
+                            <i class="bi bi-pencil" style="color: var(--theme-primary, var(--color-primary)); margin-right: var(--spacing-xs);"></i>
+                            Description — @World.Name
+                        </h2>
+                    </div>
+                    <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
+                        @if (!string.IsNullOrEmpty(SaveMessage))
+                        {
+                            <span style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)");">
+                                @SaveMessage
+                            </span>
+                        }
+                        <button class="btn btn-primary btn-sm" @onclick="SaveDescription" disabled="@IsSaving">
+                            @if (IsSaving)
+                            {
+                                <i class="bi bi-hourglass-split"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-floppy"></i>
+                            }
+                            Enregistrer
+                        </button>
+                    </div>
+                </div>
+
+                <div class="description-editor-container" style="flex: 1; min-height: 0;">
+                    <div class="description-editor-toolbar">
+                        <span class="description-editor-hint">
+                            <i class="bi bi-info-circle"></i>
+                            Texte brut — les retours à la ligne sont préservés
+                        </span>
+                        @if (DescriptionDirty)
+                        {
+                            <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Modifications non sauvegardées</span>
+                        }
+                    </div>
+                    <textarea class="description-editor-textarea"
+                              placeholder="Décrivez votre monde : son histoire, sa géographie, ses factions, ses mystères..."
+                              value="@DescriptionDraft"
+                              @oninput="OnDescriptionInput"></textarea>
+                </div>
             </div>
         }
+
+        @* ──────────────────────────────────────────────────────────
+           SECTION: DÉTAIL CAMPAGNE
+           ────────────────────────────────────────────────────────── *@
+        @if (SelectedCampaignId.HasValue && SelectedChapterId == null && Section == null)
+        {
+            @if (SelectedCampaign == null)
+            {
+                <div style="padding: var(--spacing-xl);">
+                    <AppLoadingSpinner Label="@L["Common_Loading"]" />
+                </div>
+            }
+            else
+            {
+                <AppPageHeader Title="@SelectedCampaign.Name"
+                               Subtitle="@SelectedCampaign.Description"
+                               Icon="bi-map"
+                               Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(SelectedCampaign.Name) })">
+                    <Actions>
+                        <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
+                        <button class="btn btn-ghost" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
+                            <i class="bi bi-trash3"></i>
+                            @L["Common_Delete"]
+                        </button>
+                    </Actions>
+                </AppPageHeader>
+
+                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                    <h3 class="card-title">Informations</h3>
+                    <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                        <div>
+                            <span class="info-label">Visibilité</span>
+                            <span class="info-value">@(SelectedCampaign.Visibility == Visibility.Public ? "Publique" : "Privée")</span>
+                        </div>
+                        <div>
+                            <span class="info-label">Joueurs max</span>
+                            <span class="info-value">@SelectedCampaign.MaxPlayers</span>
+                        </div>
+                        <div>
+                            <span class="info-label">@L["Worlds_CreatedAt"]</span>
+                            <span class="info-value">@SelectedCampaign.CreatedAt.ToString("d MMM yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chapitres -->
+                <div class="cdm-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h3 class="card-title">Chapitres</h3>
+                        <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewChapterForm = !ShowNewChapterForm">
+                            <i class="bi bi-plus"></i>
+                            @L["Chapters_Create"]
+                        </button>
+                    </div>
+
+                    @if (ShowNewChapterForm)
+                    {
+                        <div style="background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: var(--spacing-md); margin-bottom: var(--spacing-md); border: 1px solid var(--theme-card-border, var(--color-border));">
+                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                <label class="form-label">Titre du chapitre</label>
+                                <input type="text" class="form-control" @bind="NewChapter.Title" placeholder="Titre du chapitre..." />
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-sm);">
+                                <button class="btn btn-primary btn-sm" @onclick="CreateChapter" disabled="@IsSaving">
+                                    <i class="bi bi-check"></i> Créer
+                                </button>
+                                <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewChapterForm = false">
+                                    @L["Common_Cancel"]
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var chapters) && chapters.Count > 0)
+                    {
+                        @foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
+                        {
+                            var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
+                            <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&chapterId=@ch.Id" class="chapter-list-row">
+                                <i class="bi @chIcon" style="color: @(ch.IsCompleted ? "var(--color-success)" : ch.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-text-muted)");"></i>
+                                <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
+                                @if (ch.IsCompleted)
+                                {
+                                    <span class="status-badge status-completed">Terminé</span>
+                                }
+                                else if (ch.IsActive)
+                                {
+                                    <span class="status-badge status-active">En cours</span>
+                                }
+                            </a>
+                        }
+                    }
+                    else
+                    {
+                        <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">
+                            Aucun chapitre pour le moment.
+                        </p>
+                    }
+                </div>
+            }
+        }
+
+        @* ──────────────────────────────────────────────────────────
+           SECTION: CONTENU CHAPITRE
+           ────────────────────────────────────────────────────────── *@
+        @if (SelectedCampaignId.HasValue && SelectedChapterId.HasValue && Section == null)
+        {
+            @if (SelectedChapter == null)
+            {
+                <div style="padding: var(--spacing-xl);">
+                    <AppLoadingSpinner Label="@L["Common_Loading"]" />
+                </div>
+            }
+            else
+            {
+                <div style="display: flex; flex-direction: column; height: calc(100vh - var(--topbar-height) - 2rem); padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);">
+                    <div class="world-section-header">
+                        <div>
+                            <h2 class="world-section-title">
+                                Ch. @SelectedChapter.ChapterNumber — @SelectedChapter.Title
+                            </h2>
+                            @if (SelectedChapter.IsCompleted)
+                            {
+                                <span class="status-badge status-completed">Terminé</span>
+                            }
+                            else if (SelectedChapter.IsActive)
+                            {
+                                <span class="status-badge status-active">En cours</span>
+                            }
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
+                            @if (!string.IsNullOrEmpty(SaveMessage))
+                            {
+                                <span style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)");">@SaveMessage</span>
+                            }
+                            <button class="btn btn-primary btn-sm" @onclick="SaveChapterContent" disabled="@IsSaving">
+                                <i class="bi bi-floppy"></i> Enregistrer
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="description-editor-container" style="flex: 1; min-height: 0;">
+                        <div class="description-editor-toolbar">
+                            <span class="description-editor-hint">
+                                <i class="bi bi-book"></i>
+                                Contenu du chapitre
+                            </span>
+                            @if (ChapterContentDirty)
+                            {
+                                <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Modifications non sauvegardées</span>
+                            }
+                        </div>
+                        <textarea class="description-editor-textarea"
+                                  placeholder="Rédigez le contenu de ce chapitre : synopsis, notes de session, événements clés..."
+                                  value="@ChapterContentDraft"
+                                  @oninput="OnChapterContentInput"></textarea>
+                    </div>
+                </div>
+            }
+        }
+
+        @* ──────────────────────────────────────────────────────────
+           SECTION: INVITATIONS
+           ────────────────────────────────────────────────────────── *@
+        @if (Section == "invitations")
+        {
+            <AppPageHeader Title="Invitations"
+                           Icon="bi-person-plus"
+                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new("Invitations") })" />
+
+            @if (Campaigns.Count == 0)
+            {
+                <AppEmptyState Icon="bi-person-plus"
+                               Title="Aucune campagne"
+                               Message="Créez d'abord une campagne pour pouvoir inviter des joueurs." />
+            }
+            else
+            {
+                <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
+                    Générez un lien d'invitation par campagne. Les joueurs peuvent rejoindre en cliquant sur le lien.
+                </p>
+                @foreach (var campaign in Campaigns)
+                {
+                    var token = campaign.InviteToken;
+                    var inviteUrl = token != null ? $"{Nav.BaseUri}join?token={token}" : null;
+                    <div class="invite-row">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
+                                <i class="bi bi-map" style="color: var(--color-text-muted); margin-right: var(--spacing-xs);"></i>
+                                @campaign.Name
+                            </div>
+                            @if (inviteUrl != null)
+                            {
+                                <div class="invite-token-box">@inviteUrl</div>
+                            }
+                            else
+                            {
+                                <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic;">Aucun lien généré</span>
+                            }
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
+                            <button class="btn btn-ghost btn-sm" @onclick="() => GenerateInviteToken(campaign.Id)" disabled="@IsGeneratingToken">
+                                <i class="bi bi-arrow-repeat"></i>
+                                @(token == null ? "Générer" : "Régénérer")
+                            </button>
+                            @if (inviteUrl != null)
+                            {
+                                <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(inviteUrl)" title="Copier le lien">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        }
+
     </AppThemeWrapper>
 }
 
-<AppConfirmDialog @ref="DeleteDialog"
+<AppConfirmDialog @ref="DeleteWorldDialog"
                   Title="@L["Worlds_DeleteConfirmTitle"]"
                   Message="@L["Worlds_DeleteConfirm"]"
                   ConfirmLabel="@L["Common_Delete"]"
                   CancelLabel="@L["Common_Cancel"]"
                   OnConfirm="DeleteWorldAsync" />
+
+<AppConfirmDialog @ref="DeleteCampaignDialog"
+                  Title="Supprimer la campagne ?"
+                  Message="Cette action est irréversible. Tous les chapitres seront supprimés."
+                  ConfirmLabel="@L["Common_Delete"]"
+                  CancelLabel="@L["Common_Cancel"]"
+                  OnConfirm="DeleteCampaignAsync" />
+

@@ -18,6 +18,12 @@ public class NavigationContextService
 
     public event Action? OnContextChanged;
 
+    /// <summary>
+    /// Called when the user clicks an expand/collapse toggle on a nav tree item.
+    /// The string parameter is the item's ToggleKey.
+    /// </summary>
+    public Func<string, Task>? OnToggleItem { get; set; }
+
     public void SetContext(string sectionTitle, string backHref, string backLabel, List<SecondaryNavItem> items, GameType? gameType = null)
     {
         SectionTitle = sectionTitle;
@@ -35,8 +41,17 @@ public class NavigationContextService
         BackLabel = null;
         Items = new();
         GameType = null;
+        OnToggleItem = null;
         OnContextChanged?.Invoke();
     }
 }
 
-public record SecondaryNavItem(string Label, string Href, string Icon, bool IsActive = false, List<SecondaryNavItem>? Children = null);
+public record SecondaryNavItem(
+    string Label,
+    string Href,
+    string Icon,
+    bool IsActive = false,
+    List<SecondaryNavItem>? Children = null,
+    bool IsExpanded = false,
+    bool IsSection = false,
+    string? ToggleKey = null);

@@ -78,23 +78,39 @@
             <nav class="secondary-nav" aria-label="Navigation contextuelle">
                 @foreach (var item in NavContext.Items)
                 {
-                    <a href="@item.Href"
-                       class="secondary-nav-item @(item.IsActive ? "active" : "")"
-                       title="@item.Label">
-                        <i class="bi @item.Icon"></i>
-                        @item.Label
-                    </a>
-                    @if (item.Children != null)
+                    @if (item.IsSection)
                     {
-                        foreach (var child in item.Children)
-                        {
-                            <a href="@child.Href"
-                               class="secondary-nav-item @(child.IsActive ? "active" : "")"
-                               style="padding-left: calc(var(--spacing-md) + 1.5rem);"
-                               title="@child.Label">
-                                <i class="bi @child.Icon"></i>
-                                @child.Label
+                        <div class="secondary-nav-section-label">@item.Label</div>
+                    }
+                    else
+                    {
+                        <div class="secondary-nav-item-row">
+                            <a href="@item.Href"
+                               class="secondary-nav-item @(item.IsActive ? "active" : "")"
+                               title="@item.Label">
+                                <i class="bi @item.Icon"></i>
+                                <span class="secondary-nav-label">@item.Label</span>
                             </a>
+                            @if (item.ToggleKey != null)
+                            {
+                                <button class="secondary-nav-toggle-btn"
+                                        @onclick="async () => { if (NavContext.OnToggleItem != null) await NavContext.OnToggleItem(item.ToggleKey!); }"
+                                        title="@(item.IsExpanded ? "Réduire" : "Développer")">
+                                    <i class="bi @(item.IsExpanded ? "bi-chevron-down" : "bi-chevron-right")"></i>
+                                </button>
+                            }
+                        </div>
+                        @if (item.IsExpanded && item.Children != null)
+                        {
+                            foreach (var child in item.Children)
+                            {
+                                <a href="@child.Href"
+                                   class="secondary-nav-item secondary-nav-child @(child.IsActive ? "active" : "")"
+                                   title="@child.Label">
+                                    <i class="bi @child.Icon"></i>
+                                    <span>@child.Label</span>
+                                </a>
+                            }
                         }
                     }
                 }

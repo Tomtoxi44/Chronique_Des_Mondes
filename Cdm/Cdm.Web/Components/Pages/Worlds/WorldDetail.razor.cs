@@ -6,6 +6,7 @@ using Cdm.Web.Services;
 using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Localization;
+using Microsoft.JSInterop;
 
 namespace Cdm.Web.Components.Pages.Worlds;
 
@@ -13,16 +14,66 @@ public partial class WorldDetail : IDisposable
 {
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
+    [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     [Parameter] public int WorldId { get; set; }
 
+    [SupplyParameterFromQuery(Name = "section")]
+    private string? Section { get; set; }
+
+    [SupplyParameterFromQuery(Name = "campaignId")]
+    private int? SelectedCampaignId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "chapterId")]
+    private int? SelectedChapterId { get; set; }
+
     private WorldDto? World;
     private List<CampaignDto> Campaigns = new();
+    private Dictionary<int, bool> ExpandedCampaigns = new();
+    private Dictionary<int, List<ChapterDto>> CampaignChapters = new();
     private bool IsLoading = true;
-    private AppConfirmDialog DeleteDialog { get; set; } = default!;
+    private bool IsSaving = false;
+    private string? SaveMessage;
+    private bool SaveSuccess = false;
+
+    // Description editor
+    private string DescriptionDraft = string.Empty;
+    private bool DescriptionDirty = false;
+
+    // Campaign detail
+    private CampaignDto? SelectedCampaign;
+    private bool ShowNewChapterForm = false;
+    private CreateChapterDto NewChapter = new();
+
+    // Chapter detail
+    private ChapterDto? SelectedChapter;
+    private string ChapterContentDraft = string.Empty;
+    private bool ChapterContentDirty = false;
+
+    // Invite tokens
+    private bool IsGeneratingToken = false;
+
+    private void OnDescriptionInput(ChangeEventArgs e)
+    {
+        DescriptionDraft = e.Value?.ToString() ?? string.Empty;
+        DescriptionDirty = true;
+        SaveMessage = null;
+    }
+
+    private void OnChapterContentInput(ChangeEventArgs e)
+    {
+        ChapterContentDraft = e.Value?.ToString() ?? string.Empty;
+        ChapterContentDirty = true;
+        SaveMessage = null;
+    }
+
+    private AppConfirmDialog DeleteWorldDialog { get; set; } = default!;
+    private AppConfirmDialog DeleteCampaignDialog { get; set; } = default!;
+    private CampaignDto? CampaignToDelete;
 
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
@@ -35,10 +86,41 @@ public partial class WorldDetail : IDisposable
         await LoadAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        if (World != null)
-            SetSecondaryNav();
+        if (World == null) return;
+
+        // Update selected campaign/chapter when query params change
+        SelectedCampaign = SelectedCampaignId.HasValue
+            ? Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId.Value)
+            : null;
+
+        if (SelectedCampaignId.HasValue)
+        {
+            // Ensure the campaign is expanded and chapters are loaded
+            if (!CampaignChapters.ContainsKey(SelectedCampaignId.Value))
+            {
+                var chapters = await ChapterClient.GetChaptersByCampaignAsync(SelectedCampaignId.Value);
+                CampaignChapters[SelectedCampaignId.Value] = chapters;
+            }
+            ExpandedCampaigns[SelectedCampaignId.Value] = true;
+
+            SelectedChapter = SelectedChapterId.HasValue
+                ? CampaignChapters[SelectedCampaignId.Value].FirstOrDefault(c => c.Id == SelectedChapterId.Value)
+                : null;
+
+            if (SelectedChapter != null)
+                ChapterContentDraft = SelectedChapter.Content ?? string.Empty;
+        }
+        else
+        {
+            SelectedChapter = null;
+        }
+
+        if (Section == "description")
+            DescriptionDraft = World.Description ?? string.Empty;
+
+        SetSecondaryNav();
     }
 
     private async Task LoadAsync()
@@ -55,7 +137,10 @@ public partial class WorldDetail : IDisposable
             Campaigns = allCampaigns.Where(c => c.WorldId == WorldId).ToList();
 
             if (World != null)
+            {
+                DescriptionDraft = World.Description ?? string.Empty;
                 SetSecondaryNav();
+            }
         }
         finally
         {
@@ -63,22 +148,89 @@ public partial class WorldDetail : IDisposable
         }
     }
 
+    private async Task ToggleCampaign(string key)
+    {
+        if (!int.TryParse(key, out var campaignId)) return;
+
+        var currentlyExpanded = ExpandedCampaigns.GetValueOrDefault(campaignId, false);
+
+        if (!currentlyExpanded && !CampaignChapters.ContainsKey(campaignId))
+        {
+            var chapters = await ChapterClient.GetChaptersByCampaignAsync(campaignId);
+            CampaignChapters[campaignId] = chapters;
+        }
+
+        ExpandedCampaigns[campaignId] = !currentlyExpanded;
+        SetSecondaryNav();
+        await InvokeAsync(StateHasChanged);
+    }
+
     private void SetSecondaryNav()
     {
         if (World == null) return;
 
-        var items = Campaigns.Select(c => new SecondaryNavItem(
-            Label: c.Name,
-            Href: $"/campaigns/{c.Id}",
-            Icon: "bi-map",
-            IsActive: false
-        )).ToList<SecondaryNavItem>();
+        NavContext.OnToggleItem = async (key) => await ToggleCampaign(key);
 
-        items.Insert(0, new SecondaryNavItem(
-            Label: "Vue d'ensemble",
-            Href: $"/worlds/{WorldId}",
-            Icon: "bi-info-circle",
-            IsActive: true
+        var items = new List<SecondaryNavItem>
+        {
+            new("Vue d'ensemble", $"/worlds/{WorldId}", "bi-info-circle",
+                IsActive: Section == null && !SelectedCampaignId.HasValue),
+            new("Description", $"/worlds/{WorldId}?section=description", "bi-pencil",
+                IsActive: Section == "description"),
+        };
+
+        // Campaigns section
+        items.Add(new SecondaryNavItem("Campagnes", "#", "bi-map", IsSection: true));
+
+        foreach (var campaign in Campaigns)
+        {
+            var isExpanded = ExpandedCampaigns.GetValueOrDefault(campaign.Id, false);
+            var isCampaignActive = SelectedCampaignId == campaign.Id && Section == null;
+
+            var children = new List<SecondaryNavItem>();
+            if (isExpanded && CampaignChapters.TryGetValue(campaign.Id, out var chapters))
+            {
+                foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
+                {
+                    var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
+                    children.Add(new SecondaryNavItem(
+                        $"Ch. {ch.ChapterNumber} — {ch.Title}",
+                        $"/worlds/{WorldId}?campaignId={campaign.Id}&chapterId={ch.Id}",
+                        chIcon,
+                        IsActive: SelectedChapterId == ch.Id
+                    ));
+                }
+                children.Add(new SecondaryNavItem(
+                    L["Chapters_Create"],
+                    $"/worlds/{WorldId}?campaignId={campaign.Id}#new-chapter",
+                    "bi-plus-circle"
+                ));
+            }
+
+            items.Add(new SecondaryNavItem(
+                campaign.Name,
+                $"/worlds/{WorldId}?campaignId={campaign.Id}",
+                "bi-map",
+                IsActive: isCampaignActive,
+                Children: isExpanded ? children : null,
+                IsExpanded: isExpanded,
+                ToggleKey: campaign.Id.ToString()
+            ));
+        }
+
+        items.Add(new SecondaryNavItem(
+            L["Campaigns_Create"],
+            $"/campaigns/create?worldId={WorldId}",
+            "bi-plus-circle"
+        ));
+
+        // Management section
+        items.Add(new SecondaryNavItem("Gestion", "#", "bi-gear", IsSection: true));
+        items.Add(new SecondaryNavItem(
+            "Invitations",
+            $"/worlds/{WorldId}?section=invitations",
+            "bi-person-plus",
+            IsActive: Section == "invitations"
         ));
 
         NavContext.SetContext(
@@ -90,7 +242,110 @@ public partial class WorldDetail : IDisposable
         );
     }
 
-    private void ConfirmDeleteWorld() => DeleteDialog.Show();
+    private async Task SaveDescription()
+    {
+        if (World == null) return;
+        IsSaving = true;
+        SaveMessage = null;
+        try
+        {
+            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(World.Name, DescriptionDraft, World.IsActive));
+            if (result != null)
+            {
+                World = result;
+                DescriptionDirty = false;
+                SaveSuccess = true;
+                SaveMessage = "Description sauvegardée.";
+            }
+            else
+            {
+                SaveSuccess = false;
+                SaveMessage = "Erreur lors de la sauvegarde.";
+            }
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task SaveChapterContent()
+    {
+        if (SelectedChapter == null || !SelectedCampaignId.HasValue) return;
+        IsSaving = true;
+        SaveMessage = null;
+        try
+        {
+            var dto = new CreateChapterDto
+            {
+                CampaignId = SelectedCampaignId.Value,
+                Title = SelectedChapter.Title,
+                Content = ChapterContentDraft
+            };
+            var result = await ChapterClient.UpdateChapterAsync(SelectedChapter.Id, dto);
+            if (result != null)
+            {
+                var chapters = CampaignChapters[SelectedCampaignId.Value];
+                var idx = chapters.FindIndex(c => c.Id == result.Id);
+                if (idx >= 0) chapters[idx] = result;
+                SelectedChapter = result;
+                ChapterContentDirty = false;
+                SaveSuccess = true;
+                SaveMessage = "Chapitre sauvegardé.";
+            }
+            else
+            {
+                SaveSuccess = false;
+                SaveMessage = "Erreur lors de la sauvegarde.";
+            }
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task CreateChapter()
+    {
+        if (!SelectedCampaignId.HasValue) return;
+        IsSaving = true;
+        NewChapter.CampaignId = SelectedCampaignId.Value;
+        var result = await ChapterClient.CreateChapterAsync(NewChapter);
+        if (result != null)
+        {
+            if (!CampaignChapters.ContainsKey(SelectedCampaignId.Value))
+                CampaignChapters[SelectedCampaignId.Value] = new();
+            CampaignChapters[SelectedCampaignId.Value].Add(result);
+            ShowNewChapterForm = false;
+            NewChapter = new CreateChapterDto();
+            SetSecondaryNav();
+        }
+        IsSaving = false;
+    }
+
+    private async Task GenerateInviteToken(int campaignId)
+    {
+        IsGeneratingToken = true;
+        var token = await CampaignClient.GenerateInviteTokenAsync(campaignId);
+        if (token != null)
+        {
+            var campaign = Campaigns.FirstOrDefault(c => c.Id == campaignId);
+            if (campaign != null)
+                campaign.InviteToken = token;
+        }
+        IsGeneratingToken = false;
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        catch { /* silently ignore if clipboard API not available */ }
+    }
+
+    private void ConfirmDeleteWorld() => DeleteWorldDialog.Show();
 
     private async Task DeleteWorldAsync()
     {
@@ -100,6 +355,30 @@ public partial class WorldDetail : IDisposable
         {
             NavContext.ClearContext();
             Nav.NavigateTo("/worlds");
+        }
+    }
+
+    private void ConfirmDeleteCampaign(CampaignDto campaign)
+    {
+        CampaignToDelete = campaign;
+        DeleteCampaignDialog.Show();
+    }
+
+    private async Task DeleteCampaignAsync()
+    {
+        if (CampaignToDelete == null) return;
+        var success = await CampaignClient.DeleteCampaignAsync(CampaignToDelete.Id);
+        if (success)
+        {
+            Campaigns.Remove(CampaignToDelete);
+            ExpandedCampaigns.Remove(CampaignToDelete.Id);
+            CampaignChapters.Remove(CampaignToDelete.Id);
+            CampaignToDelete = null;
+            Nav.NavigateTo($"/worlds/{WorldId}");
+        }
+        else
+        {
+            CampaignToDelete = null;
         }
     }
 

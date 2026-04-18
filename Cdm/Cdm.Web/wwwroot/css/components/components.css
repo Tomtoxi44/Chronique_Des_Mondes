@@ -1035,3 +1035,138 @@ textarea.form-control {
   color: var(--color-text-muted);
   margin-top: 2px;
 }
+
+/* Campaign list row (inside world detail overview) */
+.campaign-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  transition: background var(--duration-fast), color var(--duration-fast);
+  border: 1px solid transparent;
+  margin-bottom: var(--spacing-xs);
+}
+
+.campaign-row:hover {
+  background: var(--theme-badge-bg, rgba(99, 102, 241, 0.06));
+  color: var(--color-text-primary);
+  border-color: var(--theme-card-border, var(--color-border));
+}
+
+/* ============================================
+   DESCRIPTION EDITOR (World / Chapter notepad)
+   ============================================ */
+.description-editor-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-card);
+  border: 1px solid var(--theme-card-border, var(--color-border));
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.description-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--theme-card-border, var(--color-border));
+  background: var(--color-bg-secondary);
+  flex-shrink: 0;
+  gap: var(--spacing-sm);
+}
+
+.description-editor-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.description-editor-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 400px;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: 1.8;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.description-editor-textarea::placeholder {
+  color: var(--color-text-disabled);
+  font-style: italic;
+}
+
+/* Campaign/chapter inline sections */
+.world-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.world-section-title {
+  font-family: var(--theme-heading-font, var(--font-heading));
+  font-size: var(--font-size-h4);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.chapter-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  transition: background var(--duration-fast), color var(--duration-fast);
+  border: 1px solid transparent;
+}
+
+.chapter-list-row:hover {
+  background: var(--theme-badge-bg, rgba(99, 102, 241, 0.06));
+  color: var(--color-text-primary);
+  border-color: var(--theme-card-border, var(--color-border));
+}
+
+/* Invite section */
+.invite-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--theme-card-border, var(--color-border));
+  margin-bottom: var(--spacing-sm);
+}
+
+.invite-token-box {
+  flex: 1;
+  font-family: monospace;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

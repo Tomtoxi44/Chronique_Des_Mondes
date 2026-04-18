@@ -292,6 +292,73 @@
   padding: var(--spacing-sm) var(--spacing-md) var(--spacing-xs);
 }
 
+/* Tree navigation */
+.secondary-nav-section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  border-top: 1px solid var(--color-border);
+}
+
+.secondary-nav-section-label:first-child {
+  margin-top: 0;
+  border-top: none;
+}
+
+.secondary-nav-item-row {
+  display: flex;
+  align-items: center;
+}
+
+.secondary-nav-item-row .secondary-nav-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.secondary-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.secondary-nav-toggle-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast), color var(--duration-fast);
+  margin-right: var(--spacing-xs);
+  font-size: 0.7rem;
+}
+
+.secondary-nav-toggle-btn:hover {
+  background: var(--theme-badge-bg, rgba(99, 102, 241, 0.08));
+  color: var(--color-text-primary);
+}
+
+.secondary-nav-child {
+  padding-left: calc(var(--spacing-md) + 1.1rem);
+  font-size: calc(var(--font-size-sm) * 0.95);
+  color: var(--color-text-muted);
+}
+
+.secondary-nav-child.active {
+  color: var(--theme-primary, var(--color-primary-light));
+}
+
 /* ============================================
    ZONE PRINCIPALE (droite)
    ============================================ */
