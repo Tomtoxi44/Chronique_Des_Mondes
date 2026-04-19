@@ -356,178 +356,203 @@ else
                 }
                 else
                 {
-                    <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                        <h3 class="card-title">Informations</h3>
-                    <div class="info-grid" style="margin-top: var(--spacing-md);">
-                        <div>
-                            <span class="info-label">Visibilité</span>
-                            <span class="info-value">@(SelectedCampaign.Visibility == Visibility.Public ? "Publique" : "Privée")</span>
-                        </div>
-                        <div>
-                            <span class="info-label">Joueurs max</span>
-                            <span class="info-value">@SelectedCampaign.MaxPlayers</span>
-                        </div>
-                        <div>
-                            <span class="info-label">@L["Worlds_CreatedAt"]</span>
-                            <span class="info-value">@SelectedCampaign.CreatedAt.ToString("d MMM yyyy")</span>
-                        </div>
+                    <!-- Tab bar -->
+                    <div class="campaign-tabs" style="margin-bottom: var(--spacing-md);">
+                        @if (IsOwner)
+                        {
+                            <button class="campaign-tab-btn @(CampaignTab == "chapitres" ? "active" : "")" @onclick='() => CampaignTab = "chapitres"'>
+                                <i class="bi bi-book"></i> Chapitres
+                            </button>
+                            <button class="campaign-tab-btn @(CampaignTab == "session" ? "active" : "")" @onclick='() => CampaignTab = "session"'>
+                                <i class="bi bi-play-circle"></i> Session
+                                @if (ActiveSession != null)
+                                {
+                                    <span class="tab-dot-active"></span>
+                                }
+                            </button>
+                        }
+                        <button class="campaign-tab-btn @(CampaignTab == "infos" ? "active" : "")" @onclick='() => CampaignTab = "infos"'>
+                            <i class="bi bi-info-circle"></i> Infos
+                        </button>
                     </div>
-                    </div>
-                }
 
-                <!-- Session de jeu -->
-                @if (IsOwner)
-                {
-                    <div class="cdm-card" style="margin-top: var(--spacing-lg); border-top: 2px solid var(--theme-primary, var(--color-primary));">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
-                            <div>
-                                <h3 class="card-title" style="margin: 0;">Session de jeu</h3>
-                                <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
-                                    Lancez une session pour commencer à jouer cette campagne.
-                                </p>
+                    <!-- Chapitres tab -->
+                    @if (IsOwner && CampaignTab == "chapitres")
+                    {
+                        <div class="cdm-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                                <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                    <h3 class="card-title">Chapitres</h3>
+                                    @if (IsReordering)
+                                    {
+                                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Enregistrement...</span>
+                                    }
+                                </div>
+                                <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
+                                    <i class="bi bi-plus"></i>
+                                    @L["Chapters_Create"]
+                                </a>
                             </div>
-                            @if (ActiveSession == null && !IsStartSessionPanelOpen)
+
+                            @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var tabChapters) && tabChapters.Count > 0)
                             {
-                                <button class="btn btn-primary btn-sm" @onclick="OpenStartSessionPanel">
-                                    <i class="bi bi-play-fill"></i>
-                                    Lancer une session
-                                </button>
+                                <div class="chapter-drag-list">
+                                    @foreach (var ch in tabChapters.OrderBy(c => c.ChapterNumber))
+                                    {
+                                        var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
+                                        var isDragOver = _dragOverChapterId == ch.Id;
+                                        <div class="chapter-drag-row @(isDragOver ? "drag-over" : "")"
+                                             draggable="true"
+                                             @ondragstart="() => OnChapterDragStart(ch)"
+                                             @ondragover:preventDefault
+                                             @ondragover="() => OnChapterDragOver(ch)"
+                                             @ondragleave="OnChapterDragLeave"
+                                             @ondrop="() => OnChapterDrop(ch)">
+                                            <i class="bi bi-grip-vertical drag-handle"></i>
+                                            <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&chapterId=@ch.Id" class="chapter-drag-link">
+                                                <i class="bi @chIcon" style="color: @(ch.IsCompleted ? "var(--color-success)" : ch.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-text-muted)");"></i>
+                                                <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
+                                                @if (ch.IsCompleted)
+                                                {
+                                                    <span class="status-badge status-completed">Terminé</span>
+                                                }
+                                                else if (ch.IsActive)
+                                                {
+                                                    <span class="status-badge status-active">En cours</span>
+                                                }
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                                <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-sm);">
+                                    <i class="bi bi-grip-vertical"></i> Glisser-déposer pour réordonner
+                                </p>
+                            }
+                            else
+                            {
+                                <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">
+                                    Aucun chapitre pour le moment.
+                                </p>
+                            }
+                        </div>
+                    }
+
+                    <!-- Session tab -->
+                    @if (IsOwner && CampaignTab == "session")
+                    {
+                        <div class="cdm-card" style="border-top: 2px solid var(--theme-primary, var(--color-primary));">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                                <div>
+                                    <h3 class="card-title" style="margin: 0;">Session de jeu</h3>
+                                    <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
+                                        Lancez une session pour commencer à jouer cette campagne.
+                                    </p>
+                                </div>
+                                @if (ActiveSession == null && !IsStartSessionPanelOpen)
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="OpenStartSessionPanel">
+                                        <i class="bi bi-play-fill"></i>
+                                        Lancer une session
+                                    </button>
+                                }
+                                else if (ActiveSession != null)
+                                {
+                                    <a href="/sessions/@ActiveSession.Id/gm" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-play-fill"></i>
+                                        Reprendre la session
+                                    </a>
+                                }
+                            </div>
+
+                            @if (IsLoadingSession)
+                            {
+                                <AppLoadingSpinner Label="Vérification..." />
                             }
                             else if (ActiveSession != null)
                             {
-                                <a href="/sessions/@ActiveSession.Id/gm" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-play-fill"></i>
-                                    Reprendre la session
-                                </a>
-                            }
-                        </div>
-
-                        @if (IsLoadingSession)
-                        {
-                            <AppLoadingSpinner Label="Vérification..." />
-                        }
-                        else if (ActiveSession != null)
-                        {
-                            <div style="background: rgba(var(--color-success-rgb, 16,185,129),0.1); border: 1px solid var(--color-success); border-radius: 6px; padding: var(--spacing-sm) var(--spacing-md);">
-                                <span class="status-badge status-active" style="margin-right: var(--spacing-sm);">Session active</span>
-                                <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Démarrée le @ActiveSession.StartedAt.ToLocalTime().ToString("dd/MM à HH:mm")</span>
-                            </div>
-                        }
-                        else if (IsStartSessionPanelOpen)
-                        {
-                            <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-md); margin-top: var(--spacing-sm);">
-                                @if (!string.IsNullOrEmpty(SessionStartError))
-                                {
-                                    <div class="alert alert-error" style="margin-bottom: var(--spacing-sm);">@SessionStartError</div>
-                                }
-
-                                <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                                    <label class="form-label">Message de bienvenue (optionnel)</label>
-                                    <input type="text" class="form-control" @bind="SessionWelcomeMessage" placeholder="Bienvenue dans cette session..." />
+                                <div style="background: rgba(var(--color-success-rgb, 16,185,129),0.1); border: 1px solid var(--color-success); border-radius: 6px; padding: var(--spacing-sm) var(--spacing-md);">
+                                    <span class="status-badge status-active" style="margin-right: var(--spacing-sm);">Session active</span>
+                                    <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Démarrée le @ActiveSession.StartedAt.ToLocalTime().ToString("dd/MM à HH:mm")</span>
                                 </div>
+                            }
+                            else if (IsStartSessionPanelOpen)
+                            {
+                                <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-md); margin-top: var(--spacing-sm);">
+                                    @if (!string.IsNullOrEmpty(SessionStartError))
+                                    {
+                                        <div class="alert alert-error" style="margin-bottom: var(--spacing-sm);">@SessionStartError</div>
+                                    }
 
-                                @if (SessionParticipants.Count > 0)
-                                {
                                     <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                                        <label class="form-label">Joueurs à inviter</label>
-                                        @foreach (var wc in SessionParticipants)
-                                        {
-                                            <label style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-xs) 0; cursor: pointer;">
-                                                <input type="checkbox"
-                                                       checked="@SelectedWorldCharacterIds.Contains(wc.Id)"
-                                                       @onchange="() => ToggleParticipant(wc.Id)" />
-                                                <span style="font-size: var(--font-size-sm);">@wc.CharacterName</span>
-                                            </label>
-                                        }
+                                        <label class="form-label">Message de bienvenue (optionnel)</label>
+                                        <input type="text" class="form-control" @bind="SessionWelcomeMessage" placeholder="Bienvenue dans cette session..." />
                                     </div>
-                                }
-                                else
-                                {
-                                    <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
-                                        <i class="bi bi-info-circle"></i>
-                                        Aucun joueur n'a encore rejoint ce monde.
-                                    </p>
-                                }
 
-                                <div style="display: flex; gap: var(--spacing-sm);">
-                                    <button class="btn btn-primary btn-sm" @onclick="StartSession" disabled="@IsStartingSession">
-                                        @if (IsStartingSession)
-                                        {
-                                            <i class="bi bi-hourglass-split"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-play-fill"></i>
-                                        }
-                                        Démarrer
-                                    </button>
-                                    <button class="btn btn-ghost btn-sm" @onclick="() => IsStartSessionPanelOpen = false">
-                                        Annuler
-                                    </button>
+                                    @if (SessionParticipants.Count > 0)
+                                    {
+                                        <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                                            <label class="form-label">Joueurs à inviter</label>
+                                            @foreach (var wc in SessionParticipants)
+                                            {
+                                                <label style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-xs) 0; cursor: pointer;">
+                                                    <input type="checkbox"
+                                                           checked="@SelectedWorldCharacterIds.Contains(wc.Id)"
+                                                           @onchange="() => ToggleParticipant(wc.Id)" />
+                                                    <span style="font-size: var(--font-size-sm);">@wc.CharacterName</span>
+                                                </label>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
+                                            <i class="bi bi-info-circle"></i>
+                                            Aucun joueur n'a encore rejoint ce monde.
+                                        </p>
+                                    }
+
+                                    <div style="display: flex; gap: var(--spacing-sm);">
+                                        <button class="btn btn-primary btn-sm" @onclick="StartSession" disabled="@IsStartingSession">
+                                            @if (IsStartingSession)
+                                            {
+                                                <i class="bi bi-hourglass-split"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-play-fill"></i>
+                                            }
+                                            Démarrer
+                                        </button>
+                                        <button class="btn btn-ghost btn-sm" @onclick="() => IsStartSessionPanelOpen = false">
+                                            Annuler
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Infos tab -->
+                    @if (CampaignTab == "infos" || !IsOwner)
+                    {
+                        <div class="cdm-card">
+                            <h3 class="card-title">Informations</h3>
+                            <div class="info-grid" style="margin-top: var(--spacing-md);">
+                                <div>
+                                    <span class="info-label">Visibilité</span>
+                                    <span class="info-value">@(SelectedCampaign.Visibility == Visibility.Public ? "Publique" : "Privée")</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">Joueurs max</span>
+                                    <span class="info-value">@SelectedCampaign.MaxPlayers</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">@L["Worlds_CreatedAt"]</span>
+                                    <span class="info-value">@SelectedCampaign.CreatedAt.ToString("d MMM yyyy")</span>
                                 </div>
                             </div>
-                        }
-                    </div>
-                }
-                <!-- Chapitres -->
-                @if (IsOwner)
-                {
-                <div class="cdm-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                        <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                            <h3 class="card-title">Chapitres</h3>
-                            @if (IsReordering)
-                            {
-                                <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Enregistrement...</span>
-                            }
                         </div>
-                        <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
-                            <i class="bi bi-plus"></i>
-                            @L["Chapters_Create"]
-                        </a>
-                    </div>
-
-                    @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var chapters) && chapters.Count > 0)
-                    {
-                        <div class="chapter-drag-list">
-                            @foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
-                            {
-                                var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
-                                var isDragOver = _dragOverChapterId == ch.Id;
-                                <div class="chapter-drag-row @(isDragOver ? "drag-over" : "")"
-                                     draggable="true"
-                                     @ondragstart="() => OnChapterDragStart(ch)"
-                                     @ondragover:preventDefault
-                                     @ondragover="() => OnChapterDragOver(ch)"
-                                     @ondragleave="OnChapterDragLeave"
-                                     @ondrop="() => OnChapterDrop(ch)">
-                                    <i class="bi bi-grip-vertical drag-handle"></i>
-                                    <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&chapterId=@ch.Id" class="chapter-drag-link">
-                                        <i class="bi @chIcon" style="color: @(ch.IsCompleted ? "var(--color-success)" : ch.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-text-muted)");"></i>
-                                        <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
-                                        @if (ch.IsCompleted)
-                                        {
-                                            <span class="status-badge status-completed">Terminé</span>
-                                        }
-                                        else if (ch.IsActive)
-                                        {
-                                            <span class="status-badge status-active">En cours</span>
-                                        }
-                                    </a>
-                                </div>
-                            }
-                        </div>
-                        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-sm);">
-                            <i class="bi bi-grip-vertical"></i> Glisser-déposer pour réordonner
-                        </p>
                     }
-                    else
-                    {
-                        <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">
-                            Aucun chapitre pour le moment.
-                        </p>
-                    }
-                </div>
                 }
             }
         }
@@ -619,6 +644,95 @@ else
                                   value="@ChapterContentDraft"
                                   @oninput="OnChapterContentInput"></textarea>
                     </div>
+                </div>
+
+                <!-- Section PNJ du chapitre -->
+                <div class="cdm-card" style="margin-top: var(--spacing-lg);">
+                    <div class="npc-panel-header">
+                        <div>
+                            <h3 class="card-title" style="margin: 0;">Personnages non-joueurs</h3>
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
+                                PNJ liés à ce chapitre (visibles uniquement par le MJ)
+                            </p>
+                        </div>
+                        @if (!ShowNpcForm)
+                        {
+                            <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
+                                <i class="bi bi-plus"></i> Ajouter un PNJ
+                            </button>
+                        }
+                    </div>
+
+                    @if (ShowNpcForm)
+                    {
+                        <div style="background: var(--color-surface-alt, var(--color-bg-secondary)); border-radius: 6px; padding: var(--spacing-md); margin-top: var(--spacing-md);">
+                            <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                <div class="form-group">
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" class="form-control" @bind="NewNpc.FirstName" placeholder="Prénom..." />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" class="form-control" @bind="NewNpc.Name" placeholder="Nom de famille..." />
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                <label class="form-label">Âge</label>
+                                <input type="number" class="form-control" @bind="NewNpc.Age" placeholder="Âge..." style="max-width: 120px;" />
+                            </div>
+                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" rows="2" @bind="NewNpc.Description" placeholder="Description narrative..."></textarea>
+                            </div>
+                            <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                                <label class="form-label">Description physique</label>
+                                <textarea class="form-control" rows="2" @bind="NewNpc.PhysicalDescription" placeholder="Apparence physique..."></textarea>
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-sm);">
+                                <button class="btn btn-primary btn-sm" @onclick="CreateNpc" disabled="@IsSavingNpc">
+                                    <i class="bi bi-check"></i> Créer
+                                </button>
+                                <button class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
+                            </div>
+                        </div>
+                    }
+
+                    @if (ChapterNpcs.Count > 0)
+                    {
+                        <div class="npc-list" style="margin-top: var(--spacing-md);">
+                            @foreach (var npc in ChapterNpcs)
+                            {
+                                <div class="npc-card">
+                                    <div class="npc-card-header">
+                                        <div>
+                                            <strong>@npc.DisplayName</strong>
+                                            @if (npc.Age.HasValue)
+                                            {
+                                                <span style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-left: var(--spacing-xs);">@npc.Age ans</span>
+                                            }
+                                        </div>
+                                        <button class="btn btn-ghost btn-sm" style="color: var(--color-error);" @onclick="() => ConfirmDeleteNpc(npc)">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(npc.Description))
+                                    {
+                                        <p class="npc-description">@npc.Description</p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(npc.PhysicalDescription))
+                                    {
+                                        <p class="npc-description" style="font-style: italic;">@npc.PhysicalDescription</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else if (!ShowNpcForm)
+                    {
+                        <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm); margin-top: var(--spacing-md);">
+                            Aucun PNJ pour ce chapitre.
+                        </p>
+                    }
                 </div>
             }
         }
@@ -1018,4 +1132,11 @@ else
                   ConfirmLabel="@L["Common_Delete"]"
                   CancelLabel="@L["Common_Cancel"]"
                   OnConfirm="DeleteCampaignAsync" />
+
+<AppConfirmDialog @ref="DeleteNpcDialog"
+                  Title="Supprimer ce PNJ ?"
+                  Message="@($"Voulez-vous supprimer {NpcToDelete?.DisplayName ?? "ce PNJ"} ?")"
+                  ConfirmLabel="@L["Common_Delete"]"
+                  CancelLabel="@L["Common_Cancel"]"
+                  OnConfirm="DeleteNpc" />
 

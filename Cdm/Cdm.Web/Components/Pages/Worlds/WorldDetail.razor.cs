@@ -17,6 +17,7 @@ public partial class WorldDetail : IDisposable
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
+    [Inject] private NpcApiClient NpcClient { get; set; } = default!;
     [Inject] private EventApiClient EventClient { get; set; } = default!;
     [Inject] private AchievementApiClient AchievementClient { get; set; } = default!;
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
@@ -140,6 +141,19 @@ public partial class WorldDetail : IDisposable
     private AppConfirmDialog DeleteCampaignDialog { get; set; } = default!;
     private CampaignDto? CampaignToDelete;
 
+    // Campaign tabs
+    private string CampaignTab = "chapitres";
+    private int? _lastCampaignIdForTab;
+
+    // NPC management (per chapter)
+    private List<NpcDto> ChapterNpcs = new();
+    private bool ShowNpcForm = false;
+    private bool IsSavingNpc = false;
+    private CreateNpcDto NewNpc = new();
+    private NpcDto? NpcToDelete;
+    private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
+    private int? _lastNpcChapterId;
+
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
         new BreadcrumbItem(L["Worlds_Title"], "/worlds"),
@@ -182,6 +196,17 @@ public partial class WorldDetail : IDisposable
             if (SelectedChapter != null)
                 ChapterContentDraft = SelectedChapter.Content ?? string.Empty;
 
+            // Load NPCs when chapter changes
+            if (SelectedChapterId != _lastNpcChapterId)
+            {
+                _lastNpcChapterId = SelectedChapterId;
+                ShowNpcForm = false;
+                if (SelectedChapterId.HasValue && SelectedChapter != null)
+                    ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(SelectedChapterId.Value);
+                else
+                    ChapterNpcs.Clear();
+            }
+
             // Check for active session on this campaign (GM only)
             if (IsOwner && !IsLoadingSession && Section == null && !SelectedChapterId.HasValue)
                 await LoadActiveSessionAsync(SelectedCampaignId.Value);
@@ -191,6 +216,13 @@ public partial class WorldDetail : IDisposable
             SelectedChapter = null;
             ActiveSession = null;
             IsStartSessionPanelOpen = false;
+        }
+
+        // Reset tab when switching campaigns
+        if (SelectedCampaignId != _lastCampaignIdForTab)
+        {
+            _lastCampaignIdForTab = SelectedCampaignId;
+            CampaignTab = "chapitres";
         }
 
         if (Section == "description")
@@ -847,6 +879,42 @@ public partial class WorldDetail : IDisposable
             SessionStartError = "Impossible de démarrer la session. Une session est peut-être déjà active.";
         }
         IsStartingSession = false;
+    }
+
+    private void ShowAddNpc()
+    {
+        NewNpc = new CreateNpcDto { ChapterId = SelectedChapter!.Id };
+        ShowNpcForm = true;
+    }
+
+    private async Task CreateNpc()
+    {
+        if (SelectedChapter == null) return;
+        IsSavingNpc = true;
+        NewNpc.ChapterId = SelectedChapter.Id;
+        var result = await NpcClient.CreateNpcAsync(NewNpc);
+        if (result != null)
+        {
+            ChapterNpcs.Add(result);
+            NewNpc = new CreateNpcDto { ChapterId = SelectedChapter.Id };
+            ShowNpcForm = false;
+        }
+        IsSavingNpc = false;
+    }
+
+    private void ConfirmDeleteNpc(NpcDto npc)
+    {
+        NpcToDelete = npc;
+        DeleteNpcDialog.Show();
+    }
+
+    private async Task DeleteNpc()
+    {
+        if (NpcToDelete == null) return;
+        var ok = await NpcClient.DeleteNpcAsync(NpcToDelete.Id);
+        if (ok)
+            ChapterNpcs.Remove(NpcToDelete);
+        NpcToDelete = null;
     }
 
     public void Dispose()
