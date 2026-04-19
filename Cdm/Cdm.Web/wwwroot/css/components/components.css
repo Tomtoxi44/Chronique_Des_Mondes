@@ -723,6 +723,24 @@ textarea.form-control {
     right: -8px;
     min-width: 160px;
   }
+
+  /* Editor section : hauteur auto sur mobile */
+  .editor-section {
+    height: auto;
+    min-height: 60vh;
+  }
+
+  /* Textarea padding réduit sur mobile */
+  .description-editor-textarea {
+    padding: var(--spacing-md);
+    min-height: 300px;
+  }
+
+  /* World section header : wrap sur mobile */
+  .world-section-header {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
 }
 
 /* ============================================
@@ -1227,6 +1245,13 @@ textarea.form-control {
   justify-content: space-between;
   margin-bottom: var(--spacing-lg);
   gap: var(--spacing-md);
+}
+
+/* Full-height editor section (description, chapitre) */
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--topbar-height) - 4rem);
 }
 
 .world-section-title {

@@ -96,7 +96,7 @@ else
                             <i class="bi bi-pencil"></i>
                         </button>
                     </div>
-                    <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                    <div class="info-grid" style="margin-top: var(--spacing-md);">
                         <div>
                             <span class="info-label">@L["Worlds_GameType"]</span>
                             <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
@@ -182,7 +182,7 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (Section == "description")
         {
-            <div style="display: flex; flex-direction: column; height: calc(100vh - var(--topbar-height) - 2rem); padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);">
+            <div class="editor-section">
                 <div class="world-section-header">
                     <div>
                         <h2 class="world-section-title">
@@ -253,7 +253,7 @@ else
                         <label class="form-label">Description</label>
                         <textarea class="form-control" rows="3" @bind="NewCampaign.Description" placeholder="Décrivez cette campagne..."></textarea>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                    <div class="form-two-col" style="margin-bottom: var(--spacing-md);">
                         <div class="form-group">
                             <label class="form-label">Visibilité</label>
                             <select class="form-control" @bind="NewCampaign.Visibility">
@@ -334,7 +334,7 @@ else
                 {
                     <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
                         <h3 class="card-title">Informations</h3>
-                    <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                    <div class="info-grid" style="margin-top: var(--spacing-md);">
                         <div>
                             <span class="info-label">Visibilité</span>
                             <span class="info-value">@(SelectedCampaign.Visibility == Visibility.Public ? "Publique" : "Privée")</span>
@@ -456,7 +456,7 @@ else
             }
             else
             {
-                <div style="display: flex; flex-direction: column; height: calc(100vh - var(--topbar-height) - 2rem); padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);">
+                <div class="editor-section">
                     <div class="world-section-header">
                         <div>
                             <h2 class="world-section-title">
@@ -533,7 +533,7 @@ else
                         <label class="form-label">Description</label>
                         <textarea class="form-control" rows="3" @bind="NewEvent.Description" placeholder="Description narrative de l'événement..."></textarea>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
                         <div class="form-group">
                             <label class="form-label">Type d'effet</label>
                             <select class="form-control" @bind="NewEvent.EffectType">
@@ -553,7 +553,7 @@ else
                     </div>
                     @if (NewEvent.EffectType != EventEffectType.Narrative)
                     {
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                        <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
                             <div class="form-group">
                                 <label class="form-label">Stat ciblée</label>
                                 <input type="text" class="form-control" @bind="NewEvent.TargetStat" placeholder="ex: Force, PV..." />
@@ -659,7 +659,7 @@ else
                         <label class="form-label">Description <span style="color:var(--color-error)">*</span></label>
                         <textarea class="form-control" rows="3" @bind="NewAchievement.Description" placeholder="Décrivez ce succès et comment l'obtenir..."></textarea>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
                         <div class="form-group">
                             <label class="form-label">Rareté</label>
                             <select class="form-control" @bind="NewAchievement.Rarity">
