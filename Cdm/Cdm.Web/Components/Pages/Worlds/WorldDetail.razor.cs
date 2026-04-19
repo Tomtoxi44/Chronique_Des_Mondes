@@ -169,6 +169,7 @@ public partial class WorldDetail : IDisposable
     private DotNetObjectReference<WorldDetail>? _dotNetRef;
     private IJSObjectReference? _mentionModule;
     private bool _needsMentionInit = false;
+    private bool _needsPreviewClickInit = false;
 
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
@@ -224,6 +225,10 @@ public partial class WorldDetail : IDisposable
                 else
                     ChapterNpcs.Clear();
             }
+
+            // Ensure WorldCharacters are loaded for @mention PJ support
+            if (SelectedChapterId.HasValue && WorldCharacters.Count == 0 && !IsLoadingWorldCharacters)
+                await LoadWorldCharactersAsync();
 
             // Reset chapter tab when switching chapters
             if (SelectedChapterId != _lastChapterIdForTab)
@@ -999,8 +1004,30 @@ public partial class WorldDetail : IDisposable
     // ── @mention JS interop ───────────────────────────────────────────────
 
     [Microsoft.JSInterop.JSInvokable]
-    public List<NpcMentionItem> GetNpcsForMention()
-        => ChapterNpcs.Select(n => new NpcMentionItem(n.Id, n.DisplayName, n.Description ?? string.Empty)).ToList();
+    public List<MentionItem> GetMentionables()
+    {
+        var items = ChapterNpcs
+            .Select(n => new MentionItem(n.Id, n.DisplayName, n.Description ?? string.Empty, "npc"))
+            .ToList();
+        items.AddRange(WorldCharacters
+            .Select(c => new MentionItem(c.CharacterId, c.CharacterName, string.Empty, "pc")));
+        return items;
+    }
+
+    [Microsoft.JSInterop.JSInvokable]
+    public async Task OpenMentionDetail(string type, int id)
+    {
+        if (type == "npc")
+        {
+            ChapterTab = "pnj";
+            ExpandedNpcIds.Add(id);
+            await InvokeAsync(StateHasChanged);
+        }
+        else if (type == "pc")
+        {
+            await InvokeAsync(() => Nav.NavigateTo($"/characters/{id}"));
+        }
+    }
 
     private void SwitchToChapterTab(string tab)
     {
@@ -1014,13 +1041,18 @@ public partial class WorldDetail : IDisposable
         ChapterPreviewMode = !ChapterPreviewMode;
         if (!ChapterPreviewMode)
             _needsMentionInit = true;
+        else
+            _needsPreviewClickInit = true;
     }
 
     private MarkupString RenderChapterContent(string text)
     {
         if (string.IsNullOrEmpty(text)) return new MarkupString(string.Empty);
         var npcMap = ChapterNpcs.ToDictionary(n => n.Id, n => n);
+        var pcMap = WorldCharacters.ToDictionary(c => c.CharacterId, c => c);
         var escaped = text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+
+        // Render NPC mentions: @[Name](npc:id)
         var rendered = System.Text.RegularExpressions.Regex.Replace(
             escaped,
             @"@\[([^\]]+)\]\(npc:(\d+)\)",
@@ -1032,8 +1064,24 @@ public partial class WorldDetail : IDisposable
                     ? (npc.Description ?? npc.PhysicalDescription ?? string.Empty)
                     : string.Empty;
                 var tip = string.IsNullOrEmpty(tooltip) ? "" : $" data-tooltip=\"{tooltip.Replace("\"", "&quot;")}\"";
-                return $"<span class=\"npc-mention\"{tip}>@{name}</span>";
+                return $"<span class=\"npc-mention\" data-mention-type=\"npc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
             });
+
+        // Render PJ mentions: @[Name](pc:id)
+        rendered = System.Text.RegularExpressions.Regex.Replace(
+            rendered,
+            @"@\[([^\]]+)\]\(pc:(\d+)\)",
+            m =>
+            {
+                var name = m.Groups[1].Value;
+                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
+                var tooltip = id > 0 && pcMap.TryGetValue(id, out var pc)
+                    ? $"Personnage joueur{(pc.Level.HasValue ? $" — Niveau {pc.Level}" : string.Empty)}"
+                    : "Personnage joueur";
+                var tip = $" data-tooltip=\"{tooltip}\"";
+                return $"<span class=\"npc-mention pc-mention\" data-mention-type=\"pc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
+            });
+
         rendered = rendered.Replace("\r\n", "\n").Replace("\n", "<br />");
         return new MarkupString(rendered);
     }
@@ -1050,6 +1098,14 @@ public partial class WorldDetail : IDisposable
             _mentionModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "/js/mention.js");
             await _mentionModule.InvokeVoidAsync("init", "chapter-content-editor", _dotNetRef);
         }
+
+        if (_needsPreviewClickInit && ChapterTab == "contenu" && ChapterPreviewMode
+            && SelectedChapter != null && _dotNetRef != null)
+        {
+            _needsPreviewClickInit = false;
+            _mentionModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "/js/mention.js");
+            await _mentionModule.InvokeVoidAsync("initPreviewClicks", "chapter-preview-content", _dotNetRef);
+        }
     }
 
     public void Dispose()
@@ -1058,5 +1114,5 @@ public partial class WorldDetail : IDisposable
         _dotNetRef?.Dispose();
     }
 
-    public record NpcMentionItem(int Id, string DisplayName, string Description);
+    public record MentionItem(int Id, string DisplayName, string Description, string Type);
 }

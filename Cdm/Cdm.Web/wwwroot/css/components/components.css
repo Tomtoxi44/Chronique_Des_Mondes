@@ -190,6 +190,11 @@
   position: relative;
 }
 
+/* PJ mentions use a secondary color to distinguish from NPCs */
+.npc-mention.pc-mention {
+  color: var(--color-secondary, #7a9fd4);
+}
+
 .npc-mention[data-tooltip]:hover::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -253,6 +258,28 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Type badges (PNJ / PJ) in dropdown */
+.mention-type-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.03em;
+}
+
+.mention-type-npc {
+  background: color-mix(in srgb, var(--theme-primary, var(--color-primary)) 15%, transparent);
+  color: var(--theme-primary, var(--color-primary));
+}
+
+.mention-type-pc {
+  background: color-mix(in srgb, var(--color-secondary, #7a9fd4) 15%, transparent);
+  color: var(--color-secondary, #7a9fd4);
 }
 
 /* ============================================

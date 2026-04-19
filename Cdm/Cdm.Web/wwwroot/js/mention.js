@@ -1,13 +1,13 @@
 /**
  * @mention system for chapter content textarea.
- * Usage: import { init } from '/js/mention.js'; await init('textarea-id', dotnetRef);
+ * Usage: import { init, initPreviewClicks } from '/js/mention.js';
  */
 
 let currentDropdown = null;
 let currentTextarea = null;
 let mentionStart = -1;
 let currentQuery = '';
-let cachedNpcs = [];
+let cachedItems = []; // { id, displayName, description, type: 'npc'|'pc' }
 let clickOutsideHandler = null;
 
 function removeDropdown() {
@@ -70,21 +70,25 @@ function showDropdown(filtered, textarea) {
     dd.style.top = (coords.top + lineHeight + 4) + 'px';
     dd.style.left = Math.min(coords.left, window.innerWidth - 220) + 'px';
 
-    filtered.slice(0, 8).forEach(npc => {
-        const item = document.createElement('div');
-        item.className = 'mention-item';
-        item.dataset.id = npc.id;
-        item.dataset.name = npc.displayName;
-        item.dataset.desc = npc.description || '';
-        item.innerHTML = `<span class="mention-item-name">${escapeHtml(npc.displayName)}</span>`;
-        if (npc.description) {
-            item.innerHTML += `<span class="mention-item-desc">${escapeHtml(npc.description.slice(0, 60))}${npc.description.length > 60 ? '…' : ''}</span>`;
+    filtered.slice(0, 8).forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'mention-item';
+        el.dataset.id = item.id;
+        el.dataset.name = item.displayName;
+        el.dataset.type = item.type;
+        el.dataset.desc = item.description || '';
+        const badge = item.type === 'pc'
+            ? `<span class="mention-type-badge mention-type-pc">PJ</span>`
+            : `<span class="mention-type-badge mention-type-npc">PNJ</span>`;
+        el.innerHTML = `<span class="mention-item-name">${badge}${escapeHtml(item.displayName)}</span>`;
+        if (item.description) {
+            el.innerHTML += `<span class="mention-item-desc">${escapeHtml(item.description.slice(0, 60))}${item.description.length > 60 ? '…' : ''}</span>`;
         }
-        item.addEventListener('mousedown', e => {
+        el.addEventListener('mousedown', e => {
             e.preventDefault();
-            insertMention(npc.id, npc.displayName, textarea);
+            insertMention(item.id, item.displayName, item.type, textarea);
         });
-        dd.appendChild(item);
+        dd.appendChild(el);
     });
 
     document.body.appendChild(dd);
@@ -96,10 +100,10 @@ function showDropdown(filtered, textarea) {
     document.addEventListener('mousedown', clickOutsideHandler);
 }
 
-function insertMention(id, name, textarea) {
+function insertMention(id, name, type, textarea) {
     const before = textarea.value.substring(0, mentionStart);
     const after = textarea.value.substring(textarea.selectionStart);
-    const token = `@[${name}](npc:${id})`;
+    const token = `@[${name}](${type}:${id})`;
     textarea.value = before + token + after;
     const newPos = mentionStart + token.length;
     textarea.setSelectionRange(newPos, newPos);
@@ -140,7 +144,7 @@ export function init(textareaId, dotnetRef) {
         textarea.removeEventListener('blur', textarea._mentionBlurHandler);
     }
 
-    cachedNpcs = [];
+    cachedItems = [];
     currentTextarea = textarea;
 
     const inputHandler = async (e) => {
@@ -152,11 +156,11 @@ export function init(textareaId, dotnetRef) {
             mentionStart = pos - match[0].length;
             currentQuery = match[1];
 
-            if (cachedNpcs.length === 0) {
-                cachedNpcs = await dotnetRef.invokeMethodAsync('GetNpcsForMention');
+            if (cachedItems.length === 0) {
+                cachedItems = await dotnetRef.invokeMethodAsync('GetMentionables');
             }
 
-            const filtered = cachedNpcs.filter(n =>
+            const filtered = cachedItems.filter(n =>
                 currentQuery === '' ||
                 n.displayName.toLowerCase().includes(currentQuery.toLowerCase())
             );
@@ -176,7 +180,7 @@ export function init(textareaId, dotnetRef) {
                            currentDropdown.querySelector('.mention-item');
             if (active) {
                 e.preventDefault();
-                insertMention(parseInt(active.dataset.id), active.dataset.name, textarea);
+                insertMention(parseInt(active.dataset.id), active.dataset.name, active.dataset.type, textarea);
             }
         }
     };
@@ -193,6 +197,20 @@ export function init(textareaId, dotnetRef) {
     textarea._mentionBlurHandler = blurHandler;
 }
 
+export function initPreviewClicks(containerId, dotnetRef) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('[data-mention-type][data-mention-id]').forEach(span => {
+        const clone = span.cloneNode(true);
+        span.parentNode.replaceChild(clone, span);
+        clone.addEventListener('click', () => {
+            const type = clone.dataset.mentionType;
+            const id = parseInt(clone.dataset.mentionId);
+            if (type && !isNaN(id)) dotnetRef.invokeMethodAsync('OpenMentionDetail', type, id);
+        });
+    });
+}
+
 export function clearCache() {
-    cachedNpcs = [];
+    cachedItems = [];
 }

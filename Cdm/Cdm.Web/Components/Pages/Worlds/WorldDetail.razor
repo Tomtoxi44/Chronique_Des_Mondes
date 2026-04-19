@@ -668,7 +668,7 @@ else
                 {
                     @if (ChapterPreviewMode)
                     {
-                        <div class="chapter-preview">
+                        <div id="chapter-preview-content" class="chapter-preview">
                             @if (string.IsNullOrWhiteSpace(ChapterContentDraft))
                             {
                                 <span style="color: var(--color-text-muted); font-style: italic;">Aucun contenu rédigé.</span>
@@ -685,12 +685,12 @@ else
                             <div class="description-editor-toolbar">
                                 <span class="description-editor-hint">
                                     <i class="bi bi-book"></i>
-                                    Contenu du chapitre &middot; Tapez <strong>@@</strong> pour mentionner un PNJ
+                                    Contenu du chapitre &middot; Tapez <strong>@@</strong> pour mentionner un PNJ ou un PJ
                                 </span>
                             </div>
                             <textarea id="chapter-content-editor"
                                       class="description-editor-textarea"
-                                      placeholder="Rédigez le contenu de ce chapitre... Tapez @@ pour mentionner un PNJ."
+                                      placeholder="Rédigez le contenu de ce chapitre... Tapez @@ pour mentionner un PNJ ou un PJ."
                                       value="@ChapterContentDraft"
                                       @oninput="OnChapterContentInput"></textarea>
                         </div>
