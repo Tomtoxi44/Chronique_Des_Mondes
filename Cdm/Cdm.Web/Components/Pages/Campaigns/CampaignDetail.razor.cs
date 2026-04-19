@@ -5,7 +5,9 @@ using Cdm.Web.Resources;
 using Cdm.Web.Services;
 using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Localization;
+using System.Security.Claims;
 
 namespace Cdm.Web.Components.Pages.Campaigns;
 
@@ -13,6 +15,8 @@ public partial class CampaignDetail : IDisposable
 {
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
+    [Inject] private NpcApiClient NpcClient { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
@@ -32,6 +36,19 @@ public partial class CampaignDetail : IDisposable
     private AppConfirmDialog DeleteChapterDialog { get; set; } = default!;
     private CreateChapterDto NewChapter { get; set; } = new();
 
+    // GM detection
+    private int CurrentUserId;
+    private bool IsGm => Campaign != null && Campaign.CreatedBy == CurrentUserId;
+
+    // NPC management (GM only, per chapter)
+    private List<NpcDto> Npcs = new();
+    private bool ShowNpcForm = false;
+    private bool IsSavingNpc = false;
+    private CreateNpcDto NewNpc { get; set; } = new();
+    private NpcDto? NpcToDelete;
+    private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
+    private int? _lastNpcChapterId;
+
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
         new BreadcrumbItem(L["Campaigns_Title"], "/campaigns"),
@@ -40,10 +57,15 @@ public partial class CampaignDetail : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid))
+            CurrentUserId = uid;
+
         await LoadAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (SelectedChapterId.HasValue && Chapters.Count > 0)
             SelectedChapter = Chapters.FirstOrDefault(c => c.Id == SelectedChapterId.Value);
@@ -52,6 +74,17 @@ public partial class CampaignDetail : IDisposable
 
         if (Campaign != null)
             SetSecondaryNav();
+
+        // Load NPCs when chapter changes (GM only)
+        if (IsGm && SelectedChapterId != _lastNpcChapterId)
+        {
+            _lastNpcChapterId = SelectedChapterId;
+            ShowNpcForm = false;
+            if (SelectedChapterId.HasValue)
+                await LoadNpcsForChapterAsync(SelectedChapterId.Value);
+            else
+                Npcs.Clear();
+        }
     }
 
     private async Task LoadAsync()
@@ -197,4 +230,45 @@ public partial class CampaignDetail : IDisposable
     };
 
     public void Dispose() => NavContext.ClearContext();
+
+    private async Task LoadNpcsForChapterAsync(int chapterId)
+    {
+        Npcs = await NpcClient.GetNpcsByChapterAsync(chapterId);
+    }
+
+    private void ShowAddNpc()
+    {
+        NewNpc = new CreateNpcDto { ChapterId = SelectedChapter!.Id };
+        ShowNpcForm = true;
+    }
+
+    private async Task CreateNpc()
+    {
+        if (SelectedChapter == null) return;
+        IsSavingNpc = true;
+        NewNpc.ChapterId = SelectedChapter.Id;
+        var result = await NpcClient.CreateNpcAsync(NewNpc);
+        if (result != null)
+        {
+            Npcs.Add(result);
+            NewNpc = new CreateNpcDto { ChapterId = SelectedChapter.Id };
+            ShowNpcForm = false;
+        }
+        IsSavingNpc = false;
+    }
+
+    private void ConfirmDeleteNpc(NpcDto npc)
+    {
+        NpcToDelete = npc;
+        DeleteNpcDialog.Show();
+    }
+
+    private async Task DeleteNpc()
+    {
+        if (NpcToDelete == null) return;
+        var success = await NpcClient.DeleteNpcAsync(NpcToDelete.Id);
+        if (success)
+            Npcs.Remove(NpcToDelete);
+        NpcToDelete = null;
+    }
 }

@@ -17,6 +17,7 @@ public partial class WorldDetail : IDisposable
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
+    [Inject] private NpcApiClient NpcClient { get; set; } = default!;
     [Inject] private EventApiClient EventClient { get; set; } = default!;
     [Inject] private AchievementApiClient AchievementClient { get; set; } = default!;
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
@@ -140,6 +141,36 @@ public partial class WorldDetail : IDisposable
     private AppConfirmDialog DeleteCampaignDialog { get; set; } = default!;
     private CampaignDto? CampaignToDelete;
 
+    // Campaign tabs
+    private string CampaignTab = "chapitres";
+    private int? _lastCampaignIdForTab;
+
+    // Chapter tabs (Contenu | PNJ)
+    private string ChapterTab = "contenu";
+    private int? _lastChapterIdForTab;
+    private bool ChapterPreviewMode = false;
+
+    // NPC management (per chapter)
+    private List<NpcDto> ChapterNpcs = new();
+    private bool ShowNpcForm = false;
+    private bool IsSavingNpc = false;
+    private CreateNpcDto NewNpc = new();
+    private NpcDto? NpcToDelete;
+    private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
+    private int? _lastNpcChapterId;
+
+    // NPC expand/edit (per card)
+    private HashSet<int> ExpandedNpcIds = new();
+    private int? EditingNpcId;
+    private CreateNpcDto EditingNpcDraft = new();
+    private bool IsSavingEditNpc = false;
+
+    // @mention JS interop
+    private DotNetObjectReference<WorldDetail>? _dotNetRef;
+    private IJSObjectReference? _mentionModule;
+    private bool _needsMentionInit = false;
+    private bool _needsPreviewClickInit = false;
+
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
         new BreadcrumbItem(L["Worlds_Title"], "/worlds"),
@@ -182,6 +213,32 @@ public partial class WorldDetail : IDisposable
             if (SelectedChapter != null)
                 ChapterContentDraft = SelectedChapter.Content ?? string.Empty;
 
+            // Load NPCs when chapter changes
+            if (SelectedChapterId != _lastNpcChapterId)
+            {
+                _lastNpcChapterId = SelectedChapterId;
+                ShowNpcForm = false;
+                ExpandedNpcIds.Clear();
+                EditingNpcId = null;
+                if (SelectedChapterId.HasValue && SelectedChapter != null)
+                    ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(SelectedChapterId.Value);
+                else
+                    ChapterNpcs.Clear();
+            }
+
+            // Ensure WorldCharacters are loaded for @mention PJ support
+            if (SelectedChapterId.HasValue && WorldCharacters.Count == 0 && !IsLoadingWorldCharacters)
+                await LoadWorldCharactersAsync();
+
+            // Reset chapter tab when switching chapters
+            if (SelectedChapterId != _lastChapterIdForTab)
+            {
+                _lastChapterIdForTab = SelectedChapterId;
+                ChapterTab = "contenu";
+                ChapterPreviewMode = false;
+                _needsMentionInit = true;
+            }
+
             // Check for active session on this campaign (GM only)
             if (IsOwner && !IsLoadingSession && Section == null && !SelectedChapterId.HasValue)
                 await LoadActiveSessionAsync(SelectedCampaignId.Value);
@@ -191,6 +248,13 @@ public partial class WorldDetail : IDisposable
             SelectedChapter = null;
             ActiveSession = null;
             IsStartSessionPanelOpen = false;
+        }
+
+        // Reset tab when switching campaigns
+        if (SelectedCampaignId != _lastCampaignIdForTab)
+        {
+            _lastCampaignIdForTab = SelectedCampaignId;
+            CampaignTab = "chapitres";
         }
 
         if (Section == "description")
@@ -849,8 +913,206 @@ public partial class WorldDetail : IDisposable
         IsStartingSession = false;
     }
 
+    private void ShowAddNpc()
+    {
+        NewNpc = new CreateNpcDto { ChapterId = SelectedChapter!.Id };
+        ShowNpcForm = true;
+    }
+
+    private async Task CreateNpc()
+    {
+        if (SelectedChapter == null) return;
+        IsSavingNpc = true;
+        NewNpc.ChapterId = SelectedChapter.Id;
+        var result = await NpcClient.CreateNpcAsync(NewNpc);
+        if (result != null)
+        {
+            ChapterNpcs.Add(result);
+            NewNpc = new CreateNpcDto { ChapterId = SelectedChapter.Id };
+            ShowNpcForm = false;
+        }
+        IsSavingNpc = false;
+    }
+
+    private void ConfirmDeleteNpc(NpcDto npc)
+    {
+        NpcToDelete = npc;
+        DeleteNpcDialog.Show();
+    }
+
+    private async Task DeleteNpc()
+    {
+        if (NpcToDelete == null) return;
+        var ok = await NpcClient.DeleteNpcAsync(NpcToDelete.Id);
+        if (ok)
+            ChapterNpcs.Remove(NpcToDelete);
+        NpcToDelete = null;
+    }
+
+    // ── NPC expand / edit ────────────────────────────────────────────────
+
+    private void ToggleNpcExpand(int npcId)
+    {
+        if (ExpandedNpcIds.Contains(npcId))
+            ExpandedNpcIds.Remove(npcId);
+        else
+            ExpandedNpcIds.Add(npcId);
+        // Close edit mode if collapsing
+        if (!ExpandedNpcIds.Contains(npcId) && EditingNpcId == npcId)
+        {
+            EditingNpcId = null;
+            EditingNpcDraft = new();
+        }
+    }
+
+    private void StartEditNpc(NpcDto npc)
+    {
+        EditingNpcId = npc.Id;
+        ExpandedNpcIds.Add(npc.Id);
+        EditingNpcDraft = new CreateNpcDto
+        {
+            ChapterId = npc.ChapterId,
+            FirstName = npc.FirstName,
+            Name = npc.Name,
+            Description = npc.Description,
+            PhysicalDescription = npc.PhysicalDescription,
+            Age = npc.Age
+        };
+    }
+
+    private void CancelEditNpc()
+    {
+        EditingNpcId = null;
+        EditingNpcDraft = new();
+    }
+
+    private async Task SaveEditNpc()
+    {
+        if (EditingNpcId == null) return;
+        IsSavingEditNpc = true;
+        var result = await NpcClient.UpdateNpcAsync(EditingNpcId.Value, EditingNpcDraft);
+        if (result != null)
+        {
+            var idx = ChapterNpcs.FindIndex(n => n.Id == EditingNpcId.Value);
+            if (idx >= 0) ChapterNpcs[idx] = result;
+            EditingNpcId = null;
+            EditingNpcDraft = new();
+        }
+        IsSavingEditNpc = false;
+    }
+
+    // ── @mention JS interop ───────────────────────────────────────────────
+
+    [Microsoft.JSInterop.JSInvokable]
+    public List<MentionItem> GetMentionables()
+    {
+        var items = ChapterNpcs
+            .Select(n => new MentionItem(n.Id, n.DisplayName, n.Description ?? string.Empty, "npc"))
+            .ToList();
+        items.AddRange(WorldCharacters
+            .Select(c => new MentionItem(c.CharacterId, c.CharacterName, string.Empty, "pc")));
+        return items;
+    }
+
+    [Microsoft.JSInterop.JSInvokable]
+    public async Task OpenMentionDetail(string type, int id)
+    {
+        if (type == "npc")
+        {
+            ChapterTab = "pnj";
+            ExpandedNpcIds.Add(id);
+            await InvokeAsync(StateHasChanged);
+        }
+        else if (type == "pc")
+        {
+            await InvokeAsync(() => Nav.NavigateTo($"/characters/{id}"));
+        }
+    }
+
+    private void SwitchToChapterTab(string tab)
+    {
+        ChapterTab = tab;
+        if (tab == "contenu" && !ChapterPreviewMode)
+            _needsMentionInit = true;
+    }
+
+    private void ToggleChapterPreview()
+    {
+        ChapterPreviewMode = !ChapterPreviewMode;
+        if (!ChapterPreviewMode)
+            _needsMentionInit = true;
+        else
+            _needsPreviewClickInit = true;
+    }
+
+    private MarkupString RenderChapterContent(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return new MarkupString(string.Empty);
+        var npcMap = ChapterNpcs.ToDictionary(n => n.Id, n => n);
+        var pcMap = WorldCharacters.ToDictionary(c => c.CharacterId, c => c);
+        var escaped = text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+
+        // Render NPC mentions: @[Name](npc:id)
+        var rendered = System.Text.RegularExpressions.Regex.Replace(
+            escaped,
+            @"@\[([^\]]+)\]\(npc:(\d+)\)",
+            m =>
+            {
+                var name = m.Groups[1].Value;
+                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
+                var tooltip = id > 0 && npcMap.TryGetValue(id, out var npc)
+                    ? (npc.Description ?? npc.PhysicalDescription ?? string.Empty)
+                    : string.Empty;
+                var tip = string.IsNullOrEmpty(tooltip) ? "" : $" data-tooltip=\"{tooltip.Replace("\"", "&quot;")}\"";
+                return $"<span class=\"npc-mention\" data-mention-type=\"npc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
+            });
+
+        // Render PJ mentions: @[Name](pc:id)
+        rendered = System.Text.RegularExpressions.Regex.Replace(
+            rendered,
+            @"@\[([^\]]+)\]\(pc:(\d+)\)",
+            m =>
+            {
+                var name = m.Groups[1].Value;
+                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
+                var tooltip = id > 0 && pcMap.TryGetValue(id, out var pc)
+                    ? $"Personnage joueur{(pc.Level.HasValue ? $" — Niveau {pc.Level}" : string.Empty)}"
+                    : "Personnage joueur";
+                var tip = $" data-tooltip=\"{tooltip}\"";
+                return $"<span class=\"npc-mention pc-mention\" data-mention-type=\"pc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
+            });
+
+        rendered = rendered.Replace("\r\n", "\n").Replace("\n", "<br />");
+        return new MarkupString(rendered);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+        if (_needsMentionInit && ChapterTab == "contenu" && !ChapterPreviewMode
+            && SelectedChapter != null && _dotNetRef != null)
+        {
+            _needsMentionInit = false;
+            _mentionModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "/js/mention.js");
+            await _mentionModule.InvokeVoidAsync("init", "chapter-content-editor", _dotNetRef);
+        }
+
+        if (_needsPreviewClickInit && ChapterTab == "contenu" && ChapterPreviewMode
+            && SelectedChapter != null && _dotNetRef != null)
+        {
+            _needsPreviewClickInit = false;
+            _mentionModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "/js/mention.js");
+            await _mentionModule.InvokeVoidAsync("initPreviewClicks", "chapter-preview-content", _dotNetRef);
+        }
+    }
+
     public void Dispose()
     {
         NavContext.ClearContext();
+        _dotNetRef?.Dispose();
     }
+
+    public record MentionItem(int Id, string DisplayName, string Description, string Type);
 }

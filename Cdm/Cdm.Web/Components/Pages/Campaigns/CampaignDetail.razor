@@ -81,6 +81,94 @@ else
                     <p style="color: var(--color-text-muted); font-style: italic;">Aucun contenu pour ce chapitre.</p>
                 }
             </div>
+
+            @if (IsGm)
+            {
+                <!-- Section PNJ (GM uniquement) -->
+                <div class="cdm-card" style="margin-top: var(--spacing-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h4 class="card-title" style="margin: 0;">
+                            <i class="bi bi-person-badge"></i>
+                            Personnages non-joueurs
+                        </h4>
+                        <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
+                            <i class="bi bi-plus"></i> Ajouter
+                        </button>
+                    </div>
+
+                    @if (ShowNpcForm)
+                    {
+                        <div class="cdm-card" style="background: var(--color-surface-alt); margin-bottom: var(--spacing-md);">
+                            <EditForm Model="NewNpc" OnValidSubmit="CreateNpc" FormName="npc-create">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label">Prénom</label>
+                                        <InputText @bind-Value="NewNpc.FirstName" class="form-control" placeholder="Prénom..." />
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label">Nom</label>
+                                        <InputText @bind-Value="NewNpc.Name" class="form-control" placeholder="Nom..." />
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-top: var(--spacing-sm);">
+                                    <label class="form-label">Âge</label>
+                                    <InputNumber @bind-Value="NewNpc.Age" class="form-control" placeholder="Âge..." />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <InputTextArea @bind-Value="NewNpc.Description" class="form-control" rows="2" placeholder="Description..." />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description physique</label>
+                                    <InputTextArea @bind-Value="NewNpc.PhysicalDescription" class="form-control" rows="2" placeholder="Apparence physique..." />
+                                </div>
+                                <div class="form-actions" style="margin-top: var(--spacing-sm);">
+                                    <button type="button" class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
+                                    <button type="submit" class="btn btn-primary btn-sm" disabled="@IsSavingNpc">
+                                        @if (IsSavingNpc) { <AppLoadingSpinner Inline="true" Size="sm" /> }
+                                        Créer le PNJ
+                                    </button>
+                                </div>
+                            </EditForm>
+                        </div>
+                    }
+
+                    @if (Npcs.Count == 0 && !ShowNpcForm)
+                    {
+                        <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">Aucun PNJ dans ce chapitre.</p>
+                    }
+                    else
+                    {
+                        <div class="npc-list">
+                            @foreach (var npc in Npcs)
+                            {
+                                <div class="npc-card">
+                                    <div class="npc-card-header">
+                                        <div>
+                                            <strong>@npc.DisplayName</strong>
+                                            @if (npc.Age.HasValue)
+                                            {
+                                                <span style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-left: var(--spacing-sm);">@npc.Age ans</span>
+                                            }
+                                        </div>
+                                        <button class="btn btn-ghost btn-sm danger" @onclick="() => ConfirmDeleteNpc(npc)">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(npc.Description))
+                                    {
+                                        <p class="npc-description">@npc.Description</p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(npc.PhysicalDescription))
+                                    {
+                                        <p class="npc-description" style="font-style: italic; color: var(--color-text-muted);">@npc.PhysicalDescription</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
         }
         else
         {
@@ -142,3 +230,10 @@ else
                   ConfirmLabel="@L["Common_Delete"]"
                   CancelLabel="@L["Common_Cancel"]"
                   OnConfirm="DeleteChapter" />
+
+<AppConfirmDialog @ref="DeleteNpcDialog"
+                  Title="@L["Common_Confirm"]"
+                  Message="Supprimer ce PNJ ?"
+                  ConfirmLabel="@L["Common_Delete"]"
+                  CancelLabel="@L["Common_Cancel"]"
+                  OnConfirm="DeleteNpc" />
