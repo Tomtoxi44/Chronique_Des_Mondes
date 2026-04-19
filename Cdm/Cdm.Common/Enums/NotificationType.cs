@@ -48,5 +48,10 @@ public enum NotificationType
     /// <summary>
     /// Character status change
     /// </summary>
-    CharacterUpdate = 7
+    CharacterUpdate = 7,
+
+    /// <summary>
+    /// Session has ended
+    /// </summary>
+    SessionEnded = 9
 }

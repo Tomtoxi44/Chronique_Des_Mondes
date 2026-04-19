@@ -219,7 +219,13 @@ public class SessionService(AppDbContext dbContext, ILogger<SessionService> logg
     {
         try
         {
-            var session = await this.dbContext.Sessions.FindAsync(sessionId);
+            var session = await this.dbContext.Sessions
+                .Include(s => s.Campaign)
+                .Include(s => s.Participants)
+                    .ThenInclude(p => p.WorldCharacter)
+                        .ThenInclude(wc => wc.Character)
+                .FirstOrDefaultAsync(s => s.Id == sessionId);
+
             if (session == null)
             {
                 return false;
@@ -234,6 +240,23 @@ public class SessionService(AppDbContext dbContext, ILogger<SessionService> logg
             session.Status = SessionStatus.Ended;
             session.EndedAt = DateTime.UtcNow;
             await this.dbContext.SaveChangesAsync();
+
+            // Notify participants that the session has ended
+            foreach (var participant in session.Participants)
+            {
+                if (participant.WorldCharacter?.Character == null) continue;
+                await this.notificationService.CreateNotificationAsync(new CreateNotificationDto
+                {
+                    UserId = participant.WorldCharacter.Character.UserId,
+                    Type = NotificationType.SessionEnded,
+                    Title = "Session terminée",
+                    Message = $"La session de la campagne « {session.Campaign?.Name ?? "Campagne"} » est terminée.",
+                    RelatedEntityId = session.Id,
+                    RelatedEntityType = "Session",
+                    ActionUrl = $"/sessions",
+                    SentBy = userId
+                });
+            }
 
             this.logger.LogInformation("Session {SessionId} ended by user {UserId}", sessionId, userId);
             return true;

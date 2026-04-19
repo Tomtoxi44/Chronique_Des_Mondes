@@ -121,14 +121,16 @@ else if (Session != null)
                     </div>
 
                     <div class="session-chapter-body">
+                        <div id="session-chapter-preview-content">
                         @if (!string.IsNullOrWhiteSpace(SelectedChapter.Content))
                         {
-                            <div class="chapter-content-text">@SelectedChapter.Content</div>
+                            <div class="chapter-content-text">@RenderChapterContent(SelectedChapter.Content)</div>
                         }
                         else
                         {
                             <p style="color: var(--color-text-muted); font-style: italic;">Ce chapitre n'a pas encore de contenu.</p>
                         }
+                        </div>
 
                         @if (ChapterNpcs.Count > 0)
                         {
@@ -140,7 +142,7 @@ else if (Session != null)
                                 <div class="npc-list">
                                     @foreach (var npc in ChapterNpcs)
                                     {
-                                        <div class="npc-card">
+                                        <div class="npc-card" id="gm-npc-@npc.Id">
                                             <div class="npc-card-header">
                                                 <strong>@npc.DisplayName</strong>
                                                 @if (npc.Age.HasValue)
