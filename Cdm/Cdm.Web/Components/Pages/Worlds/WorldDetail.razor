@@ -1,4 +1,4 @@
-@page "/worlds/{WorldId:int}"
+﻿@page "/worlds/{WorldId:int}"
 @attribute [Authorize]
 @implements IDisposable
 
@@ -589,6 +589,7 @@ else
             </div>
         }
 
+
         @* ──────────────────────────────────────────────────────────
            SECTION: CONTENU CHAPITRE
            ────────────────────────────────────────────────────────── *@
@@ -602,12 +603,13 @@ else
             }
             else
             {
-                <div class="editor-section">
-                    <div class="world-section-header">
-                        <div>
-                            <h2 class="world-section-title">
-                                Ch. @SelectedChapter.ChapterNumber — @SelectedChapter.Title
-                            </h2>
+                <!-- Chapter header -->
+                <div class="world-section-header">
+                    <div>
+                        <h2 class="world-section-title">
+                            Ch. @SelectedChapter.ChapterNumber — @SelectedChapter.Title
+                        </h2>
+                        <div style="display: flex; gap: var(--spacing-xs); margin-top: 4px; flex-wrap: wrap;">
                             @if (SelectedChapter.IsCompleted)
                             {
                                 <span class="status-badge status-completed">Terminé</span>
@@ -617,123 +619,244 @@ else
                                 <span class="status-badge status-active">En cours</span>
                             }
                         </div>
+                    </div>
+                    @if (ChapterTab == "contenu")
+                    {
                         <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
                             @if (!string.IsNullOrEmpty(SaveMessage))
                             {
                                 <span style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)");">@SaveMessage</span>
                             }
-                            <button class="btn btn-primary btn-sm" @onclick="SaveChapterContent" disabled="@IsSaving">
-                                <i class="bi bi-floppy"></i> Enregistrer
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="description-editor-container" style="flex: 1; min-height: 0;">
-                        <div class="description-editor-toolbar">
-                            <span class="description-editor-hint">
-                                <i class="bi bi-book"></i>
-                                Contenu du chapitre
-                            </span>
-                            @if (ChapterContentDirty)
+                            @if (ChapterContentDirty && !ChapterPreviewMode)
                             {
-                                <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Modifications non sauvegardées</span>
+                                <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Non sauvegardé</span>
+                            }
+                            <button class="btn btn-ghost btn-sm" @onclick="ToggleChapterPreview" title="@(ChapterPreviewMode ? "Éditer" : "Prévisualiser")">
+                                <i class="bi @(ChapterPreviewMode ? "bi-pencil" : "bi-eye")"></i>
+                                @(ChapterPreviewMode ? "Éditer" : "Aperçu")
+                            </button>
+                            @if (!ChapterPreviewMode)
+                            {
+                                <button class="btn btn-primary btn-sm" @onclick="SaveChapterContent" disabled="@IsSaving">
+                                    <i class="bi bi-floppy"></i> Enregistrer
+                                </button>
                             }
                         </div>
-                        <textarea class="description-editor-textarea"
-                                  placeholder="Rédigez le contenu de ce chapitre : synopsis, notes de session, événements clés..."
-                                  value="@ChapterContentDraft"
-                                  @oninput="OnChapterContentInput"></textarea>
-                    </div>
+                    }
                 </div>
 
-                <!-- Section PNJ du chapitre -->
-                <div class="cdm-card" style="margin-top: var(--spacing-lg);">
-                    <div class="npc-panel-header">
-                        <div>
-                            <h3 class="card-title" style="margin: 0;">Personnages non-joueurs</h3>
-                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
-                                PNJ liés à ce chapitre (visibles uniquement par le MJ)
-                            </p>
-                        </div>
-                        @if (!ShowNpcForm)
+                <!-- Chapter tab bar -->
+                <div class="campaign-tabs" style="margin-bottom: var(--spacing-md);">
+                    <button class="campaign-tab-btn @(ChapterTab == "contenu" ? "active" : "")" @onclick='() => SwitchToChapterTab("contenu")'>
+                        <i class="bi bi-pencil-square"></i> Contenu
+                        @if (ChapterContentDirty)
                         {
-                            <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
-                                <i class="bi bi-plus"></i> Ajouter un PNJ
-                            </button>
+                            <span class="tab-dot-active" style="background: var(--color-warning);"></span>
+                        }
+                    </button>
+                    <button class="campaign-tab-btn @(ChapterTab == "pnj" ? "active" : "")" @onclick='() => SwitchToChapterTab("pnj")'>
+                        <i class="bi bi-people"></i> PNJ
+                        @if (ChapterNpcs.Count > 0)
+                        {
+                            <span style="background: var(--color-bg-secondary); color: var(--color-text-muted); font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 600;">@ChapterNpcs.Count</span>
+                        }
+                    </button>
+                </div>
+
+                <!-- Contenu tab -->
+                @if (ChapterTab == "contenu")
+                {
+                    @if (ChapterPreviewMode)
+                    {
+                        <div class="chapter-preview">
+                            @if (string.IsNullOrWhiteSpace(ChapterContentDraft))
+                            {
+                                <span style="color: var(--color-text-muted); font-style: italic;">Aucun contenu rédigé.</span>
+                            }
+                            else
+                            {
+                                @RenderChapterContent(ChapterContentDraft)
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="description-editor-container" style="flex: 1; min-height: 0;">
+                            <div class="description-editor-toolbar">
+                                <span class="description-editor-hint">
+                                    <i class="bi bi-book"></i>
+                                    Contenu du chapitre &middot; Tapez <strong>@@</strong> pour mentionner un PNJ
+                                </span>
+                            </div>
+                            <textarea id="chapter-content-editor"
+                                      class="description-editor-textarea"
+                                      placeholder="Rédigez le contenu de ce chapitre... Tapez @@ pour mentionner un PNJ."
+                                      value="@ChapterContentDraft"
+                                      @oninput="OnChapterContentInput"></textarea>
+                        </div>
+                    }
+                }
+
+                <!-- PNJ tab -->
+                @if (ChapterTab == "pnj")
+                {
+                    <div class="cdm-card">
+                        <div class="npc-panel-header">
+                            <div>
+                                <h3 class="card-title" style="margin: 0;">Personnages non-joueurs</h3>
+                                <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
+                                    PNJ de ce chapitre — visibles uniquement par le MJ
+                                </p>
+                            </div>
+                            @if (!ShowNpcForm)
+                            {
+                                <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
+                                    <i class="bi bi-plus"></i> Ajouter
+                                </button>
+                            }
+                        </div>
+
+                        @if (ShowNpcForm)
+                        {
+                            <div style="background: var(--color-surface-alt, var(--color-bg-secondary)); border-radius: 6px; padding: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                                <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                    <div class="form-group">
+                                        <label class="form-label">Prénom</label>
+                                        <input type="text" class="form-control" @bind="NewNpc.FirstName" placeholder="Prénom..." />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Nom</label>
+                                        <input type="text" class="form-control" @bind="NewNpc.Name" placeholder="Nom de famille..." />
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                    <label class="form-label">Âge</label>
+                                    <input type="number" class="form-control" @bind="NewNpc.Age" placeholder="Âge..." style="max-width: 120px;" />
+                                </div>
+                                <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-control" rows="2" @bind="NewNpc.Description" placeholder="Description narrative..."></textarea>
+                                </div>
+                                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                                    <label class="form-label">Description physique</label>
+                                    <textarea class="form-control" rows="2" @bind="NewNpc.PhysicalDescription" placeholder="Apparence physique..."></textarea>
+                                </div>
+                                <div style="display: flex; gap: var(--spacing-sm);">
+                                    <button class="btn btn-primary btn-sm" @onclick="CreateNpc" disabled="@IsSavingNpc">
+                                        <i class="bi bi-check"></i> Créer
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (ChapterNpcs.Count > 0)
+                        {
+                            <div class="npc-list">
+                                @foreach (var npc in ChapterNpcs)
+                                {
+                                    var isExpanded = ExpandedNpcIds.Contains(npc.Id);
+                                    var isEditing = EditingNpcId == npc.Id;
+                                    var rawInitials = ((npc.FirstName?.Length > 0 ? npc.FirstName[0].ToString() : "") +
+                                                       (npc.Name?.Length > 0 ? npc.Name[0].ToString() : "")).Trim();
+                                    var npcInitials = string.IsNullOrEmpty(rawInitials) ? "?" : rawInitials;
+
+                                    <div class="npc-card">
+                                        <div class="npc-card-header" @onclick="() => ToggleNpcExpand(npc.Id)">
+                                            <div class="npc-card-avatar">@npcInitials</div>
+                                            <div class="npc-card-info">
+                                                <div class="npc-card-name">@npc.DisplayName</div>
+                                                @if (npc.Age.HasValue || !string.IsNullOrEmpty(npc.Description))
+                                                {
+                                                    <div class="npc-card-meta">
+                                                        @if (npc.Age.HasValue) { <span>@npc.Age ans</span> }
+                                                        @if (!string.IsNullOrEmpty(npc.Description))
+                                                        {
+                                                            <span style="margin-left: 4px;">· @(npc.Description.Length > 50 ? npc.Description[..50] + "…" : npc.Description)</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="npc-card-actions" @onclick:stopPropagation="true">
+                                                <button class="btn btn-ghost btn-sm" title="Modifier" @onclick="() => StartEditNpc(npc)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-ghost btn-sm" style="color: var(--color-error);" title="Supprimer" @onclick="() => ConfirmDeleteNpc(npc)">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                                <i class="bi @(isExpanded ? "bi-chevron-up" : "bi-chevron-down")" style="color: var(--color-text-muted); font-size: var(--font-size-xs);"></i>
+                                            </div>
+                                        </div>
+
+                                        @if (isExpanded)
+                                        {
+                                            <div class="npc-card-body">
+                                                @if (isEditing)
+                                                {
+                                                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Prénom</label>
+                                                            <input type="text" class="form-control" @bind="EditingNpcDraft.FirstName" />
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label class="form-label">Nom</label>
+                                                            <input type="text" class="form-control" @bind="EditingNpcDraft.Name" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                                        <label class="form-label">Âge</label>
+                                                        <input type="number" class="form-control" @bind="EditingNpcDraft.Age" style="max-width: 120px;" />
+                                                    </div>
+                                                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                                        <label class="form-label">Description</label>
+                                                        <textarea class="form-control" rows="3" @bind="EditingNpcDraft.Description"></textarea>
+                                                    </div>
+                                                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                                                        <label class="form-label">Description physique</label>
+                                                        <textarea class="form-control" rows="2" @bind="EditingNpcDraft.PhysicalDescription"></textarea>
+                                                    </div>
+                                                    <div style="display: flex; gap: var(--spacing-sm);">
+                                                        <button class="btn btn-primary btn-sm" @onclick="SaveEditNpc" disabled="@IsSavingEditNpc">
+                                                            <i class="bi bi-check"></i> Sauvegarder
+                                                        </button>
+                                                        <button class="btn btn-ghost btn-sm" @onclick="CancelEditNpc">Annuler</button>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    @if (!string.IsNullOrEmpty(npc.Description))
+                                                    {
+                                                        <div class="npc-card-body-label">Description</div>
+                                                        <p class="npc-description">@npc.Description</p>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(npc.PhysicalDescription))
+                                                    {
+                                                        <div class="npc-card-body-label">Apparence</div>
+                                                        <p class="npc-description" style="font-style: italic;">@npc.PhysicalDescription</p>
+                                                    }
+                                                    @if (string.IsNullOrEmpty(npc.Description) && string.IsNullOrEmpty(npc.PhysicalDescription))
+                                                    {
+                                                        <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm); margin: 0;">
+                                                            Aucune description renseignée.
+                                                        </p>
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else if (!ShowNpcForm)
+                        {
+                            <div style="text-align: center; padding: var(--spacing-xl) 0; color: var(--color-text-muted);">
+                                <i class="bi bi-people" style="font-size: 2rem; display: block; margin-bottom: var(--spacing-sm);"></i>
+                                <p style="font-size: var(--font-size-sm); margin: 0;">Aucun PNJ pour ce chapitre.</p>
+                                <p style="font-size: var(--font-size-xs); margin: 4px 0 0;">Cliquez sur <strong>Ajouter</strong> pour créer votre premier PNJ.</p>
+                            </div>
                         }
                     </div>
-
-                    @if (ShowNpcForm)
-                    {
-                        <div style="background: var(--color-surface-alt, var(--color-bg-secondary)); border-radius: 6px; padding: var(--spacing-md); margin-top: var(--spacing-md);">
-                            <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
-                                <div class="form-group">
-                                    <label class="form-label">Prénom</label>
-                                    <input type="text" class="form-control" @bind="NewNpc.FirstName" placeholder="Prénom..." />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Nom</label>
-                                    <input type="text" class="form-control" @bind="NewNpc.Name" placeholder="Nom de famille..." />
-                                </div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                                <label class="form-label">Âge</label>
-                                <input type="number" class="form-control" @bind="NewNpc.Age" placeholder="Âge..." style="max-width: 120px;" />
-                            </div>
-                            <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                                <label class="form-label">Description</label>
-                                <textarea class="form-control" rows="2" @bind="NewNpc.Description" placeholder="Description narrative..."></textarea>
-                            </div>
-                            <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                                <label class="form-label">Description physique</label>
-                                <textarea class="form-control" rows="2" @bind="NewNpc.PhysicalDescription" placeholder="Apparence physique..."></textarea>
-                            </div>
-                            <div style="display: flex; gap: var(--spacing-sm);">
-                                <button class="btn btn-primary btn-sm" @onclick="CreateNpc" disabled="@IsSavingNpc">
-                                    <i class="bi bi-check"></i> Créer
-                                </button>
-                                <button class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
-                            </div>
-                        </div>
-                    }
-
-                    @if (ChapterNpcs.Count > 0)
-                    {
-                        <div class="npc-list" style="margin-top: var(--spacing-md);">
-                            @foreach (var npc in ChapterNpcs)
-                            {
-                                <div class="npc-card">
-                                    <div class="npc-card-header">
-                                        <div>
-                                            <strong>@npc.DisplayName</strong>
-                                            @if (npc.Age.HasValue)
-                                            {
-                                                <span style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-left: var(--spacing-xs);">@npc.Age ans</span>
-                                            }
-                                        </div>
-                                        <button class="btn btn-ghost btn-sm" style="color: var(--color-error);" @onclick="() => ConfirmDeleteNpc(npc)">
-                                            <i class="bi bi-trash3"></i>
-                                        </button>
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(npc.Description))
-                                    {
-                                        <p class="npc-description">@npc.Description</p>
-                                    }
-                                    @if (!string.IsNullOrEmpty(npc.PhysicalDescription))
-                                    {
-                                        <p class="npc-description" style="font-style: italic;">@npc.PhysicalDescription</p>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    }
-                    else if (!ShowNpcForm)
-                    {
-                        <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm); margin-top: var(--spacing-md);">
-                            Aucun PNJ pour ce chapitre.
-                        </p>
-                    }
-                </div>
+                }
             }
         }
 

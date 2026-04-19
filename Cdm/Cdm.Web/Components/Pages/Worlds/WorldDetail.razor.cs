@@ -145,6 +145,11 @@ public partial class WorldDetail : IDisposable
     private string CampaignTab = "chapitres";
     private int? _lastCampaignIdForTab;
 
+    // Chapter tabs (Contenu | PNJ)
+    private string ChapterTab = "contenu";
+    private int? _lastChapterIdForTab;
+    private bool ChapterPreviewMode = false;
+
     // NPC management (per chapter)
     private List<NpcDto> ChapterNpcs = new();
     private bool ShowNpcForm = false;
@@ -153,6 +158,17 @@ public partial class WorldDetail : IDisposable
     private NpcDto? NpcToDelete;
     private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
     private int? _lastNpcChapterId;
+
+    // NPC expand/edit (per card)
+    private HashSet<int> ExpandedNpcIds = new();
+    private int? EditingNpcId;
+    private CreateNpcDto EditingNpcDraft = new();
+    private bool IsSavingEditNpc = false;
+
+    // @mention JS interop
+    private DotNetObjectReference<WorldDetail>? _dotNetRef;
+    private IJSObjectReference? _mentionModule;
+    private bool _needsMentionInit = false;
 
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
@@ -201,10 +217,21 @@ public partial class WorldDetail : IDisposable
             {
                 _lastNpcChapterId = SelectedChapterId;
                 ShowNpcForm = false;
+                ExpandedNpcIds.Clear();
+                EditingNpcId = null;
                 if (SelectedChapterId.HasValue && SelectedChapter != null)
                     ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(SelectedChapterId.Value);
                 else
                     ChapterNpcs.Clear();
+            }
+
+            // Reset chapter tab when switching chapters
+            if (SelectedChapterId != _lastChapterIdForTab)
+            {
+                _lastChapterIdForTab = SelectedChapterId;
+                ChapterTab = "contenu";
+                ChapterPreviewMode = false;
+                _needsMentionInit = true;
             }
 
             // Check for active session on this campaign (GM only)
@@ -917,8 +944,119 @@ public partial class WorldDetail : IDisposable
         NpcToDelete = null;
     }
 
+    // ── NPC expand / edit ────────────────────────────────────────────────
+
+    private void ToggleNpcExpand(int npcId)
+    {
+        if (ExpandedNpcIds.Contains(npcId))
+            ExpandedNpcIds.Remove(npcId);
+        else
+            ExpandedNpcIds.Add(npcId);
+        // Close edit mode if collapsing
+        if (!ExpandedNpcIds.Contains(npcId) && EditingNpcId == npcId)
+        {
+            EditingNpcId = null;
+            EditingNpcDraft = new();
+        }
+    }
+
+    private void StartEditNpc(NpcDto npc)
+    {
+        EditingNpcId = npc.Id;
+        ExpandedNpcIds.Add(npc.Id);
+        EditingNpcDraft = new CreateNpcDto
+        {
+            ChapterId = npc.ChapterId,
+            FirstName = npc.FirstName,
+            Name = npc.Name,
+            Description = npc.Description,
+            PhysicalDescription = npc.PhysicalDescription,
+            Age = npc.Age
+        };
+    }
+
+    private void CancelEditNpc()
+    {
+        EditingNpcId = null;
+        EditingNpcDraft = new();
+    }
+
+    private async Task SaveEditNpc()
+    {
+        if (EditingNpcId == null) return;
+        IsSavingEditNpc = true;
+        var result = await NpcClient.UpdateNpcAsync(EditingNpcId.Value, EditingNpcDraft);
+        if (result != null)
+        {
+            var idx = ChapterNpcs.FindIndex(n => n.Id == EditingNpcId.Value);
+            if (idx >= 0) ChapterNpcs[idx] = result;
+            EditingNpcId = null;
+            EditingNpcDraft = new();
+        }
+        IsSavingEditNpc = false;
+    }
+
+    // ── @mention JS interop ───────────────────────────────────────────────
+
+    [Microsoft.JSInterop.JSInvokable]
+    public List<NpcMentionItem> GetNpcsForMention()
+        => ChapterNpcs.Select(n => new NpcMentionItem(n.Id, n.DisplayName, n.Description ?? string.Empty)).ToList();
+
+    private void SwitchToChapterTab(string tab)
+    {
+        ChapterTab = tab;
+        if (tab == "contenu" && !ChapterPreviewMode)
+            _needsMentionInit = true;
+    }
+
+    private void ToggleChapterPreview()
+    {
+        ChapterPreviewMode = !ChapterPreviewMode;
+        if (!ChapterPreviewMode)
+            _needsMentionInit = true;
+    }
+
+    private MarkupString RenderChapterContent(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return new MarkupString(string.Empty);
+        var npcMap = ChapterNpcs.ToDictionary(n => n.Id, n => n);
+        var escaped = text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+        var rendered = System.Text.RegularExpressions.Regex.Replace(
+            escaped,
+            @"@\[([^\]]+)\]\(npc:(\d+)\)",
+            m =>
+            {
+                var name = m.Groups[1].Value;
+                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
+                var tooltip = id > 0 && npcMap.TryGetValue(id, out var npc)
+                    ? (npc.Description ?? npc.PhysicalDescription ?? string.Empty)
+                    : string.Empty;
+                var tip = string.IsNullOrEmpty(tooltip) ? "" : $" data-tooltip=\"{tooltip.Replace("\"", "&quot;")}\"";
+                return $"<span class=\"npc-mention\"{tip}>@{name}</span>";
+            });
+        rendered = rendered.Replace("\r\n", "\n").Replace("\n", "<br />");
+        return new MarkupString(rendered);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+        if (_needsMentionInit && ChapterTab == "contenu" && !ChapterPreviewMode
+            && SelectedChapter != null && _dotNetRef != null)
+        {
+            _needsMentionInit = false;
+            _mentionModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "/js/mention.js");
+            await _mentionModule.InvokeVoidAsync("init", "chapter-content-editor", _dotNetRef);
+        }
+    }
+
     public void Dispose()
     {
         NavContext.ClearContext();
+        _dotNetRef?.Dispose();
     }
+
+    public record NpcMentionItem(int Id, string DisplayName, string Description);
 }
