@@ -3,6 +3,7 @@ using Cdm.Business.Abstraction.Services;
 using Cdm.Business.Common.Services;
 using Cdm.Common.Services;
 using Cdm.Data.Common;
+using Cdm.Migrations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +22,10 @@ builder.Services.AddOpenApi();
 
 // Configure Database
 builder.AddSqlServerDbContext<AppDbContext>("DefaultConnection");
+
+// Register MigrationsContext on the same connection to run migrations at startup
+builder.Services.AddDbContext<MigrationsContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure JWT Authentication
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"];
@@ -113,18 +118,80 @@ var app = builder.Build();
 if (app.Environment.IsProduction())
 {
     using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var migrationsContext = scope.ServiceProvider.GetRequiredService<MigrationsContext>();
+    var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
+
     try
     {
         logger.LogInformation("Applying pending database migrations...");
-        await dbContext.Database.MigrateAsync();
+        await migrationsContext.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied successfully.");
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "An error occurred while applying database migrations.");
+        throw;
+    }
+
+    // Safety net: ensure critical tables exist even if migration history is out of sync
+    try
+    {
+        logger.LogInformation("Ensuring critical schema objects exist...");
+        await appDbContext.Database.ExecuteSqlRawAsync(@"
+IF COL_LENGTH('[dbo].[Characters]', 'IsLocked') IS NULL
+    ALTER TABLE [dbo].[Characters] ADD [IsLocked] bit NOT NULL DEFAULT 0;
+
+IF OBJECT_ID(N'[dbo].[Sessions]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[Sessions] (
+        [Id] int NOT NULL IDENTITY,
+        [CampaignId] int NOT NULL,
+        [GmUserId] int NOT NULL,
+        [Status] int NOT NULL,
+        [StartedAt] datetime2 NOT NULL,
+        [EndedAt] datetime2 NULL,
+        CONSTRAINT [PK_Sessions] PRIMARY KEY ([Id])
+    );
+    ALTER TABLE [dbo].[Sessions]
+        ADD CONSTRAINT [FK_Sessions_Campaigns_CampaignId]
+        FOREIGN KEY ([CampaignId]) REFERENCES [dbo].[Campaigns] ([Id]) ON DELETE CASCADE;
+    ALTER TABLE [dbo].[Sessions]
+        ADD CONSTRAINT [FK_Sessions_Users_GmUserId]
+        FOREIGN KEY ([GmUserId]) REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE;
+    CREATE INDEX [IX_Sessions_CampaignId] ON [dbo].[Sessions] ([CampaignId]);
+    CREATE INDEX [IX_Sessions_GmUserId] ON [dbo].[Sessions] ([GmUserId]);
+END
+
+IF OBJECT_ID(N'[dbo].[SessionParticipants]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SessionParticipants] (
+        [Id] int NOT NULL IDENTITY,
+        [SessionId] int NOT NULL,
+        [UserId] int NOT NULL,
+        [CharacterId] int NULL,
+        [JoinedAt] datetime2 NOT NULL,
+        CONSTRAINT [PK_SessionParticipants] PRIMARY KEY ([Id])
+    );
+    ALTER TABLE [dbo].[SessionParticipants]
+        ADD CONSTRAINT [FK_SessionParticipants_Sessions_SessionId]
+        FOREIGN KEY ([SessionId]) REFERENCES [dbo].[Sessions] ([Id]) ON DELETE CASCADE;
+    ALTER TABLE [dbo].[SessionParticipants]
+        ADD CONSTRAINT [FK_SessionParticipants_Users_UserId]
+        FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([Id]);
+    ALTER TABLE [dbo].[SessionParticipants]
+        ADD CONSTRAINT [FK_SessionParticipants_Characters_CharacterId]
+        FOREIGN KEY ([CharacterId]) REFERENCES [dbo].[Characters] ([Id]);
+    CREATE INDEX [IX_SessionParticipants_SessionId] ON [dbo].[SessionParticipants] ([SessionId]);
+    CREATE INDEX [IX_SessionParticipants_UserId] ON [dbo].[SessionParticipants] ([UserId]);
+    CREATE INDEX [IX_SessionParticipants_CharacterId] ON [dbo].[SessionParticipants] ([CharacterId]);
+END
+");
+        logger.LogInformation("Critical schema objects verified successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while ensuring critical schema objects.");
         throw;
     }
 }
