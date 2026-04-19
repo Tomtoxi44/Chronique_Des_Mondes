@@ -83,6 +83,11 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<SessionParticipant> SessionParticipants { get; set; } = null!;
 
+    /// <summary>
+    /// Gets or sets the non-player characters (NPCs).
+    /// </summary>
+    public DbSet<NonPlayerCharacter> NonPlayerCharacters { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -535,6 +540,27 @@ public class AppDbContext : DbContext
 
             entity.Property(sp => sp.Status)
                 .HasDefaultValue(SessionParticipantStatus.Invited);
+        });
+
+        // Configure NonPlayerCharacter entity
+        modelBuilder.Entity<NonPlayerCharacter>(entity =>
+        {
+            entity.HasIndex(npc => npc.ChapterId)
+                .HasDatabaseName("IX_NonPlayerCharacters_ChapterId");
+
+            entity.HasIndex(npc => npc.IsActive)
+                .HasDatabaseName("IX_NonPlayerCharacters_IsActive");
+
+            entity.HasOne(npc => npc.Chapter)
+                .WithMany()
+                .HasForeignKey(npc => npc.ChapterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(npc => npc.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(npc => npc.IsActive)
+                .HasDefaultValue(true);
         });
     }
 

@@ -68,6 +68,11 @@ public class MigrationsContext : DbContext
     /// </summary>
     public DbSet<UserAchievement> UserAchievements { get; set; } = null!;
 
+    /// <summary>
+    /// Non-player characters table
+    /// </summary>
+    public DbSet<NonPlayerCharacter> NonPlayerCharacters { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -339,6 +344,21 @@ public class MigrationsContext : DbContext
 
             entity.Property(ua => ua.UnlockedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(ua => ua.IsManuallyAwarded).HasDefaultValue(false);
+        });
+
+        // Configure NonPlayerCharacter entity
+        modelBuilder.Entity<NonPlayerCharacter>(entity =>
+        {
+            entity.HasIndex(npc => npc.ChapterId).HasDatabaseName("IX_NonPlayerCharacters_ChapterId");
+            entity.HasIndex(npc => npc.IsActive).HasDatabaseName("IX_NonPlayerCharacters_IsActive");
+
+            entity.HasOne(npc => npc.Chapter)
+                .WithMany()
+                .HasForeignKey(npc => npc.ChapterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(npc => npc.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(npc => npc.IsActive).HasDefaultValue(true);
         });
 
         // Seed global roles: Player, GameMaster, Admin

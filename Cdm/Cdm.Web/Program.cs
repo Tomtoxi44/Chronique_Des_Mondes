@@ -246,6 +246,23 @@ builder.Services.AddHttpClient("SessionApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register NpcApiClient with scoped lifetime
+builder.Services.AddScoped<NpcApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("NpcApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<NpcApiClient>>();
+    return new NpcApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("NpcApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

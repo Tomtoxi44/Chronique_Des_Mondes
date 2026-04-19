@@ -129,6 +129,38 @@ else if (Session != null)
                         {
                             <p style="color: var(--color-text-muted); font-style: italic;">Ce chapitre n'a pas encore de contenu.</p>
                         }
+
+                        @if (ChapterNpcs.Count > 0)
+                        {
+                            <div class="npc-panel" style="margin-top: var(--spacing-lg);">
+                                <div class="npc-panel-header">
+                                    <i class="bi bi-person-badge"></i>
+                                    <span>PNJ (@ChapterNpcs.Count)</span>
+                                </div>
+                                <div class="npc-list">
+                                    @foreach (var npc in ChapterNpcs)
+                                    {
+                                        <div class="npc-card">
+                                            <div class="npc-card-header">
+                                                <strong>@npc.DisplayName</strong>
+                                                @if (npc.Age.HasValue)
+                                                {
+                                                    <span style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-left: 6px;">@npc.Age ans</span>
+                                                }
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(npc.Description))
+                                            {
+                                                <p class="npc-description">@npc.Description</p>
+                                            }
+                                            @if (!string.IsNullOrEmpty(npc.PhysicalDescription))
+                                            {
+                                                <p class="npc-description" style="font-style: italic; color: var(--color-text-muted);">@npc.PhysicalDescription</p>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
                 }
             </main>

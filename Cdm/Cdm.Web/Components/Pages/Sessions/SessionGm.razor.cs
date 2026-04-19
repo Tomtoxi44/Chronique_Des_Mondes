@@ -19,6 +19,7 @@ public partial class SessionGm
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
+    [Inject] private NpcApiClient NpcClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -29,6 +30,7 @@ public partial class SessionGm
     private ChapterDto? SelectedChapter;
     private List<WorldCharacterDto> WorldCharacters = new();
     private WorldCharacterDto? SelectedPlayerSheet;
+    private List<NpcDto> ChapterNpcs = new();
     private bool IsLoading = true;
     private bool IsEnding = false;
     private string? ErrorMessage;
@@ -73,7 +75,11 @@ public partial class SessionGm
 
         // Pre-select current chapter if set
         if (Session.CurrentChapterId.HasValue)
+        {
             SelectedChapter = Chapters.FirstOrDefault(c => c.Id == Session.CurrentChapterId.Value);
+            if (SelectedChapter != null)
+                ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(SelectedChapter.Id);
+        }
 
         NavContext.ClearContext();
         IsLoading = false;
@@ -82,6 +88,7 @@ public partial class SessionGm
     private async Task SelectChapter(ChapterDto chapter)
     {
         SelectedChapter = chapter;
+        ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(chapter.Id);
         if (Session != null)
         {
             var updated = await SessionClient.UpdateCurrentChapterAsync(Session.Id, chapter.Id);
