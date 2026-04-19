@@ -73,6 +73,16 @@ public class MigrationsContext : DbContext
     /// </summary>
     public DbSet<NonPlayerCharacter> NonPlayerCharacters { get; set; } = null!;
 
+    /// <summary>
+    /// Sessions table
+    /// </summary>
+    public DbSet<Session> Sessions { get; set; } = null!;
+
+    /// <summary>
+    /// Session participants table
+    /// </summary>
+    public DbSet<SessionParticipant> SessionParticipants { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -359,6 +369,50 @@ public class MigrationsContext : DbContext
 
             entity.Property(npc => npc.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(npc => npc.IsActive).HasDefaultValue(true);
+        });
+
+        // Configure Session entity
+        modelBuilder.Entity<Session>(entity =>
+        {
+            entity.HasIndex(s => s.CampaignId).HasDatabaseName("IX_Sessions_CampaignId");
+            entity.HasIndex(s => s.StartedById).HasDatabaseName("IX_Sessions_StartedById");
+            entity.HasIndex(s => s.Status).HasDatabaseName("IX_Sessions_Status");
+
+            entity.HasOne(s => s.Campaign)
+                .WithMany()
+                .HasForeignKey(s => s.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.StartedBy)
+                .WithMany()
+                .HasForeignKey(s => s.StartedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(s => s.CurrentChapter)
+                .WithMany()
+                .HasForeignKey(s => s.CurrentChapterId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(s => s.Status).HasDefaultValue(SessionStatus.Active);
+        });
+
+        // Configure SessionParticipant entity
+        modelBuilder.Entity<SessionParticipant>(entity =>
+        {
+            entity.HasIndex(p => p.SessionId).HasDatabaseName("IX_SessionParticipants_SessionId");
+            entity.HasIndex(p => p.WorldCharacterId).HasDatabaseName("IX_SessionParticipants_WorldCharacterId");
+
+            entity.HasOne(p => p.Session)
+                .WithMany(s => s.Participants)
+                .HasForeignKey(p => p.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(p => p.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(p => p.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(p => p.Status).HasDefaultValue(SessionParticipantStatus.Invited);
         });
 
         // Seed global roles: Player, GameMaster, Admin

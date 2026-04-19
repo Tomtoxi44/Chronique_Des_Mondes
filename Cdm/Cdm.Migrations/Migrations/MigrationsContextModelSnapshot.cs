@@ -743,6 +743,87 @@ namespace Cdm.Migrations.Migrations
                     b.ToTable("WorldCharacters");
                 });
 
+            modelBuilder.Entity("Cdm.Data.Common.Models.Session", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CampaignId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CurrentChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("StartedById")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("WelcomeMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId")
+                        .HasDatabaseName("IX_Sessions_CampaignId");
+
+                    b.HasIndex("CurrentChapterId")
+                        .HasDatabaseName("IX_Sessions_CurrentChapterId");
+
+                    b.HasIndex("StartedById")
+                        .HasDatabaseName("IX_Sessions_StartedById");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_Sessions_Status");
+
+                    b.ToTable("Sessions");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.SessionParticipant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("WorldCharacterId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId")
+                        .HasDatabaseName("IX_SessionParticipants_SessionId");
+
+                    b.HasIndex("WorldCharacterId")
+                        .HasDatabaseName("IX_SessionParticipants_WorldCharacterId");
+
+                    b.ToTable("SessionParticipants");
+                });
+
             modelBuilder.Entity("Cdm.Data.Common.Models.Achievement", b =>
                 {
                     b.HasOne("Cdm.Data.Common.Models.Campaign", "Campaign")
@@ -934,6 +1015,51 @@ namespace Cdm.Migrations.Migrations
                     b.Navigation("World");
                 });
 
+            modelBuilder.Entity("Cdm.Data.Common.Models.Session", b =>
+                {
+                    b.HasOne("Cdm.Data.Common.Models.Campaign", "Campaign")
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cdm.Data.Common.Models.Chapter", "CurrentChapter")
+                        .WithMany()
+                        .HasForeignKey("CurrentChapterId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Cdm.Data.Common.Models.User", "StartedBy")
+                        .WithMany()
+                        .HasForeignKey("StartedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("CurrentChapter");
+
+                    b.Navigation("StartedBy");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.SessionParticipant", b =>
+                {
+                    b.HasOne("Cdm.Data.Common.Models.Session", "Session")
+                        .WithMany("Participants")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cdm.Data.Common.Models.WorldCharacter", "WorldCharacter")
+                        .WithMany()
+                        .HasForeignKey("WorldCharacterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+
+                    b.Navigation("WorldCharacter");
+                });
+
             modelBuilder.Entity("Cdm.Data.Common.Models.Achievement", b =>
                 {
                     b.Navigation("UserAchievements");
@@ -968,6 +1094,11 @@ namespace Cdm.Migrations.Migrations
             modelBuilder.Entity("Cdm.Data.Common.Models.User", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Cdm.Data.Common.Models.Session", b =>
+                {
+                    b.Navigation("Participants");
                 });
 
             modelBuilder.Entity("Cdm.Data.Common.Models.World", b =>
