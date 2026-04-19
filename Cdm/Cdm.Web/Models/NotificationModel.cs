@@ -49,6 +49,7 @@ public class NotificationModel
     {
         NotificationType.CampaignInvite => "Invitation à une campagne",
         NotificationType.SessionStarting => "Session imminente",
+        NotificationType.SessionEnded => "Session terminée",
         NotificationType.AchievementUnlocked => "Succès débloqué",
         NotificationType.TradeProposed => "Échange proposé",
         NotificationType.MessageMention => "Mention",
@@ -64,6 +65,7 @@ public class NotificationModel
     {
         NotificationType.CampaignInvite => "bi-envelope",
         NotificationType.SessionStarting => "bi-clock",
+        NotificationType.SessionEnded => "bi-stop-circle",
         NotificationType.AchievementUnlocked => "bi-trophy",
         NotificationType.TradeProposed => "bi-arrow-left-right",
         NotificationType.MessageMention => "bi-at",

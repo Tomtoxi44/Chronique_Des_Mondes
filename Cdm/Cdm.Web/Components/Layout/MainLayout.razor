@@ -27,7 +27,13 @@
                 <span class="nav-label">@L["Nav_Characters"]</span>
             </a>
             <a href="/sessions" class="nav-item @ActiveClass("/sessions")" title="@L["Nav_Sessions"]">
-                <i class="bi bi-play-circle nav-icon"></i>
+                <span class="nav-icon-wrapper">
+                    <i class="bi bi-play-circle nav-icon"></i>
+                    @if (HasActiveSession)
+                    {
+                        <span class="session-live-dot" title="Session active en cours"></span>
+                    }
+                </span>
                 <span class="nav-label">@L["Nav_Sessions"]</span>
             </a>
 

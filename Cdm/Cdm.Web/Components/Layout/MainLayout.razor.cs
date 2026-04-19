@@ -1,4 +1,5 @@
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Common.Enums;
 using Cdm.Web.Models;
 using Cdm.Web.Resources;
 using Cdm.Web.Services;
@@ -19,6 +20,7 @@ public partial class MainLayout : IDisposable
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private NotificationApiClient NotificationClient { get; set; } = default!;
+    [Inject] private SessionApiClient SessionClient { get; set; } = default!;
 
     private bool IsCollapsed = false;
     private bool _wasAutoCollapsed = false;
@@ -34,9 +36,14 @@ public partial class MainLayout : IDisposable
     private List<NotificationModel> Notifications = new();
     private bool IsLoadingNotifications = false;
 
+    // Active session badge
+    private bool HasActiveSession = false;
+    private int? ActiveSessionId;
+
     protected override async Task OnInitializedAsync()
     {
         NavContext.OnContextChanged += OnContextChanged;
+        Nav.LocationChanged += OnLocationChanged;
 
         var authState = await AuthProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -49,6 +56,29 @@ public partial class MainLayout : IDisposable
 
             UserInitials = BuildInitials(UserName);
             UnreadNotificationCount = await NotificationClient.GetUnreadCountAsync();
+            await RefreshActiveSessionBadgeAsync();
+        }
+    }
+
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        await RefreshActiveSessionBadgeAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RefreshActiveSessionBadgeAsync()
+    {
+        try
+        {
+            var sessions = await SessionClient.GetMySessionsAsync();
+            var active = sessions.FirstOrDefault(s => s.Status == Cdm.Common.Enums.SessionStatus.Active);
+            HasActiveSession = active != null;
+            ActiveSessionId = active?.Id;
+        }
+        catch
+        {
+            HasActiveSession = false;
+            ActiveSessionId = null;
         }
     }
 
@@ -216,5 +246,6 @@ public partial class MainLayout : IDisposable
     public void Dispose()
     {
         NavContext.OnContextChanged -= OnContextChanged;
+        Nav.LocationChanged -= OnLocationChanged;
     }
 }

@@ -7,12 +7,13 @@ using Cdm.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Localization;
+using Microsoft.JSInterop;
 using System.Security.Claims;
 using System.Text.Json;
 
 namespace Cdm.Web.Components.Pages.Sessions;
 
-public partial class SessionGm
+public partial class SessionGm : IAsyncDisposable
 {
     [Parameter] public int SessionId { get; set; }
 
@@ -24,6 +25,7 @@ public partial class SessionGm
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private SessionDto? Session;
     private List<ChapterDto> Chapters = new();
@@ -35,6 +37,9 @@ public partial class SessionGm
     private bool IsEnding = false;
     private string? ErrorMessage;
     private int CurrentUserId;
+
+    private DotNetObjectReference<SessionGm>? _dotNetRef;
+    private bool _needsPreviewClickInit = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,6 +94,7 @@ public partial class SessionGm
     {
         SelectedChapter = chapter;
         ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(chapter.Id);
+        _needsPreviewClickInit = true;
         if (Session != null)
         {
             var updated = await SessionClient.UpdateCurrentChapterAsync(Session.Id, chapter.Id);
@@ -131,6 +137,78 @@ public partial class SessionGm
         SelectedPlayerSheet = SelectedPlayerSheet?.Id == sheet?.Id ? null : sheet;
     }
 
+    private MarkupString RenderChapterContent(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return new MarkupString(string.Empty);
+        var npcMap = ChapterNpcs.ToDictionary(n => n.Id, n => n);
+        var pcMap = WorldCharacters.ToDictionary(c => c.CharacterId, c => c);
+        var escaped = text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+
+        // Render NPC mentions: @[Name](npc:id)
+        var rendered = System.Text.RegularExpressions.Regex.Replace(
+            escaped,
+            @"@\[([^\]]+)\]\(npc:(\d+)\)",
+            m =>
+            {
+                var name = m.Groups[1].Value;
+                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
+                var tooltip = id > 0 && npcMap.TryGetValue(id, out var npc)
+                    ? (npc.Description ?? npc.PhysicalDescription ?? string.Empty)
+                    : string.Empty;
+                var tip = string.IsNullOrEmpty(tooltip) ? "" : $" data-tooltip=\"{tooltip.Replace("\"", "&quot;")}\"";
+                return $"<span class=\"npc-mention\" data-mention-type=\"npc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
+            });
+
+        // Render PJ mentions: @[Name](pc:id)
+        rendered = System.Text.RegularExpressions.Regex.Replace(
+            rendered,
+            @"@\[([^\]]+)\]\(pc:(\d+)\)",
+            m =>
+            {
+                var name = m.Groups[1].Value;
+                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
+                var tooltip = id > 0 && pcMap.TryGetValue(id, out var pc)
+                    ? $"Personnage joueur{(pc.Level.HasValue ? $" — Niveau {pc.Level}" : string.Empty)}"
+                    : "Personnage joueur";
+                var tip = $" data-tooltip=\"{tooltip}\"";
+                return $"<span class=\"npc-mention pc-mention\" data-mention-type=\"pc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
+            });
+
+        rendered = rendered.Replace("\r\n", "\n").Replace("\n", "<br />");
+        return new MarkupString(rendered);
+    }
+
+    [JSInvokable]
+    public void OpenMentionDetail(string type, int id)
+    {
+        if (type == "npc")
+        {
+            // Scroll to NPC in the list
+            var npc = ChapterNpcs.FirstOrDefault(n => n.Id == id);
+            if (npc != null)
+                _ = JS.InvokeVoidAsync("document.getElementById", $"gm-npc-{id}");
+        }
+        else if (type == "pc")
+        {
+            Nav.NavigateTo($"/characters/{id}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || _needsPreviewClickInit)
+        {
+            _needsPreviewClickInit = false;
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            try
+            {
+                var module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/mention.js");
+                await module.InvokeVoidAsync("initPreviewClicks", "session-chapter-preview-content", _dotNetRef);
+            }
+            catch { /* ignore — prerendering or JS unavailable */ }
+        }
+    }
+
     private Dictionary<string, string> ParseGameSpecificData(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return new();
@@ -155,4 +233,10 @@ public partial class SessionGm
         SessionParticipantStatus.Invited => "Invité",
         _ => "Déconnecté"
     };
+
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        await ValueTask.CompletedTask;
+    }
 }
