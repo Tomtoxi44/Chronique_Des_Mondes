@@ -110,7 +110,8 @@ builder.Services.AddSignalR(options =>
 var app = builder.Build();
 
 // Apply schema safety net on startup (Production)
-// Ensures critical tables exist even if migration history is out of sync (ghost migration fix)
+// Ensures Sessions/SessionParticipants tables exist with the correct schema.
+// Also repairs if a previous bad deployment created them with wrong column names.
 if (app.Environment.IsProduction())
 {
     using var scope = app.Services.CreateScope();
@@ -119,61 +120,73 @@ if (app.Environment.IsProduction())
 
     try
     {
-        logger.LogInformation("Ensuring critical schema objects exist...");
+        logger.LogInformation("Ensuring correct database schema...");
         await appDbContext.Database.ExecuteSqlRawAsync(@"
-IF COL_LENGTH('[dbo].[Characters]', 'IsLocked') IS NULL
-    ALTER TABLE [dbo].[Characters] ADD [IsLocked] bit NOT NULL DEFAULT 0;
+-- Repair: if Sessions was created with wrong schema (GmUserId column from bad hotfix), drop and recreate
+IF COL_LENGTH('[dbo].[Sessions]', 'GmUserId') IS NOT NULL
+BEGIN
+    IF OBJECT_ID(N'[dbo].[SessionParticipants]', N'U') IS NOT NULL
+        DROP TABLE [dbo].[SessionParticipants];
+    DROP TABLE [dbo].[Sessions];
+END
 
+-- Ensure IsLocked column on Characters
+IF COL_LENGTH('[dbo].[Characters]', 'IsLocked') IS NULL
+BEGIN
+    ALTER TABLE [dbo].[Characters] ADD [IsLocked] bit NOT NULL DEFAULT 0;
+    CREATE INDEX [IX_Characters_IsLocked] ON [dbo].[Characters] ([IsLocked]);
+END
+
+-- Ensure Sessions table with correct schema (StartedById, not GmUserId)
 IF OBJECT_ID(N'[dbo].[Sessions]', N'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[Sessions] (
         [Id] int NOT NULL IDENTITY,
         [CampaignId] int NOT NULL,
-        [GmUserId] int NOT NULL,
-        [Status] int NOT NULL,
+        [StartedById] int NOT NULL,
         [StartedAt] datetime2 NOT NULL,
         [EndedAt] datetime2 NULL,
-        CONSTRAINT [PK_Sessions] PRIMARY KEY ([Id])
+        [Status] int NOT NULL DEFAULT 1,
+        [CurrentChapterId] int NULL,
+        [WelcomeMessage] nvarchar(max) NULL,
+        CONSTRAINT [PK_Sessions] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Sessions_Campaigns_CampaignId]
+            FOREIGN KEY ([CampaignId]) REFERENCES [dbo].[Campaigns] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_Sessions_Users_StartedById]
+            FOREIGN KEY ([StartedById]) REFERENCES [dbo].[Users] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_Sessions_Chapters_CurrentChapterId]
+            FOREIGN KEY ([CurrentChapterId]) REFERENCES [dbo].[Chapters] ([Id]) ON DELETE SET NULL
     );
-    ALTER TABLE [dbo].[Sessions]
-        ADD CONSTRAINT [FK_Sessions_Campaigns_CampaignId]
-        FOREIGN KEY ([CampaignId]) REFERENCES [dbo].[Campaigns] ([Id]) ON DELETE CASCADE;
-    ALTER TABLE [dbo].[Sessions]
-        ADD CONSTRAINT [FK_Sessions_Users_GmUserId]
-        FOREIGN KEY ([GmUserId]) REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE;
     CREATE INDEX [IX_Sessions_CampaignId] ON [dbo].[Sessions] ([CampaignId]);
-    CREATE INDEX [IX_Sessions_GmUserId] ON [dbo].[Sessions] ([GmUserId]);
+    CREATE INDEX [IX_Sessions_StartedById] ON [dbo].[Sessions] ([StartedById]);
+    CREATE INDEX [IX_Sessions_Status] ON [dbo].[Sessions] ([Status]);
+    CREATE INDEX [IX_Sessions_CurrentChapterId] ON [dbo].[Sessions] ([CurrentChapterId]);
 END
 
+-- Ensure SessionParticipants table with correct schema (WorldCharacterId, not UserId/CharacterId)
 IF OBJECT_ID(N'[dbo].[SessionParticipants]', N'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[SessionParticipants] (
         [Id] int NOT NULL IDENTITY,
         [SessionId] int NOT NULL,
-        [UserId] int NOT NULL,
-        [CharacterId] int NULL,
+        [WorldCharacterId] int NOT NULL,
         [JoinedAt] datetime2 NOT NULL,
-        CONSTRAINT [PK_SessionParticipants] PRIMARY KEY ([Id])
+        [Status] int NOT NULL DEFAULT 0,
+        CONSTRAINT [PK_SessionParticipants] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_SessionParticipants_Sessions_SessionId]
+            FOREIGN KEY ([SessionId]) REFERENCES [dbo].[Sessions] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_SessionParticipants_WorldCharacters_WorldCharacterId]
+            FOREIGN KEY ([WorldCharacterId]) REFERENCES [dbo].[WorldCharacters] ([Id]) ON DELETE CASCADE
     );
-    ALTER TABLE [dbo].[SessionParticipants]
-        ADD CONSTRAINT [FK_SessionParticipants_Sessions_SessionId]
-        FOREIGN KEY ([SessionId]) REFERENCES [dbo].[Sessions] ([Id]) ON DELETE CASCADE;
-    ALTER TABLE [dbo].[SessionParticipants]
-        ADD CONSTRAINT [FK_SessionParticipants_Users_UserId]
-        FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([Id]);
-    ALTER TABLE [dbo].[SessionParticipants]
-        ADD CONSTRAINT [FK_SessionParticipants_Characters_CharacterId]
-        FOREIGN KEY ([CharacterId]) REFERENCES [dbo].[Characters] ([Id]);
     CREATE INDEX [IX_SessionParticipants_SessionId] ON [dbo].[SessionParticipants] ([SessionId]);
-    CREATE INDEX [IX_SessionParticipants_UserId] ON [dbo].[SessionParticipants] ([UserId]);
-    CREATE INDEX [IX_SessionParticipants_CharacterId] ON [dbo].[SessionParticipants] ([CharacterId]);
+    CREATE INDEX [IX_SessionParticipants_WorldCharacterId] ON [dbo].[SessionParticipants] ([WorldCharacterId]);
 END
 ");
-        logger.LogInformation("Critical schema objects verified successfully.");
+        logger.LogInformation("Database schema verified successfully.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while ensuring critical schema objects.");
+        logger.LogError(ex, "An error occurred while ensuring database schema.");
         // Do not throw — allow app to start even if safety net fails
     }
 }
