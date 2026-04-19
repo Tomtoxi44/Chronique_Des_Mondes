@@ -70,6 +70,37 @@ public static class WorldEndpoints
         group.MapDelete("/{id:int}/characters/{characterId:int}", RemoveCharacterFromWorldAsync)
             .WithName("RemoveCharacterFromWorld")
             .WithOpenApi();
+
+        // POST /api/worlds/{id}/invite - Generate invite token (GM only)
+        group.MapPost("/{id:int}/invite", GenerateWorldInviteTokenAsync)
+            .WithName("GenerateWorldInviteToken")
+            .WithOpenApi();
+
+        // GET /api/worlds/join/{token} - Get world info from invite token (no auth required)
+        app.MapGet("/api/worlds/join/{token}", GetWorldByInviteTokenAsync)
+            .WithTags("Worlds")
+            .WithName("GetWorldByInviteToken")
+            .WithOpenApi();
+
+        // POST /api/worlds/join - Join a world with a character
+        group.MapPost("/join", JoinWorldAsync)
+            .WithName("JoinWorld")
+            .WithOpenApi();
+
+        // GET /api/worlds/{id}/my-character - Get current user's world character
+        group.MapGet("/{id:int}/my-character", GetMyWorldCharacterAsync)
+            .WithName("GetMyWorldCharacter")
+            .WithOpenApi();
+
+        // PUT /api/worlds/{id}/my-character - Update current user's world character profile
+        group.MapPut("/{id:int}/my-character", UpdateMyWorldCharacterAsync)
+            .WithName("UpdateMyWorldCharacter")
+            .WithOpenApi();
+
+        // GET /api/worlds/{id}/campaigns - Get campaigns for a world (visible to members)
+        group.MapGet("/{id:int}/campaigns", GetWorldCampaignsForMemberAsync)
+            .WithName("GetWorldCampaignsForMember")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> CreateWorldAsync(
@@ -330,6 +361,86 @@ public static class WorldEndpoints
         }
     }
 
+    private static async Task<IResult> GenerateWorldInviteTokenAsync(
+        int id,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            var token = await worldService.GenerateWorldInviteTokenAsync(id, userId.Value);
+            if (token == null)
+            {
+                return Results.NotFound(new { Error = "World not found or not authorized" });
+            }
+
+            return Results.Ok(new { InviteToken = token });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error generating invite token for world {WorldId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> GetWorldByInviteTokenAsync(
+        string token,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger)
+    {
+        try
+        {
+            var world = await worldService.GetWorldByInviteTokenAsync(token);
+            if (world == null)
+            {
+                return Results.NotFound(new { Error = "Invalid or expired invite token" });
+            }
+
+            return Results.Ok(world);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving world by invite token");
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> JoinWorldAsync(
+        [FromBody] JoinWorldRequest request,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            var worldCharacter = await worldService.JoinWorldAsync(request.InviteToken, request.CharacterId, userId.Value);
+            if (worldCharacter == null)
+            {
+                return Results.BadRequest(new { Error = "Invalid token, expired, character locked, or already in world" });
+            }
+
+            return Results.Ok(worldCharacter);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error joining world");
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
     private static int? GetUserId(HttpContext httpContext)
     {
         var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
@@ -338,5 +449,81 @@ public static class WorldEndpoints
             return null;
         }
         return userId;
+    }
+
+    private static async Task<IResult> GetMyWorldCharacterAsync(
+        int id,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var worldChar = await worldService.GetMyWorldCharacterAsync(id, userId.Value);
+            if (worldChar == null) return Results.NotFound();
+
+            return Results.Ok(worldChar);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving world character for world {WorldId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> UpdateMyWorldCharacterAsync(
+        int id,
+        [FromBody] UpdateWorldCharacterProfileRequest request,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var dto = new Cdm.Business.Abstraction.DTOs.UpdateWorldCharacterProfileDto
+            {
+                Level = request.Level,
+                CurrentHealth = request.CurrentHealth,
+                MaxHealth = request.MaxHealth,
+                GameSpecificData = request.GameSpecificData
+            };
+
+            var worldChar = await worldService.UpdateMyWorldCharacterAsync(id, dto, userId.Value);
+            if (worldChar == null) return Results.NotFound();
+
+            return Results.Ok(worldChar);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating world character for world {WorldId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> GetWorldCampaignsForMemberAsync(
+        int id,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var campaigns = await worldService.GetWorldCampaignsForMemberAsync(id, userId.Value);
+            return Results.Ok(campaigns);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving campaigns for world {WorldId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 }

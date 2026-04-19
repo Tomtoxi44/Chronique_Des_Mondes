@@ -5,8 +5,10 @@ using Cdm.Web.Resources;
 using Cdm.Web.Services;
 using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 
 namespace Cdm.Web.Components.Pages.Worlds;
 
@@ -17,10 +19,12 @@ public partial class WorldDetail : IDisposable
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
     [Inject] private EventApiClient EventClient { get; set; } = default!;
     [Inject] private AchievementApiClient AchievementClient { get; set; } = default!;
+    [Inject] private SessionApiClient SessionClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     [Parameter] public int WorldId { get; set; }
 
@@ -41,6 +45,19 @@ public partial class WorldDetail : IDisposable
     private bool IsSaving = false;
     private string? SaveMessage;
     private bool SaveSuccess = false;
+
+    private int CurrentUserId = 0;
+    private bool IsOwner => World?.UserId == CurrentUserId;
+
+    // Session launch state
+    private SessionDto? ActiveSession;
+    private bool IsLoadingSession = false;
+    private bool IsStartSessionPanelOpen = false;
+    private bool IsStartingSession = false;
+    private string? SessionStartError;
+    private string? SessionWelcomeMessage;
+    private List<WorldCharacterDto> SessionParticipants = new();
+    private HashSet<int> SelectedWorldCharacterIds = new();
 
     // World settings editor (inline in overview)
     private bool IsWorldEditing = false;
@@ -74,6 +91,12 @@ public partial class WorldDetail : IDisposable
 
     // Invite tokens
     private bool IsGeneratingToken = false;
+    private bool IsGeneratingWorldToken = false;
+    private string? WorldInviteToken;
+
+    // World characters (players)
+    private List<WorldCharacterDto> WorldCharacters = new();
+    private bool IsLoadingWorldCharacters = false;
 
     // Events
     private List<EventDto> WorldEvents = new();
@@ -158,10 +181,16 @@ public partial class WorldDetail : IDisposable
 
             if (SelectedChapter != null)
                 ChapterContentDraft = SelectedChapter.Content ?? string.Empty;
+
+            // Check for active session on this campaign (GM only)
+            if (IsOwner && !IsLoadingSession && Section == null && !SelectedChapterId.HasValue)
+                await LoadActiveSessionAsync(SelectedCampaignId.Value);
         }
         else
         {
             SelectedChapter = null;
+            ActiveSession = null;
+            IsStartSessionPanelOpen = false;
         }
 
         if (Section == "description")
@@ -182,6 +211,9 @@ public partial class WorldDetail : IDisposable
         if (Section == "achievements" && !IsLoadingAchievements && WorldAchievements.Count == 0)
             await LoadAchievementsAsync();
 
+        if (Section == "invitations" && !IsLoadingWorldCharacters && WorldCharacters.Count == 0)
+            await LoadWorldCharactersAsync();
+
         SetSecondaryNav();
     }
 
@@ -190,16 +222,20 @@ public partial class WorldDetail : IDisposable
         IsLoading = true;
         try
         {
-            var worldTask = WorldClient.GetWorldByIdAsync(WorldId);
-            var campaignsTask = CampaignClient.GetMyCampaignsAsync();
-            await Task.WhenAll(worldTask, campaignsTask);
+            // Identify current user
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var uid))
+                CurrentUserId = uid;
 
+            var worldTask = WorldClient.GetWorldByIdAsync(WorldId);
+            await worldTask;
             World = worldTask.Result;
-            var allCampaigns = campaignsTask.Result;
-            Campaigns = allCampaigns.Where(c => c.WorldId == WorldId).ToList();
 
             if (World != null)
             {
+                // Use world-level campaign endpoint (works for both GM and players)
+                Campaigns = await WorldClient.GetWorldCampaignsAsync(WorldId);
                 DescriptionDraft = World.Description ?? string.Empty;
                 SetSecondaryNav();
             }
@@ -237,9 +273,13 @@ public partial class WorldDetail : IDisposable
         {
             new("Vue d'ensemble", $"/worlds/{WorldId}", "bi-info-circle",
                 IsActive: Section == null && !SelectedCampaignId.HasValue),
-            new("Description", $"/worlds/{WorldId}?section=description", "bi-pencil",
-                IsActive: Section == "description"),
         };
+
+        if (IsOwner)
+        {
+            items.Add(new SecondaryNavItem("Description", $"/worlds/{WorldId}?section=description", "bi-pencil",
+                IsActive: Section == "description"));
+        }
 
         // Campaigns section
         items.Add(new SecondaryNavItem("Campagnes", "#", "bi-map", IsSection: true));
@@ -252,22 +292,25 @@ public partial class WorldDetail : IDisposable
             var children = new List<SecondaryNavItem>();
             if (isExpanded && CampaignChapters.TryGetValue(campaign.Id, out var chapters))
             {
-                foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
+                if (IsOwner)
                 {
-                    var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
+                    foreach (var ch in chapters.OrderBy(c => c.ChapterNumber))
+                    {
+                        var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
+                        children.Add(new SecondaryNavItem(
+                            $"Ch. {ch.ChapterNumber} — {ch.Title}",
+                            $"/worlds/{WorldId}?campaignId={campaign.Id}&chapterId={ch.Id}",
+                            chIcon,
+                            IsActive: SelectedChapterId == ch.Id
+                        ));
+                    }
                     children.Add(new SecondaryNavItem(
-                        $"Ch. {ch.ChapterNumber} — {ch.Title}",
-                        $"/worlds/{WorldId}?campaignId={campaign.Id}&chapterId={ch.Id}",
-                        chIcon,
-                        IsActive: SelectedChapterId == ch.Id
+                        L["Chapters_Create"],
+                        $"/worlds/{WorldId}?campaignId={campaign.Id}&section=new-chapter",
+                        "bi-plus-circle",
+                        IsActive: Section == "new-chapter" && SelectedCampaignId == campaign.Id
                     ));
                 }
-                children.Add(new SecondaryNavItem(
-                    L["Chapters_Create"],
-                    $"/worlds/{WorldId}?campaignId={campaign.Id}&section=new-chapter",
-                    "bi-plus-circle",
-                    IsActive: Section == "new-chapter" && SelectedCampaignId == campaign.Id
-                ));
             }
 
             items.Add(new SecondaryNavItem(
@@ -277,37 +320,46 @@ public partial class WorldDetail : IDisposable
                 IsActive: isCampaignActive,
                 Children: isExpanded ? children : null,
                 IsExpanded: isExpanded,
-                ToggleKey: campaign.Id.ToString()
+                ToggleKey: IsOwner ? campaign.Id.ToString() : null
             ));
         }
 
-        items.Add(new SecondaryNavItem(
-            L["Campaigns_Create"],
-            $"/worlds/{WorldId}?section=new-campaign",
-            "bi-plus-circle",
-            IsActive: Section == "new-campaign"
-        ));
+        if (IsOwner)
+        {
+            items.Add(new SecondaryNavItem(
+                L["Campaigns_Create"],
+                $"/worlds/{WorldId}?section=new-campaign",
+                "bi-plus-circle",
+                IsActive: Section == "new-campaign"
+            ));
 
-        // Management section
-        items.Add(new SecondaryNavItem("Gestion", "#", "bi-gear", IsSection: true));
-        items.Add(new SecondaryNavItem(
-            "Événements",
-            $"/worlds/{WorldId}?section=events",
-            "bi-lightning",
-            IsActive: Section == "events"
-        ));
-        items.Add(new SecondaryNavItem(
-            "Succès",
-            $"/worlds/{WorldId}?section=achievements",
-            "bi-trophy",
-            IsActive: Section == "achievements"
-        ));
-        items.Add(new SecondaryNavItem(
-            "Invitations",
-            $"/worlds/{WorldId}?section=invitations",
-            "bi-person-plus",
-            IsActive: Section == "invitations"
-        ));
+            // Management section
+            items.Add(new SecondaryNavItem("Gestion", "#", "bi-gear", IsSection: true));
+            items.Add(new SecondaryNavItem(
+                "Événements",
+                $"/worlds/{WorldId}?section=events",
+                "bi-lightning",
+                IsActive: Section == "events"
+            ));
+            items.Add(new SecondaryNavItem(
+                "Succès",
+                $"/worlds/{WorldId}?section=achievements",
+                "bi-trophy",
+                IsActive: Section == "achievements"
+            ));
+            items.Add(new SecondaryNavItem(
+                "Invitations",
+                $"/worlds/{WorldId}?section=invitations",
+                "bi-person-plus",
+                IsActive: Section == "invitations"
+            ));
+        }
+        else
+        {
+            // Player section: link to their world character
+            items.Add(new SecondaryNavItem("Mon personnage", $"/worlds/{WorldId}/my-character", "bi-person-badge",
+                IsActive: false));
+        }
 
         NavContext.SetContext(
             sectionTitle: World.Name,
@@ -642,6 +694,29 @@ public partial class WorldDetail : IDisposable
         _ => type.ToString()
     };
 
+    private async Task LoadWorldCharactersAsync()
+    {
+        IsLoadingWorldCharacters = true;
+        WorldCharacters = await WorldClient.GetWorldCharactersTypedAsync(WorldId);
+        IsLoadingWorldCharacters = false;
+    }
+
+    private async Task GenerateWorldInviteToken()
+    {
+        IsGeneratingWorldToken = true;
+        var token = await WorldClient.GenerateWorldInviteTokenAsync(WorldId);
+        if (token != null)
+            WorldInviteToken = token;
+        IsGeneratingWorldToken = false;
+    }
+
+    private async Task RemoveWorldCharacter(int characterId)
+    {
+        var ok = await WorldClient.RemoveCharacterFromWorldAsync(WorldId, characterId);
+        if (ok)
+            WorldCharacters.RemoveAll(wc => wc.CharacterId == characterId);
+    }
+
     private async Task GenerateInviteToken(int campaignId)
     {
         IsGeneratingToken = true;
@@ -720,6 +795,59 @@ public partial class WorldDetail : IDisposable
         CampaignStatus.OnHold => L["Campaigns_Status_OnHold"],
         _ => status.ToString()
     };
+
+    private async Task LoadActiveSessionAsync(int campaignId)
+    {
+        IsLoadingSession = true;
+        ActiveSession = await SessionClient.GetActiveSessionByCampaignAsync(campaignId);
+        IsLoadingSession = false;
+    }
+
+    private async Task OpenStartSessionPanel()
+    {
+        IsStartSessionPanelOpen = true;
+        SessionStartError = null;
+        SessionWelcomeMessage = string.Empty;
+        SelectedWorldCharacterIds.Clear();
+
+        if (SessionParticipants.Count == 0)
+        {
+            SessionParticipants = await WorldClient.GetWorldCharactersTypedAsync(WorldId);
+        }
+    }
+
+    private void ToggleParticipant(int wcId)
+    {
+        if (SelectedWorldCharacterIds.Contains(wcId))
+            SelectedWorldCharacterIds.Remove(wcId);
+        else
+            SelectedWorldCharacterIds.Add(wcId);
+    }
+
+    private async Task StartSession()
+    {
+        if (SelectedCampaignId == null) return;
+        IsStartingSession = true;
+        SessionStartError = null;
+
+        var dto = new StartSessionDto
+        {
+            CampaignId = SelectedCampaignId.Value,
+            WelcomeMessage = SessionWelcomeMessage,
+            WorldCharacterIds = SelectedWorldCharacterIds.ToList()
+        };
+
+        var session = await SessionClient.StartSessionAsync(dto);
+        if (session != null)
+        {
+            Nav.NavigateTo($"/sessions/{session.Id}/gm");
+        }
+        else
+        {
+            SessionStartError = "Impossible de démarrer la session. Une session est peut-être déjà active.";
+        }
+        IsStartingSession = false;
+    }
 
     public void Dispose()
     {

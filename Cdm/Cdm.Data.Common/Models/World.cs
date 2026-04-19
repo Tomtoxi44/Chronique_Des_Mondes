@@ -44,6 +44,16 @@ public class World
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the invite token for joining the world (generated on demand).
+    /// </summary>
+    public string? InviteToken { get; set; }
+
+    /// <summary>
+    /// Gets or sets the expiry date of the invite token.
+    /// </summary>
+    public DateTime? InviteTokenExpiry { get; set; }
+
+    /// <summary>
     /// Gets or sets the creation date.
     /// </summary>
     public DateTime CreatedAt { get; set; }

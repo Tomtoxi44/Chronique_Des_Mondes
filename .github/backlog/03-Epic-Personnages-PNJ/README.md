@@ -4,7 +4,7 @@
 
 - **Phase** : Phase 0 (MVP Core)
 - **Priorité** : P0 - Critique
-- **Statut** : 📝 Planifié
+- **Statut** : 🔄 Personnages implémentés, PNJ planifié
 - **Estimation totale** : 32 Story Points
 
 ---
@@ -30,17 +30,17 @@ Permettre aux joueurs de créer et gérer leurs personnages génériques, aux MJ
 
 ## 📝 User Stories
 
-| ID | Titre | Statut | Story Points | Priorité |
-|----|-------|--------|--------------|----------|
-| [US-023](./US-023-creation-personnage.md) | Création personnage générique | 📝 Planifié | 5 | P0 |
-| [US-024](./US-024-modification-personnage.md) | Modification personnage | 📝 Planifié | 3 | P0 |
-| [US-025](./US-025-liste-personnages.md) | Liste des personnages | 📝 Planifié | 2 | P0 |
-| [US-026](./US-026-suppression-personnage.md) | Suppression personnage | 📝 Planifié | 2 | P0 |
-| [US-027](./US-027-creation-pnj.md) | Création PNJ générique | 📝 Planifié | 5 | P0 |
-| [US-028](./US-028-association-pnj-chapitre.md) | Association PNJ ↔ Chapitre | 📝 Planifié | 3 | P1 |
-| [US-029](./US-029-creation-chapitres.md) | Création de chapitres | 📝 Planifié | 5 | P0 |
-| [US-030](./US-030-blocs-narratifs.md) | Blocs de texte narratif | 📝 Planifié | 5 | P1 |
-| [US-031](./US-031-reorganisation-chapitres.md) | Réorganisation chapitres | 📝 Planifié | 2 | P2 |
+| ID | Titre | Statut | Priorité |
+|----|-------|--------|----------|
+| [US-023](./US-023-creation-personnage.md) | Création personnage générique | ✅ Terminé | P0 |
+| [US-024](./US-024-modification-personnage.md) | Modification personnage | ✅ Terminé | P0 |
+| [US-025](./US-025-liste-personnages.md) | Liste des personnages | ✅ Terminé | P0 |
+| [US-026](./US-026-suppression-personnage.md) | Suppression personnage | ✅ Terminé | P0 |
+| [US-027](./US-027-creation-pnj.md) | Création PNJ générique | ⏳ Planifié (Phase 1) | P0 |
+| [US-028](./US-028-association-pnj-chapitre.md) | Association PNJ ↔ Chapitre | ⏳ Planifié (Phase 1) | P1 |
+| [US-029](./US-029-creation-chapitres.md) | Création de chapitres | ✅ Terminé | P0 |
+| [US-030](./US-030-blocs-narratifs.md) | Contenu narratif (texte) | ✅ Terminé (basique) | P1 |
+| [US-031](./US-031-reorganisation-chapitres.md) | Réorganisation chapitres | ✅ Terminé (ordre numérique) | P2 |
 
 ---
 
@@ -122,8 +122,8 @@ Permettre aux joueurs de créer et gérer leurs personnages génériques, aux MJ
 ## 📈 Progression
 
 ```
-Complété : [░░░░░░░░░░] 0% (0/9 US)
-Planifié  : 9 US
+Complété : [███████░░░] 70% (7/9 US)
+Planifié  : 2 US (PNJ création + association chapitre)
 ```
 
 ---

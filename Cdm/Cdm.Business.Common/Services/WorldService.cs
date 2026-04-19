@@ -19,12 +19,15 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 /// <param name="dbContext">Database context for world data access.</param>
 /// <param name="logger">Logger instance for structured logging.</param>
+/// <param name="notificationService">Notification service for creating notifications.</param>
 public class WorldService(
     AppDbContext dbContext,
-    ILogger<WorldService> logger) : IWorldService
+    ILogger<WorldService> logger,
+    INotificationService notificationService) : IWorldService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly ILogger<WorldService> logger = logger;
+    private readonly INotificationService notificationService = notificationService;
 
     /// <inheritdoc/>
     public async Task<WorldDto?> CreateWorldAsync(CreateWorldDto dto, int userId)
@@ -461,6 +464,286 @@ public class WorldService(
                 "Error removing character {CharacterId} from world {WorldId}",
                 characterId, worldId);
             return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<string?> GenerateWorldInviteTokenAsync(int worldId, int userId)
+    {
+        try
+        {
+            var world = await this.dbContext.Worlds.FindAsync(worldId);
+            if (world == null || !world.IsActive || world.UserId != userId)
+            {
+                this.logger.LogWarning(
+                    "World {WorldId} not found or user {UserId} not authorized to generate invite token",
+                    worldId, userId);
+                return null;
+            }
+
+            world.InviteToken = Guid.NewGuid().ToString("N");
+            world.InviteTokenExpiry = DateTime.UtcNow.AddDays(30);
+            world.UpdatedAt = DateTime.UtcNow;
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation("Generated invite token for world {WorldId}", worldId);
+            return world.InviteToken;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error generating invite token for world {WorldId}", worldId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<WorldDto?> GetWorldByInviteTokenAsync(string inviteToken)
+    {
+        try
+        {
+            var world = await this.dbContext.Worlds
+                .Include(w => w.Campaigns)
+                .Include(w => w.WorldCharacters)
+                .FirstOrDefaultAsync(w =>
+                    w.InviteToken == inviteToken &&
+                    w.InviteTokenExpiry > DateTime.UtcNow &&
+                    w.IsActive);
+
+            if (world == null)
+            {
+                this.logger.LogWarning("World not found for invite token (invalid or expired)");
+                return null;
+            }
+
+            return this.MapToDto(world);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error retrieving world by invite token");
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<WorldCharacterDto?> JoinWorldAsync(string inviteToken, int characterId, int userId)
+    {
+        try
+        {
+            var world = await this.dbContext.Worlds
+                .FirstOrDefaultAsync(w =>
+                    w.InviteToken == inviteToken &&
+                    w.InviteTokenExpiry > DateTime.UtcNow &&
+                    w.IsActive);
+
+            if (world == null)
+            {
+                this.logger.LogWarning("Invalid or expired invite token");
+                return null;
+            }
+
+            var character = await this.dbContext.Characters
+                .FirstOrDefaultAsync(c => c.Id == characterId && c.UserId == userId && c.IsActive);
+
+            if (character == null)
+            {
+                this.logger.LogWarning(
+                    "Character {CharacterId} not found or not owned by user {UserId}",
+                    characterId, userId);
+                return null;
+            }
+
+            if (character.IsLocked)
+            {
+                this.logger.LogWarning("Character {CharacterId} is already locked in another world", characterId);
+                return null;
+            }
+
+            // Check if already in this world
+            var existing = await this.dbContext.WorldCharacters
+                .FirstOrDefaultAsync(wc => wc.WorldId == world.Id && wc.CharacterId == characterId);
+            if (existing != null)
+            {
+                if (existing.IsActive)
+                {
+                    this.logger.LogWarning("Character {CharacterId} is already in world {WorldId}", characterId, world.Id);
+                    return null;
+                }
+
+                // Reactivate if previously removed
+                existing.IsActive = true;
+                existing.UpdatedAt = DateTime.UtcNow;
+                character.IsLocked = true;
+                await this.dbContext.SaveChangesAsync();
+                return this.MapToWorldCharacterDto(existing);
+            }
+
+            var worldCharacter = new WorldCharacter
+            {
+                WorldId = world.Id,
+                CharacterId = characterId,
+                IsActive = true,
+                JoinedAt = DateTime.UtcNow
+            };
+
+            character.IsLocked = true;
+
+            this.dbContext.WorldCharacters.Add(worldCharacter);
+            await this.dbContext.SaveChangesAsync();
+
+            // Notify the GM
+            await this.notificationService.CreateNotificationAsync(new CreateNotificationDto
+            {
+                UserId = world.UserId,
+                Type = NotificationType.WorldInvite,
+                Title = "Un joueur a rejoint votre monde",
+                Message = $"Le personnage '{character.Name}' a rejoint le monde '{world.Name}'.",
+                RelatedEntityId = world.Id,
+                RelatedEntityType = "World",
+                ActionUrl = $"/worlds/{world.Id}",
+                SentBy = userId
+            });
+
+            // Reload with nav props
+            await this.dbContext.Entry(worldCharacter).Reference(wc => wc.Character).LoadAsync();
+            await this.dbContext.Entry(worldCharacter).Reference(wc => wc.World).LoadAsync();
+
+            this.logger.LogInformation(
+                "Character {CharacterId} joined world {WorldId}",
+                characterId, world.Id);
+
+            return this.MapToWorldCharacterDto(worldCharacter);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error joining world with invite token");
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<WorldCharacterDto?> GetMyWorldCharacterAsync(int worldId, int userId)
+    {
+        try
+        {
+            var worldCharacter = await this.dbContext.WorldCharacters
+                .Include(wc => wc.Character)
+                .Include(wc => wc.World)
+                .FirstOrDefaultAsync(wc =>
+                    wc.WorldId == worldId &&
+                    wc.Character.UserId == userId &&
+                    wc.IsActive);
+
+            if (worldCharacter == null)
+            {
+                this.logger.LogWarning(
+                    "No active world character found for user {UserId} in world {WorldId}",
+                    userId, worldId);
+                return null;
+            }
+
+            return this.MapToWorldCharacterDto(worldCharacter);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error retrieving world character for user {UserId} in world {WorldId}", userId, worldId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<WorldCharacterDto?> UpdateMyWorldCharacterAsync(int worldId, UpdateWorldCharacterProfileDto dto, int userId)
+    {
+        try
+        {
+            var worldCharacter = await this.dbContext.WorldCharacters
+                .Include(wc => wc.Character)
+                .Include(wc => wc.World)
+                .FirstOrDefaultAsync(wc =>
+                    wc.WorldId == worldId &&
+                    wc.Character.UserId == userId &&
+                    wc.IsActive);
+
+            if (worldCharacter == null)
+            {
+                this.logger.LogWarning(
+                    "No active world character found for user {UserId} in world {WorldId} (update)",
+                    userId, worldId);
+                return null;
+            }
+
+            worldCharacter.Level = dto.Level;
+            worldCharacter.CurrentHealth = dto.CurrentHealth;
+            worldCharacter.MaxHealth = dto.MaxHealth;
+            worldCharacter.GameSpecificData = dto.GameSpecificData;
+            worldCharacter.UpdatedAt = DateTime.UtcNow;
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation(
+                "Updated world character for user {UserId} in world {WorldId}",
+                userId, worldId);
+
+            return this.MapToWorldCharacterDto(worldCharacter);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error updating world character for user {UserId} in world {WorldId}", userId, worldId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<CampaignDto>> GetWorldCampaignsForMemberAsync(int worldId, int userId)
+    {
+        try
+        {
+            var world = await this.dbContext.Worlds.FindAsync(worldId);
+            if (world == null || !world.IsActive)
+            {
+                this.logger.LogWarning("World {WorldId} not found", worldId);
+                return Enumerable.Empty<CampaignDto>();
+            }
+
+            // Check authorization: must be GM or active participant
+            var isGm = world.UserId == userId;
+            var isParticipant = await this.dbContext.WorldCharacters
+                .AnyAsync(wc => wc.WorldId == worldId && wc.Character.UserId == userId && wc.IsActive);
+
+            if (!isGm && !isParticipant)
+            {
+                this.logger.LogWarning(
+                    "User {UserId} is not authorized to view campaigns for world {WorldId}",
+                    userId, worldId);
+                return Enumerable.Empty<CampaignDto>();
+            }
+
+            var campaigns = await this.dbContext.Campaigns
+                .Where(c => c.WorldId == worldId && c.IsActive && !c.IsDeleted)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            return campaigns.Select(c => new CampaignDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+                WorldId = c.WorldId,
+                GameType = world.GameType,
+                Visibility = c.Visibility,
+                MaxPlayers = c.MaxPlayers,
+                CoverImageUrl = c.CoverImageUrl,
+                CreatedBy = c.CreatedBy,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                Status = c.Status,
+                IsActive = c.IsActive
+            });
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error retrieving campaigns for world {WorldId}", worldId);
+            return Enumerable.Empty<CampaignDto>();
         }
     }
 }

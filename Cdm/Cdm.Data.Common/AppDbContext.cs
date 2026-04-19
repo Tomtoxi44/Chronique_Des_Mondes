@@ -73,6 +73,16 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<Notification> Notifications { get; set; } = null!;
 
+    /// <summary>
+    /// Gets or sets the sessions.
+    /// </summary>
+    public DbSet<Session> Sessions { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the session participants.
+    /// </summary>
+    public DbSet<SessionParticipant> SessionParticipants { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -463,6 +473,68 @@ public class AppDbContext : DbContext
 
             entity.Property(ua => ua.IsManuallyAwarded)
                 .HasDefaultValue(false);
+        });
+
+        // Configure Session entity
+        modelBuilder.Entity<Session>(entity =>
+        {
+            entity.HasIndex(s => s.CampaignId)
+                .HasDatabaseName("IX_Sessions_CampaignId");
+
+            entity.HasIndex(s => s.Status)
+                .HasDatabaseName("IX_Sessions_Status");
+
+            entity.HasOne(s => s.Campaign)
+                .WithMany()
+                .HasForeignKey(s => s.CampaignId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(s => s.StartedBy)
+                .WithMany()
+                .HasForeignKey(s => s.StartedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(s => s.CurrentChapter)
+                .WithMany()
+                .HasForeignKey(s => s.CurrentChapterId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            entity.Property(s => s.StartedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(s => s.Status)
+                .HasDefaultValue(SessionStatus.Active);
+        });
+
+        // Configure SessionParticipant entity
+        modelBuilder.Entity<SessionParticipant>(entity =>
+        {
+            entity.HasIndex(sp => sp.SessionId)
+                .HasDatabaseName("IX_SessionParticipants_SessionId");
+
+            entity.HasIndex(sp => sp.WorldCharacterId)
+                .HasDatabaseName("IX_SessionParticipants_WorldCharacterId");
+
+            entity.HasIndex(sp => new { sp.SessionId, sp.WorldCharacterId })
+                .IsUnique()
+                .HasDatabaseName("IX_SessionParticipants_SessionId_WorldCharacterId");
+
+            entity.HasOne(sp => sp.Session)
+                .WithMany(s => s.Participants)
+                .HasForeignKey(sp => sp.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(sp => sp.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(sp => sp.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(sp => sp.JoinedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(sp => sp.Status)
+                .HasDefaultValue(SessionParticipantStatus.Invited);
         });
     }
 

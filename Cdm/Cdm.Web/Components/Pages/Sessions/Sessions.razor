@@ -4,7 +4,7 @@
 <PageTitle>Sessions — Chronique des Mondes</PageTitle>
 
 <AppPageHeader Title="@L["Nav_Sessions"]"
-               Subtitle="Lancez et gérez vos sessions de jeu"
+               Subtitle="Vos sessions de jeu actives et passées"
                Icon="bi-play-circle" />
 
 @if (IsLoading)
@@ -13,50 +13,94 @@
         @for (int i = 0; i < 2; i++) { <AppSkeletonCard /> }
     </div>
 }
-else if (ActiveCampaigns.Count == 0)
+else if (MySessions.Count == 0)
 {
     <AppEmptyState Icon="bi-play-circle"
-                   Title="Aucune campagne active"
-                   Message="Créez et activez une campagne pour pouvoir lancer des sessions.">
+                   Title="Aucune session"
+                   Message="Vous n'avez pas encore participé à une session. Lancez-en une depuis la vue détail d'une campagne.">
         <ActionContent>
-            <a href="/campaigns/create" class="btn btn-primary">
-                <i class="bi bi-plus"></i>
-                @L["Campaigns_Create"]
+            <a href="/worlds" class="btn btn-primary">
+                <i class="bi bi-globe2"></i>
+                Voir mes mondes
             </a>
         </ActionContent>
     </AppEmptyState>
 }
 else
 {
-    <p style="color: var(--color-text-muted); margin-bottom: var(--spacing-lg); font-size: var(--font-size-sm);">
-        Sélectionnez une campagne active pour lancer une session.
-    </p>
+    var activeSessions = MySessions.Where(s => s.Status == Cdm.Common.Enums.SessionStatus.Active).ToList();
+    var pastSessions = MySessions.Where(s => s.Status != Cdm.Common.Enums.SessionStatus.Active).ToList();
 
-    <div class="cards-grid">
-        @foreach (var campaign in ActiveCampaigns)
-        {
-            <AppThemeWrapper GameType="@campaign.GameType">
-                <div class="cdm-card">
+    @if (activeSessions.Count > 0)
+    {
+        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
+            <i class="bi bi-circle-fill" style="color: var(--color-success); font-size: 0.6rem; vertical-align: middle;"></i>
+            Sessions actives
+        </h3>
+        <div class="cards-grid" style="margin-bottom: var(--spacing-xl);">
+            @foreach (var session in activeSessions)
+            {
+                <div class="cdm-card cdm-card--highlight">
                     <div class="card-header-row">
-                        <AppGameBadge GameType="@campaign.GameType" />
-                        <span class="status-badge status-active">@L["Campaigns_Status_Active"]</span>
+                        <span class="status-badge @GetSessionStatusClass(session.Status)">@GetSessionStatusLabel(session.Status)</span>
+                        @if (IsGm(session))
+                        {
+                            <span class="status-badge" style="background: var(--color-primary); color: white; opacity: 0.9;">MJ</span>
+                        }
                     </div>
-                    <h3 class="card-title">@campaign.Name</h3>
-                    @if (!string.IsNullOrEmpty(campaign.Description))
-                    {
-                        <p class="card-description">@campaign.Description</p>
-                    }
+                    <h3 class="card-title">@session.CampaignName</h3>
                     <div class="card-meta">
-                        <span><i class="bi bi-people"></i> @campaign.MaxPlayers joueurs max</span>
+                        <span><i class="bi bi-people"></i> @session.Participants.Count() joueur(s)</span>
+                        <span><i class="bi bi-calendar3"></i> @session.StartedAt.ToString("dd/MM/yyyy")</span>
                     </div>
                     <div style="margin-top: var(--spacing-md);">
-                        <a href="/campaigns/@campaign.Id" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">
-                            <i class="bi bi-play-fill"></i>
-                            Ouvrir la campagne
-                        </a>
+                        @if (IsGm(session))
+                        {
+                            <a href="/sessions/@session.Id/gm" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">
+                                <i class="bi bi-play-fill"></i>
+                                Reprendre (MJ)
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="/sessions/@session.Id/player" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">
+                                <i class="bi bi-controller"></i>
+                                Rejoindre
+                            </a>
+                        }
                     </div>
                 </div>
-            </AppThemeWrapper>
-        }
-    </div>
+            }
+        </div>
+    }
+
+    @if (pastSessions.Count > 0)
+    {
+        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
+            <i class="bi bi-clock-history"></i>
+            Historique
+        </h3>
+        <div class="cards-grid">
+            @foreach (var session in pastSessions.OrderByDescending(s => s.StartedAt))
+            {
+                <div class="cdm-card" style="opacity: 0.8;">
+                    <div class="card-header-row">
+                        <span class="status-badge @GetSessionStatusClass(session.Status)">@GetSessionStatusLabel(session.Status)</span>
+                        @if (IsGm(session))
+                        {
+                            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">MJ</span>
+                        }
+                    </div>
+                    <h3 class="card-title">@session.CampaignName</h3>
+                    <div class="card-meta">
+                        <span><i class="bi bi-calendar3"></i> @session.StartedAt.ToString("dd/MM/yyyy")</span>
+                        @if (session.EndedAt.HasValue)
+                        {
+                            <span><i class="bi bi-hourglass"></i> @((session.EndedAt.Value - session.StartedAt).TotalHours.ToString("F1"))h</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
 }

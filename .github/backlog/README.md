@@ -9,16 +9,14 @@
 
 Ce backlog est organisé en **6 Epics** correspondant aux phases de développement :
 
-| Epic | Phase | Description | Story Points | Statut |
-|------|-------|-------------|--------------|--------|
-| [Epic 1](./01-Epic-Authentification/) | Phase 0 | Authentification & Gestion Utilisateurs | 34 SP | 🔄 En cours |
-| [Epic 2](./02-Epic-Gestion-Parties/) | Phase 0 | Gestion des Parties, Campagnes & Sessions | 48 SP | 📝 Planifié |
-| [Epic 3](./03-Epic-Personnages-PNJ/) | Phase 0 | Personnages, PNJ & Chapitres | 32 SP | 📝 Planifié |
-| [Epic 4](./04-Epic-Combat-Des/) | Phase 1 | Combat & Système de Dés | 42 SP | 📝 Planifié |
-| [Epic 5](./05-Epic-Sorts-Equipements/) | Phase 2 | Sorts & Équipements | 38 SP | 📝 Planifié |
-| [Epic 6](./06-Epic-Mode-DnD/) | Phase 3 | Mode D&D (Règles Automatisées) | 54 SP | 📝 Planifié |
-
-**Total** : 248 Story Points estimés
+| Epic | Phase | Description | Statut |
+|------|-------|-------------|--------|
+| [Epic 1](./01-Epic-Authentification/) | Fondations | Authentification & Gestion Utilisateurs | ✅ Majorité implémentée |
+| [Epic 2](./02-Epic-Gestion-Parties/) | Fondations | Gestion des Mondes, Campagnes, Chapitres & Sessions | ✅ Majorité implémentée |
+| [Epic 3](./03-Epic-Personnages-PNJ/) | Fondations | Personnages & PNJ | 🔄 Personnages OK, PNJ planifié |
+| [Epic 4](./04-Epic-Combat-Des/) | Futur | Combat & Système de Dés | ⏳ Futur |
+| [Epic 5](./05-Epic-Sorts-Equipements/) | Futur | Sorts & Équipements | ⏳ Futur |
+| [Epic 6](./06-Epic-Mode-DnD/) | Futur | Mode D&D Avancé (Calculs Automatiques) | ⏳ Futur — données basiques implémentées |
 
 ---
 
@@ -96,14 +94,12 @@ Optimisations et modes spécialisés :
 ## 📈 Progression Globale
 
 ```
-Epic 1 - Authentification        : [██████░░░░] 60% (6/10 US) - 34 SP
-Epic 2 - Gestion Parties         : [░░░░░░░░░░]  0% (0/12 US) - 48 SP
-Epic 3 - Personnages & PNJ       : [░░░░░░░░░░]  0% (0/9 US)  - 32 SP
-Epic 4 - Combat & Dés            : [░░░░░░░░░░]  0% (0/8 US)  - 42 SP
-Epic 5 - Sorts & Équipements     : [░░░░░░░░░░]  0% (0/9 US)  - 38 SP
-Epic 6 - Mode D&D                : [░░░░░░░░░░]  0% (0/9 US)  - 54 SP
-
-Total : 6/57 User Stories (10.5%) - 248 Story Points estimés
+Epic 1 - Authentification        : [████████░░] 80% - Implémenté (manque reset mdp, validation email)
+Epic 2 - Gestion Parties         : [████████░░] 80% - Implémenté (manque SignalR, historique)
+Epic 3 - Personnages & PNJ       : [█████░░░░░] 50% - Personnages OK, PNJ planifié
+Epic 4 - Combat & Dés            : [░░░░░░░░░░]  0% - Futur
+Epic 5 - Sorts & Équipements     : [░░░░░░░░░░]  0% - Futur (inventaire basique implémenté)
+Epic 6 - Mode D&D Avancé         : [██░░░░░░░░] 20% - Données basiques (classe, race, stats) implémentées
 ```
 
 ---

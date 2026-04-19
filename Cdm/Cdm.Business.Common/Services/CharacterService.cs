@@ -548,6 +548,7 @@ public class CharacterService(
             Description = character.Description,
             Age = character.Age,
             AvatarUrl = character.AvatarUrl,
+            IsLocked = character.IsLocked,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt
         };

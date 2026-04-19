@@ -1,0 +1,152 @@
+@page "/worlds/join/{Token}"
+@attribute [Authorize]
+
+<PageTitle>Rejoindre un monde — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+        <AppLoadingSpinner Label="Vérification du lien d'invitation..." />
+    </div>
+}
+else if (World == null)
+{
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+        <AppEmptyState Icon="bi-exclamation-triangle"
+                       Title="Lien invalide ou expiré"
+                       Message="Ce lien d'invitation n'est plus valide. Demandez un nouveau lien au maître de jeu.">
+            <ActionContent>
+                <a href="/worlds" class="btn btn-primary">
+                    <i class="bi bi-globe2"></i>
+                    Mes mondes
+                </a>
+            </ActionContent>
+        </AppEmptyState>
+    </div>
+}
+else if (JoinSuccess)
+{
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+        <div style="text-align: center; max-width: 480px;">
+            <div style="font-size: 3rem; color: var(--color-success); margin-bottom: var(--spacing-md);">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h2 style="margin-bottom: var(--spacing-sm);">Vous avez rejoint le monde !</h2>
+            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-xl);">
+                Votre personnage <strong>@JoinedCharacterName</strong> est maintenant membre du monde <strong>@World.Name</strong>.
+            </p>
+            <a href="/worlds/@World.Id" class="btn btn-primary">
+                <i class="bi bi-arrow-right"></i>
+                Voir le monde
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <AppThemeWrapper GameType="@World.GameType">
+        <div style="max-width: 600px; margin: var(--spacing-xl) auto; padding: 0 var(--spacing-md);">
+
+            @* En-tête monde *@
+            <div class="cdm-card" style="margin-bottom: var(--spacing-lg); text-align: center;">
+                <div style="font-size: 2.5rem; margin-bottom: var(--spacing-md);">
+                    <i class="bi bi-globe2" style="color: var(--theme-primary, var(--color-primary));"></i>
+                </div>
+                <h2 style="margin-bottom: var(--spacing-xs);">@World.Name</h2>
+                <AppGameBadge GameType="@World.GameType" />
+                @if (!string.IsNullOrEmpty(World.Description))
+                {
+                    <p style="color: var(--color-text-secondary); margin-top: var(--spacing-md); font-size: var(--font-size-sm);">
+                        @World.Description
+                    </p>
+                }
+                <div style="display: flex; justify-content: center; gap: var(--spacing-lg); margin-top: var(--spacing-md);">
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                        <i class="bi bi-map"></i> @World.CampaignCount campagne(s)
+                    </span>
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                        <i class="bi bi-people"></i> @World.CharacterCount joueur(s)
+                    </span>
+                </div>
+            </div>
+
+            @* Sélection de personnage *@
+            <div class="cdm-card">
+                <h3 style="margin-bottom: var(--spacing-sm);">Choisissez un personnage</h3>
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
+                    Sélectionnez le personnage avec lequel vous souhaitez rejoindre ce monde. Une fois rejoint, le personnage sera lié à ce monde.
+                </p>
+
+                @if (IsLoadingCharacters)
+                {
+                    <AppLoadingSpinner Label="Chargement de vos personnages..." />
+                }
+                else if (AvailableCharacters.Count == 0)
+                {
+                    <AppEmptyState Icon="bi-person-x"
+                                   Title="Aucun personnage disponible"
+                                   Message="Vous n'avez pas de personnage disponible. Créez un personnage ou libérez un personnage actuellement lié à un autre monde.">
+                        <ActionContent>
+                            <a href="/characters/create" class="btn btn-primary btn-sm">
+                                <i class="bi bi-person-plus"></i>
+                                Créer un personnage
+                            </a>
+                        </ActionContent>
+                    </AppEmptyState>
+                }
+                else
+                {
+                    <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg);">
+                        @foreach (var character in AvailableCharacters)
+                        {
+                            var isSelected = SelectedCharacterId == character.Id;
+                            <button type="button"
+                                    class="character-select-card @(isSelected ? "selected" : "")"
+                                    @onclick="() => SelectedCharacterId = character.Id">
+                                <div class="character-avatar-mini" style="@(isSelected ? "background: var(--theme-primary, var(--color-primary)); color: white;" : "")">
+                                    @((character.FirstName ?? character.Name).Substring(0, 1).ToUpperInvariant())
+                                </div>
+                                <div style="flex: 1; text-align: left;">
+                                    <div style="font-weight: 600;">@character.FirstName @character.Name</div>
+                                    @if (!string.IsNullOrEmpty(character.Description))
+                                    {
+                                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px;">
+                                            @character.Description
+                                        </div>
+                                    }
+                                </div>
+                                @if (isSelected)
+                                {
+                                    <i class="bi bi-check-circle-fill" style="color: var(--theme-primary, var(--color-primary));"></i>
+                                }
+                            </button>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(JoinError))
+                    {
+                        <div class="alert alert-danger" style="margin-bottom: var(--spacing-md);">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            @JoinError
+                        </div>
+                    }
+
+                    <div style="display: flex; gap: var(--spacing-sm); justify-content: flex-end;">
+                        <a href="/worlds" class="btn btn-ghost">
+                            Refuser
+                        </a>
+                        <button class="btn btn-primary" @onclick="JoinWorld"
+                                disabled="@(SelectedCharacterId == null || IsJoining)">
+                            @if (IsJoining)
+                            {
+                                <span class="spinner-border spinner-border-sm"></span>
+                            }
+                            <i class="bi bi-person-check"></i>
+                            Rejoindre le monde
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </AppThemeWrapper>
+}

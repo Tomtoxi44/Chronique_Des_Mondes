@@ -11,6 +11,11 @@ public enum NotificationType
     CampaignInvite = 0,
 
     /// <summary>
+    /// World invitation notification
+    /// </summary>
+    WorldInvite = 8,
+
+    /// <summary>
     /// Chapter session is starting soon
     /// </summary>
     SessionStarting = 1,

@@ -55,6 +55,7 @@ public class NotificationModel
         NotificationType.CombatTurn => "Tour de combat",
         NotificationType.SystemAnnouncement => "Annonce système",
         NotificationType.CharacterUpdate => "Mise à jour du personnage",
+        NotificationType.WorldInvite => "Invitation à un monde",
         _ => "Notification"
     };
 
@@ -69,6 +70,7 @@ public class NotificationModel
         NotificationType.CombatTurn => "bi-shield-exclamation",
         NotificationType.SystemAnnouncement => "bi-megaphone",
         NotificationType.CharacterUpdate => "bi-person-gear",
+        NotificationType.WorldInvite => "bi-globe2",
         _ => "bi-bell"
     };
 

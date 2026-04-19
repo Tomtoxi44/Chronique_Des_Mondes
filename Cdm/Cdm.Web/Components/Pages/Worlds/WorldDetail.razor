@@ -36,10 +36,13 @@ else
                            Icon="bi-globe2"
                            Breadcrumbs="@Breadcrumbs">
                 <Actions>
-                    <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
-                        <i class="bi bi-trash3"></i>
-                        @L["Common_Delete"]
-                    </button>
+                    @if (IsOwner)
+                    {
+                        <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
+                            <i class="bi bi-trash3"></i>
+                            @L["Common_Delete"]
+                        </button>
+                    }
                 </Actions>
             </AppPageHeader>
 
@@ -49,7 +52,7 @@ else
             </div>
 
             <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                @if (IsWorldEditing)
+                @if (IsOwner && IsWorldEditing)
                 {
                     <div style="margin-bottom: var(--spacing-md); display: flex; justify-content: space-between; align-items: center;">
                         <h3 class="card-title">Modifier les paramètres</h3>
@@ -92,9 +95,12 @@ else
                 {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <h3 class="card-title">@L["Worlds_Information"]</h3>
-                        <button class="btn btn-ghost btn-sm" @onclick="BeginWorldEdit">
-                            <i class="bi bi-pencil"></i>
-                        </button>
+                        @if (IsOwner)
+                        {
+                            <button class="btn btn-ghost btn-sm" @onclick="BeginWorldEdit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        }
                     </div>
                     <div class="info-grid" style="margin-top: var(--spacing-md);">
                         <div>
@@ -121,9 +127,12 @@ else
                 <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
                     <h3 class="card-title">Description</h3>
                     <p style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: var(--spacing-md) 0 0;">@World.Description</p>
-                    <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-md);">
-                        <i class="bi bi-pencil"></i> Modifier
-                    </a>
+                    @if (IsOwner)
+                    {
+                        <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-md);">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                    }
                 </div>
             }
             else
@@ -131,11 +140,14 @@ else
                 <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                         <h3 class="card-title">Description</h3>
-                        <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm">
-                            <i class="bi bi-plus"></i> Ajouter une description
-                        </a>
+                        @if (IsOwner)
+                        {
+                            <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm">
+                                <i class="bi bi-plus"></i> Ajouter une description
+                            </a>
+                        }
                     </div>
-                    <p style="color: var(--color-text-muted); font-style: italic; margin-top: var(--spacing-sm);">Aucune description. Cliquez pour écrire.</p>
+                    <p style="color: var(--color-text-muted); font-style: italic; margin-top: var(--spacing-sm);">@(IsOwner ? "Aucune description. Cliquez pour écrire." : "Aucune description.")</p>
                 </div>
             }
 
@@ -144,10 +156,13 @@ else
                 <div class="cdm-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
                         <h3 class="card-title">@L["Worlds_Campaigns"]</h3>
-                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-ghost btn-sm">
-                            <i class="bi bi-plus"></i>
-                            @L["Campaigns_Create"]
-                        </a>
+                        @if (IsOwner)
+                        {
+                            <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-ghost btn-sm">
+                                <i class="bi bi-plus"></i>
+                                @L["Campaigns_Create"]
+                            </a>
+                        }
                     </div>
 
                     @foreach (var campaign in Campaigns)
@@ -162,7 +177,7 @@ else
                     }
                 </div>
             }
-            else
+            else if (IsOwner)
             {
                 <AppEmptyState Icon="bi-map"
                                Title="Aucune campagne"
@@ -175,12 +190,18 @@ else
                     </ActionContent>
                 </AppEmptyState>
             }
+            else
+            {
+                <AppEmptyState Icon="bi-map"
+                               Title="Aucune campagne"
+                               Message="Ce monde n'a pas encore de campagne." />
+            }
         }
 
         @* ──────────────────────────────────────────────────────────
            SECTION: DESCRIPTION EDITOR
            ────────────────────────────────────────────────────────── *@
-        @if (Section == "description")
+        @if (IsOwner && Section == "description")
         {
             <div class="editor-section">
                 <div class="world-section-header">
@@ -233,7 +254,7 @@ else
         @* ──────────────────────────────────────────────────────────
            SECTION: NOUVELLE CAMPAGNE (formulaire dédié)
            ────────────────────────────────────────────────────────── *@
-        @if (Section == "new-campaign" && !SelectedCampaignId.HasValue)
+        @if (IsOwner && Section == "new-campaign" && !SelectedCampaignId.HasValue)
         {
             <AppPageHeader Title="@L["Campaigns_Create"]"
                            Icon="bi-map"
@@ -294,21 +315,24 @@ else
                                Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(SelectedCampaign.Name) })">
                     <Actions>
                         <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
-                        @if (!IsCampaignEditing)
+                        @if (IsOwner)
                         {
-                            <button class="btn btn-ghost btn-sm" @onclick="() => IsCampaignEditing = true">
-                                <i class="bi bi-pencil"></i>
-                                Modifier
+                            @if (!IsCampaignEditing)
+                            {
+                                <button class="btn btn-ghost btn-sm" @onclick="() => IsCampaignEditing = true">
+                                    <i class="bi bi-pencil"></i>
+                                    Modifier
+                                </button>
+                            }
+                            <button class="btn btn-ghost btn-sm" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
+                                <i class="bi bi-trash3"></i>
+                                @L["Common_Delete"]
                             </button>
                         }
-                        <button class="btn btn-ghost btn-sm" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
-                            <i class="bi bi-trash3"></i>
-                            @L["Common_Delete"]
-                        </button>
                     </Actions>
                 </AppPageHeader>
 
-                @if (IsCampaignEditing)
+                @if (IsOwner && IsCampaignEditing)
                 {
                     <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
                         <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Modifier la campagne</h3>
@@ -351,7 +375,103 @@ else
                     </div>
                 }
 
+                <!-- Session de jeu -->
+                @if (IsOwner)
+                {
+                    <div class="cdm-card" style="margin-top: var(--spacing-lg); border-top: 2px solid var(--theme-primary, var(--color-primary));">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                            <div>
+                                <h3 class="card-title" style="margin: 0;">Session de jeu</h3>
+                                <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
+                                    Lancez une session pour commencer à jouer cette campagne.
+                                </p>
+                            </div>
+                            @if (ActiveSession == null && !IsStartSessionPanelOpen)
+                            {
+                                <button class="btn btn-primary btn-sm" @onclick="OpenStartSessionPanel">
+                                    <i class="bi bi-play-fill"></i>
+                                    Lancer une session
+                                </button>
+                            }
+                            else if (ActiveSession != null)
+                            {
+                                <a href="/sessions/@ActiveSession.Id/gm" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-play-fill"></i>
+                                    Reprendre la session
+                                </a>
+                            }
+                        </div>
+
+                        @if (IsLoadingSession)
+                        {
+                            <AppLoadingSpinner Label="Vérification..." />
+                        }
+                        else if (ActiveSession != null)
+                        {
+                            <div style="background: rgba(var(--color-success-rgb, 16,185,129),0.1); border: 1px solid var(--color-success); border-radius: 6px; padding: var(--spacing-sm) var(--spacing-md);">
+                                <span class="status-badge status-active" style="margin-right: var(--spacing-sm);">Session active</span>
+                                <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Démarrée le @ActiveSession.StartedAt.ToLocalTime().ToString("dd/MM à HH:mm")</span>
+                            </div>
+                        }
+                        else if (IsStartSessionPanelOpen)
+                        {
+                            <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-md); margin-top: var(--spacing-sm);">
+                                @if (!string.IsNullOrEmpty(SessionStartError))
+                                {
+                                    <div class="alert alert-error" style="margin-bottom: var(--spacing-sm);">@SessionStartError</div>
+                                }
+
+                                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                                    <label class="form-label">Message de bienvenue (optionnel)</label>
+                                    <input type="text" class="form-control" @bind="SessionWelcomeMessage" placeholder="Bienvenue dans cette session..." />
+                                </div>
+
+                                @if (SessionParticipants.Count > 0)
+                                {
+                                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                                        <label class="form-label">Joueurs à inviter</label>
+                                        @foreach (var wc in SessionParticipants)
+                                        {
+                                            <label style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-xs) 0; cursor: pointer;">
+                                                <input type="checkbox"
+                                                       checked="@SelectedWorldCharacterIds.Contains(wc.Id)"
+                                                       @onchange="() => ToggleParticipant(wc.Id)" />
+                                                <span style="font-size: var(--font-size-sm);">@wc.CharacterName</span>
+                                            </label>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
+                                        <i class="bi bi-info-circle"></i>
+                                        Aucun joueur n'a encore rejoint ce monde.
+                                    </p>
+                                }
+
+                                <div style="display: flex; gap: var(--spacing-sm);">
+                                    <button class="btn btn-primary btn-sm" @onclick="StartSession" disabled="@IsStartingSession">
+                                        @if (IsStartingSession)
+                                        {
+                                            <i class="bi bi-hourglass-split"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-play-fill"></i>
+                                        }
+                                        Démarrer
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm" @onclick="() => IsStartSessionPanelOpen = false">
+                                        Annuler
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
                 <!-- Chapitres -->
+                @if (IsOwner)
+                {
                 <div class="cdm-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
                         <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
@@ -408,13 +528,14 @@ else
                         </p>
                     }
                 </div>
+                }
             }
         }
 
         @* ──────────────────────────────────────────────────────────
            SECTION: NOUVEAU CHAPITRE (formulaire dédié)
            ────────────────────────────────────────────────────────── *@
-        @if (SelectedCampaignId.HasValue && Section == "new-chapter")
+        @if (IsOwner && SelectedCampaignId.HasValue && Section == "new-chapter")
         {
             var parentCampaign = Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId.Value);
             <AppPageHeader Title="@L["Chapters_Create"]"
@@ -446,7 +567,7 @@ else
         @* ──────────────────────────────────────────────────────────
            SECTION: CONTENU CHAPITRE
            ────────────────────────────────────────────────────────── *@
-        @if (SelectedCampaignId.HasValue && SelectedChapterId.HasValue && Section == null)
+        @if (IsOwner && SelectedCampaignId.HasValue && SelectedChapterId.HasValue && Section == null)
         {
             @if (SelectedChapter == null)
             {
@@ -505,7 +626,7 @@ else
         @* ──────────────────────────────────────────────────────────
            SECTION: ÉVÉNEMENTS
            ────────────────────────────────────────────────────────── *@
-        @if (Section == "events")
+        @if (IsOwner && Section == "events")
         {
             <AppPageHeader Title="Événements"
                            Icon="bi-lightning"
@@ -631,7 +752,7 @@ else
         @* ──────────────────────────────────────────────────────────
            SECTION: SUCCÈS
            ────────────────────────────────────────────────────────── *@
-        @if (Section == "achievements")
+        @if (IsOwner && Section == "achievements")
         {
             <AppPageHeader Title="Succès"
                            Icon="bi-trophy"
@@ -745,57 +866,140 @@ else
         @* ──────────────────────────────────────────────────────────
            SECTION: INVITATIONS
            ────────────────────────────────────────────────────────── *@
-        @if (Section == "invitations")
+        @if (IsOwner && Section == "invitations")
         {
             <AppPageHeader Title="Invitations"
                            Icon="bi-person-plus"
                            Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new("Invitations") })" />
 
-            @if (Campaigns.Count == 0)
-            {
-                <AppEmptyState Icon="bi-person-plus"
-                               Title="Aucune campagne"
-                               Message="Créez d'abord une campagne pour pouvoir inviter des joueurs." />
-            }
-            else
-            {
-                <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
-                    Générez un lien d'invitation par campagne. Les joueurs peuvent rejoindre en cliquant sur le lien.
-                </p>
-                @foreach (var campaign in Campaigns)
+            @* Lien d'invitation monde *@
+            <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                <div class="world-section-header">
+                    <div>
+                        <h3 class="card-title" style="margin: 0;">Lien d'invitation au monde</h3>
+                        <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--spacing-xs) 0 0;">
+                            Partagez ce lien pour inviter des joueurs à rejoindre le monde avec leur personnage. Valable 30 jours.
+                        </p>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(WorldInviteToken))
                 {
-                    var token = campaign.InviteToken;
-                    var inviteUrl = token != null ? $"{Nav.BaseUri}join?token={token}" : null;
-                    <div class="invite-row">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight: 600; font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
-                                <i class="bi bi-map" style="color: var(--color-text-muted); margin-right: var(--spacing-xs);"></i>
-                                @campaign.Name
-                            </div>
-                            @if (inviteUrl != null)
-                            {
-                                <div class="invite-token-box">@inviteUrl</div>
-                            }
-                            else
-                            {
-                                <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic;">Aucun lien généré</span>
-                            }
-                        </div>
-                        <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
-                            <button class="btn btn-ghost btn-sm" @onclick="() => GenerateInviteToken(campaign.Id)" disabled="@IsGeneratingToken">
-                                <i class="bi bi-arrow-repeat"></i>
-                                @(token == null ? "Générer" : "Régénérer")
+                    var worldInviteUrl = $"{Nav.BaseUri}worlds/join/{WorldInviteToken}";
+                    var qrUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(worldInviteUrl)}&bgcolor=1a1a2e&color=d4af37";
+                    <div class="invite-token-box" style="margin: var(--spacing-md) 0;">@worldInviteUrl</div>
+                    <div style="display: flex; gap: var(--spacing-md); align-items: flex-start; flex-wrap: wrap;">
+                        <div style="display: flex; gap: var(--spacing-sm);">
+                            <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(worldInviteUrl)" title="Copier le lien">
+                                <i class="bi bi-clipboard"></i>
+                                Copier
                             </button>
-                            @if (inviteUrl != null)
-                            {
-                                <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(inviteUrl)" title="Copier le lien">
-                                    <i class="bi bi-clipboard"></i>
-                                </button>
-                            }
+                            <button class="btn btn-ghost btn-sm" @onclick="GenerateWorldInviteToken" disabled="@IsGeneratingWorldToken">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Régénérer
+                            </button>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--spacing-xs);">
+                            <img src="@qrUrl" alt="QR Code d'invitation" width="120" height="120"
+                                 style="border-radius: var(--radius-md); border: 2px solid var(--color-border);" />
+                            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Scanner pour rejoindre</span>
                         </div>
                     </div>
                 }
-            }
+                else
+                {
+                    <button class="btn btn-primary btn-sm" style="margin-top: var(--spacing-md);" @onclick="GenerateWorldInviteToken" disabled="@IsGeneratingWorldToken">
+                        <i class="bi bi-link-45deg"></i>
+                        @(IsGeneratingWorldToken ? "Génération..." : "Générer un lien d'invitation")
+                    </button>
+                }
+            </div>
+
+            @* Joueurs actuels *@
+            <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+                <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Joueurs dans le monde</h3>
+                @if (IsLoadingWorldCharacters)
+                {
+                    <AppLoadingSpinner Label="Chargement..." />
+                }
+                else if (WorldCharacters.Count == 0)
+                {
+                    <AppEmptyState Icon="bi-people"
+                                   Title="Aucun joueur"
+                                   Message="Aucun joueur n'a encore rejoint ce monde. Partagez le lien ci-dessus." />
+                }
+                else
+                {
+                    <div class="character-list">
+                        @foreach (var wc in WorldCharacters)
+                        {
+                            <div class="invite-row">
+                                <div class="character-avatar-mini">
+                                    @wc.CharacterName.Substring(0, 1).ToUpperInvariant()
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 600; font-size: var(--font-size-sm);">@wc.CharacterName</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        Rejoint le @wc.JoinedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                                    </div>
+                                </div>
+                                <button class="btn btn-ghost btn-sm" style="color: var(--color-danger);"
+                                        @onclick="() => RemoveWorldCharacter(wc.CharacterId)"
+                                        title="Retirer du monde">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* Invitations par campagne *@
+            <div class="cdm-card">
+                <h3 class="card-title" style="margin-bottom: var(--spacing-sm);">Liens d'invitation par campagne</h3>
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
+                    Générez un lien par campagne pour rejoindre directement cette campagne.
+                </p>
+                @if (Campaigns.Count == 0)
+                {
+                    <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); font-style: italic;">Aucune campagne dans ce monde.</p>
+                }
+                else
+                {
+                    @foreach (var campaign in Campaigns)
+                    {
+                        var token = campaign.InviteToken;
+                        var inviteUrl = token != null ? $"{Nav.BaseUri}join?token={token}" : null;
+                        <div class="invite-row">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
+                                    <i class="bi bi-map" style="color: var(--color-text-muted); margin-right: var(--spacing-xs);"></i>
+                                    @campaign.Name
+                                </div>
+                                @if (inviteUrl != null)
+                                {
+                                    <div class="invite-token-box">@inviteUrl</div>
+                                }
+                                else
+                                {
+                                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic;">Aucun lien généré</span>
+                                }
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
+                                <button class="btn btn-ghost btn-sm" @onclick="() => GenerateInviteToken(campaign.Id)" disabled="@IsGeneratingToken">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                    @(token == null ? "Générer" : "Régénérer")
+                                </button>
+                                @if (inviteUrl != null)
+                                {
+                                    <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(inviteUrl)" title="Copier le lien">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
         }
 
     </AppThemeWrapper>

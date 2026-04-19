@@ -1,0 +1,209 @@
+@page "/worlds/{WorldId:int}/my-character"
+@attribute [Authorize]
+
+<PageTitle>Mon personnage — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="padding: var(--spacing-xl);">
+        <AppLoadingSpinner Label="Chargement..." />
+    </div>
+}
+else if (WorldCharacter == null)
+{
+    <AppEmptyState Icon="bi-person-badge"
+                   Title="Personnage introuvable"
+                   Message="Vous n'avez pas encore de personnage dans ce monde, ou ce monde n'existe pas.">
+        <ActionContent>
+            <a href="/worlds" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i>
+                Retour aux mondes
+            </a>
+        </ActionContent>
+    </AppEmptyState>
+}
+else
+{
+    <AppThemeWrapper GameType="@World!.GameType">
+
+        <AppPageHeader Title="@WorldCharacter.CharacterName"
+                       Icon="bi-person-badge"
+                       Breadcrumbs="@Breadcrumbs">
+            <Actions>
+                @if (!IsEditing)
+                {
+                    <button class="btn btn-ghost btn-sm" @onclick="BeginEdit">
+                        <i class="bi bi-pencil"></i>
+                        Modifier
+                    </button>
+                }
+            </Actions>
+        </AppPageHeader>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-lg);">
+
+            <!-- Infos générales -->
+            <div class="cdm-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                    <h3 class="card-title">Informations générales</h3>
+                    <AppGameBadge GameType="@World!.GameType" />
+                </div>
+                <div class="info-grid">
+                    <div>
+                        <span class="info-label">Personnage</span>
+                        <span class="info-value">@WorldCharacter.CharacterName</span>
+                    </div>
+                    <div>
+                        <span class="info-label">Monde</span>
+                        <span class="info-value">@World.Name</span>
+                    </div>
+                    <div>
+                        <span class="info-label">Rejoint le</span>
+                        <span class="info-value">@WorldCharacter.JoinedAt.ToLocalTime().ToString("d MMM yyyy")</span>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Profil de jeu -->
+            <div class="cdm-card">
+                <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Profil de jeu</h3>
+                @if (IsEditing)
+                {
+                    <div class="form-group">
+                        <label class="form-label">Niveau</label>
+                        <input type="number" class="form-control" @bind="EditLevel" min="1" max="100" style="max-width: 120px;" />
+                    </div>
+                    <div class="form-two-col" style="margin-top: var(--spacing-sm);">
+                        <div class="form-group">
+                            <label class="form-label">PV actuels</label>
+                            <input type="number" class="form-control" @bind="EditCurrentHealth" min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">PV maximum</label>
+                            <input type="number" class="form-control" @bind="EditMaxHealth" min="1" />
+                        </div>
+                    </div>
+
+                    @if (WorldGameType == Cdm.Common.Enums.GameType.DnD5e)
+                    {
+                        <hr style="border-color: var(--color-border); margin: var(--spacing-md) 0;" />
+                        <p style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted); letter-spacing: 0.05em; margin-bottom: var(--spacing-sm);">D&amp;D 5e</p>
+                        <div class="form-two-col">
+                            <div class="form-group">
+                                <label class="form-label">Classe</label>
+                                <input type="text" class="form-control" @bind="EditDndClass" placeholder="Ex: Guerrier" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Race</label>
+                                <input type="text" class="form-control" @bind="EditDndRace" placeholder="Ex: Humain" />
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: var(--spacing-sm);">
+                            <label class="form-label">Background</label>
+                            <input type="text" class="form-control" @bind="EditDndBackground" placeholder="Ex: Soldat" />
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.7rem;">FOR</label>
+                                <input type="number" class="form-control" @bind="EditDndStrength" min="1" max="30" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.7rem;">DEX</label>
+                                <input type="number" class="form-control" @bind="EditDndDexterity" min="1" max="30" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.7rem;">CON</label>
+                                <input type="number" class="form-control" @bind="EditDndConstitution" min="1" max="30" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.7rem;">INT</label>
+                                <input type="number" class="form-control" @bind="EditDndIntelligence" min="1" max="30" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.7rem;">SAG</label>
+                                <input type="number" class="form-control" @bind="EditDndWisdom" min="1" max="30" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.7rem;">CHA</label>
+                                <input type="number" class="form-control" @bind="EditDndCharisma" min="1" max="30" />
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(SaveMessage))
+                    {
+                        <p style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)"); margin-top: var(--spacing-sm);">@SaveMessage</p>
+                    }
+
+                    <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                        <button class="btn btn-primary btn-sm" @onclick="SaveProfile" disabled="@IsSaving">
+                            <i class="bi bi-floppy"></i> Enregistrer
+                        </button>
+                        <button class="btn btn-ghost btn-sm" @onclick="CancelEdit">
+                            Annuler
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="info-grid">
+                        <div>
+                            <span class="info-label">Niveau</span>
+                            <span class="info-value">@(WorldCharacter.Level?.ToString() ?? "—")</span>
+                        </div>
+                        <div>
+                            <span class="info-label">Points de vie</span>
+                            <span class="info-value">
+                                @if (WorldCharacter.CurrentHealth.HasValue && WorldCharacter.MaxHealth.HasValue)
+                                {
+                                    <span>@WorldCharacter.CurrentHealth / @WorldCharacter.MaxHealth</span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--color-text-muted);">Non définis</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (WorldGameType == Cdm.Common.Enums.GameType.DnD5e && GameSpecificFields.Count > 0)
+                    {
+                        <hr style="border-color: var(--color-border); margin: var(--spacing-md) 0;" />
+                        <p style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted); letter-spacing: 0.05em; margin-bottom: var(--spacing-sm);">D&amp;D 5e</p>
+                        <div class="info-grid">
+                            @if (GameSpecificFields.TryGetValue("class", out var cls))
+                            {
+                                <div><span class="info-label">Classe</span><span class="info-value">@cls</span></div>
+                            }
+                            @if (GameSpecificFields.TryGetValue("race", out var race))
+                            {
+                                <div><span class="info-label">Race</span><span class="info-value">@race</span></div>
+                            }
+                            @if (GameSpecificFields.TryGetValue("background", out var bg))
+                            {
+                                <div><span class="info-label">Background</span><span class="info-value">@bg</span></div>
+                            }
+                        </div>
+                        @if (new[] {"strength","dexterity","constitution","intelligence","wisdom","charisma"}.Any(k => GameSpecificFields.ContainsKey(k)))
+                        {
+                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-top: var(--spacing-sm);">
+                                @foreach (var pair in new[] { ("strength","FOR"), ("dexterity","DEX"), ("constitution","CON"), ("intelligence","INT"), ("wisdom","SAG"), ("charisma","CHA") })
+                                {
+                                    @if (GameSpecificFields.TryGetValue(pair.Item1, out var val))
+                                    {
+                                        <div class="char-stat-box">
+                                            <span class="char-stat-label">@pair.Item2</span>
+                                            <span class="char-stat-value" style="font-size: var(--font-size-md);">@val</span>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    }
+                }
+            </div>
+
+        </div>
+
+    </AppThemeWrapper>
+}

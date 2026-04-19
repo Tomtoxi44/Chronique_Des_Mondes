@@ -1,0 +1,224 @@
+@page "/sessions/{SessionId:int}/player"
+@attribute [Authorize]
+
+<PageTitle>Session — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+        <AppLoadingSpinner />
+    </div>
+}
+else if (ErrorMessage != null)
+{
+    <AppEmptyState Icon="bi-exclamation-circle"
+                   Title="Erreur"
+                   Message="@ErrorMessage" />
+}
+else if (Session != null)
+{
+    <div class="session-player-shell">
+        <!-- Header session -->
+        <div class="session-player-header">
+            <div class="session-info-row">
+                <i class="bi bi-controller" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                <div>
+                    <h2 class="session-campaign-title">@Session.CampaignName</h2>
+                    <span class="@GetStatusClass(Session.Status) status-badge">@GetStatusLabel(Session.Status)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message de bienvenue -->
+        @if (!string.IsNullOrEmpty(Session.WelcomeMessage))
+        {
+            <div class="cdm-card session-welcome-card">
+                <div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                    <i class="bi bi-megaphone" style="color: var(--color-primary);"></i>
+                    <span style="font-weight: 600; font-size: var(--font-size-sm);">Message du MJ</span>
+                </div>
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">@Session.WelcomeMessage</p>
+            </div>
+        }
+
+        <!-- Chapitre en cours -->
+        @if (!string.IsNullOrEmpty(Session.CurrentChapterTitle))
+        {
+            <div class="cdm-card session-chapter-indicator">
+                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: 4px;">
+                    <i class="bi bi-book"></i> Chapitre en cours
+                </p>
+                <p style="font-weight: 600;">@Session.CurrentChapterTitle</p>
+            </div>
+        }
+
+        <!-- Rejoindre la session -->
+        @if (MyParticipant?.Status == Cdm.Common.Enums.SessionParticipantStatus.Invited && MyCharacter != null)
+        {
+            <div class="cdm-card" style="border: 1px solid var(--color-warning);">
+                <p style="font-size: var(--font-size-sm); margin-bottom: var(--spacing-sm);">
+                    <i class="bi bi-bell" style="color: var(--color-warning);"></i>
+                    Vous avez été invité à rejoindre cette session.
+                </p>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center;"
+                        @onclick="JoinSession" disabled="@IsJoining">
+                    @if (IsJoining)
+                    {
+                        <span class="btn-spinner"></span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-box-arrow-in-right"></i>
+                    }
+                    Rejoindre la session
+                </button>
+            </div>
+        }
+
+        <!-- Mon personnage — onglets -->
+        @if (MyCharacter != null)
+        {
+            <div class="cdm-card session-character-card">
+                <!-- Avatar + nom -->
+                <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                    <div class="character-avatar-circle">
+                        @MyCharacter.CharacterName.Substring(0, Math.Min(2, MyCharacter.CharacterName.Length)).ToUpper()
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: var(--font-size-lg);">@MyCharacter.CharacterName</h3>
+                        <p style="margin: 0; color: var(--color-text-muted); font-size: var(--font-size-sm);">@MyCharacter.WorldName</p>
+                        @if (MyParticipant?.Status == Cdm.Common.Enums.SessionParticipantStatus.Joined)
+                        {
+                            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: var(--font-size-xs); color: var(--color-success);">
+                                <i class="bi bi-check-circle-fill"></i> En session
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Onglets -->
+                <div class="session-player-tabs">
+                    <button class="session-tab-btn @(ActiveTab == "character" ? "active" : "")" @onclick='() => ActiveTab = "character"'>
+                        <i class="bi bi-person"></i> Personnage
+                    </button>
+                    <button class="session-tab-btn @(ActiveTab == "inventory" ? "active" : "")" @onclick='() => ActiveTab = "inventory"'>
+                        <i class="bi bi-bag"></i> Inventaire
+                    </button>
+                    @if (MyCharacter.GameType == Cdm.Common.Enums.GameType.DnD5e)
+                    {
+                        <button class="session-tab-btn @(ActiveTab == "gametype" ? "active" : "")" @onclick='() => ActiveTab = "gametype"'>
+                            <i class="bi bi-shield"></i> D&amp;D
+                        </button>
+                    }
+                </div>
+
+                <!-- Contenu de l'onglet -->
+                @if (ActiveTab == "character")
+                {
+                    <div class="session-char-stats" style="margin-top: var(--spacing-md);">
+                        @if (MyCharacter.Level.HasValue)
+                        {
+                            <div class="char-stat-box">
+                                <span class="char-stat-label">Niveau</span>
+                                <span class="char-stat-value">@MyCharacter.Level</span>
+                            </div>
+                        }
+                        @if (MyCharacter.CurrentHealth.HasValue && MyCharacter.MaxHealth.HasValue)
+                        {
+                            <div class="char-stat-box">
+                                <span class="char-stat-label">PV</span>
+                                <span class="char-stat-value">@MyCharacter.CurrentHealth / @MyCharacter.MaxHealth</span>
+                            </div>
+                        }
+                    </div>
+                    @if (GameSpecificFields.TryGetValue("class", out var cls) || GameSpecificFields.TryGetValue("race", out var race))
+                    {
+                        <div class="info-grid" style="margin-top: var(--spacing-sm);">
+                            @if (GameSpecificFields.TryGetValue("class", out var clsVal))
+                            {
+                                <div><span class="info-label">Classe</span><span class="info-value">@clsVal</span></div>
+                            }
+                            @if (GameSpecificFields.TryGetValue("race", out var raceVal))
+                            {
+                                <div><span class="info-label">Race</span><span class="info-value">@raceVal</span></div>
+                            }
+                            @if (GameSpecificFields.TryGetValue("background", out var bg))
+                            {
+                                <div><span class="info-label">Background</span><span class="info-value">@bg</span></div>
+                            }
+                        </div>
+                    }
+                }
+                else if (ActiveTab == "inventory")
+                {
+                    <div style="margin-top: var(--spacing-md);">
+                        @if (Inventory.Count == 0)
+                        {
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); font-style: italic;">
+                                Inventaire vide.
+                            </p>
+                        }
+                        else
+                        {
+                            <div class="inventory-list">
+                                @foreach (var item in Inventory)
+                                {
+                                    <div class="inventory-item">
+                                        <span class="inventory-item-name">@item.Name</span>
+                                        <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
+                                            <span class="inventory-item-qty">×@item.Qty</span>
+                                            <button class="btn btn-ghost btn-xs" @onclick="() => RemoveInventoryItem(item)" title="Supprimer">
+                                                <i class="bi bi-trash3" style="font-size: 0.7rem;"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        <div style="display: flex; gap: var(--spacing-xs); margin-top: var(--spacing-sm);">
+                            <input type="text" class="form-control" placeholder="Nouvel objet..." @bind="NewItemName"
+                                   @onkeydown="@(async e => { if (e.Key == "Enter") await AddInventoryItem(); })" />
+                            <button class="btn btn-primary btn-sm" @onclick="AddInventoryItem" disabled="@string.IsNullOrWhiteSpace(NewItemName)">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+                else if (ActiveTab == "gametype" && MyCharacter.GameType == Cdm.Common.Enums.GameType.DnD5e)
+                {
+                    <div style="margin-top: var(--spacing-md);">
+                        <p style="font-size: var(--font-size-xs); font-weight: 600; text-transform: uppercase; color: var(--color-text-muted); letter-spacing: 0.05em; margin-bottom: var(--spacing-sm);">Caractéristiques</p>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-sm);">
+                            @foreach (var pair in new[] { ("strength","FOR"),("dexterity","DEX"),("constitution","CON"),("intelligence","INT"),("wisdom","SAG"),("charisma","CHA") })
+                            {
+                                @if (GameSpecificFields.TryGetValue(pair.Item1, out var val))
+                                {
+                                    <div class="char-stat-box">
+                                        <span class="char-stat-label">@pair.Item2</span>
+                                        <span class="char-stat-value">@val</span>
+                                        @if (int.TryParse(val, out var intVal))
+                                        {
+                                            var mod = (intVal - 10) / 2;
+                                            <span style="font-size: 0.65rem; color: var(--color-text-muted);">(@(mod >= 0 ? "+" : "")@mod)</span>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="cdm-card">
+                <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">
+                    Vous n'avez pas encore de personnage dans ce monde.
+                </p>
+                <a href="/worlds/@Session.WorldId/my-character" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-sm);">
+                    <i class="bi bi-person-badge"></i> Voir mon profil
+                </a>
+            </div>
+        }
+    </div>
+}

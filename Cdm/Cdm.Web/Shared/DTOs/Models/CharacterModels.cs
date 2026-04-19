@@ -51,10 +51,12 @@ public class CharacterDto
     /// Gets or sets the last update date
     /// </summary>
     public DateTime? UpdatedAt { get; set; }
-}
 
-/// <summary>
-/// DTO for creating a new character
+    /// <summary>
+    /// Gets or sets a value indicating whether the character is locked (already in a world)
+    /// </summary>
+    public bool IsLocked { get; set; }
+}
 /// </summary>
 public class CreateCharacterDto
 {

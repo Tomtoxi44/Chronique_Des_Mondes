@@ -152,6 +152,67 @@
             </div>
 
             <div class="topbar-right">
+                <!-- Notification bell -->
+                <div class="notification-bell-wrapper @(IsNotificationOpen ? "open" : "")">
+                    <button class="topbar-icon-btn notification-bell-btn" @onclick="ToggleNotifications"
+                            title="Notifications" aria-label="Notifications">
+                        <i class="bi bi-bell"></i>
+                        @if (UnreadNotificationCount > 0)
+                        {
+                            <span class="notification-badge">@(UnreadNotificationCount > 9 ? "9+" : UnreadNotificationCount.ToString())</span>
+                        }
+                    </button>
+
+                    <div class="notification-dropdown">
+                        <div class="notification-dropdown-header">
+                            <span>Notifications</span>
+                            @if (Notifications.Any(n => !n.IsRead))
+                            {
+                                <button class="btn-link-xs" @onclick="MarkAllNotificationsRead">
+                                    Tout marquer lu
+                                </button>
+                            }
+                        </div>
+
+                        @if (IsLoadingNotifications)
+                        {
+                            <div style="padding: var(--spacing-lg); text-align: center; color: var(--color-text-muted);">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </div>
+                        }
+                        else if (Notifications.Count == 0)
+                        {
+                            <div style="padding: var(--spacing-lg); text-align: center; color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                                <i class="bi bi-bell-slash" style="font-size: 1.5rem; display: block; margin-bottom: var(--spacing-xs);"></i>
+                                Aucune notification
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="notification-list">
+                                @foreach (var n in Notifications.Take(8))
+                                {
+                                    <div class="notification-item @(!n.IsRead ? "unread" : "")"
+                                         @onclick="() => NavigateFromNotification(n)">
+                                        <div class="notification-icon">
+                                            <i class="bi @n.TypeIcon"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">@n.Title</div>
+                                            <div class="notification-message">@n.Message</div>
+                                            <div class="notification-time">@n.TimeAgoDisplay</div>
+                                        </div>
+                                        @if (!n.IsRead)
+                                        {
+                                            <div class="notification-dot"></div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
                 <button class="topbar-icon-btn" @onclick="ToggleTheme"
                         title="@(IsDarkMode ? L["Settings_LightMode"] : L["Settings_DarkMode"])">
                     <i class="bi @(IsDarkMode ? "bi-sun" : "bi-moon-stars")"></i>

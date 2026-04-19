@@ -185,6 +185,157 @@ public class WorldApiClient
     }
 
     /// <summary>
+    /// Get characters assigned to a world (typed)
+    /// </summary>
+    public async Task<List<WorldCharacterDto>> GetWorldCharactersTypedAsync(int worldId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync($"api/worlds/{worldId}/characters");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<List<WorldCharacterDto>>() ?? new();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching characters for world {WorldId}", worldId);
+            return new();
+        }
+    }
+
+    /// <summary>
+    /// Generate (or refresh) the invite token for a world.
+    /// </summary>
+    public async Task<string?> GenerateWorldInviteTokenAsync(int worldId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.PostAsync($"api/worlds/{worldId}/invite", null);
+            if (!response.IsSuccessStatusCode) return null;
+            var result = await response.Content.ReadFromJsonAsync<InviteTokenResponse>();
+            return result?.InviteToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating invite token for world {WorldId}", worldId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Get world info by invite token (public, no auth required).
+    /// </summary>
+    public async Task<WorldDto?> GetWorldByInviteTokenAsync(string token)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/worlds/join/{token}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<WorldDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting world by invite token");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Join a world with a character using an invite token.
+    /// </summary>
+    public async Task<WorldCharacterDto?> JoinWorldAsync(string token, int characterId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.PostAsJsonAsync("api/worlds/join", new { InviteToken = token, CharacterId = characterId });
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<WorldCharacterDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error joining world");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Remove a character from a world.
+    /// </summary>
+    public async Task<bool> RemoveCharacterFromWorldAsync(int worldId, int characterId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.DeleteAsync($"api/worlds/{worldId}/characters/{characterId}");
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing character {CharacterId} from world {WorldId}", characterId, worldId);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Get the current user's world character for a specific world.
+    /// </summary>
+    public async Task<WorldCharacterDto?> GetMyWorldCharacterAsync(int worldId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync($"api/worlds/{worldId}/my-character");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<WorldCharacterDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching world character for world {WorldId}", worldId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Update the current user's world character profile.
+    /// </summary>
+    public async Task<WorldCharacterDto?> UpdateMyWorldCharacterAsync(int worldId, UpdateWorldCharacterProfileRequest request)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.PutAsJsonAsync($"api/worlds/{worldId}/my-character", request);
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<WorldCharacterDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating world character for world {WorldId}", worldId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Get campaigns for a world (accessible by GM and members).
+    /// </summary>
+    public async Task<List<CampaignDto>> GetWorldCampaignsAsync(int worldId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync($"api/worlds/{worldId}/campaigns");
+            if (!response.IsSuccessStatusCode) return new List<CampaignDto>();
+            return await response.Content.ReadFromJsonAsync<List<CampaignDto>>() ?? new List<CampaignDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching campaigns for world {WorldId}", worldId);
+            return new List<CampaignDto>();
+        }
+    }
+
+    /// <summary>
     /// Upload an image for a world
     /// </summary>
     public async Task<string?> UploadWorldImageAsync(int id, MultipartFormDataContent content)
@@ -209,4 +360,7 @@ public class WorldApiClient
 public record CreateWorldRequest(string Name, string Description, GameType GameType);
 public record UpdateWorldRequest(string Name, string Description, bool IsActive, GameType GameType = GameType.Generic);
 public record UploadImageResponse(string ImageUrl);
+public record InviteTokenResponse(string InviteToken);
+public record UpdateWorldCharacterProfileRequest(int? Level, int? CurrentHealth, int? MaxHealth, string? GameSpecificData);
 file record ErrorResponse(string? Error);
+

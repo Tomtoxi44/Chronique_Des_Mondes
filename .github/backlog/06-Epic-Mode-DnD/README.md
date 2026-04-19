@@ -18,10 +18,13 @@ Implémenter les règles complètes de **Dungeons & Dragons 5e** avec calculs au
 ## 📊 Critères d'Acceptation Globaux
 
 ### Personnages D&D
-- [ ] Création personnage D&D avec race, classe, caractéristiques
-- [ ] Calculs automatiques : modificateurs, PV, CA, bonus de maîtrise
-- [ ] Gestion de la progression par niveau (1-20)
+- [x] Données basiques : classe, race, background, 6 caractéristiques (via GameSpecificData JSON)
+- [x] Calcul des modificateurs `(val-10)/2` affiché dans les vues MJ et Joueur
+- [ ] Calculs automatiques avancés : PV calculés, CA, bonus de maîtrise selon niveau
 - [ ] Compétences et maîtrises D&D
+- [ ] Sous-classe (archétype)
+
+> **Note** : La montée de niveau (XP) est hors scope actuel — sera traitée lors de l'implémentation D&D avancée.
 
 ### PNJ/Monstres D&D
 - [ ] Création monstres D&D avec statistiques complètes
@@ -51,17 +54,18 @@ Implémenter les règles complètes de **Dungeons & Dragons 5e** avec calculs au
 
 ## 📝 User Stories
 
-| ID | Titre | Statut | Story Points | Priorité |
-|----|-------|--------|--------------|----------|
-| [US-049](./US-049-creation-personnage-dnd.md) | Création personnage D&D | 📝 Planifié | 8 | P3 |
-| [US-050](./US-050-calculs-caracteristiques.md) | Calculs automatiques caractéristiques | 📝 Planifié | 5 | P3 |
-| [US-051](./US-051-progression-niveaux.md) | Progression par niveaux | 📝 Planifié | 5 | P3 |
-| [US-052](./US-052-monstres-dnd.md) | Monstres D&D et CR | 📝 Planifié | 8 | P3 |
-| [US-053](./US-053-combat-initiative-auto.md) | Initiative automatique D&D | 📝 Planifié | 3 | P3 |
-| [US-054](./US-054-jets-attaque-auto.md) | Jets d'attaque automatiques | 📝 Planifié | 8 | P3 |
-| [US-055](./US-055-degats-automatiques.md) | Calcul dégâts automatiques | 📝 Planifié | 8 | P3 |
-| [US-056](./US-056-sorts-dnd.md) | Sorts D&D avec emplacements | 📝 Planifié | 5 | P3 |
-| [US-057](./US-057-equipements-dnd.md) | Équipements D&D (armes/armures) | 📝 Planifié | 5 | P3 |
+| ID | Titre | Statut | Priorité |
+|----|-------|--------|----------|
+| [US-049](./US-049-fiche-personnage-dnd.md) | Fiche personnage D&D complète | ⏳ Futur | P3 |
+| [US-050](./US-050-races-dnd.md) | Races D&D | ⏳ Futur | P3 |
+| [US-051](./US-051-classes-dnd.md) | Classes D&D | ⏳ Futur | P3 |
+| [US-052](./US-052-jets-competences.md) | Jets de compétences | ⏳ Futur | P3 |
+| [US-053](./US-053-avantage-desavantage.md) | Avantage / Désavantage | ⏳ Futur | P3 |
+| [US-055](./US-055-actions-bonus-reactions.md) | Actions bonus et réactions | ⏳ Futur | P3 |
+| [US-056](./US-056-conditions-etats.md) | Conditions et états | ⏳ Futur | P3 |
+| [US-057](./US-057-repos-court-long.md) | Repos court / long | ⏳ Futur | P3 |
+
+> **US-054 (XP / Montée de niveau)** : Retiré du scope — fonctionnalité spécifique D&D, sera reconsidérée lors de l'implémentation D&D avancée.
 
 ---
 

@@ -4,7 +4,7 @@
 
 - **Phase** : Phase 0 (MVP Core)
 - **Priorité** : P0 - Critique
-- **Statut** : 🔄 En cours
+- **Statut** : ✅ Majorité implémentée
 - **Estimation totale** : 34 Story Points
 
 ---
@@ -30,18 +30,18 @@ Mettre en place un système d'authentification sécurisé et complet permettant 
 
 ## 📝 User Stories
 
-| ID | Titre | Statut | Story Points | Priorité |
-|----|-------|--------|--------------|----------|
-| [US-001](./US-001-inscription-utilisateur.md) | Inscription utilisateur | ✅ Terminé | 5 | P0 |
-| [US-002](./US-002-connexion-utilisateur.md) | Connexion utilisateur | ✅ Terminé | 3 | P0 |
-| [US-003](./US-003-gestion-jwt.md) | Gestion des tokens JWT | ✅ Terminé | 5 | P0 |
-| [US-004](./US-004-profil-utilisateur.md) | Gestion du profil utilisateur | 🔄 En cours | 3 | P0 |
-| [US-005](./US-005-reset-password.md) | Réinitialisation mot de passe | 📝 Planifié | 5 | P1 |
-| [US-006](./US-006-gestion-roles.md) | Gestion multi-rôles | 📝 Planifié | 3 | P0 |
-| [US-007](./US-007-refresh-token.md) | Refresh token JWT | 📝 Planifié | 3 | P1 |
-| [US-008](./US-008-deconnexion.md) | Déconnexion sécurisée | 📝 Planifié | 2 | P0 |
-| [US-009](./US-009-validation-email.md) | Validation d'email | 📝 Planifié | 3 | P2 |
-| [US-010](./US-010-gestion-sessions.md) | Gestion des sessions actives | 📝 Planifié | 2 | P2 |
+| ID | Titre | Statut | Priorité |
+|----|-------|--------|----------|
+| [US-001](./US-001-inscription-utilisateur.md) | Inscription utilisateur | ✅ Terminé | P0 |
+| [US-002](./US-002-connexion-utilisateur.md) | Connexion utilisateur | ✅ Terminé | P0 |
+| [US-003](./US-003-gestion-jwt.md) | Gestion des tokens JWT | ✅ Terminé | P0 |
+| [US-004](./US-004-profil-utilisateur.md) | Gestion du profil utilisateur | ✅ Terminé | P0 |
+| [US-005](./US-005-reset-password.md) | Réinitialisation mot de passe | ⏳ Planifié | P1 |
+| [US-006](./US-006-gestion-roles.md) | Gestion multi-rôles (MJ/Joueur) | ✅ Terminé (implicite par contexte monde) | P0 |
+| [US-007](./US-007-refresh-token.md) | Refresh token JWT | ✅ Terminé | P1 |
+| [US-008](./US-008-deconnexion.md) | Déconnexion sécurisée | ✅ Terminé | P0 |
+| [US-009](./US-009-validation-email.md) | Validation d'email | ⏳ Planifié | P2 |
+| [US-010](./US-010-gestion-sessions.md) | Gestion des sessions actives | ✅ Terminé (in-app) | P2 |
 
 ---
 
@@ -109,9 +109,8 @@ Mettre en place un système d'authentification sécurisé et complet permettant 
 ## 📈 Progression
 
 ```
-Complété : [██████░░░░] 60% (6/10 US)
-En cours  : 1 US
-Planifié  : 3 US
+Complété : [████████░░] 80% (8/10 US)
+Planifié  : 2 US (reset password, validation email)
 ```
 
 ---

@@ -4,7 +4,7 @@
 
 - **Phase** : Phase 0 (MVP Core)
 - **Priorité** : P0 - Critique
-- **Statut** : 📝 Planifié
+- **Statut** : ✅ Majorité implémentée
 - **Estimation totale** : 48 Story Points
 
 ---
@@ -31,20 +31,20 @@ Permettre aux Maîtres du Jeu (MJ) de créer et gérer des campagnes complètes,
 
 ## 📝 User Stories
 
-| ID | Titre | Statut | Story Points | Priorité |
-|----|-------|--------|--------------|----------|
-| [US-011](./US-011-creation-campagne.md) | Création de campagne | 📝 Planifié | 5 | P0 |
-| [US-012](./US-012-modification-campagne.md) | Modification de campagne | 📝 Planifié | 3 | P0 |
-| [US-013](./US-013-liste-campagnes.md) | Liste des campagnes | 📝 Planifié | 3 | P0 |
-| [US-014](./US-014-creation-chapitres.md) | Création et gestion des chapitres | 📝 Planifié | 5 | P0 |
-| [US-015](./US-015-invitation-joueurs.md) | Invitation de joueurs | 📝 Planifié | 5 | P0 |
-| [US-016](./US-016-acceptation-invitation.md) | Acceptation d'invitation | 📝 Planifié | 3 | P0 |
-| [US-017](./US-017-selection-personnage.md) | Sélection personnage pour campagne | 📝 Planifié | 3 | P0 |
-| [US-018](./US-018-lancement-session.md) | Lancement de session | 📝 Planifié | 8 | P0 |
-| [US-019](./US-019-progression-chapitres.md) | Progression par chapitres | 📝 Planifié | 5 | P1 |
-| [US-020](./US-020-auto-sauvegarde.md) | Auto-sauvegarde de session | 📝 Planifié | 3 | P1 |
-| [US-021](./US-021-historique-sessions.md) | Historique des sessions | 📝 Planifié | 3 | P2 |
-| [US-022](./US-022-gestion-joueurs.md) | Gestion des joueurs | 📝 Planifié | 2 | P1 |
+| ID | Titre | Statut | Priorité |
+|----|-------|--------|----------|
+| [US-011](./US-011-creation-campagne.md) | Création de campagne | ✅ Terminé | P0 |
+| [US-012](./US-012-modification-campagne.md) | Modification de campagne | ✅ Terminé | P0 |
+| [US-013](./US-013-liste-campagnes.md) | Liste des campagnes | ✅ Terminé | P0 |
+| [US-014](./US-014-creation-chapitres.md) | Création et gestion des chapitres | ✅ Terminé | P0 |
+| [US-015](./US-015-invitation-joueurs.md) | Invitation de joueurs (lien + QR code) | ✅ Terminé | P0 |
+| [US-016](./US-016-acceptation-invitation.md) | Acceptation d'invitation (monde) | ✅ Terminé | P0 |
+| [US-017](./US-017-selection-personnage.md) | Sélection personnage pour rejoindre | ✅ Terminé | P0 |
+| [US-018](./US-018-lancement-session.md) | Lancement de session + notifications | ✅ Terminé | P0 |
+| [US-019](./US-019-progression-chapitres.md) | Vue MJ chapitres en session | ✅ Terminé (basique) | P1 |
+| [US-020](./US-020-auto-sauvegarde.md) | Auto-sauvegarde de session | ⏳ Planifié | P1 |
+| [US-021](./US-021-historique-sessions.md) | Historique des sessions | ⏳ Planifié | P2 |
+| [US-022](./US-022-gestion-joueurs.md) | Gestion des joueurs dans la session | ✅ Terminé (vue MJ) | P1 |
 
 ---
 
@@ -126,8 +126,8 @@ Permettre aux Maîtres du Jeu (MJ) de créer et gérer des campagnes complètes,
 ## 📈 Progression
 
 ```
-Complété : [░░░░░░░░░░] 0% (0/12 US)
-Planifié  : 12 US
+Complété : [████████░░] 80% (10/12 US)
+Planifié  : 2 US (auto-sauvegarde, historique sessions)
 ```
 
 ---

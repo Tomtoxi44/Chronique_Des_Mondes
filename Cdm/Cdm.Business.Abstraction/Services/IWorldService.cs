@@ -78,4 +78,55 @@ public interface IWorldService
     /// <param name="userId">The user identifier requesting the removal.</param>
     /// <returns>True if removed successfully, false otherwise.</returns>
     Task<bool> RemoveCharacterFromWorldAsync(int worldId, int characterId, int userId);
+
+    /// <summary>
+    /// Generates (or refreshes) an invite token for a world. Only the GM can do this.
+    /// </summary>
+    /// <param name="worldId">The world identifier.</param>
+    /// <param name="userId">The GM user identifier.</param>
+    /// <returns>The invite token string, or null if unauthorized.</returns>
+    Task<string?> GenerateWorldInviteTokenAsync(int worldId, int userId);
+
+    /// <summary>
+    /// Gets a world by its invite token (to display info before joining).
+    /// </summary>
+    /// <param name="inviteToken">The invite token.</param>
+    /// <returns>The world DTO, or null if token is invalid/expired.</returns>
+    Task<WorldDto?> GetWorldByInviteTokenAsync(string inviteToken);
+
+    /// <summary>
+    /// Joins a world with a character using an invite token.
+    /// Locks the character and creates a WorldCharacter entry.
+    /// </summary>
+    /// <param name="inviteToken">The invite token.</param>
+    /// <param name="characterId">The character to bring into the world.</param>
+    /// <param name="userId">The player user identifier.</param>
+    /// <returns>The world character DTO, or null if failed.</returns>
+    Task<WorldCharacterDto?> JoinWorldAsync(string inviteToken, int characterId, int userId);
+
+    /// <summary>
+    /// Gets the current user's world character for a specific world.
+    /// </summary>
+    /// <param name="worldId">The world identifier.</param>
+    /// <param name="userId">The player user identifier.</param>
+    /// <returns>The world character DTO, or null if not found.</returns>
+    Task<WorldCharacterDto?> GetMyWorldCharacterAsync(int worldId, int userId);
+
+    /// <summary>
+    /// Updates the current user's world character profile (game-specific stats).
+    /// </summary>
+    /// <param name="worldId">The world identifier.</param>
+    /// <param name="dto">The update data.</param>
+    /// <param name="userId">The player user identifier.</param>
+    /// <returns>The updated world character DTO, or null if not found/unauthorized.</returns>
+    Task<WorldCharacterDto?> UpdateMyWorldCharacterAsync(int worldId, UpdateWorldCharacterProfileDto dto, int userId);
+
+    /// <summary>
+    /// Gets campaigns in a world accessible to a member (GM or player).
+    /// Players see campaign title + description only (no chapter content).
+    /// </summary>
+    /// <param name="worldId">The world identifier.</param>
+    /// <param name="userId">The user identifier (must be GM or world member).</param>
+    /// <returns>List of campaigns visible to the member.</returns>
+    Task<IEnumerable<CampaignDto>> GetWorldCampaignsForMemberAsync(int worldId, int userId);
 }
