@@ -3,7 +3,6 @@ using Cdm.Business.Abstraction.Services;
 using Cdm.Business.Common.Services;
 using Cdm.Common.Services;
 using Cdm.Data.Common;
-using Cdm.Migrations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -22,10 +21,6 @@ builder.Services.AddOpenApi();
 
 // Configure Database
 builder.AddSqlServerDbContext<AppDbContext>("DefaultConnection");
-
-// Register MigrationsContext on the same connection to run migrations at startup
-builder.Services.AddDbContext<MigrationsContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure JWT Authentication
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"];
@@ -114,27 +109,14 @@ builder.Services.AddSignalR(options =>
 
 var app = builder.Build();
 
-// Apply pending migrations automatically on startup (Production)
+// Apply schema safety net on startup (Production)
+// Ensures critical tables exist even if migration history is out of sync (ghost migration fix)
 if (app.Environment.IsProduction())
 {
     using var scope = app.Services.CreateScope();
-    var migrationsContext = scope.ServiceProvider.GetRequiredService<MigrationsContext>();
     var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-    try
-    {
-        logger.LogInformation("Applying pending database migrations...");
-        await migrationsContext.Database.MigrateAsync();
-        logger.LogInformation("Database migrations applied successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while applying database migrations.");
-        throw;
-    }
-
-    // Safety net: ensure critical tables exist even if migration history is out of sync
     try
     {
         logger.LogInformation("Ensuring critical schema objects exist...");
@@ -192,7 +174,7 @@ END
     catch (Exception ex)
     {
         logger.LogError(ex, "An error occurred while ensuring critical schema objects.");
-        throw;
+        // Do not throw — allow app to start even if safety net fails
     }
 }
 
