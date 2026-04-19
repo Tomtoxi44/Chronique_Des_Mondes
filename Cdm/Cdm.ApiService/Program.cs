@@ -93,6 +93,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<INpcService, NpcService>();
 // Email service is optional for MVP
 // builder.Services.AddScoped<IEmailService, AzureEmailService>();
 
@@ -152,6 +153,7 @@ app.MapEventEndpoints();
 app.MapAchievementEndpoints();
 app.MapNotificationEndpoints();
 app.MapSessionEndpoints();
+app.MapNpcEndpoints();
 
 // Map SignalR hubs
 app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");
