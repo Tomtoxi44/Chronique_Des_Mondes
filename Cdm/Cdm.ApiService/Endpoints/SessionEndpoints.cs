@@ -61,6 +61,11 @@ public static class SessionEndpoints
         group.MapPut("/{id:int}/chapter", UpdateCurrentChapterAsync)
             .WithName("UpdateCurrentChapter")
             .WithOpenApi();
+
+        // PUT /api/sessions/{id}/leave - Player leaves session
+        group.MapPut("/{id:int}/leave", LeaveSessionAsync)
+            .WithName("LeaveSession")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> StartSessionAsync(
@@ -220,6 +225,29 @@ public static class SessionEndpoints
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating chapter for session {SessionId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> LeaveSessionAsync(
+        int id,
+        [FromServices] ISessionService sessionService,
+        ILogger<SessionEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var left = await sessionService.LeaveSessionAsync(id, userId.Value);
+            if (!left) return Results.BadRequest(new { Error = "Failed to leave session." });
+
+            return Results.NoContent();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error leaving session {SessionId}", id);
             return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
         }
     }

@@ -5,14 +5,16 @@ using Cdm.Web.Resources;
 using Cdm.Web.Services;
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.State;
+using Cdm.Web.Services.Storage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
 
 namespace Cdm.Web.Components.Layout;
 
-public partial class MainLayout : IDisposable
+public partial class MainLayout : IAsyncDisposable
 {
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
@@ -21,6 +23,7 @@ public partial class MainLayout : IDisposable
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private NotificationApiClient NotificationClient { get; set; } = default!;
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
+    [Inject] private ILocalStorageService LocalStorage { get; set; } = default!;
 
     private bool IsCollapsed = false;
     private bool _wasAutoCollapsed = false;
@@ -40,6 +43,13 @@ public partial class MainLayout : IDisposable
     private bool HasActiveSession = false;
     private int? ActiveSessionId;
 
+    // Toast d'invitation de session
+    private NotificationModel? SessionInviteToast;
+    private int? SessionInviteId;
+
+    // SignalR hub
+    private HubConnection? _notifHub;
+
     protected override async Task OnInitializedAsync()
     {
         NavContext.OnContextChanged += OnContextChanged;
@@ -57,11 +67,76 @@ public partial class MainLayout : IDisposable
             UserInitials = BuildInitials(UserName);
             UnreadNotificationCount = await NotificationClient.GetUnreadCountAsync();
             await RefreshActiveSessionBadgeAsync();
+            await ConnectToNotificationHubAsync();
         }
+    }
+
+    private async Task ConnectToNotificationHubAsync()
+    {
+        try
+        {
+            var token = await LocalStorage.GetItemAsync("auth_token");
+            if (string.IsNullOrEmpty(token)) return;
+
+            var hubUrl = NotificationClient.GetApiBaseUrl() + "/hubs/notifications";
+            _notifHub = new HubConnectionBuilder()
+                .WithUrl(hubUrl, opts => opts.AccessTokenProvider = () => Task.FromResult<string?>(token))
+                .WithAutomaticReconnect()
+                .Build();
+
+            _notifHub.On<NotificationData>("ReceiveNotification", OnReceiveNotification);
+
+            await _notifHub.StartAsync();
+        }
+        catch { /* ignore — hub indisponible ou token absent */ }
+    }
+
+    private void OnReceiveNotification(NotificationData data)
+    {
+        var model = new NotificationModel
+        {
+            Id = data.Id ?? 0,
+            Type = Enum.TryParse<NotificationType>(data.Type, out var t) ? t : NotificationType.SystemAnnouncement,
+            Title = data.Title,
+            Message = data.Message,
+            ActionUrl = data.ActionUrl,
+            IsRead = false,
+            CreatedAt = data.Timestamp
+        };
+
+        Notifications.Insert(0, model);
+        UnreadNotificationCount++;
+
+        if (data.Type == nameof(NotificationType.SessionStarting) && data.ActionUrl != null)
+        {
+            SessionInviteToast = model;
+            SessionInviteId = data.Id;
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void NavigateToInvitedSession()
+    {
+        if (SessionInviteToast?.ActionUrl != null)
+            Nav.NavigateTo(SessionInviteToast.ActionUrl);
+        SessionInviteToast = null;
+    }
+
+    private void DismissSessionToast()
+    {
+        SessionInviteToast = null;
+    }
+
+    private void CloseAllDropdowns()
+    {
+        IsNotificationOpen = false;
+        IsDropdownOpen = false;
     }
 
     private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
+        CloseAllDropdowns();
         await RefreshActiveSessionBadgeAsync();
         await InvokeAsync(StateHasChanged);
     }
@@ -243,9 +318,13 @@ public partial class MainLayout : IDisposable
         return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         NavContext.OnContextChanged -= OnContextChanged;
         Nav.LocationChanged -= OnLocationChanged;
+        if (_notifHub != null)
+        {
+            await _notifHub.DisposeAsync();
+        }
     }
 }

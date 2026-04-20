@@ -71,4 +71,12 @@ public interface ISessionService
     /// <param name="userId">The GM user identifier.</param>
     /// <returns>The updated session DTO, or null if failed.</returns>
     Task<SessionDto?> UpdateCurrentChapterAsync(int sessionId, int? chapterId, int userId);
+
+    /// <summary>
+    /// Marks the player as having left the session voluntarily.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <param name="userId">The player user identifier.</param>
+    /// <returns>True if successful, false otherwise.</returns>
+    Task<bool> LeaveSessionAsync(int sessionId, int userId);
 }

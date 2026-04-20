@@ -711,6 +711,59 @@
 }
 
 /* ============================================
+   DROPDOWN BACKDROP (click-outside to close)
+   ============================================ */
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1055;
+  background: transparent;
+}
+
+/* ============================================
+   SESSION INVITE TOAST
+   ============================================ */
+.session-invite-toast {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  right: var(--spacing-xl);
+  z-index: 1080;
+  background: var(--color-surface-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--border-radius-lg, 12px);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  max-width: 320px;
+  animation: slideInToast 0.3s ease;
+}
+
+.session-invite-toast:hover { background: var(--color-surface-secondary); }
+
+.session-invite-toast-icon { color: var(--color-primary); font-size: 1.5rem; flex-shrink: 0; }
+.session-invite-toast-title { font-weight: 600; font-size: var(--font-size-sm); }
+.session-invite-toast-msg { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+
+.session-invite-toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+@keyframes slideInToast {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ============================================
    OVERLAY MOBILE
    ============================================ */
 .sidebar-overlay {

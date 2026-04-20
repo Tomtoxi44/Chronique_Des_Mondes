@@ -324,6 +324,34 @@ public class SessionService(AppDbContext dbContext, ILogger<SessionService> logg
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<bool> LeaveSessionAsync(int sessionId, int userId)
+    {
+        try
+        {
+            var participant = await this.dbContext.SessionParticipants
+                .Include(p => p.WorldCharacter).ThenInclude(wc => wc.Character)
+                .FirstOrDefaultAsync(p => p.SessionId == sessionId && p.WorldCharacter.Character.UserId == userId);
+
+            if (participant == null)
+            {
+                this.logger.LogWarning("Participant for user {UserId} not found in session {SessionId}", userId, sessionId);
+                return false;
+            }
+
+            participant.Status = SessionParticipantStatus.Left;
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation("User {UserId} left session {SessionId}", userId, sessionId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error leaving session {SessionId} for user {UserId}", sessionId, userId);
+            return false;
+        }
+    }
+
     private async Task<SessionDto?> BuildSessionDtoAsync(int sessionId)
     {
         var session = await this.dbContext.Sessions

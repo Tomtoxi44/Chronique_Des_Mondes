@@ -107,6 +107,11 @@
   --color-bg-card:      #1f1f35;
   --color-bg-input:     #1a1a30;
 
+  /* Surface aliases (used by dropdowns, panels, notifications) */
+  --color-surface-primary:   var(--color-bg-card);
+  --color-surface-secondary: var(--color-bg-elevated);
+  --color-surface-alt:       var(--color-bg-secondary);
+
   --color-text-primary:   #f1f5f9;
   --color-text-secondary: #cbd5e1;
   --color-text-muted:     #94a3b8;
@@ -138,6 +143,11 @@
   --color-bg-elevated:  #ffffff;
   --color-bg-card:      #ffffff;
   --color-bg-input:     #ffffff;
+
+  /* Surface aliases */
+  --color-surface-primary:   var(--color-bg-card);
+  --color-surface-secondary: var(--color-bg-elevated);
+  --color-surface-alt:       var(--color-bg-secondary);
 
   --color-text-primary:   #0f172a;
   --color-text-secondary: #334155;

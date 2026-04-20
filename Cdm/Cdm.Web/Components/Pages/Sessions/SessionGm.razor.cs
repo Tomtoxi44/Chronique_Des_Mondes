@@ -4,8 +4,10 @@ using Cdm.Web.Resources;
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.State;
 using Cdm.Web.Services;
+using Cdm.Web.Services.Storage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
 using System.Security.Claims;
@@ -26,6 +28,7 @@ public partial class SessionGm : IAsyncDisposable
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private ILocalStorageService LocalStorage { get; set; } = default!;
 
     private SessionDto? Session;
     private List<ChapterDto> Chapters = new();
@@ -37,9 +40,17 @@ public partial class SessionGm : IAsyncDisposable
     private bool IsEnding = false;
     private string? ErrorMessage;
     private int CurrentUserId;
+    private string? CurrentUserName;
 
     private DotNetObjectReference<SessionGm>? _dotNetRef;
     private bool _needsPreviewClickInit = false;
+
+    // SignalR
+    private HubConnection? _hub;
+    private bool IsHubConnected => _hub?.State == HubConnectionState.Connected;
+    private List<ChatEntry> ChatEntries { get; set; } = new();
+    private string ChatInput = "";
+    private int? RollingDie;
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,6 +58,7 @@ public partial class SessionGm : IAsyncDisposable
         var user = authState.User;
         if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid))
             CurrentUserId = uid;
+        CurrentUserName = user.Identity?.Name ?? "MJ";
 
         await LoadAsync();
     }
@@ -65,20 +77,15 @@ public partial class SessionGm : IAsyncDisposable
             return;
         }
 
-        // Redirect if not the GM
         if (Session.StartedById != CurrentUserId)
         {
             Nav.NavigateTo($"/sessions/{SessionId}/player");
             return;
         }
 
-        // Load chapters for the campaign
         Chapters = await ChapterClient.GetChaptersByCampaignAsync(Session.CampaignId);
-
-        // Load world character sheets for the GM
         WorldCharacters = await WorldClient.GetWorldCharactersTypedAsync(Session.WorldId);
 
-        // Pre-select current chapter if set
         if (Session.CurrentChapterId.HasValue)
         {
             SelectedChapter = Chapters.FirstOrDefault(c => c.Id == Session.CurrentChapterId.Value);
@@ -88,6 +95,68 @@ public partial class SessionGm : IAsyncDisposable
 
         NavContext.ClearContext();
         IsLoading = false;
+
+        await ConnectToHubAsync();
+    }
+
+    private async Task ConnectToHubAsync()
+    {
+        if (Session == null) return;
+        var token = await LocalStorage.GetItemAsync("auth_token");
+        if (string.IsNullOrEmpty(token)) return;
+
+        var baseUrl = SessionClient.GetApiBaseUrl();
+        _hub = new HubConnectionBuilder()
+            .WithUrl($"{baseUrl}/hubs/session", options =>
+            {
+                options.AccessTokenProvider = () => Task.FromResult<string?>(token);
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<HubMessageDto>("ReceiveMessage", msg =>
+        {
+            ChatEntries.Add(new ChatEntry("text", msg.UserName ?? "?", msg.Message, null, null, msg.Timestamp));
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<HubDiceDto>("DiceRolled", dto =>
+        {
+            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp));
+            InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await _hub.StartAsync();
+            await _hub.InvokeAsync("JoinSession", SessionId);
+        }
+        catch { }
+    }
+
+    private async Task SendMessage()
+    {
+        if (_hub == null || !IsHubConnected || string.IsNullOrWhiteSpace(ChatInput)) return;
+        var msg = ChatInput.Trim();
+        ChatInput = "";
+        try { await _hub.InvokeAsync("SendMessage", SessionId, msg); }
+        catch { }
+    }
+
+    private async Task RollDice(int faces)
+    {
+        if (_hub == null || !IsHubConnected || RollingDie.HasValue) return;
+        RollingDie = faces;
+        StateHasChanged();
+        await Task.Delay(400);
+        var result = Random.Shared.Next(1, faces + 1);
+        try { await _hub.InvokeAsync("RollDice", SessionId, $"D{faces}", 1, new[] { result }, 0, (string?)null); }
+        catch
+        {
+            ChatEntries.Add(new ChatEntry("dice", CurrentUserName ?? "MJ", null, $"D{faces}", new[] { result }, DateTime.UtcNow));
+        }
+        RollingDie = null;
+        StateHasChanged();
     }
 
     private async Task SelectChapter(ChapterDto chapter)
@@ -105,15 +174,12 @@ public partial class SessionGm : IAsyncDisposable
     private async Task NavigateChapter(int delta)
     {
         if (Session == null || Chapters.Count == 0) return;
-
         var ordered = Chapters.OrderBy(c => c.ChapterNumber).ToList();
         int currentIndex = SelectedChapter != null
             ? ordered.IndexOf(ordered.FirstOrDefault(c => c.Id == SelectedChapter.Id)!)
             : -1;
-
         int nextIndex = currentIndex + delta;
         if (nextIndex < 0 || nextIndex >= ordered.Count) return;
-
         await SelectChapter(ordered[nextIndex]);
     }
 
@@ -144,7 +210,6 @@ public partial class SessionGm : IAsyncDisposable
         var pcMap = WorldCharacters.ToDictionary(c => c.CharacterId, c => c);
         var escaped = text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
-        // Render NPC mentions: @[Name](npc:id)
         var rendered = System.Text.RegularExpressions.Regex.Replace(
             escaped,
             @"@\[([^\]]+)\]\(npc:(\d+)\)",
@@ -159,7 +224,6 @@ public partial class SessionGm : IAsyncDisposable
                 return $"<span class=\"npc-mention\" data-mention-type=\"npc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
             });
 
-        // Render PJ mentions: @[Name](pc:id)
         rendered = System.Text.RegularExpressions.Regex.Replace(
             rendered,
             @"@\[([^\]]+)\]\(pc:(\d+)\)",
@@ -183,7 +247,6 @@ public partial class SessionGm : IAsyncDisposable
     {
         if (type == "npc")
         {
-            // Scroll to NPC in the list
             var npc = ChapterNpcs.FirstOrDefault(n => n.Id == id);
             if (npc != null)
                 _ = JS.InvokeVoidAsync("document.getElementById", $"gm-npc-{id}");
@@ -205,7 +268,7 @@ public partial class SessionGm : IAsyncDisposable
                 var module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/mention.js");
                 await module.InvokeVoidAsync("initPreviewClicks", "session-chapter-preview-content", _dotNetRef);
             }
-            catch { /* ignore — prerendering or JS unavailable */ }
+            catch { }
         }
     }
 
@@ -237,6 +300,11 @@ public partial class SessionGm : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _dotNetRef?.Dispose();
-        await ValueTask.CompletedTask;
+        if (_hub != null)
+            await _hub.DisposeAsync();
     }
+
+    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp);
+    private record HubMessageDto(int UserId, string? UserName, string? Message, DateTime Timestamp);
+    private record HubDiceDto(int UserId, string? UserName, string? DiceType, int Count, int[]? Results, int Modifier, int Total, string? Reason, DateTime Timestamp);
 }

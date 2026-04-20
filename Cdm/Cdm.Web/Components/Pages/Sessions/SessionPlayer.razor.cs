@@ -4,15 +4,17 @@ using Cdm.Web.Resources;
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.State;
 using Cdm.Web.Services;
+using Cdm.Web.Services.Storage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Localization;
 using System.Security.Claims;
 using System.Text.Json;
 
 namespace Cdm.Web.Components.Pages.Sessions;
 
-public partial class SessionPlayer
+public partial class SessionPlayer : IAsyncDisposable
 {
     [Parameter] public int SessionId { get; set; }
 
@@ -22,19 +24,28 @@ public partial class SessionPlayer
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
+    [Inject] private ILocalStorageService LocalStorage { get; set; } = default!;
 
     private SessionDto? Session;
     private WorldCharacterDto? MyCharacter;
     private SessionParticipantDto? MyParticipant;
     private bool IsLoading = true;
-    private bool IsJoining = false;
+    private bool IsLeaving = false;
     private string? ErrorMessage;
     private int CurrentUserId;
+    private string? CurrentUserName;
 
-    private string ActiveTab = "character"; // "character" | "inventory" | "gametype"
+    private string ActiveTab = "character";
     private Dictionary<string, string> GameSpecificFields { get; set; } = new();
     private List<InventoryItem> Inventory { get; set; } = new();
     private string NewItemName = "";
+
+    // SignalR
+    private HubConnection? _hub;
+    private bool IsHubConnected => _hub?.State == HubConnectionState.Connected;
+    private List<ChatEntry> ChatEntries { get; set; } = new();
+    private string ChatInput = "";
+    private int? RollingDie;
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,6 +53,7 @@ public partial class SessionPlayer
         var user = authState.User;
         if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid))
             CurrentUserId = uid;
+        CurrentUserName = user.Identity?.Name ?? "Joueur";
 
         await LoadAsync();
     }
@@ -70,8 +82,90 @@ public partial class SessionPlayer
         MyCharacter = await WorldClient.GetMyWorldCharacterAsync(Session.WorldId);
         ParseGameSpecificData();
 
+        // Auto-join si status == Invited
+        if (MyParticipant?.Status == SessionParticipantStatus.Invited && MyCharacter != null)
+        {
+            var joined = await SessionClient.JoinSessionAsync(Session.Id, MyCharacter.Id);
+            if (joined != null)
+            {
+                Session = joined;
+                MyParticipant = Session.Participants.FirstOrDefault(p => p.UserId == CurrentUserId);
+            }
+        }
+
         NavContext.ClearContext();
         IsLoading = false;
+
+        await ConnectToHubAsync();
+    }
+
+    private async Task ConnectToHubAsync()
+    {
+        if (Session == null) return;
+        var token = await LocalStorage.GetItemAsync("auth_token");
+        if (string.IsNullOrEmpty(token)) return;
+
+        var baseUrl = SessionClient.GetApiBaseUrl();
+        _hub = new HubConnectionBuilder()
+            .WithUrl($"{baseUrl}/hubs/session", options =>
+            {
+                options.AccessTokenProvider = () => Task.FromResult<string?>(token);
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<HubMessageDto>("ReceiveMessage", msg =>
+        {
+            ChatEntries.Add(new ChatEntry("text", msg.UserName ?? "?", msg.Message, null, null, msg.Timestamp));
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<HubDiceDto>("DiceRolled", dto =>
+        {
+            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp));
+            InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            await _hub.StartAsync();
+            await _hub.InvokeAsync("JoinSession", SessionId);
+        }
+        catch { /* hub optionnel : la session fonctionne sans */ }
+    }
+
+    private async Task SendMessage()
+    {
+        if (_hub == null || !IsHubConnected || string.IsNullOrWhiteSpace(ChatInput)) return;
+        var msg = ChatInput.Trim();
+        ChatInput = "";
+        try { await _hub.InvokeAsync("SendMessage", SessionId, msg); }
+        catch { }
+    }
+
+    private async Task RollDice(int faces)
+    {
+        if (_hub == null || !IsHubConnected || RollingDie.HasValue) return;
+        RollingDie = faces;
+        StateHasChanged();
+        await Task.Delay(400);
+        var result = Random.Shared.Next(1, faces + 1);
+        try { await _hub.InvokeAsync("RollDice", SessionId, $"D{faces}", 1, new[] { result }, 0, (string?)null); }
+        catch
+        {
+            ChatEntries.Add(new ChatEntry("dice", CurrentUserName ?? "Joueur", null, $"D{faces}", new[] { result }, DateTime.UtcNow));
+        }
+        RollingDie = null;
+        StateHasChanged();
+    }
+
+    private async Task LeaveSession()
+    {
+        if (Session == null) return;
+        IsLeaving = true;
+        var ok = await SessionClient.LeaveSessionAsync(Session.Id);
+        IsLeaving = false;
+        if (ok) Nav.NavigateTo($"/worlds/{Session.WorldId}");
     }
 
     private void ParseGameSpecificData()
@@ -86,13 +180,9 @@ public partial class SessionPlayer
             foreach (var kv in dict)
             {
                 if (kv.Key == "inventory" && kv.Value.ValueKind == JsonValueKind.Array)
-                {
                     Inventory = kv.Value.Deserialize<List<InventoryItem>>() ?? new();
-                }
                 else
-                {
                     GameSpecificFields[kv.Key] = kv.Value.ToString();
-                }
             }
         }
         catch { }
@@ -123,19 +213,6 @@ public partial class SessionPlayer
         if (result != null) MyCharacter = result;
     }
 
-    private async Task JoinSession()
-    {
-        if (Session == null || MyCharacter == null) return;
-        IsJoining = true;
-        var result = await SessionClient.JoinSessionAsync(Session.Id, MyCharacter.Id);
-        if (result != null)
-        {
-            Session = result;
-            MyParticipant = Session.Participants.FirstOrDefault(p => p.UserId == CurrentUserId);
-        }
-        IsJoining = false;
-    }
-
     private static string GetStatusLabel(SessionStatus status) => status switch
     {
         SessionStatus.Active => "En cours",
@@ -152,6 +229,14 @@ public partial class SessionPlayer
         _ => "status-draft"
     };
 
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub != null)
+        {
+            await _hub.DisposeAsync();
+        }
+    }
+
     private record InventoryItem
     {
         [System.Text.Json.Serialization.JsonPropertyName("name")]
@@ -159,4 +244,9 @@ public partial class SessionPlayer
         [System.Text.Json.Serialization.JsonPropertyName("qty")]
         public int Qty { get; set; } = 1;
     }
+
+    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp);
+    private record HubMessageDto(int UserId, string? UserName, string? Message, DateTime Timestamp);
+    private record HubDiceDto(int UserId, string? UserName, string? DiceType, int Count, int[]? Results, int Modifier, int Total, string? Reason, DateTime Timestamp);
 }
+
