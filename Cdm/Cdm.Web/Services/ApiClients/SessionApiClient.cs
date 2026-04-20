@@ -145,4 +145,23 @@ public class SessionApiClient
             return null;
         }
     }
+
+    /// <summary>Leave a session as a player.</summary>
+    public async Task<bool> LeaveSessionAsync(int sessionId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.PutAsync($"api/sessions/{sessionId}/leave", null);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error leaving session {SessionId}", sessionId);
+            return false;
+        }
+    }
+
+    /// <summary>Returns the API base URL for constructing hub URLs.</summary>
+    public string GetApiBaseUrl() => _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? string.Empty;
 }

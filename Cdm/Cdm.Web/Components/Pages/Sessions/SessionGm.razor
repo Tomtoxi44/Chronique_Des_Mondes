@@ -256,6 +256,73 @@ else if (Session != null)
                         <p style="font-size: var(--font-size-sm);">@Session.WelcomeMessage</p>
                     </div>
                 }
+
+                <!-- Chat + Dés MJ -->
+                <div class="gm-chat-section">
+                    <div class="session-sidebar-header" style="border-top: 1px solid var(--color-border); margin-top: var(--spacing-sm);">
+                        <i class="bi bi-chat-dots"></i>
+                        <span>Chat & Dés</span>
+                        @if (!IsHubConnected)
+                        {
+                            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-left: auto;">
+                                <i class="bi bi-wifi-off"></i>
+                            </span>
+                        }
+                    </div>
+                    <div class="gm-chat-feed" id="gm-chat-feed">
+                        @if (ChatEntries.Count == 0)
+                        {
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); font-style: italic; text-align: center; padding: var(--spacing-sm);">
+                                Aucun message.
+                            </p>
+                        }
+                        @foreach (var entry in ChatEntries)
+                        {
+                            <div class="chat-entry">
+                                <div class="chat-entry-meta">
+                                    <span class="chat-entry-author">@entry.UserName</span>
+                                    <span class="chat-entry-time">@entry.Timestamp.ToLocalTime().ToString("HH:mm")</span>
+                                </div>
+                                @if (entry.Type == "text")
+                                {
+                                    <span class="chat-entry-text">@entry.Text</span>
+                                }
+                                else if (entry.Type == "dice" && entry.Results != null)
+                                {
+                                    <div class="chat-entry-dice">
+                                        <span class="chat-dice-type">@entry.DiceType</span>
+                                        <span>→</span>
+                                        <span class="chat-dice-result">@string.Join(", ", entry.Results)</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="gm-dice-row">
+                        @foreach (var faces in new[] { 2, 4, 6, 8, 10, 12, 20, 100 })
+                        {
+                            var f = faces;
+                            <button class="gm-dice-btn @(RollingDie == f ? "rolling" : "")"
+                                    @onclick="() => RollDice(f)"
+                                    disabled="@(!IsHubConnected || RollingDie.HasValue)"
+                                    title="Lancer un D@f">
+                                D@f
+                            </button>
+                        }
+                    </div>
+                    <div class="gm-chat-input-row">
+                        <input class="form-control" style="font-size: var(--font-size-xs);"
+                               placeholder="Envoyer un message…"
+                               @bind="ChatInput"
+                               @bind:event="oninput"
+                               @onkeydown="@(async e => { if (e.Key == "Enter") await SendMessage(); })"
+                               disabled="@(!IsHubConnected)" />
+                        <button class="btn btn-primary btn-sm" @onclick="SendMessage"
+                                disabled="@(!IsHubConnected || string.IsNullOrWhiteSpace(ChatInput))">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </div>
             </aside>
         </div>
     </div>

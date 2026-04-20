@@ -125,5 +125,8 @@ public class NotificationApiClient
         }
     }
 
+    /// <summary>Returns the API base URL for constructing hub URLs.</summary>
+    public string GetApiBaseUrl() => this.httpClient.BaseAddress?.ToString().TrimEnd('/') ?? string.Empty;
+
     private record UnreadCountResponse(int Count);
 }

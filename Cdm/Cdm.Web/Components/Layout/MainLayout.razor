@@ -126,6 +126,27 @@
         <div class="sidebar-overlay visible" @onclick="CloseMobile"></div>
     }
 
+    <!-- OVERLAY FERMETURE DROPDOWNS (click extérieur) -->
+    @if (IsNotificationOpen || IsDropdownOpen)
+    {
+        <div class="dropdown-backdrop" @onclick="CloseAllDropdowns"></div>
+    }
+
+    <!-- TOAST INVITATION SESSION -->
+    @if (SessionInviteToast != null)
+    {
+        <div class="session-invite-toast" @onclick="NavigateToInvitedSession">
+            <div class="session-invite-toast-icon"><i class="bi bi-play-circle-fill"></i></div>
+            <div>
+                <div class="session-invite-toast-title">@SessionInviteToast.Title</div>
+                <div class="session-invite-toast-msg">@SessionInviteToast.Message</div>
+            </div>
+            <button class="session-invite-toast-close" @onclick:stopPropagation="true" @onclick="DismissSessionToast">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    }
+
     <!-- ZONE PRINCIPALE -->
     <div class="app-main-wrapper @GetMainClass()" id="main-content">
 
