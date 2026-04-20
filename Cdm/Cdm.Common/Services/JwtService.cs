@@ -22,7 +22,7 @@ public interface IJwtService
     /// <param name="email">User email</param>
     /// <param name="roles">List of role names assigned to the user</param>
     /// <returns>JWT token string</returns>
-    string GenerateToken(int userId, string email, List<string> roles);
+    string GenerateToken(int userId, string email, List<string> roles, string? nickname = null);
 
     /// <summary>
     /// Validate a JWT token
@@ -67,7 +67,7 @@ public class JwtService : IJwtService
         }
     }
 
-    public string GenerateToken(int userId, string email, List<string> roles)
+    public string GenerateToken(int userId, string email, List<string> roles, string? nickname = null)
     {
         try
         {
@@ -79,6 +79,7 @@ public class JwtService : IJwtService
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Name, nickname ?? email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
             };

@@ -82,8 +82,9 @@ public partial class SessionPlayer : IAsyncDisposable
         MyCharacter = await WorldClient.GetMyWorldCharacterAsync(Session.WorldId);
         ParseGameSpecificData();
 
-        // Auto-join si status == Invited
-        if (MyParticipant?.Status == SessionParticipantStatus.Invited && MyCharacter != null)
+        // Auto-join si status == Invited ou Left (rejoin après avoir quitté)
+        if ((MyParticipant?.Status == SessionParticipantStatus.Invited
+             || MyParticipant?.Status == SessionParticipantStatus.Left) && MyCharacter != null)
         {
             var joined = await SessionClient.JoinSessionAsync(Session.Id, MyCharacter.Id);
             if (joined != null)
@@ -124,6 +125,15 @@ public partial class SessionPlayer : IAsyncDisposable
         {
             ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp));
             InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<object>("SessionEnded", _ =>
+        {
+            InvokeAsync(() =>
+            {
+                Nav.NavigateTo($"/worlds/{Session!.WorldId}");
+                return Task.CompletedTask;
+            });
         });
 
         try
