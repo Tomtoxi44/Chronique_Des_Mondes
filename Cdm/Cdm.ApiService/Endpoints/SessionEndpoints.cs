@@ -6,9 +6,11 @@
 
 namespace Cdm.ApiService.Endpoints;
 
+using Cdm.ApiService.Hubs;
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 /// <summary>
@@ -161,6 +163,7 @@ public static class SessionEndpoints
     private static async Task<IResult> EndSessionAsync(
         int id,
         [FromServices] ISessionService sessionService,
+        [FromServices] IHubContext<SessionHub> hubContext,
         ILogger<SessionEndpointsLogger> logger,
         HttpContext httpContext)
     {
@@ -171,6 +174,9 @@ public static class SessionEndpoints
 
             var ended = await sessionService.EndSessionAsync(id, userId.Value);
             if (!ended) return Results.BadRequest(new { Error = "Failed to end session. Check session ownership." });
+
+            await hubContext.Clients.Group($"chapter_{id}")
+                .SendAsync("SessionEnded", new { SessionId = id, Timestamp = DateTime.UtcNow });
 
             return Results.NoContent();
         }

@@ -97,7 +97,7 @@ public class AuthService : IAuthService
             var roleNames = roles.Select(r => r.Name).ToList();
 
             // Generate JWT token with roles
-            var token = this.jwtService.GenerateToken(user.Id, user.Email, roleNames);
+            var token = this.jwtService.GenerateToken(user.Id, user.Email, roleNames, user.Nickname);
 
             // Send welcome email (optional)
             if (this.emailService != null)
@@ -181,7 +181,7 @@ public class AuthService : IAuthService
                 .ToListAsync();
 
             // Generate JWT token with roles
-            var token = this.jwtService.GenerateToken(user.Id, user.Email, roles);
+            var token = this.jwtService.GenerateToken(user.Id, user.Email, roles, user.Nickname);
 
             // Return success response
             var response = new LoginResponse

@@ -278,7 +278,7 @@ else if (Session != null)
                             <button class="dice-btn @(RollingDie == f ? "rolling" : "")"
                                     @onclick="() => RollDice(f)"
                                     disabled="@(!IsHubConnected || RollingDie.HasValue)">
-                                D@f
+                                D@(f)
                             </button>
                         }
                     </div>

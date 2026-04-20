@@ -305,8 +305,8 @@ else if (Session != null)
                             <button class="gm-dice-btn @(RollingDie == f ? "rolling" : "")"
                                     @onclick="() => RollDice(f)"
                                     disabled="@(!IsHubConnected || RollingDie.HasValue)"
-                                    title="Lancer un D@f">
-                                D@f
+                                    title="Lancer un D@(f)">
+                                D@(f)
                             </button>
                         }
                     </div>
