@@ -1020,7 +1020,7 @@ namespace Cdm.Migrations.Migrations
                     b.HasOne("Cdm.Data.Common.Models.Campaign", "Campaign")
                         .WithMany()
                         .HasForeignKey("CampaignId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Cdm.Data.Common.Models.Chapter", "CurrentChapter")
@@ -1052,7 +1052,7 @@ namespace Cdm.Migrations.Migrations
                     b.HasOne("Cdm.Data.Common.Models.WorldCharacter", "WorldCharacter")
                         .WithMany()
                         .HasForeignKey("WorldCharacterId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Session");

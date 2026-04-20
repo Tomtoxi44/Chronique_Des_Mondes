@@ -33,7 +33,7 @@ BEGIN
         [WelcomeMessage] nvarchar(max) NULL,
         CONSTRAINT [PK_Sessions] PRIMARY KEY ([Id]),
         CONSTRAINT [FK_Sessions_Campaigns_CampaignId] FOREIGN KEY ([CampaignId])
-            REFERENCES [Campaigns] ([Id]) ON DELETE CASCADE,
+            REFERENCES [Campaigns] ([Id]) ON DELETE NO ACTION,
         CONSTRAINT [FK_Sessions_Users_StartedById] FOREIGN KEY ([StartedById])
             REFERENCES [Users] ([Id]) ON DELETE NO ACTION,
         CONSTRAINT [FK_Sessions_Chapters_CurrentChapterId] FOREIGN KEY ([CurrentChapterId])
@@ -59,7 +59,7 @@ BEGIN
         CONSTRAINT [FK_SessionParticipants_Sessions_SessionId] FOREIGN KEY ([SessionId])
             REFERENCES [Sessions] ([Id]) ON DELETE CASCADE,
         CONSTRAINT [FK_SessionParticipants_WorldCharacters_WorldCharacterId] FOREIGN KEY ([WorldCharacterId])
-            REFERENCES [WorldCharacters] ([Id]) ON DELETE CASCADE
+            REFERENCES [WorldCharacters] ([Id]) ON DELETE NO ACTION
     );
     CREATE INDEX [IX_SessionParticipants_SessionId] ON [SessionParticipants] ([SessionId]);
     CREATE INDEX [IX_SessionParticipants_WorldCharacterId] ON [SessionParticipants] ([WorldCharacterId]);

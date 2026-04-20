@@ -381,7 +381,7 @@ public class MigrationsContext : DbContext
             entity.HasOne(s => s.Campaign)
                 .WithMany()
                 .HasForeignKey(s => s.CampaignId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(s => s.StartedBy)
                 .WithMany()
@@ -410,7 +410,7 @@ public class MigrationsContext : DbContext
             entity.HasOne(p => p.WorldCharacter)
                 .WithMany()
                 .HasForeignKey(p => p.WorldCharacterId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(p => p.Status).HasDefaultValue(SessionParticipantStatus.Invited);
         });
