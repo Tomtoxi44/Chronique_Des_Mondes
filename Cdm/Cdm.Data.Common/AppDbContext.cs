@@ -88,6 +88,21 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<NonPlayerCharacter> NonPlayerCharacters { get; set; } = null!;
 
+    /// <summary>
+    /// Gets or sets the refresh tokens.
+    /// </summary>
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the session chat messages.
+    /// </summary>
+    public DbSet<SessionMessage> SessionMessages { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the session dice rolls.
+    /// </summary>
+    public DbSet<SessionDiceRoll> SessionDiceRolls { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

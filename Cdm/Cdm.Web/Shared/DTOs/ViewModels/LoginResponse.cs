@@ -26,6 +26,16 @@ public class LoginResponse
     public string Token { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the refresh token for renewing the JWT.
+    /// </summary>
+    public string RefreshToken { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets when the refresh token expires.
+    /// </summary>
+    public DateTime RefreshTokenExpiry { get; set; }
+
+    /// <summary>
     /// Gets or sets the success message.
     /// </summary>
     public string Message { get; set; } = string.Empty;

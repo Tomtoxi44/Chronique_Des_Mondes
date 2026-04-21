@@ -25,13 +25,13 @@
 
             <div class="form-two-col">
                 <div class="form-group">
-                    <label class="form-label">@L["Characters_Name"] *</label>
-                    <InputText @bind-Value="Model.Name" class="form-control" placeholder="Nom de famille..." />
-                    <ValidationMessage For="() => Model.Name" class="form-error" />
+                    <label class="form-label">@L["Characters_FirstName"] *</label>
+                    <InputText @bind-Value="Model.FirstName" class="form-control" placeholder="Prénom..." />
+                    <ValidationMessage For="() => Model.FirstName" class="form-error" />
                 </div>
                 <div class="form-group">
-                    <label class="form-label">@L["Characters_FirstName"]</label>
-                    <InputText @bind-Value="Model.FirstName" class="form-control" placeholder="Prénom..." />
+                    <label class="form-label">@L["Characters_Name"]</label>
+                    <InputText @bind-Value="Model.Name" class="form-control" placeholder="Nom de famille (optionnel)..." />
                 </div>
             </div>
 

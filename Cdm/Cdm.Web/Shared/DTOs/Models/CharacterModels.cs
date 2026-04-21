@@ -61,17 +61,17 @@ public class CharacterDto
 public class CreateCharacterDto
 {
     /// <summary>
-    /// Gets or sets the character's name (required)
+    /// Gets or sets the character's first name (required)
     /// </summary>
-    [Required(ErrorMessage = "Le nom est requis")]
-    [MaxLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères")]
-    public string Name { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Le prénom est requis")]
+    [MaxLength(100, ErrorMessage = "Le prénom ne peut pas dépasser 100 caractères")]
+    public string FirstName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the character's first name
+    /// Gets or sets the character's last name
     /// </summary>
-    [MaxLength(100, ErrorMessage = "Le prénom ne peut pas dépasser 100 caractères")]
-    public string? FirstName { get; set; }
+    [MaxLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères")]
+    public string? Name { get; set; }
 
     /// <summary>
     /// Gets or sets the character's description
@@ -99,17 +99,17 @@ public class CreateCharacterDto
 public class UpdateCharacterDto
 {
     /// <summary>
-    /// Gets or sets the character's name
+    /// Gets or sets the character's first name (required)
     /// </summary>
-    [Required(ErrorMessage = "Le nom est requis")]
-    [MaxLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères")]
-    public string Name { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Le prénom est requis")]
+    [MaxLength(100, ErrorMessage = "Le prénom ne peut pas dépasser 100 caractères")]
+    public string FirstName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the character's first name
+    /// Gets or sets the character's last name
     /// </summary>
-    [MaxLength(100, ErrorMessage = "Le prénom ne peut pas dépasser 100 caractères")]
-    public string? FirstName { get; set; }
+    [MaxLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères")]
+    public string? Name { get; set; }
 
     /// <summary>
     /// Gets or sets the character's description

@@ -47,7 +47,7 @@ public class JwtService : IJwtService
     private readonly string secretKey;
     private readonly string issuer;
     private readonly string audience;
-    private readonly int expirationDays;
+    private readonly int expirationHours;
     private readonly ILogger<JwtService> logger;
 
     public JwtService(IConfiguration configuration, ILogger<JwtService> logger)
@@ -59,7 +59,7 @@ public class JwtService : IJwtService
             ?? throw new InvalidOperationException("JWT secret key configuration ('Jwt:SecretKey') is missing. Please set a secure value in your configuration.");
         this.issuer = configuration["Jwt:Issuer"] ?? "ChroniqueDesMondes";
         this.audience = configuration["Jwt:Audience"] ?? "ChroniqueDesMondesWeb";
-        this.expirationDays = int.TryParse(configuration["Jwt:ExpirationDays"], out var days) ? days : 7;
+        this.expirationHours = int.TryParse(configuration["Jwt:ExpirationHours"], out var hours) ? hours : 1;
 
         if (this.secretKey.Length < 32)
         {
@@ -80,6 +80,7 @@ public class JwtService : IJwtService
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Name, nickname ?? email),
+                new Claim(JwtRegisteredClaimNames.Name, nickname ?? email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
             };
@@ -93,7 +94,7 @@ public class JwtService : IJwtService
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claimsList),
-                Expires = DateTime.UtcNow.AddDays(this.expirationDays),
+                Expires = DateTime.UtcNow.AddHours(this.expirationHours),
                 Issuer = this.issuer,
                 Audience = this.audience,
                 SigningCredentials = new SigningCredentials(

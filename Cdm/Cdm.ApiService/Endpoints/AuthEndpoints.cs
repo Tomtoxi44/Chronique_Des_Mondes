@@ -84,5 +84,30 @@ public static class AuthEndpoints
         .WithDescription("Authenticate with email and password to receive a JWT token")
         .Produces<LoginResponse>(StatusCodes.Status200OK)
         .Produces<ErrorResponse>(StatusCodes.Status400BadRequest);
+
+        // POST /api/auth/refresh
+        group.MapPost("/refresh", async (
+            [FromBody] RefreshTokenRequest request,
+            [FromServices] IAuthService authService,
+            ILogger<RefreshTokenRequest> logger) =>
+        {
+            logger.LogInformation("Token refresh request received");
+
+            var result = await authService.RefreshTokenAsync(request.RefreshToken);
+
+            if (result.IsSuccess)
+            {
+                logger.LogInformation("Token refreshed for user: {UserId}", result.Data!.UserId);
+                return Results.Ok(result.Data);
+            }
+
+            logger.LogWarning("Token refresh failed: {Error}", result.ErrorMessage);
+            return Results.Unauthorized();
+        })
+        .WithName("RefreshToken")
+        .WithSummary("Refresh a JWT access token")
+        .WithDescription("Exchange a valid refresh token for a new access token and refresh token")
+        .Produces<LoginResponse>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status401Unauthorized);
     }
 }

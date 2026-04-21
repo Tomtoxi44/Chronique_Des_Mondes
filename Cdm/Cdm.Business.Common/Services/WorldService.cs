@@ -381,7 +381,7 @@ public class WorldService(
         {
             Id = wc.Id,
             CharacterId = wc.CharacterId,
-            CharacterName = wc.Character?.Name ?? string.Empty,
+            CharacterName = wc.Character?.FirstName ?? wc.Character?.Name ?? string.Empty,
             WorldId = wc.WorldId,
             WorldName = wc.World?.Name ?? string.Empty,
             GameType = wc.World?.GameType ?? GameType.Custom,

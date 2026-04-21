@@ -189,6 +189,81 @@ END
         logger.LogError(ex, "An error occurred while ensuring database schema.");
         // Do not throw — allow app to start even if safety net fails
     }
+
+    // Safety net for new tables added in migration 20260421100000
+    try
+    {
+        await appDbContext.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'[dbo].[RefreshTokens]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[RefreshTokens] (
+        [Id] int NOT NULL IDENTITY,
+        [Token] nvarchar(500) NOT NULL,
+        [UserId] int NOT NULL,
+        [ExpiresAt] datetime2 NOT NULL,
+        [CreatedAt] datetime2 NOT NULL DEFAULT (GETUTCDATE()),
+        [RevokedAt] datetime2 NULL,
+        CONSTRAINT [PK_RefreshTokens] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_RefreshTokens_Users_UserId] FOREIGN KEY ([UserId])
+            REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX [IX_RefreshTokens_Token] ON [dbo].[RefreshTokens] ([Token]);
+    CREATE INDEX [IX_RefreshTokens_UserId] ON [dbo].[RefreshTokens] ([UserId]);
+    CREATE INDEX [IX_RefreshTokens_ExpiresAt] ON [dbo].[RefreshTokens] ([ExpiresAt]);
+END
+
+IF OBJECT_ID(N'[dbo].[SessionMessages]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SessionMessages] (
+        [Id] int NOT NULL IDENTITY,
+        [ChapterId] int NOT NULL,
+        [UserId] int NOT NULL,
+        [UserName] nvarchar(200) NOT NULL,
+        [Message] nvarchar(max) NOT NULL,
+        [SentAt] datetime2 NOT NULL DEFAULT (GETUTCDATE()),
+        CONSTRAINT [PK_SessionMessages] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_SessionMessages_Chapters_ChapterId] FOREIGN KEY ([ChapterId])
+            REFERENCES [dbo].[Chapters] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_SessionMessages_Users_UserId] FOREIGN KEY ([UserId])
+            REFERENCES [dbo].[Users] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_SessionMessages_ChapterId] ON [dbo].[SessionMessages] ([ChapterId]);
+    CREATE INDEX [IX_SessionMessages_UserId] ON [dbo].[SessionMessages] ([UserId]);
+    CREATE INDEX [IX_SessionMessages_SentAt] ON [dbo].[SessionMessages] ([SentAt]);
+END
+
+IF OBJECT_ID(N'[dbo].[SessionDiceRolls]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[SessionDiceRolls] (
+        [Id] int NOT NULL IDENTITY,
+        [ChapterId] int NOT NULL,
+        [UserId] int NOT NULL,
+        [UserName] nvarchar(200) NOT NULL,
+        [DiceType] nvarchar(20) NOT NULL,
+        [Count] int NOT NULL,
+        [Results] nvarchar(500) NOT NULL,
+        [Modifier] int NOT NULL DEFAULT 0,
+        [Total] int NOT NULL,
+        [Reason] nvarchar(500) NULL,
+        [RolledAt] datetime2 NOT NULL DEFAULT (GETUTCDATE()),
+        CONSTRAINT [PK_SessionDiceRolls] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_SessionDiceRolls_Chapters_ChapterId] FOREIGN KEY ([ChapterId])
+            REFERENCES [dbo].[Chapters] ([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_SessionDiceRolls_Users_UserId] FOREIGN KEY ([UserId])
+            REFERENCES [dbo].[Users] ([Id]) ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_SessionDiceRolls_ChapterId] ON [dbo].[SessionDiceRolls] ([ChapterId]);
+    CREATE INDEX [IX_SessionDiceRolls_UserId] ON [dbo].[SessionDiceRolls] ([UserId]);
+    CREATE INDEX [IX_SessionDiceRolls_DiceType] ON [dbo].[SessionDiceRolls] ([DiceType]);
+    CREATE INDEX [IX_SessionDiceRolls_RolledAt] ON [dbo].[SessionDiceRolls] ([RolledAt]);
+END
+");
+        logger.LogInformation("RefreshTokens, SessionMessages, SessionDiceRolls tables ensured.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while ensuring new tables schema.");
+    }
 }
 
 // Configure the HTTP request pipeline.

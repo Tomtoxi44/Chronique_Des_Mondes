@@ -1899,6 +1899,7 @@ textarea.form-control {
 .participant-name {
   font-size: var(--font-size-sm);
   font-weight: 600;
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

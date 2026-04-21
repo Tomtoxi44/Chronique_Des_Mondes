@@ -8,6 +8,7 @@ using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 
 /// <summary>
 /// Authentication service implementation
@@ -99,6 +100,9 @@ public class AuthService : IAuthService
             // Generate JWT token with roles
             var token = this.jwtService.GenerateToken(user.Id, user.Email, roleNames, user.Nickname);
 
+            // Generate and save refresh token
+            var refreshToken = await this.CreateRefreshTokenAsync(user.Id);
+
             // Send welcome email (optional)
             if (this.emailService != null)
             {
@@ -115,7 +119,6 @@ public class AuthService : IAuthService
                 }
             }
 
-            // Return success response
             var response = new RegisterResponse
             {
                 UserId = user.Id,
@@ -183,6 +186,9 @@ public class AuthService : IAuthService
             // Generate JWT token with roles
             var token = this.jwtService.GenerateToken(user.Id, user.Email, roles, user.Nickname);
 
+            // Generate and save refresh token
+            var refreshToken = await this.CreateRefreshTokenAsync(user.Id);
+
             // Return success response
             var response = new LoginResponse
             {
@@ -190,6 +196,8 @@ public class AuthService : IAuthService
                 Email = user.Email,
                 Nickname = user.Nickname,
                 Token = token,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiry = refreshToken.ExpiresAt,
                 Message = "Login successful"
             };
 
@@ -201,5 +209,81 @@ public class AuthService : IAuthService
             return ServiceResult<LoginResponse>.Failure("An error occurred during login");
         }
     }
-}
 
+    public async Task<ServiceResult<LoginResponse>> RefreshTokenAsync(string refreshToken)
+    {
+        try
+        {
+            var token = await this.context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (token == null || !token.IsActive)
+            {
+                this.logger.LogWarning("Refresh token is invalid or expired");
+                return ServiceResult<LoginResponse>.Failure("Invalid or expired refresh token");
+            }
+
+            var user = token.User;
+            if (!user.IsActive)
+            {
+                return ServiceResult<LoginResponse>.Failure("Account is inactive");
+            }
+
+            // Revoke old refresh token
+            token.RevokedAt = DateTime.UtcNow;
+            this.context.RefreshTokens.Update(token);
+
+            // Generate new tokens
+            var roles = await this.context.UserRoles
+                .Where(ur => ur.UserId == user.Id)
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+
+            var newAccessToken = this.jwtService.GenerateToken(user.Id, user.Email, roles, user.Nickname);
+            var newRefreshToken = await this.CreateRefreshTokenAsync(user.Id);
+
+            await this.context.SaveChangesAsync();
+
+            this.logger.LogInformation("Tokens refreshed for user {UserId}", user.Id);
+
+            return ServiceResult<LoginResponse>.Success(new LoginResponse
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                Nickname = user.Nickname,
+                Token = newAccessToken,
+                RefreshToken = newRefreshToken.Token,
+                RefreshTokenExpiry = newRefreshToken.ExpiresAt,
+                Message = "Token refreshed"
+            });
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error during token refresh");
+            return ServiceResult<LoginResponse>.Failure("An error occurred during token refresh");
+        }
+    }
+
+    private async Task<RefreshToken> CreateRefreshTokenAsync(int userId)
+    {
+        var tokenBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(tokenBytes);
+        var tokenString = Convert.ToBase64String(tokenBytes);
+
+        var refreshToken = new RefreshToken
+        {
+            Token = tokenString,
+            UserId = userId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        this.context.RefreshTokens.Add(refreshToken);
+        await this.context.SaveChangesAsync();
+
+        return refreshToken;
+    }
+}

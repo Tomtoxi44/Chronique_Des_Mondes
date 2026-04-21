@@ -383,7 +383,7 @@ public class SessionService(AppDbContext dbContext, ILogger<SessionService> logg
                 Id = p.Id,
                 SessionId = p.SessionId,
                 WorldCharacterId = p.WorldCharacterId,
-                CharacterName = p.WorldCharacter?.Character?.Name ?? string.Empty,
+                CharacterName = p.WorldCharacter?.Character?.FirstName ?? p.WorldCharacter?.Character?.Name ?? string.Empty,
                 UserId = p.WorldCharacter?.Character?.UserId ?? 0,
                 UserName = p.WorldCharacter?.Character?.Owner?.Nickname ?? string.Empty,
                 JoinedAt = p.JoinedAt,

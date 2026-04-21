@@ -6,6 +6,8 @@
 
 namespace Cdm.ApiService.Hubs;
 
+using Cdm.Data.Common;
+using Cdm.Data.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
@@ -18,14 +20,17 @@ using System.Security.Claims;
 public class SessionHub : Hub
 {
     private readonly ILogger<SessionHub> logger;
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionHub"/> class.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public SessionHub(ILogger<SessionHub> logger)
+    /// <param name="db">Database context.</param>
+    public SessionHub(ILogger<SessionHub> logger, AppDbContext db)
     {
         this.logger = logger;
+        this.db = db;
     }
 
     /// <summary>
@@ -36,7 +41,7 @@ public class SessionHub : Hub
     public async Task JoinSession(int chapterId)
     {
         var userId = this.GetUserId();
-        var userName = this.Context.User?.Identity?.Name ?? "Unknown";
+        var userName = this.GetUserName();
         var groupName = $"chapter_{chapterId}";
 
         await this.Groups.AddToGroupAsync(this.Context.ConnectionId, groupName);
@@ -61,7 +66,7 @@ public class SessionHub : Hub
     public async Task LeaveSession(int chapterId)
     {
         var userId = this.GetUserId();
-        var userName = this.Context.User?.Identity?.Name ?? "Unknown";
+        var userName = this.GetUserName();
         var groupName = $"chapter_{chapterId}";
 
         await this.Groups.RemoveFromGroupAsync(this.Context.ConnectionId, groupName);
@@ -87,13 +92,25 @@ public class SessionHub : Hub
     public async Task SendMessage(int chapterId, string message)
     {
         var userId = this.GetUserId();
-        var userName = this.Context.User?.Identity?.Name ?? "Unknown";
+        var userName = this.GetUserName();
         var groupName = $"chapter_{chapterId}";
 
         this.logger.LogInformation(
             "User {UserId} sent message in session {ChapterId}",
             userId,
             chapterId);
+
+        // Persist message to database
+        var sessionMessage = new SessionMessage
+        {
+            ChapterId = chapterId,
+            UserId = userId,
+            UserName = userName,
+            Message = message,
+            SentAt = DateTime.UtcNow
+        };
+        this.db.SessionMessages.Add(sessionMessage);
+        await this.db.SaveChangesAsync();
 
         await this.Clients.Group(groupName).SendAsync(
             "ReceiveMessage",
@@ -119,7 +136,7 @@ public class SessionHub : Hub
     public async Task RollDice(int chapterId, string diceType, int count, int[] results, int modifier, string? reason)
     {
         var userId = this.GetUserId();
-        var userName = this.Context.User?.Identity?.Name ?? "Unknown";
+        var userName = this.GetUserName();
         var groupName = $"chapter_{chapterId}";
         var total = results.Sum() + modifier;
 
@@ -130,6 +147,23 @@ public class SessionHub : Hub
             diceType,
             chapterId,
             total);
+
+        // Persist dice roll to database
+        var diceRoll = new SessionDiceRoll
+        {
+            ChapterId = chapterId,
+            UserId = userId,
+            UserName = userName,
+            DiceType = diceType,
+            Count = count,
+            Results = string.Join(",", results),
+            Modifier = modifier,
+            Total = total,
+            Reason = reason,
+            RolledAt = DateTime.UtcNow
+        };
+        this.db.SessionDiceRolls.Add(diceRoll);
+        await this.db.SaveChangesAsync();
 
         await this.Clients.Group(groupName).SendAsync(
             "DiceRolled",
@@ -158,7 +192,7 @@ public class SessionHub : Hub
     public async Task ProposeTradeTheory(int chapterId, int targetUserId, string offerDescription, string requestDescription)
     {
         var userId = this.GetUserId();
-        var userName = this.Context.User?.Identity?.Name ?? "Unknown";
+        var userName = this.GetUserName();
         var groupName = $"chapter_{chapterId}";
 
         this.logger.LogInformation(
@@ -244,5 +278,18 @@ public class SessionHub : Hub
     {
         var userIdClaim = this.Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out int userId) ? userId : 0;
+    }
+
+    /// <summary>
+    /// Gets the current user's display name from claims.
+    /// Falls back through multiple claim types to handle different JWT mapping configurations.
+    /// </summary>
+    /// <returns>The user name, or "Unknown" if not found.</returns>
+    private string GetUserName()
+    {
+        return this.Context.User?.FindFirst(ClaimTypes.Name)?.Value
+            ?? this.Context.User?.FindFirst("name")?.Value
+            ?? this.Context.User?.FindFirst("unique_name")?.Value
+            ?? "Unknown";
     }
 }
