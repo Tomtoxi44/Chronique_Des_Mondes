@@ -41,7 +41,9 @@ public partial class Characters
 
     private static string GetInitials(CharacterDto character)
     {
-        var parts = character.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var name = !string.IsNullOrEmpty(character.FirstName) ? character.FirstName : character.Name;
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "?";
         if (parts.Length == 1) return parts[0][0].ToString().ToUpper();
         return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
     }

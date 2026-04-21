@@ -21,6 +21,13 @@ public interface IAuthService
     /// <param name="request">Login request DTO</param>
     /// <returns>Service result with login response</returns>
     Task<ServiceResult<LoginResponse>> LoginAsync(LoginRequest request);
+
+    /// <summary>
+    /// Refresh a JWT access token using a valid refresh token
+    /// </summary>
+    /// <param name="refreshToken">The refresh token string</param>
+    /// <returns>Service result with a new login response containing fresh tokens</returns>
+    Task<ServiceResult<LoginResponse>> RefreshTokenAsync(string refreshToken);
 }
 
 /// <summary>

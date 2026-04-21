@@ -42,7 +42,7 @@ public class CharacterService(
             var character = new Character
             {
                 UserId = userId,
-                Name = dto.Name,
+                Name = string.IsNullOrEmpty(dto.Name) ? (dto.FirstName ?? string.Empty) : dto.Name,
                 FirstName = dto.FirstName,
                 Description = dto.Description,
                 Age = dto.Age,
@@ -159,7 +159,7 @@ public class CharacterService(
             }
 
             // Update fields
-            character.Name = dto.Name;
+            character.Name = string.IsNullOrEmpty(dto.Name) ? (dto.FirstName ?? string.Empty) : dto.Name;
             character.FirstName = dto.FirstName;
             character.Description = dto.Description;
             character.Age = dto.Age;

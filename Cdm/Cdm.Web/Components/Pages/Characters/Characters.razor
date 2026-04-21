@@ -60,10 +60,10 @@ else
                 </div>
 
                 <h3 class="card-title">
-                    @character.Name
-                    @if (!string.IsNullOrEmpty(character.FirstName))
+                    @character.FirstName
+                    @if (!string.IsNullOrEmpty(character.Name))
                     {
-                        <span style="font-weight: 400;"> @character.FirstName</span>
+                        <span style="font-weight: 400;"> @character.Name</span>
                     }
                 </h3>
 

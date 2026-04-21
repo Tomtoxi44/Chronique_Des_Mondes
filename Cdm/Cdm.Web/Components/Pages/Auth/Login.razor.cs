@@ -43,7 +43,8 @@ public partial class Login
             {
                 var provider = (CustomAuthStateProvider)AuthProvider;
                 await provider.MarkUserAsAuthenticatedAsync(
-                    response.UserId, response.Email, response.Nickname, response.Token);
+                    response.UserId, response.Email, response.Nickname, response.Token,
+                    response.RefreshToken, response.RefreshTokenExpiry);
 
                 var target = !string.IsNullOrEmpty(ReturnUrl)
                     ? Uri.UnescapeDataString(ReturnUrl)

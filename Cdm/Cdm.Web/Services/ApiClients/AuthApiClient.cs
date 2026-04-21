@@ -9,6 +9,7 @@ public interface IAuthApiClient
 {
     Task<RegisterResponse?> RegisterAsync(RegisterRequest request);
     Task<LoginResponse?> LoginAsync(LoginRequest request);
+    Task<LoginResponse?> RefreshAsync(string refreshToken);
 }
 
 public class AuthApiClient : BaseApiClient, IAuthApiClient
@@ -50,6 +51,22 @@ public class AuthApiClient : BaseApiClient, IAuthApiClient
             this.logger.LogInformation("User logged in successfully: {Email}", response.Email);
         }
         
+        return response;
+    }
+
+    public async Task<LoginResponse?> RefreshAsync(string refreshToken)
+    {
+        this.logger.LogInformation("Attempting to refresh access token");
+
+        var response = await PostAsync<object, LoginResponse>(
+            "/api/auth/refresh",
+            new { RefreshToken = refreshToken });
+
+        if (response != null)
+        {
+            this.logger.LogInformation("Token refreshed successfully for user: {UserId}", response.UserId);
+        }
+
         return response;
     }
 }
