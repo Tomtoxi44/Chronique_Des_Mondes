@@ -27,4 +27,5 @@
     <Project Path="Cdm.Web/Cdm.Web.csproj" />
   </Folder>
   <Project Path="Cdm.Business.Abstraction/Cdm.Business.Abstraction.csproj" />
+  <Project Path="Cdm.Business.DnD5e/Cdm.Business.DnD5e.csproj" />
 </Solution>

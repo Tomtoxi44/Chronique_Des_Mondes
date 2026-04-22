@@ -103,6 +103,29 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<SessionDiceRoll> SessionDiceRolls { get; set; } = null!;
 
+    // ---- D&D 5e reference data ----
+
+    /// <summary>D&amp;D 5e playable races.</summary>
+    public DbSet<DndRace> DndRaces { get; set; } = null!;
+
+    /// <summary>D&amp;D 5e character classes.</summary>
+    public DbSet<DndClass> DndClasses { get; set; } = null!;
+
+    /// <summary>D&amp;D 5e items (weapons, armor, potions, etc.).</summary>
+    public DbSet<DndItem> DndItems { get; set; } = null!;
+
+    /// <summary>D&amp;D 5e spells.</summary>
+    public DbSet<DndSpell> DndSpells { get; set; } = null!;
+
+    /// <summary>D&amp;D 5e monster templates for GMs.</summary>
+    public DbSet<DndMonsterTemplate> DndMonsterTemplates { get; set; } = null!;
+
+    /// <summary>D&amp;D 5e inventory items owned by world characters.</summary>
+    public DbSet<DndInventoryItem> DndInventoryItems { get; set; } = null!;
+
+    /// <summary>D&amp;D 5e spells known/prepared by world characters.</summary>
+    public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -247,12 +270,22 @@ public class AppDbContext : DbContext
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Self-reference: world copy → base character
+            entity.HasOne<Character>()
+                .WithMany()
+                .HasForeignKey(c => c.SourceCharacterId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
             // Set default values
             entity.Property(c => c.CreatedAt)
                 .HasDefaultValueSql("GETUTCDATE()");
 
             entity.Property(c => c.IsActive)
                 .HasDefaultValue(true);
+
+            entity.Property(c => c.IsBaseCharacter)
+                .HasDefaultValue(false);
         });
 
         // Configure WorldCharacter entity (characters adapted to worlds)
@@ -576,6 +609,54 @@ public class AppDbContext : DbContext
 
             entity.Property(npc => npc.IsActive)
                 .HasDefaultValue(true);
+        });
+
+        // Configure DndInventoryItem entity
+        modelBuilder.Entity<DndInventoryItem>(entity =>
+        {
+            entity.HasIndex(i => i.WorldCharacterId)
+                .HasDatabaseName("IX_DndInventoryItems_WorldCharacterId");
+
+            entity.HasOne(i => i.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(i => i.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(i => i.DndItem)
+                .WithMany()
+                .HasForeignKey(i => i.DndItemId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            entity.Property(i => i.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(i => i.Quantity)
+                .HasDefaultValue(1);
+        });
+
+        // Configure DndCharacterSpell entity
+        modelBuilder.Entity<DndCharacterSpell>(entity =>
+        {
+            entity.HasIndex(s => s.WorldCharacterId)
+                .HasDatabaseName("IX_DndCharacterSpells_WorldCharacterId");
+
+            entity.HasOne(s => s.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(s => s.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.DndSpell)
+                .WithMany()
+                .HasForeignKey(s => s.DndSpellId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            entity.Property(s => s.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(s => s.IsPrepared)
+                .HasDefaultValue(false);
         });
     }
 

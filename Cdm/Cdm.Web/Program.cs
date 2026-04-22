@@ -263,6 +263,23 @@ builder.Services.AddHttpClient("NpcApiClient", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Register DndApiClient with scoped lifetime
+builder.Services.AddScoped<DndApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("DndApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<DndApiClient>>();
+    return new DndApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("DndApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

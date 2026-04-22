@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cdm.Business.Abstraction\Cdm.Business.Abstraction.csproj" />
+    <ProjectReference Include="..\Cdm.Business.Common\Cdm.Business.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Data.Common\Cdm.Data.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
+  </ItemGroup>
+
+</Project>

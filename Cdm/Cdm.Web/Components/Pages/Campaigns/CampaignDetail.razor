@@ -99,37 +99,152 @@ else
                     @if (ShowNpcForm)
                     {
                         <div class="cdm-card" style="background: var(--color-surface-alt); margin-bottom: var(--spacing-md);">
-                            <EditForm Model="NewNpc" OnValidSubmit="CreateNpc" FormName="npc-create">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label class="form-label">Prénom</label>
-                                        <InputText @bind-Value="NewNpc.FirstName" class="form-control" placeholder="Prénom..." />
+                            @if (IsDnd5e)
+                            {
+                                <EditForm Model="NewDndNpc" OnValidSubmit="CreateNpc" FormName="npc-create">
+                                    @* Monster template picker *@
+                                    @if (MonsterTemplates.Count > 0)
+                                    {
+                                        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                            <label class="form-label">
+                                                <i class="bi bi-dragon" style="margin-right: 4px;"></i>
+                                                Template monstre (optionnel)
+                                            </label>
+                                            <select class="form-control" @bind="SelectedMonsterTemplateId">
+                                                <option value="0">— Aucun template —</option>
+                                                @foreach (var monster in MonsterTemplates)
+                                                {
+                                                    <option value="@monster.Id">@monster.Name (@monster.ChallengeRating) — @monster.MonsterType</option>
+                                                }
+                                            </select>
+                                            <small style="color: var(--color-text-muted);">Sélectionner un template pré-remplit les statistiques.</small>
+                                        </div>
+                                        <hr style="border-color: var(--color-border); margin: var(--spacing-sm) 0;" />
+                                    }
+
+                                    @* Base NPC fields *@
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label">Prénom</label>
+                                            <InputText @bind-Value="NewDndNpc.FirstName" class="form-control" placeholder="Prénom..." />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label">Nom</label>
+                                            <InputText @bind-Value="NewDndNpc.Name" class="form-control" placeholder="Nom..." />
+                                        </div>
                                     </div>
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label class="form-label">Nom</label>
-                                        <InputText @bind-Value="NewNpc.Name" class="form-control" placeholder="Nom..." />
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label">Âge</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Age" class="form-control" placeholder="Âge..." />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label">Race</label>
+                                            <InputText @bind-Value="NewDndNpc.Race" class="form-control" placeholder="Gobelin, Elfe..." />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label">Classe</label>
+                                            <InputText @bind-Value="NewDndNpc.CharacterClass" class="form-control" placeholder="Guerrier, Voleur..." />
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="form-group" style="margin-top: var(--spacing-sm);">
-                                    <label class="form-label">Âge</label>
-                                    <InputNumber @bind-Value="NewNpc.Age" class="form-control" placeholder="Âge..." />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Description</label>
-                                    <InputTextArea @bind-Value="NewNpc.Description" class="form-control" rows="2" placeholder="Description..." />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Description physique</label>
-                                    <InputTextArea @bind-Value="NewNpc.PhysicalDescription" class="form-control" rows="2" placeholder="Apparence physique..." />
-                                </div>
-                                <div class="form-actions" style="margin-top: var(--spacing-sm);">
-                                    <button type="button" class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
-                                    <button type="submit" class="btn btn-primary btn-sm" disabled="@IsSavingNpc">
-                                        @if (IsSavingNpc) { <AppLoadingSpinner Inline="true" Size="sm" /> }
-                                        Créer le PNJ
-                                    </button>
-                                </div>
-                            </EditForm>
+                                    <div class="form-group" style="margin-top: var(--spacing-sm);">
+                                        <label class="form-label">Description</label>
+                                        <InputTextArea @bind-Value="NewDndNpc.Description" class="form-control" rows="2" placeholder="Description..." />
+                                    </div>
+
+                                    @* D&D Stats *@
+                                    <div style="margin-top: var(--spacing-sm); margin-bottom: var(--spacing-xs);">
+                                        <strong style="font-size: var(--font-size-sm); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                                            <i class="bi bi-shield-fill-check" style="margin-right: 4px;"></i>Statistiques D&amp;D
+                                        </strong>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-xs);">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" style="font-size: 0.7rem;">Niveau</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Level" class="form-control form-control-sm" placeholder="1" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" style="font-size: 0.7rem;">PV</label>
+                                            <InputNumber @bind-Value="NewDndNpc.HitPoints" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" style="font-size: 0.7rem;">CA</label>
+                                            <InputNumber @bind-Value="NewDndNpc.ArmorClass" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" style="font-size: 0.7rem;">Vitesse</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Speed" class="form-control form-control-sm" placeholder="30" />
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-top: var(--spacing-xs);">
+                                        <div class="form-group" style="margin-bottom: 0; text-align: center;">
+                                            <label class="form-label" style="font-size: 0.7rem;">FOR</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Strength" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0; text-align: center;">
+                                            <label class="form-label" style="font-size: 0.7rem;">DEX</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Dexterity" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0; text-align: center;">
+                                            <label class="form-label" style="font-size: 0.7rem;">CON</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Constitution" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0; text-align: center;">
+                                            <label class="form-label" style="font-size: 0.7rem;">INT</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Intelligence" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0; text-align: center;">
+                                            <label class="form-label" style="font-size: 0.7rem;">SAG</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Wisdom" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0; text-align: center;">
+                                            <label class="form-label" style="font-size: 0.7rem;">CHA</label>
+                                            <InputNumber @bind-Value="NewDndNpc.Charisma" class="form-control form-control-sm" placeholder="10" />
+                                        </div>
+                                    </div>
+                                    <div class="form-actions" style="margin-top: var(--spacing-sm);">
+                                        <button type="button" class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
+                                        <button type="submit" class="btn btn-primary btn-sm" disabled="@IsSavingNpc">
+                                            @if (IsSavingNpc) { <AppLoadingSpinner Inline="true" Size="sm" /> }
+                                            Créer le PNJ D&amp;D
+                                        </button>
+                                    </div>
+                                </EditForm>
+                            }
+                            else
+                            {
+                                <EditForm Model="NewNpc" OnValidSubmit="CreateNpc" FormName="npc-create">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label">Prénom</label>
+                                            <InputText @bind-Value="NewNpc.FirstName" class="form-control" placeholder="Prénom..." />
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label">Nom</label>
+                                            <InputText @bind-Value="NewNpc.Name" class="form-control" placeholder="Nom..." />
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-top: var(--spacing-sm);">
+                                        <label class="form-label">Âge</label>
+                                        <InputNumber @bind-Value="NewNpc.Age" class="form-control" placeholder="Âge..." />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Description</label>
+                                        <InputTextArea @bind-Value="NewNpc.Description" class="form-control" rows="2" placeholder="Description..." />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Description physique</label>
+                                        <InputTextArea @bind-Value="NewNpc.PhysicalDescription" class="form-control" rows="2" placeholder="Apparence physique..." />
+                                    </div>
+                                    <div class="form-actions" style="margin-top: var(--spacing-sm);">
+                                        <button type="button" class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
+                                        <button type="submit" class="btn btn-primary btn-sm" disabled="@IsSavingNpc">
+                                            @if (IsSavingNpc) { <AppLoadingSpinner Inline="true" Size="sm" /> }
+                                            Créer le PNJ
+                                        </button>
+                                    </div>
+                                </EditForm>
+                            }
                         </div>
                     }
 
@@ -142,11 +257,19 @@ else
                         <div class="npc-list">
                             @foreach (var npc in Npcs)
                             {
+                                var dndNpc = npc as DndNpcDto;
                                 <div class="npc-card">
                                     <div class="npc-card-header">
                                         <div>
                                             <strong>@npc.DisplayName</strong>
-                                            @if (npc.Age.HasValue)
+                                            @if (dndNpc?.Race != null || dndNpc?.CharacterClass != null)
+                                            {
+                                                <span style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-left: var(--spacing-sm);">
+                                                    @(dndNpc.Race) @(dndNpc.CharacterClass != null ? $"- {dndNpc.CharacterClass}" : "")
+                                                    @if (dndNpc.Level.HasValue) { <text> Nv.@dndNpc.Level</text> }
+                                                </span>
+                                            }
+                                            else if (npc.Age.HasValue)
                                             {
                                                 <span style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-left: var(--spacing-sm);">@npc.Age ans</span>
                                             }
@@ -155,6 +278,68 @@ else
                                             <i class="bi bi-trash3"></i>
                                         </button>
                                     </div>
+                                    @if (dndNpc != null && (dndNpc.HitPoints.HasValue || dndNpc.ArmorClass.HasValue || dndNpc.Strength.HasValue))
+                                    {
+                                        <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap; margin: var(--spacing-xs) 0; font-size: var(--font-size-sm);">
+                                            @if (dndNpc.HitPoints.HasValue)
+                                            {
+                                                <span class="badge" style="background: var(--color-error-subtle, #4a1010); color: #e88;">
+                                                    <i class="bi bi-heart-fill"></i> @dndNpc.HitPoints PV
+                                                </span>
+                                            }
+                                            @if (dndNpc.ArmorClass.HasValue)
+                                            {
+                                                <span class="badge" style="background: var(--color-surface-alt);">
+                                                    <i class="bi bi-shield"></i> CA @dndNpc.ArmorClass
+                                                </span>
+                                            }
+                                            @if (dndNpc.Speed.HasValue)
+                                            {
+                                                <span class="badge" style="background: var(--color-surface-alt);">
+                                                    @dndNpc.Speed m/r
+                                                </span>
+                                            }
+                                        </div>
+                                        @if (dndNpc.Strength.HasValue)
+                                        {
+                                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; font-size: 0.7rem; text-align: center; margin-top: 4px;">
+                                                @{
+                                                    int Mod(int? v) => v.HasValue ? (v.Value - 10) / 2 : 0;
+                                                    string Sign(int m) => m >= 0 ? $"+{m}" : $"{m}";
+                                                }
+                                                <div style="background: var(--color-surface-alt); border-radius: 4px; padding: 2px;">
+                                                    <div style="font-weight: 600;">FOR</div>
+                                                    <div>@dndNpc.Strength</div>
+                                                    <div style="color: var(--color-text-muted);">@Sign(Mod(dndNpc.Strength))</div>
+                                                </div>
+                                                <div style="background: var(--color-surface-alt); border-radius: 4px; padding: 2px;">
+                                                    <div style="font-weight: 600;">DEX</div>
+                                                    <div>@dndNpc.Dexterity</div>
+                                                    <div style="color: var(--color-text-muted);">@Sign(Mod(dndNpc.Dexterity))</div>
+                                                </div>
+                                                <div style="background: var(--color-surface-alt); border-radius: 4px; padding: 2px;">
+                                                    <div style="font-weight: 600;">CON</div>
+                                                    <div>@dndNpc.Constitution</div>
+                                                    <div style="color: var(--color-text-muted);">@Sign(Mod(dndNpc.Constitution))</div>
+                                                </div>
+                                                <div style="background: var(--color-surface-alt); border-radius: 4px; padding: 2px;">
+                                                    <div style="font-weight: 600;">INT</div>
+                                                    <div>@dndNpc.Intelligence</div>
+                                                    <div style="color: var(--color-text-muted);">@Sign(Mod(dndNpc.Intelligence))</div>
+                                                </div>
+                                                <div style="background: var(--color-surface-alt); border-radius: 4px; padding: 2px;">
+                                                    <div style="font-weight: 600;">SAG</div>
+                                                    <div>@dndNpc.Wisdom</div>
+                                                    <div style="color: var(--color-text-muted);">@Sign(Mod(dndNpc.Wisdom))</div>
+                                                </div>
+                                                <div style="background: var(--color-surface-alt); border-radius: 4px; padding: 2px;">
+                                                    <div style="font-weight: 600;">CHA</div>
+                                                    <div>@dndNpc.Charisma</div>
+                                                    <div style="color: var(--color-text-muted);">@Sign(Mod(dndNpc.Charisma))</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
                                     @if (!string.IsNullOrEmpty(npc.Description))
                                     {
                                         <p class="npc-description">@npc.Description</p>

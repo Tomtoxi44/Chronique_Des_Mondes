@@ -1,3 +1,4 @@
+using Cdm.Common.Enums;
 using Cdm.Web.Models;
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Shared.DTOs.Models;
@@ -46,7 +47,7 @@ public partial class WorldJoin
         IsLoadingCharacters = true;
         var characters = await CharacterClient.GetMyCharactersAsync();
         AvailableCharacters = characters?
-            .Where(c => !c.IsLocked)
+            .Where(c => !c.IsLocked && !c.SourceCharacterId.HasValue)
             .ToList() ?? new List<CharacterDto>();
         IsLoadingCharacters = false;
     }
@@ -63,6 +64,14 @@ public partial class WorldJoin
             JoinedCharacterName = AvailableCharacters.FirstOrDefault(c => c.Id == SelectedCharacterId)?.FirstName
                 ?? AvailableCharacters.FirstOrDefault(c => c.Id == SelectedCharacterId)?.Name
                 ?? "votre personnage";
+
+            // If D&D 5e world → redirect to the D&D wizard
+            if (World.GameType == GameType.DnD5e)
+            {
+                Nav.NavigateTo($"/worlds/dnd-wizard/{result.WorldId}");
+                return;
+            }
+
             JoinSuccess = true;
         }
         else
