@@ -6,6 +6,7 @@
 
 namespace Cdm.Migrations.Migrations;
 
+using Cdm.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -14,7 +15,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 /// and GameSpecificData on NonPlayerCharacters.
 /// Seeds core D&amp;D 5e reference data (races, classes, items, spells, monster templates).
 /// </summary>
-[DbContext(typeof(Cdm.Data.Common.AppDbContext))]
+[DbContext(typeof(MigrationsContext))]
 [Migration("20260422090000_AddDnd5eTablesAndCharacterBase")]
 public class AddDnd5eTablesAndCharacterBase : Migration
 {

@@ -1,8 +1,9 @@
-﻿namespace Cdm.Migrations;
+namespace Cdm.Migrations;
 
 using Cdm.Common.Enums;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 /// <summary>
 /// Migration-specific DbContext
@@ -11,6 +12,12 @@ public class MigrationsContext : DbContext
 {
     public MigrationsContext(DbContextOptions<MigrationsContext> options) : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        // Suppress the snapshot sync warning — manual migrations handle schema changes
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 
     /// <summary>
@@ -82,6 +89,15 @@ public class MigrationsContext : DbContext
     /// Session participants table
     /// </summary>
     public DbSet<SessionParticipant> SessionParticipants { get; set; } = null!;
+
+    // ── D&D 5e reference tables ──────────────────────────────────────────────
+    public DbSet<DndRace> DndRaces { get; set; } = null!;
+    public DbSet<DndClass> DndClasses { get; set; } = null!;
+    public DbSet<DndItem> DndItems { get; set; } = null!;
+    public DbSet<DndSpell> DndSpells { get; set; } = null!;
+    public DbSet<DndMonsterTemplate> DndMonsterTemplates { get; set; } = null!;
+    public DbSet<DndInventoryItem> DndInventoryItems { get; set; } = null!;
+    public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -213,6 +229,14 @@ public class MigrationsContext : DbContext
             entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(c => c.IsActive).HasDefaultValue(true);
             entity.Property(c => c.IsLocked).HasDefaultValue(false);
+            entity.Property(c => c.IsBaseCharacter).HasDefaultValue(false);
+
+            // Self-referencing FK for world copies
+            entity.HasOne<Character>()
+                .WithMany()
+                .HasForeignKey(c => c.SourceCharacterId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
         });
 
         // Configure WorldCharacter entity (characters adapted to worlds)
@@ -371,6 +395,37 @@ public class MigrationsContext : DbContext
             entity.Property(npc => npc.IsActive).HasDefaultValue(true);
         });
 
+        // D&D 5e entity configurations
+        modelBuilder.Entity<DndInventoryItem>(entity =>
+        {
+            entity.HasOne(i => i.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(i => i.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(i => i.DndItem)
+                .WithMany()
+                .HasForeignKey(i => i.DndItemId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(i => i.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<DndCharacterSpell>(entity =>
+        {
+            entity.HasOne(s => s.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(s => s.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.DndSpell)
+                .WithMany()
+                .HasForeignKey(s => s.DndSpellId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
         // Configure Session entity
         modelBuilder.Entity<Session>(entity =>
         {
@@ -393,7 +448,9 @@ public class MigrationsContext : DbContext
                 .HasForeignKey(s => s.CurrentChapterId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.Property(s => s.Status).HasDefaultValue(SessionStatus.Active);
+            entity.Property(s => s.Status)
+                .HasDefaultValue(SessionStatus.Active)
+                .HasSentinel((SessionStatus)(-1));
         });
 
         // Configure SessionParticipant entity

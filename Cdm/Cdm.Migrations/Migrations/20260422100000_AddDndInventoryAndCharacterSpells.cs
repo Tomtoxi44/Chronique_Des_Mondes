@@ -6,13 +6,14 @@
 
 namespace Cdm.Migrations.Migrations;
 
+using Cdm.Migrations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 /// <summary>
 /// Idempotent migration: creates DndInventoryItems and DndCharacterSpells tables.
 /// </summary>
-[DbContext(typeof(Cdm.Data.Common.AppDbContext))]
+[DbContext(typeof(MigrationsContext))]
 [Migration("20260422100000_AddDndInventoryAndCharacterSpells")]
 public class AddDndInventoryAndCharacterSpells : Migration
 {
