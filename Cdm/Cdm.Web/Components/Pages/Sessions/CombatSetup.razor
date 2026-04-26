@@ -1,0 +1,208 @@
+@page "/sessions/{SessionId:int}/combat/setup"
+@attribute [Authorize]
+
+<PageTitle>Configurer un combat — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display:flex;justify-content:center;align-items:center;height:60vh;">
+        <AppLoadingSpinner />
+    </div>
+}
+else if (ErrorMessage != null)
+{
+    <AppEmptyState Icon="bi-exclamation-circle" Title="Erreur" Message="@ErrorMessage" />
+}
+else
+{
+    <div class="combat-setup-shell">
+        <div class="combat-setup-header">
+            <button class="btn btn-ghost btn-sm" @onclick='() => Nav.NavigateTo($"/sessions/{SessionId}/gm")'>
+                <i class="bi bi-arrow-left"></i> Retour à la session
+            </button>
+            <h2 class="combat-setup-title"><i class="bi bi-swords"></i> Préparer un combat</h2>
+        </div>
+
+        <!-- Stepper -->
+        <div class="combat-setup-stepper">
+            <div class="stepper-step @(CurrentStep == 1 ? "active" : CurrentStep > 1 ? "done" : "")">
+                <span class="stepper-num">1</span> Groupes
+            </div>
+            <div class="stepper-divider"></div>
+            <div class="stepper-step @(CurrentStep == 2 ? "active" : CurrentStep > 2 ? "done" : "")">
+                <span class="stepper-num">2</span> Participants
+            </div>
+            <div class="stepper-divider"></div>
+            <div class="stepper-step @(CurrentStep == 3 ? "active" : "")">
+                <span class="stepper-num">3</span> Initiative
+            </div>
+        </div>
+
+        @if (CurrentStep == 1)
+        {
+            <!-- Étape 1: Définir les groupes -->
+            <div class="combat-setup-card">
+                <h3>Définir les camps</h3>
+                <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);">Définissez les groupes qui s'affrontent (minimum 2).</p>
+
+                @foreach (var group in Groups)
+                {
+                    var g = group;
+                    <div class="combat-group-row">
+                        <input type="color" class="group-color-picker" @bind="g.Color" title="Couleur du groupe" />
+                        <input type="text" class="form-control" placeholder="Nom du groupe (ex: Joueurs, Monstres)" @bind="g.Name" />
+                        <button class="btn btn-ghost btn-sm" @onclick="() => RemoveGroup(g)" disabled="@(Groups.Count <= 2)">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
+                }
+
+                <button class="btn btn-ghost btn-sm" @onclick="AddGroup" style="margin-top:var(--spacing-sm);">
+                    <i class="bi bi-plus-circle"></i> Ajouter un groupe
+                </button>
+
+                @if (!string.IsNullOrEmpty(StepError))
+                {
+                    <div class="alert-error" style="margin-top:var(--spacing-sm);">@StepError</div>
+                }
+
+                <div class="combat-setup-actions">
+                    <button class="btn btn-primary" @onclick="GoToStep2" disabled="@(Groups.Any(g => string.IsNullOrWhiteSpace(g.Name)))">
+                        Suivant <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+        else if (CurrentStep == 2)
+        {
+            <!-- Étape 2: Assigner les participants -->
+            <div class="combat-setup-card">
+                <h3>Assigner les participants</h3>
+                <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);">Assignez chaque joueur et PNJ à un groupe.</p>
+
+                <div class="combat-assign-grid">
+                    @foreach (var group in Groups)
+                    {
+                        var g = group;
+                        <div class="combat-group-column" style="border-top: 3px solid @g.Color;">
+                            <div class="combat-group-header" style="color:@g.Color;">@g.Name</div>
+                            <div class="combat-group-participants">
+                                @foreach (var p in g.Participants)
+                                {
+                                    var participant = p;
+                                    <div class="combat-participant-tag" style="border-color:@g.Color;">
+                                        <span>@p.DisplayName</span>
+                                        <div style="display:flex;align-items:center;gap:4px;">
+                                            <input type="number" class="form-control" style="width:60px;height:28px;font-size:0.75rem;"
+                                                   placeholder="PV Max" @bind="participant.MaxHp" min="1" />
+                                            <button class="btn btn-ghost btn-xs" @onclick="() => RemoveParticipant(g, participant)">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Pool de participants non assignés -->
+                <div class="combat-pool-section">
+                    <h4>Disponibles</h4>
+                    <div class="combat-pool-list">
+                        @foreach (var available in GetAvailableParticipants())
+                        {
+                            var avail = available;
+                            <div class="combat-pool-item">
+                                <span><i class="@(avail.IsPlayer ? "bi bi-person-fill" : "bi bi-robot")"></i> @avail.DisplayName</span>
+                                <select class="form-control form-control-sm" style="width:150px;"
+                                        @onchange="e => AssignToGroup(avail, e.Value?.ToString())">
+                                    <option value="">Assigner à…</option>
+                                    @foreach (var g in Groups)
+                                    {
+                                        <option value="@g.Id">@g.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(StepError))
+                {
+                    <div class="alert-error" style="margin-top:var(--spacing-sm);">@StepError</div>
+                }
+
+                <div class="combat-setup-actions">
+                    <button class="btn btn-ghost" @onclick='() => CurrentStep = 1'>
+                        <i class="bi bi-chevron-left"></i> Précédent
+                    </button>
+                    <button class="btn btn-primary" @onclick="GoToStep3">
+                        Suivant <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+        else if (CurrentStep == 3)
+        {
+            <!-- Étape 3: Mode initiative -->
+            <div class="combat-setup-card">
+                <h3>Mode d'initiative</h3>
+                <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);">Comment les participants vont-ils obtenir leur valeur d'initiative ?</p>
+
+                <div class="initiative-mode-options">
+                    <label class="initiative-mode-option @(InitiativeMode == "manual" ? "selected" : "")">
+                        <input type="radio" name="initiativeMode" value="manual" @onchange='() => InitiativeMode = "manual"' checked="@(InitiativeMode == "manual")" />
+                        <div>
+                            <strong>Manuel</strong>
+                            <span>Le MJ saisit directement l'ordre des participants.</span>
+                        </div>
+                    </label>
+                    <label class="initiative-mode-option @(InitiativeMode == "declare" ? "selected" : "")">
+                        <input type="radio" name="initiativeMode" value="declare" @onchange='() => InitiativeMode = "declare"' checked="@(InitiativeMode == "declare")" />
+                        <div>
+                            <strong>Déclaration</strong>
+                            <span>Les joueurs déclarent leur résultat de dé physique.</span>
+                        </div>
+                    </label>
+                    <label class="initiative-mode-option @(InitiativeMode == "roll" ? "selected" : "")">
+                        <input type="radio" name="initiativeMode" value="roll" @onchange='() => InitiativeMode = "roll"' checked="@(InitiativeMode == "roll")" />
+                        <div>
+                            <strong>Lancer de dé</strong>
+                            <span>Les joueurs reçoivent une demande de lancer. Les PNJs lancent automatiquement.</span>
+                        </div>
+                    </label>
+                </div>
+
+                @if (InitiativeMode == "roll")
+                {
+                    <div style="margin-top:var(--spacing-md);">
+                        <label class="form-label">Dé d'initiative</label>
+                        <select class="form-control" style="max-width:200px;" @bind="InitiativeDiceExpression">
+                            <option value="1d20">1d20 (standard D&D)</option>
+                            <option value="1d6">1d6</option>
+                            <option value="1d10">1d10</option>
+                            <option value="1d12">1d12</option>
+                        </select>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(StepError))
+                {
+                    <div class="alert-error" style="margin-top:var(--spacing-sm);">@StepError</div>
+                }
+
+                <div class="combat-setup-actions">
+                    <button class="btn btn-ghost" @onclick='() => CurrentStep = 2'>
+                        <i class="bi bi-chevron-left"></i> Précédent
+                    </button>
+                    <button class="btn btn-success" @onclick="LaunchCombat" disabled="@IsCreating">
+                        @if (IsCreating) { <span class="btn-spinner"></span> }
+                        else { <i class="bi bi-swords"></i> }
+                        Lancer le combat !
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}

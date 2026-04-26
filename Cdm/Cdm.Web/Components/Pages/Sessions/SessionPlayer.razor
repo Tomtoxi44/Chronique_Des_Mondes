@@ -18,6 +18,16 @@ else if (ErrorMessage != null)
 else if (Session != null)
 {
     <div class="session-player-shell">
+        @if (ActiveCombat != null)
+        {
+            <div class="combat-active-banner" @onclick='() => Nav.NavigateTo($"/sessions/{SessionId}/combat/{ActiveCombat.Id}/player")'
+                 style="cursor:pointer;">
+                <i class="bi bi-swords"></i>
+                <strong>⚔️ Combat en cours !</strong>
+                <span style="font-size:var(--font-size-sm);">Cliquez pour rejoindre le combat</span>
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        }
         <!-- Header -->
         <div class="session-player-header">
             <div class="session-info-row">

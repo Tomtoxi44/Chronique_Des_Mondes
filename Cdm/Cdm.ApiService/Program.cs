@@ -96,6 +96,7 @@ builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<INpcService, NpcService>();
+builder.Services.AddScoped<ICombatService, CombatService>();
 
 // D&D 5e services
 builder.Services.AddScoped<IDndReferenceService, DndReferenceService>();
@@ -298,6 +299,7 @@ app.MapAchievementEndpoints();
 app.MapNotificationEndpoints();
 app.MapSessionEndpoints();
 app.MapNpcEndpoints();
+app.MapCombatEndpoints();
 app.MapDndEndpoints();
 
 // Map SignalR hubs

@@ -132,6 +132,18 @@ public class AppDbContext : DbContext
     /// <summary>D&amp;D 5e skills reference data.</summary>
     public DbSet<DndSkill> DndSkills { get; set; } = null!;
 
+    /// <summary>Gets or sets the combat encounters.</summary>
+    public DbSet<Combat> Combats { get; set; } = null!;
+
+    /// <summary>Gets or sets the combat groups (factions/teams).</summary>
+    public DbSet<CombatGroup> CombatGroups { get; set; } = null!;
+
+    /// <summary>Gets or sets the combat participants.</summary>
+    public DbSet<CombatParticipant> CombatParticipants { get; set; } = null!;
+
+    /// <summary>Gets or sets the combat action log entries.</summary>
+    public DbSet<CombatAction> CombatActions { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -676,6 +688,75 @@ public class AppDbContext : DbContext
             entity.HasIndex(s => s.Name).IsUnique().HasDatabaseName("IX_DndSkills_Name");
             entity.HasIndex(s => s.LinkedAbility).HasDatabaseName("IX_DndSkills_LinkedAbility");
             entity.Property(s => s.IsActive).HasDefaultValue(true);
+        });
+
+        // Configure Combat entity
+        modelBuilder.Entity<Combat>(entity =>
+        {
+            entity.HasIndex(c => c.SessionId).HasDatabaseName("IX_Combats_SessionId");
+            entity.HasIndex(c => c.Status).HasDatabaseName("IX_Combats_Status");
+
+            entity.HasOne(c => c.Session)
+                .WithMany()
+                .HasForeignKey(c => c.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(c => c.StartedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(c => c.Status).HasDefaultValue(0);
+            entity.Property(c => c.CurrentTurnOrder).HasDefaultValue(0);
+        });
+
+        // Configure CombatGroup entity
+        modelBuilder.Entity<CombatGroup>(entity =>
+        {
+            entity.HasIndex(g => g.CombatId).HasDatabaseName("IX_CombatGroups_CombatId");
+
+            entity.HasOne(g => g.Combat)
+                .WithMany(c => c.Groups)
+                .HasForeignKey(g => g.CombatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(g => g.Color).HasDefaultValue("#6366f1");
+            entity.Property(g => g.DisplayOrder).HasDefaultValue(0);
+        });
+
+        // Configure CombatParticipant entity
+        modelBuilder.Entity<CombatParticipant>(entity =>
+        {
+            entity.HasIndex(p => p.CombatId).HasDatabaseName("IX_CombatParticipants_CombatId");
+            entity.HasIndex(p => p.GroupId).HasDatabaseName("IX_CombatParticipants_GroupId");
+
+            entity.HasOne(p => p.Combat)
+                .WithMany(c => c.Participants)
+                .HasForeignKey(p => p.CombatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(p => p.Group)
+                .WithMany(g => g.Participants)
+                .HasForeignKey(p => p.GroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(p => p.IsActive).HasDefaultValue(true);
+            entity.Property(p => p.IsPlayerCharacter).HasDefaultValue(false);
+            entity.Property(p => p.TurnOrder).HasDefaultValue(0);
+            entity.Property(p => p.CurrentHp).HasDefaultValue(0);
+            entity.Property(p => p.MaxHp).HasDefaultValue(1);
+        });
+
+        // Configure CombatAction entity
+        modelBuilder.Entity<CombatAction>(entity =>
+        {
+            entity.HasIndex(a => a.CombatId).HasDatabaseName("IX_CombatActions_CombatId");
+            entity.HasIndex(a => a.CreatedAt).HasDatabaseName("IX_CombatActions_CreatedAt");
+
+            entity.HasOne(a => a.Combat)
+                .WithMany(c => c.Actions)
+                .HasForeignKey(a => a.CombatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(a => a.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(a => a.IsPrivate).HasDefaultValue(false);
         });
     }
 

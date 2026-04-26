@@ -20,6 +20,7 @@ public partial class SessionPlayer : IAsyncDisposable
 
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
+    [Inject] private CombatApiClient CombatClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -29,6 +30,7 @@ public partial class SessionPlayer : IAsyncDisposable
     private SessionDto? Session;
     private WorldCharacterDto? MyCharacter;
     private SessionParticipantDto? MyParticipant;
+    private CombatDto? ActiveCombat;
     private bool IsLoading = true;
     private bool IsLeaving = false;
     private string? ErrorMessage;
@@ -96,6 +98,8 @@ public partial class SessionPlayer : IAsyncDisposable
 
         NavContext.ClearContext();
         IsLoading = false;
+
+        ActiveCombat = await CombatClient.GetActiveCombatForSessionAsync(SessionId);
 
         await ConnectToHubAsync();
     }

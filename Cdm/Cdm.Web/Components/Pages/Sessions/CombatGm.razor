@@ -1,0 +1,170 @@
+@page "/sessions/{SessionId:int}/combat/{CombatId:int}/gm"
+@attribute [Authorize]
+
+<PageTitle>Combat en cours — MJ</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display:flex;justify-content:center;align-items:center;height:60vh;">
+        <AppLoadingSpinner />
+    </div>
+}
+else if (ErrorMessage != null)
+{
+    <AppEmptyState Icon="bi-exclamation-circle" Title="Erreur" Message="@ErrorMessage" />
+}
+else if (Combat != null)
+{
+    <div class="combat-gm-shell">
+        <!-- Topbar -->
+        <div class="combat-topbar">
+            <div style="display:flex;align-items:center;gap:var(--spacing-md);">
+                <i class="bi bi-swords" style="color:var(--color-danger);font-size:1.3rem;"></i>
+                <strong>Combat en cours</strong>
+                @if (Combat.Status == 1)
+                {
+                    <span class="status-badge status-pending">Phase d'initiative</span>
+                }
+                else if (Combat.Status == 2)
+                {
+                    <span class="status-badge status-active">⚔️ Combat actif</span>
+                }
+            </div>
+            <div style="display:flex;gap:var(--spacing-sm);">
+                @if (Combat.Status == 1)
+                {
+                    <button class="btn btn-primary btn-sm" @onclick="StartCombat">
+                        <i class="bi bi-play-fill"></i> Démarrer le combat
+                    </button>
+                }
+                else if (Combat.Status == 2)
+                {
+                    <button class="btn btn-ghost btn-sm" @onclick="NextTurn">
+                        Suivant <i class="bi bi-chevron-double-right"></i>
+                    </button>
+                }
+                <button class="btn btn-danger btn-sm" @onclick="() => ShowEndConfirm = true">
+                    <i class="bi bi-stop-fill"></i> Fin de combat
+                </button>
+            </div>
+        </div>
+
+        <!-- Bande d'ordre -->
+        <CombatOrderBand Participants="@SortedParticipants" CurrentTurnOrder="@Combat.CurrentTurnOrder" />
+
+        <!-- Body principal -->
+        <div class="combat-gm-body">
+            <!-- Panel gauche: participant actif -->
+            <div class="combat-active-panel">
+                @if (ActiveParticipant != null)
+                {
+                    <div class="cdm-card">
+                        <div style="display:flex;align-items:center;gap:var(--spacing-sm);margin-bottom:var(--spacing-md);">
+                            <div class="character-avatar-circle" style="background:@ActiveParticipant.GroupColor;">
+                                @ActiveParticipant.Name.Substring(0, Math.Min(2, ActiveParticipant.Name.Length)).ToUpper()
+                            </div>
+                            <div>
+                                <h3 style="margin:0;">@ActiveParticipant.Name</h3>
+                                <span style="font-size:var(--font-size-xs);color:@ActiveParticipant.GroupColor;">@ActiveParticipant.GroupName</span>
+                            </div>
+                            <span style="margin-left:auto;font-size:var(--font-size-xs);color:var(--color-text-muted);">
+                                @(ActiveParticipant.IsPlayerCharacter ? "🧑 Joueur" : "🤖 PNJ")
+                            </span>
+                        </div>
+
+                        <!-- HP -->
+                        <div class="hp-tracker">
+                            <span class="hp-label">PV</span>
+                            <input type="number" class="form-control" style="width:70px;text-align:center;"
+                                   @bind="HpInput" min="0" max="@ActiveParticipant.MaxHp" />
+                            <span style="color:var(--color-text-muted);">/ @ActiveParticipant.MaxHp</span>
+                            <button class="btn btn-primary btn-sm" @onclick="UpdateActiveHp">Mettre à jour</button>
+                        </div>
+
+                        @if (!ActiveParticipant.IsPlayerCharacter && Combat.Status == 2)
+                        {
+                            <div style="margin-top:var(--spacing-md);">
+                                <DiceRoller IsPrivate="true" ParticipantName="@ActiveParticipant.Name" OnActionRecorded="RecordActionFromDice" />
+                            </div>
+                        }
+
+                        @if (Combat.Status == 1)
+                        {
+                            <div style="margin-top:var(--spacing-md);">
+                                <label class="form-label">Initiative de @ActiveParticipant.Name</label>
+                                <div style="display:flex;gap:var(--spacing-sm);">
+                                    <input type="number" class="form-control" style="width:100px;" @bind="InitiativeInput" min="0" />
+                                    <button class="btn btn-ghost btn-sm" @onclick="SetActiveInitiative">Valider</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Liste des participants - phase initiative -->
+                @if (Combat.Status == 1)
+                {
+                    <div class="cdm-card" style="margin-top:var(--spacing-md);">
+                        <h4 style="margin-bottom:var(--spacing-sm);">Initiatives</h4>
+                        @foreach (var p in SortedParticipants)
+                        {
+                            var participant = p;
+                            <div style="display:flex;align-items:center;gap:var(--spacing-sm);padding:var(--spacing-xs) 0;border-bottom:1px solid var(--color-border);">
+                                <span style="flex:1;font-size:var(--font-size-sm);">@p.Name</span>
+                                @if (p.Initiative.HasValue)
+                                {
+                                    <span style="font-weight:600;color:var(--color-success);">@p.Initiative</span>
+                                }
+                                else
+                                {
+                                    <span style="color:var(--color-text-muted);font-size:var(--font-size-xs);">En attente…</span>
+                                    <input type="number" class="form-control" style="width:70px;"
+                                           @onchange="e => SetParticipantInitiative(participant, e.Value?.ToString())" placeholder="0" />
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Actions rapides MJ -->
+                @if (Combat.Status == 2)
+                {
+                    <div class="cdm-card" style="margin-top:var(--spacing-md);">
+                        <h4>Action libre</h4>
+                        <textarea class="form-control" rows="2" placeholder="Décrire l'action du MJ…" @bind="FreeActionText"></textarea>
+                        <button class="btn btn-ghost btn-sm" style="margin-top:var(--spacing-xs);" @onclick="RecordFreeAction">
+                            <i class="bi bi-plus-circle"></i> Enregistrer
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <!-- Panel droit: log -->
+            <div class="combat-log-panel">
+                <CombatLog Actions="@VisibleActionsForGm" Title="Journal de combat" />
+            </div>
+        </div>
+
+        <!-- Modal fin de combat -->
+        @if (ShowEndConfirm)
+        {
+            <div class="modal-backdrop" @onclick='() => ShowEndConfirm = false'>
+                <div class="modal-card" @onclick:stopPropagation>
+                    <h3>Terminer le combat</h3>
+                    <label class="form-label">Vainqueur (optionnel)</label>
+                    <select class="form-control" @bind="VictorySide">
+                        <option value="">— Aucun —</option>
+                        @foreach (var g in Combat.Groups)
+                        {
+                            <option value="@g.Name">@g.Name</option>
+                        }
+                    </select>
+                    <div style="display:flex;gap:var(--spacing-sm);margin-top:var(--spacing-md);justify-content:flex-end;">
+                        <button class="btn btn-ghost" @onclick='() => ShowEndConfirm = false'>Annuler</button>
+                        <button class="btn btn-danger" @onclick="ConfirmEndCombat">Terminer</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
