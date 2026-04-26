@@ -16,8 +16,8 @@ public class MigrationsContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        // Suppress the snapshot sync warning — manual migrations handle schema changes
-        optionsBuilder.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+        // NOTE: ConfigureWarnings cannot be called here when DbContext pooling is enabled.
+        // The PendingModelChangesWarning suppression is configured at registration time in Program.cs.
     }
 
     /// <summary>
