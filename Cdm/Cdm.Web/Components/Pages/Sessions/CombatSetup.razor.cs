@@ -19,10 +19,12 @@ public partial class CombatSetup
     [Inject] private CombatApiClient CombatClient { get; set; } = default!;
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
     [Inject] private NpcApiClient NpcClient { get; set; } = default!;
+    [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private bool IsLoading = true;
+    private bool IsLoadingNpcs = false;
     private bool IsCreating = false;
     private string? ErrorMessage;
     private string? StepError;
@@ -32,6 +34,8 @@ public partial class CombatSetup
     private int CurrentUserId;
 
     private SessionDto? Session;
+    private List<ChapterDto> Chapters = new();
+    private int? SelectedChapterId;
     private List<GroupSetupModel> Groups = new();
     private List<AvailableParticipant> AllParticipants = new();
 
@@ -65,28 +69,48 @@ public partial class CombatSetup
         {
             AllParticipants.Add(new AvailableParticipant
             {
-                DisplayName = participant.CharacterName ?? participant.UserName ?? "Joueur",
+                DisplayName = !string.IsNullOrWhiteSpace(participant.CharacterName)
+                    ? participant.CharacterName
+                    : (!string.IsNullOrWhiteSpace(participant.UserName) ? participant.UserName : "Joueur"),
                 IsPlayer = true,
                 CharacterId = participant.WorldCharacterId,
                 UserId = participant.UserId
             });
         }
 
-        if (Session.CurrentChapterId.HasValue)
-        {
-            var npcs = await NpcClient.GetNpcsByChapterAsync(Session.CurrentChapterId.Value);
-            foreach (var npc in npcs)
-            {
-                AllParticipants.Add(new AvailableParticipant
-                {
-                    DisplayName = $"{npc.FirstName} {npc.Name}".Trim(),
-                    IsPlayer = false,
-                    NpcId = npc.Id
-                });
-            }
-        }
+        Chapters = await ChapterClient.GetChaptersByCampaignAsync(Session.CampaignId);
+        SelectedChapterId = Session.CurrentChapterId ?? Chapters.FirstOrDefault()?.Id;
+        if (SelectedChapterId.HasValue)
+            await LoadNpcsAsync(SelectedChapterId.Value);
 
         IsLoading = false;
+    }
+
+    private async Task LoadNpcsAsync(int chapterId)
+    {
+        IsLoadingNpcs = true;
+        AllParticipants.RemoveAll(p => !p.IsPlayer);
+        var npcs = await NpcClient.GetNpcsByChapterAsync(chapterId);
+        foreach (var npc in npcs)
+        {
+            AllParticipants.Add(new AvailableParticipant
+            {
+                DisplayName = $"{npc.FirstName} {npc.Name}".Trim(),
+                IsPlayer = false,
+                NpcId = npc.Id
+            });
+        }
+        IsLoadingNpcs = false;
+    }
+
+    private async Task OnChapterChangedAsync(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var chapterId))
+        {
+            SelectedChapterId = chapterId;
+            await LoadNpcsAsync(chapterId);
+            StateHasChanged();
+        }
     }
 
     private void AddGroup()

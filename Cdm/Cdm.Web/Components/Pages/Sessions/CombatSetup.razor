@@ -109,6 +109,27 @@ else
                 <!-- Pool de participants non assignés -->
                 <div class="combat-pool-section">
                     <h4>Disponibles</h4>
+
+                    @if (Chapters.Count > 0)
+                    {
+                        <div style="display:flex;align-items:center;gap:var(--spacing-sm);margin-bottom:var(--spacing-sm);">
+                            <label style="font-size:var(--font-size-sm);color:var(--color-text-muted);white-space:nowrap;">
+                                <i class="bi bi-book"></i> PNJs du chapitre :
+                            </label>
+                            <select class="form-control form-control-sm" style="max-width:280px;"
+                                    value="@SelectedChapterId" @onchange="OnChapterChangedAsync">
+                                @foreach (var chapter in Chapters)
+                                {
+                                    <option value="@chapter.Id">@chapter.ChapterNumber. @chapter.Title</option>
+                                }
+                            </select>
+                            @if (IsLoadingNpcs)
+                            {
+                                <span class="btn-spinner" style="width:16px;height:16px;"></span>
+                            }
+                        </div>
+                    }
+
                     <div class="combat-pool-list">
                         @foreach (var available in GetAvailableParticipants())
                         {
