@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace Cdm.Web.Components.Pages.Worlds;
 
@@ -158,6 +159,12 @@ public partial class WorldDetail : IDisposable
     private NpcDto? NpcToDelete;
     private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
     private int? _lastNpcChapterId;
+
+    // D&D 5e NPC stats (used only when World.GameType == DnD5e)
+    private DndNpcStats NewNpcDndStats = new();
+    private DndNpcStats EditingNpcDndStats = new();
+
+    private bool IsWorldDnD5e => World?.GameType == GameType.DnD5e;
 
     // NPC expand/edit (per card)
     private HashSet<int> ExpandedNpcIds = new();
@@ -916,6 +923,7 @@ public partial class WorldDetail : IDisposable
     private void ShowAddNpc()
     {
         NewNpc = new CreateNpcDto { ChapterId = SelectedChapter!.Id };
+        NewNpcDndStats = new DndNpcStats();
         ShowNpcForm = true;
     }
 
@@ -924,11 +932,14 @@ public partial class WorldDetail : IDisposable
         if (SelectedChapter == null) return;
         IsSavingNpc = true;
         NewNpc.ChapterId = SelectedChapter.Id;
+        if (IsWorldDnD5e)
+            NewNpc.GameSpecificData = JsonSerializer.Serialize(NewNpcDndStats, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         var result = await NpcClient.CreateNpcAsync(NewNpc);
         if (result != null)
         {
             ChapterNpcs.Add(result);
             NewNpc = new CreateNpcDto { ChapterId = SelectedChapter.Id };
+            NewNpcDndStats = new DndNpcStats();
             ShowNpcForm = false;
         }
         IsSavingNpc = false;
@@ -976,20 +987,27 @@ public partial class WorldDetail : IDisposable
             Name = npc.Name,
             Description = npc.Description,
             PhysicalDescription = npc.PhysicalDescription,
-            Age = npc.Age
+            Age = npc.Age,
+            GameSpecificData = npc.GameSpecificData
         };
+        EditingNpcDndStats = IsWorldDnD5e && !string.IsNullOrEmpty(npc.GameSpecificData)
+            ? JsonSerializer.Deserialize<DndNpcStats>(npc.GameSpecificData, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) ?? new DndNpcStats()
+            : new DndNpcStats();
     }
 
     private void CancelEditNpc()
     {
         EditingNpcId = null;
         EditingNpcDraft = new();
+        EditingNpcDndStats = new();
     }
 
     private async Task SaveEditNpc()
     {
         if (EditingNpcId == null) return;
         IsSavingEditNpc = true;
+        if (IsWorldDnD5e)
+            EditingNpcDraft.GameSpecificData = JsonSerializer.Serialize(EditingNpcDndStats, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         var result = await NpcClient.UpdateNpcAsync(EditingNpcId.Value, EditingNpcDraft);
         if (result != null)
         {
@@ -997,6 +1015,7 @@ public partial class WorldDetail : IDisposable
             if (idx >= 0) ChapterNpcs[idx] = result;
             EditingNpcId = null;
             EditingNpcDraft = new();
+            EditingNpcDndStats = new();
         }
         IsSavingEditNpc = false;
     }
@@ -1115,4 +1134,25 @@ public partial class WorldDetail : IDisposable
     }
 
     public record MentionItem(int Id, string DisplayName, string Description, string Type);
+
+    /// <summary>D&amp;D 5e stat block for a Non-Player Character.</summary>
+    public class DndNpcStats
+    {
+        public string? CreatureType { get; set; }
+        public string? Race { get; set; }
+        public string? ClassName { get; set; }
+        public string? ChallengeRating { get; set; }
+        public int Strength { get; set; } = 10;
+        public int Dexterity { get; set; } = 10;
+        public int Constitution { get; set; } = 10;
+        public int Intelligence { get; set; } = 10;
+        public int Wisdom { get; set; } = 10;
+        public int Charisma { get; set; } = 10;
+        public int MaxHitPoints { get; set; } = 10;
+        public int ArmorClass { get; set; } = 10;
+        public int Speed { get; set; } = 9;
+
+        public static int Modifier(int score) => (score - 10) / 2;
+        public static string ModStr(int score) { var m = Modifier(score); return m >= 0 ? $"+{m}" : $"{m}"; }
+    }
 }

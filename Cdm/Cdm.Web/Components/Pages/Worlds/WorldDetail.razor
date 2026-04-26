@@ -741,6 +741,67 @@ else
                                     <label class="form-label">Description physique</label>
                                     <textarea class="form-control" rows="2" @bind="NewNpc.PhysicalDescription" placeholder="Apparence physique..."></textarea>
                                 </div>
+                                @if (IsWorldDnD5e)
+                                {
+                                    <div style="border-top: 1px solid var(--color-border); margin: var(--spacing-sm) 0 var(--spacing-md);"></div>
+                                    <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-gold); margin-bottom: var(--spacing-sm);">
+                                        <i class="bi bi-shield-fill"></i> Stats D&amp;D 5e
+                                    </div>
+                                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                        <div class="form-group">
+                                            <label class="form-label">Type de créature</label>
+                                            <input type="text" class="form-control" @bind="NewNpcDndStats.CreatureType" placeholder="Humanoïde, Mort-vivant..." />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Race</label>
+                                            <input type="text" class="form-control" @bind="NewNpcDndStats.Race" placeholder="Humain, Elfe..." />
+                                        </div>
+                                    </div>
+                                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                        <div class="form-group">
+                                            <label class="form-label">Classe / Rôle</label>
+                                            <input type="text" class="form-control" @bind="NewNpcDndStats.ClassName" placeholder="Guerrier, Mage..." />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Indice de dangerosité</label>
+                                            <input type="text" class="form-control" @bind="NewNpcDndStats.ChallengeRating" placeholder="1/4, 1/2, 1, 5..." style="max-width: 100px;" />
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);">
+                                        @foreach (var (Label, Getter, Setter) in new (string, Func<int>, Action<int>)[] {
+                                            ("FOR", () => NewNpcDndStats.Strength,     v => NewNpcDndStats.Strength = v),
+                                            ("DEX", () => NewNpcDndStats.Dexterity,    v => NewNpcDndStats.Dexterity = v),
+                                            ("CON", () => NewNpcDndStats.Constitution, v => NewNpcDndStats.Constitution = v),
+                                            ("INT", () => NewNpcDndStats.Intelligence, v => NewNpcDndStats.Intelligence = v),
+                                            ("SAG", () => NewNpcDndStats.Wisdom,       v => NewNpcDndStats.Wisdom = v),
+                                            ("CHA", () => NewNpcDndStats.Charisma,     v => NewNpcDndStats.Charisma = v),
+                                        })
+                                        {
+                                            var val = Getter();
+                                            <div style="text-align: center;">
+                                                <div style="font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-muted);">@Label</div>
+                                                <input type="number" class="form-control" style="padding: 2px 4px; text-align: center; font-size: var(--font-size-sm);"
+                                                       value="@val"
+                                                       @onchange="@(e => Setter(int.TryParse(e.Value?.ToString(), out var n) ? n : 10))" />
+                                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">@DndNpcStats.ModStr(val)</div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                        <div class="form-group">
+                                            <label class="form-label">Points de vie max</label>
+                                            <input type="number" class="form-control" @bind="NewNpcDndStats.MaxHitPoints" style="max-width: 100px;" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Classe d'armure</label>
+                                            <input type="number" class="form-control" @bind="NewNpcDndStats.ArmorClass" style="max-width: 100px;" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                        <label class="form-label">Vitesse (m)</label>
+                                        <input type="number" class="form-control" @bind="NewNpcDndStats.Speed" style="max-width: 100px;" />
+                                    </div>
+                                }
                                 <div style="display: flex; gap: var(--spacing-sm);">
                                     <button class="btn btn-primary btn-sm" @onclick="CreateNpc" disabled="@IsSavingNpc">
                                         <i class="bi bi-check"></i> Créer
@@ -815,6 +876,67 @@ else
                                                         <label class="form-label">Description physique</label>
                                                         <textarea class="form-control" rows="2" @bind="EditingNpcDraft.PhysicalDescription"></textarea>
                                                     </div>
+                                                    @if (IsWorldDnD5e)
+                                                    {
+                                                        <div style="border-top: 1px solid var(--color-border); margin: var(--spacing-sm) 0 var(--spacing-md);"></div>
+                                                        <div style="font-size: var(--font-size-sm); font-weight: 600; color: var(--color-gold); margin-bottom: var(--spacing-sm);">
+                                                            <i class="bi bi-shield-fill"></i> Stats D&amp;D 5e
+                                                        </div>
+                                                        <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                                            <div class="form-group">
+                                                                <label class="form-label">Type de créature</label>
+                                                                <input type="text" class="form-control" @bind="EditingNpcDndStats.CreatureType" placeholder="Humanoïde..." />
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label class="form-label">Race</label>
+                                                                <input type="text" class="form-control" @bind="EditingNpcDndStats.Race" placeholder="Humain, Elfe..." />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                                            <div class="form-group">
+                                                                <label class="form-label">Classe / Rôle</label>
+                                                                <input type="text" class="form-control" @bind="EditingNpcDndStats.ClassName" placeholder="Guerrier, Mage..." />
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label class="form-label">ID</label>
+                                                                <input type="text" class="form-control" @bind="EditingNpcDndStats.ChallengeRating" placeholder="1/4, 1, 5..." style="max-width: 80px;" />
+                                                            </div>
+                                                        </div>
+                                                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);">
+                                                            @foreach (var (Label, Getter, Setter) in new (string, Func<int>, Action<int>)[] {
+                                                                ("FOR", () => EditingNpcDndStats.Strength,     v => EditingNpcDndStats.Strength = v),
+                                                                ("DEX", () => EditingNpcDndStats.Dexterity,    v => EditingNpcDndStats.Dexterity = v),
+                                                                ("CON", () => EditingNpcDndStats.Constitution, v => EditingNpcDndStats.Constitution = v),
+                                                                ("INT", () => EditingNpcDndStats.Intelligence, v => EditingNpcDndStats.Intelligence = v),
+                                                                ("SAG", () => EditingNpcDndStats.Wisdom,       v => EditingNpcDndStats.Wisdom = v),
+                                                                ("CHA", () => EditingNpcDndStats.Charisma,     v => EditingNpcDndStats.Charisma = v),
+                                                            })
+                                                            {
+                                                                var val = Getter();
+                                                                <div style="text-align: center;">
+                                                                    <div style="font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-muted);">@Label</div>
+                                                                    <input type="number" class="form-control" style="padding: 2px 4px; text-align: center; font-size: var(--font-size-sm);"
+                                                                           value="@val"
+                                                                           @onchange="@(e => Setter(int.TryParse(e.Value?.ToString(), out var n) ? n : 10))" />
+                                                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">@DndNpcStats.ModStr(val)</div>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                        <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+                                                            <div class="form-group">
+                                                                <label class="form-label">PV max</label>
+                                                                <input type="number" class="form-control" @bind="EditingNpcDndStats.MaxHitPoints" style="max-width: 100px;" />
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label class="form-label">CA</label>
+                                                                <input type="number" class="form-control" @bind="EditingNpcDndStats.ArmorClass" style="max-width: 100px;" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                                                            <label class="form-label">Vitesse (m)</label>
+                                                            <input type="number" class="form-control" @bind="EditingNpcDndStats.Speed" style="max-width: 100px;" />
+                                                        </div>
+                                                    }
                                                     <div style="display: flex; gap: var(--spacing-sm);">
                                                         <button class="btn btn-primary btn-sm" @onclick="SaveEditNpc" disabled="@IsSavingEditNpc">
                                                             <i class="bi bi-check"></i> Sauvegarder
@@ -834,7 +956,36 @@ else
                                                         <div class="npc-card-body-label">Apparence</div>
                                                         <p class="npc-description" style="font-style: italic;">@npc.PhysicalDescription</p>
                                                     }
-                                                    @if (string.IsNullOrEmpty(npc.Description) && string.IsNullOrEmpty(npc.PhysicalDescription))
+                                                    @if (IsWorldDnD5e && !string.IsNullOrEmpty(npc.GameSpecificData))
+                                                    {
+                                                        var dndStats = System.Text.Json.JsonSerializer.Deserialize<DndNpcStats>(npc.GameSpecificData!, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+                                                        if (dndStats != null)
+                                                        {
+                                                            <div class="npc-card-body-label" style="color: var(--color-gold); margin-top: var(--spacing-sm);">Stats D&amp;D 5e</div>
+                                                            <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs); font-size: var(--font-size-xs); margin-bottom: var(--spacing-xs);">
+                                                                @if (!string.IsNullOrEmpty(dndStats.CreatureType)) { <span class="badge badge-secondary">@dndStats.CreatureType</span> }
+                                                                @if (!string.IsNullOrEmpty(dndStats.Race))         { <span class="badge badge-secondary">@dndStats.Race</span> }
+                                                                @if (!string.IsNullOrEmpty(dndStats.ClassName))    { <span class="badge badge-secondary">@dndStats.ClassName</span> }
+                                                                @if (!string.IsNullOrEmpty(dndStats.ChallengeRating)) { <span class="badge badge-primary">ID @dndStats.ChallengeRating</span> }
+                                                            </div>
+                                                            <div style="display: flex; gap: var(--spacing-sm); font-size: var(--font-size-xs); margin-bottom: var(--spacing-xs);">
+                                                                <span>❤️ @dndStats.MaxHitPoints PV</span>
+                                                                <span>🛡 CA @dndStats.ArmorClass</span>
+                                                                <span>💨 @dndStats.Speed m</span>
+                                                            </div>
+                                                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; font-size: var(--font-size-xs); text-align: center;">
+                                                                @foreach (var (Label, Val) in new[] { ("FOR", dndStats.Strength), ("DEX", dndStats.Dexterity), ("CON", dndStats.Constitution), ("INT", dndStats.Intelligence), ("SAG", dndStats.Wisdom), ("CHA", dndStats.Charisma) })
+                                                                {
+                                                                    <div style="background: var(--color-bg-tertiary, var(--color-bg-secondary)); border-radius: 4px; padding: 4px 2px;">
+                                                                        <div style="font-weight: 600; color: var(--color-text-muted);">@Label</div>
+                                                                        <div style="font-weight: 700;">@Val</div>
+                                                                        <div style="color: var(--color-text-muted);">@DndNpcStats.ModStr(Val)</div>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    }
+                                                    @if (string.IsNullOrEmpty(npc.Description) && string.IsNullOrEmpty(npc.PhysicalDescription) && (!IsWorldDnD5e || string.IsNullOrEmpty(npc.GameSpecificData)))
                                                     {
                                                         <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm); margin: 0;">
                                                             Aucune description renseignée.
