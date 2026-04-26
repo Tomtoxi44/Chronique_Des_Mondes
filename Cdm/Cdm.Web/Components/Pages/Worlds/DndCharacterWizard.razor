@@ -186,6 +186,87 @@ else
                     </div>
                 }
 
+                @* Background *@
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">Background (historique)</label>
+                    <select class="form-select" @bind="SelectedBackgroundId" @bind:after="OnBackgroundSelected">
+                        <option value="0">— Choisir un background —</option>
+                        @foreach (var bg in AvailableBackgrounds)
+                        {
+                            <option value="@bg.Id">@bg.Name</option>
+                        }
+                    </select>
+                    @if (SelectedBackground != null)
+                    {
+                        <div style="margin-top: var(--spacing-xs); padding: var(--spacing-sm); background: var(--color-bg-secondary); border-radius: var(--border-radius-sm); font-size: var(--font-size-xs);">
+                            @if (!string.IsNullOrEmpty(SelectedBackground.Description))
+                            {
+                                <div style="color: var(--color-text-secondary); margin-bottom: var(--spacing-xs);">@SelectedBackground.Description</div>
+                            }
+                            <div>
+                                <strong><i class="bi bi-bookmark-fill"></i> Aptitude :</strong>
+                                <span style="color: var(--color-warning);"> @SelectedBackground.Feature</span>
+                            </div>
+                            @if (SelectedBackground.SkillProficiencies.Count > 0)
+                            {
+                                <div style="margin-top: var(--spacing-xs);">
+                                    <strong>Compétences accordées :</strong>
+                                    @foreach (var skill in SelectedBackground.SkillProficiencies)
+                                    {
+                                        <span style="margin-left: 4px; padding: 1px 6px; background: var(--color-primary); color: white; border-radius: 9999px; font-size: 11px;">@skill</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @* Choix de compétences de classe *@
+                @if (SelectedClass?.AvailableSkills?.Count > 0)
+                {
+                    var maxChoices = GetMaxClassSkillChoices();
+                    var currentChoices = ClassSkillChoices.Count;
+                    <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); background: var(--color-bg-secondary);">
+                        <div style="font-size: var(--font-size-sm); font-weight: 600; margin-bottom: var(--spacing-xs);">
+                            <i class="bi bi-check2-square"></i>
+                            Compétences de classe — choisissez @maxChoices
+                            <span style="color: @(currentChoices == maxChoices ? "var(--color-success)" : "var(--color-text-muted)"); font-size: var(--font-size-xs); margin-left: var(--spacing-xs);">
+                                (@currentChoices/@maxChoices sélectionnée@(currentChoices > 1 ? "s" : ""))
+                            </span>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs);">
+                            @foreach (var skill in SelectedClass.AvailableSkills)
+                            {
+                                var fromBg = IsSkillFromBackground(skill);
+                                var chosen = ClassSkillChoices.Contains(skill);
+                                var canSelect = !fromBg && (!chosen ? currentChoices < maxChoices : true);
+                                <button type="button"
+                                        style="padding: 3px 10px; border-radius: 9999px; font-size: var(--font-size-xs); border: 1px solid; cursor: @(fromBg ? "default" : "pointer");
+                                               background: @(fromBg ? "var(--color-primary)" : chosen ? "var(--color-success)" : "var(--color-bg-tertiary)");
+                                               color: @(fromBg || chosen ? "white" : canSelect ? "var(--color-text-primary)" : "var(--color-text-muted)");
+                                               border-color: @(fromBg ? "var(--color-primary)" : chosen ? "var(--color-success)" : "var(--color-border)");
+                                               opacity: @(!fromBg && !chosen && !canSelect ? "0.5" : "1");"
+                                        @onclick="() => ToggleClassSkill(skill)"
+                                        disabled="@(!canSelect && !chosen && !fromBg)"
+                                        title="@(fromBg ? $"Accordé par le background {Stats.Background}" : "")">
+                                    @if (fromBg)
+                                    {
+                                        <i class="bi bi-bookmark-fill"></i>
+                                    }
+                                    else if (chosen)
+                                    {
+                                        <i class="bi bi-check-lg"></i>
+                                    }
+                                    @skill
+                                </button>
+                            }
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-muted); margin-top: var(--spacing-xs);">
+                            <i class="bi bi-bookmark-fill" style="color: var(--color-primary);"></i> = accordé par background
+                        </div>
+                    </div>
+                }
+
                 @* Bonus de race preview *@
                 @if (SelectedRace != null)
                 {

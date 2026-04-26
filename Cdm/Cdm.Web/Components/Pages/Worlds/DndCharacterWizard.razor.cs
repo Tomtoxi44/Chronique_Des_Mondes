@@ -53,8 +53,17 @@ public partial class DndCharacterWizard
     // Reference data
     private List<DndRaceDto> AvailableRaces = new();
     private List<DndClassDto> AvailableClasses = new();
+    private List<DndBackgroundDto> AvailableBackgrounds = new();
     private List<DndItemDto> AvailableItems = new();
     private List<DndSpellDto> AvailableSpells = new();
+
+    // Background selection
+    private int SelectedBackgroundId = 0;
+    private DndBackgroundDto? SelectedBackground;
+    private List<string> BackgroundGrantedSkills = new();
+
+    // Class skill choices (separate from background skills)
+    private HashSet<string> ClassSkillChoices = new();
 
     // ── Init ─────────────────────────────────────────────────────────────
 
@@ -94,12 +103,14 @@ public partial class DndCharacterWizard
         // Load reference data in parallel
         var racesTask = DndClient.GetRacesAsync();
         var classesTask = DndClient.GetClassesAsync();
+        var backgroundsTask = DndClient.GetBackgroundsAsync();
         var itemsTask = DndClient.GetItemsAsync();
         var spellsTask = DndClient.GetSpellsAsync();
 
-        await Task.WhenAll(racesTask, classesTask, itemsTask, spellsTask);
+        await Task.WhenAll(racesTask, classesTask, backgroundsTask, itemsTask, spellsTask);
         AvailableRaces = racesTask.Result;
         AvailableClasses = classesTask.Result;
+        AvailableBackgrounds = backgroundsTask.Result;
         AvailableItems = itemsTask.Result;
         AvailableSpells = spellsTask.Result;
 
@@ -108,8 +119,25 @@ public partial class DndCharacterWizard
             SelectedRace = AvailableRaces.FirstOrDefault(r => r.Name == Stats.Race);
         if (!string.IsNullOrEmpty(Stats.CharacterClass))
             SelectedClass = AvailableClasses.FirstOrDefault(c => c.Name == Stats.CharacterClass);
+        if (!string.IsNullOrEmpty(Stats.Background))
+        {
+            SelectedBackground = AvailableBackgrounds.FirstOrDefault(b => b.Name == Stats.Background);
+            if (SelectedBackground != null)
+            {
+                SelectedBackgroundId = SelectedBackground.Id;
+                BackgroundGrantedSkills = SelectedBackground.SkillProficiencies;
+            }
+        }
         if (SelectedRace != null) SelectedRaceId = SelectedRace.Id;
         if (SelectedClass != null) SelectedClassId = SelectedClass.Id;
+
+        // Restore class skill choices (skills already in proficiencies that aren't from background)
+        if (SelectedClass != null)
+        {
+            foreach (var skill in Stats.SkillProficiencies)
+                if (!BackgroundGrantedSkills.Contains(skill) && SelectedClass.AvailableSkills.Contains(skill))
+                    ClassSkillChoices.Add(skill);
+        }
 
         IsLoading = false;
     }
@@ -172,9 +200,63 @@ public partial class DndCharacterWizard
 
     private void OnClassSelected()
     {
+        var previousClass = SelectedClass;
         SelectedClass = AvailableClasses.FirstOrDefault(c => c.Id == SelectedClassId);
         Stats.CharacterClass = SelectedClass?.Name;
+
+        // Reset class skill choices when class changes
+        if (previousClass?.Name != SelectedClass?.Name)
+        {
+            foreach (var skill in ClassSkillChoices)
+                Stats.SkillProficiencies.Remove(skill);
+            ClassSkillChoices.Clear();
+        }
+
         StateHasChanged();
+    }
+
+    private void OnBackgroundSelected()
+    {
+        // Remove old background skills from proficiencies
+        foreach (var skill in BackgroundGrantedSkills)
+            Stats.SkillProficiencies.Remove(skill);
+
+        SelectedBackground = AvailableBackgrounds.FirstOrDefault(b => b.Id == SelectedBackgroundId);
+        Stats.Background = SelectedBackground?.Name;
+        BackgroundGrantedSkills = SelectedBackground?.SkillProficiencies ?? new();
+
+        // Auto-add new background skills
+        foreach (var skill in BackgroundGrantedSkills)
+            if (!Stats.SkillProficiencies.Contains(skill))
+                Stats.SkillProficiencies.Add(skill);
+
+        StateHasChanged();
+    }
+
+    private int GetMaxClassSkillChoices() => Stats.CharacterClass switch
+    {
+        "Barde" or "Rôdeur" => 3,
+        "Roublard" => 4,
+        _ => 2
+    };
+
+    private bool IsSkillFromBackground(string skill) => BackgroundGrantedSkills.Contains(skill);
+
+    private void ToggleClassSkill(string skill)
+    {
+        if (IsSkillFromBackground(skill)) return;
+
+        if (ClassSkillChoices.Contains(skill))
+        {
+            ClassSkillChoices.Remove(skill);
+            Stats.SkillProficiencies.Remove(skill);
+        }
+        else if (ClassSkillChoices.Count < GetMaxClassSkillChoices())
+        {
+            ClassSkillChoices.Add(skill);
+            if (!Stats.SkillProficiencies.Contains(skill))
+                Stats.SkillProficiencies.Add(skill);
+        }
     }
 
     private async Task SaveStatsAndContinue()
