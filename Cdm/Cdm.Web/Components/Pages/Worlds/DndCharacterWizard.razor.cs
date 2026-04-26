@@ -297,5 +297,6 @@ public partial class DndCharacterWizard
         await SaveBaseInfoAsync();
         IsSavingBase = false;
         IsComplete = true;
+        Nav.NavigateTo($"/world-character/{WorldCharacterId}/dnd");
     }
 }

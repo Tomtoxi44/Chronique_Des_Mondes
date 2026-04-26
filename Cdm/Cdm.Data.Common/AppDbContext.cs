@@ -126,6 +126,12 @@ public class AppDbContext : DbContext
     /// <summary>D&amp;D 5e spells known/prepared by world characters.</summary>
     public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
 
+    /// <summary>D&amp;D 5e character backgrounds.</summary>
+    public DbSet<DndBackground> DndBackgrounds { get; set; } = null!;
+
+    /// <summary>D&amp;D 5e skills reference data.</summary>
+    public DbSet<DndSkill> DndSkills { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -657,6 +663,19 @@ public class AppDbContext : DbContext
 
             entity.Property(s => s.IsPrepared)
                 .HasDefaultValue(false);
+        });
+
+        modelBuilder.Entity<DndBackground>(entity =>
+        {
+            entity.HasIndex(b => b.Name).IsUnique().HasDatabaseName("IX_DndBackgrounds_Name");
+            entity.Property(b => b.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<DndSkill>(entity =>
+        {
+            entity.HasIndex(s => s.Name).IsUnique().HasDatabaseName("IX_DndSkills_Name");
+            entity.HasIndex(s => s.LinkedAbility).HasDatabaseName("IX_DndSkills_LinkedAbility");
+            entity.Property(s => s.IsActive).HasDefaultValue(true);
         });
     }
 

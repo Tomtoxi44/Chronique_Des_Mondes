@@ -82,6 +82,20 @@ public static class DndEndpoints
             var m = await svc.GetMonsterTemplateByIdAsync(id);
             return m is null ? Results.NotFound() : Results.Ok(m);
         }).WithName("GetDndMonster");
+
+        group.MapGet("/backgrounds", async ([FromServices] IDndReferenceService svc) =>
+            Results.Ok(await svc.GetBackgroundsAsync()))
+            .WithName("GetDndBackgrounds");
+
+        group.MapGet("/backgrounds/{id:int}", async (int id, [FromServices] IDndReferenceService svc) =>
+        {
+            var bg = await svc.GetBackgroundByIdAsync(id);
+            return bg is null ? Results.NotFound() : Results.Ok(bg);
+        }).WithName("GetDndBackground");
+
+        group.MapGet("/skills", async ([FromServices] IDndReferenceService svc) =>
+            Results.Ok(await svc.GetSkillsAsync()))
+            .WithName("GetDndSkills");
     }
 
     // ── Character Stats ──────────────────────────────────────────────────

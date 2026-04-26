@@ -717,6 +717,33 @@ public class WorldService(
     }
 
     /// <inheritdoc/>
+    public async Task<WorldCharacterDto?> GetWorldCharacterByIdAsync(int wcId, int userId)
+    {
+        try
+        {
+            var wc = await this.dbContext.WorldCharacters
+                .Include(w => w.Character)
+                .Include(w => w.World)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.Id == wcId && w.IsActive &&
+                    (w.Character.UserId == userId || w.World.UserId == userId));
+
+            if (wc == null)
+            {
+                this.logger.LogWarning("World character {WcId} not found or not accessible by user {UserId}", wcId, userId);
+                return null;
+            }
+
+            return this.MapToWorldCharacterDto(wc);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error retrieving world character {WcId} for user {UserId}", wcId, userId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<IEnumerable<CampaignDto>> GetWorldCampaignsForMemberAsync(int worldId, int userId)
     {
         try

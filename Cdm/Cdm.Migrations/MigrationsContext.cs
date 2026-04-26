@@ -98,6 +98,8 @@ public class MigrationsContext : DbContext
     public DbSet<DndMonsterTemplate> DndMonsterTemplates { get; set; } = null!;
     public DbSet<DndInventoryItem> DndInventoryItems { get; set; } = null!;
     public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
+    public DbSet<DndBackground> DndBackgrounds { get; set; } = null!;
+    public DbSet<DndSkill> DndSkills { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -424,6 +426,19 @@ public class MigrationsContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
 
             entity.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<DndBackground>(entity =>
+        {
+            entity.HasIndex(b => b.Name).IsUnique().HasDatabaseName("IX_DndBackgrounds_Name");
+            entity.Property(b => b.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<DndSkill>(entity =>
+        {
+            entity.HasIndex(s => s.Name).IsUnique().HasDatabaseName("IX_DndSkills_Name");
+            entity.HasIndex(s => s.LinkedAbility).HasDatabaseName("IX_DndSkills_LinkedAbility");
+            entity.Property(s => s.IsActive).HasDefaultValue(true);
         });
 
         // Configure Session entity

@@ -103,6 +103,28 @@ public class DndReferenceService(AppDbContext dbContext) : IDndReferenceService
         return m is null ? null : MapMonster(m);
     }
 
+    // ── Backgrounds ──────────────────────────────────────────────────────
+
+    public async Task<List<DndBackgroundDto>> GetBackgroundsAsync()
+    {
+        var backgrounds = await dbContext.DndBackgrounds.AsNoTracking().ToListAsync();
+        return backgrounds.Select(MapBackground).ToList();
+    }
+
+    public async Task<DndBackgroundDto?> GetBackgroundByIdAsync(int id)
+    {
+        var bg = await dbContext.DndBackgrounds.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
+        return bg is null ? null : MapBackground(bg);
+    }
+
+    // ── Skills ───────────────────────────────────────────────────────────
+
+    public async Task<List<DndSkillDto>> GetSkillsAsync()
+    {
+        var skills = await dbContext.DndSkills.AsNoTracking().ToListAsync();
+        return skills.Select(MapSkill).ToList();
+    }
+
     // ── Mappers ──────────────────────────────────────────────────────────
 
     private static DndRaceDto MapRace(Data.Common.Models.DndRace r) => new()
@@ -128,7 +150,8 @@ public class DndReferenceService(AppDbContext dbContext) : IDndReferenceService
         IsSpellcaster = c.IsSpellcaster,
         PrimaryAbilities = DeserializeList(c.PrimaryAbilities),
         SavingThrows = DeserializeList(c.SavingThrows),
-        Subclasses = DeserializeList(c.Subclasses)
+        Subclasses = DeserializeList(c.Subclasses),
+        AvailableSkills = DeserializeList(c.AvailableSkills)
     };
 
     private static DndItemDto MapItem(Data.Common.Models.DndItem i) => new()
@@ -185,6 +208,26 @@ public class DndReferenceService(AppDbContext dbContext) : IDndReferenceService
         Actions = m.Actions,
         SpecialAbilities = DeserializeList(m.SpecialAbilities),
         Alignment = m.Alignment
+    };
+
+    private static DndBackgroundDto MapBackground(Data.Common.Models.DndBackground b) => new()
+    {
+        Id = b.Id,
+        Name = b.Name,
+        Description = b.Description,
+        SkillProficiencies = DeserializeList(b.SkillProficiencies),
+        ToolProficiencies = DeserializeList(b.ToolProficiencies),
+        Languages = b.Languages,
+        Feature = b.Feature,
+        FeatureDescription = b.FeatureDescription
+    };
+
+    private static DndSkillDto MapSkill(Data.Common.Models.DndSkill s) => new()
+    {
+        Id = s.Id,
+        Name = s.Name,
+        LinkedAbility = s.LinkedAbility,
+        Description = s.Description
     };
 
     private static Dictionary<string, int> DeserializeDict(string? json)

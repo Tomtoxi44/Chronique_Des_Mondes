@@ -29,6 +29,12 @@ public class DndCharacterStatsDto
     public int? ArmorClass { get; set; }
     public int? Speed { get; set; }
 
+    /// <summary>Skills the character is proficient in (list of skill names in French).</summary>
+    public List<string> SkillProficiencies { get; set; } = new();
+
+    /// <summary>Saving throws the character is proficient in (list of ability codes, e.g. "FOR", "DEX").</summary>
+    public List<string> SavingThrowProficiencies { get; set; } = new();
+
     // Computed (read-only, set by service)
     public int? ProficiencyBonus { get; set; }
     public int? StrengthModifier => Strength.HasValue ? (Strength.Value - 10) / 2 : null;

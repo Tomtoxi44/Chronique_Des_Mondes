@@ -43,5 +43,9 @@ public class DndClass
     [Column(TypeName = "nvarchar(max)")]
     public string? Subclasses { get; set; }
 
+    /// <summary>Skills available for proficiency selection at class creation (JSON array): ["Acrobaties","Athletisme"]</summary>
+    [Column(TypeName = "nvarchar(max)")]
+    public string? AvailableSkills { get; set; }
+
     public bool IsActive { get; set; } = true;
 }

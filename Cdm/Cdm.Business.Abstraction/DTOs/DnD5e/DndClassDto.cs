@@ -17,4 +17,5 @@ public class DndClassDto
     public List<string> PrimaryAbilities { get; set; } = new();
     public List<string> SavingThrows { get; set; } = new();
     public List<string> Subclasses { get; set; } = new();
+    public List<string> AvailableSkills { get; set; } = new();
 }

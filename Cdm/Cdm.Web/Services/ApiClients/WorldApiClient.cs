@@ -279,6 +279,25 @@ public class WorldApiClient
     }
 
     /// <summary>
+    /// Get a specific world character by its ID (must belong to the current user or user must be the world GM).
+    /// </summary>
+    public async Task<WorldCharacterDto?> GetWorldCharacterByIdAsync(int wcId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync($"api/worlds/my-character/{wcId}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<WorldCharacterDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching world character {WcId}", wcId);
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Get the current user's world character for a specific world.
     /// </summary>
     public async Task<WorldCharacterDto?> GetMyWorldCharacterAsync(int worldId)

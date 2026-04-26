@@ -25,4 +25,8 @@ public interface IDndReferenceService
 
     Task<IEnumerable<DndMonsterTemplateDto>> GetMonsterTemplatesAsync();
     Task<DndMonsterTemplateDto?> GetMonsterTemplateByIdAsync(int id);
+
+    Task<List<DndBackgroundDto>> GetBackgroundsAsync();
+    Task<DndBackgroundDto?> GetBackgroundByIdAsync(int id);
+    Task<List<DndSkillDto>> GetSkillsAsync();
 }

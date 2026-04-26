@@ -97,6 +97,32 @@ public class DndApiClient
         return [];
     }
 
+    public async Task<List<DndBackgroundDto>> GetBackgroundsAsync()
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync("api/dnd/backgrounds");
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<List<DndBackgroundDto>>() ?? [];
+        }
+        catch (Exception ex) { _logger.LogError(ex, "Error fetching D&D backgrounds"); }
+        return [];
+    }
+
+    public async Task<List<DndSkillDto>> GetSkillsAsync()
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync("api/dnd/skills");
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<List<DndSkillDto>>() ?? [];
+        }
+        catch (Exception ex) { _logger.LogError(ex, "Error fetching D&D skills"); }
+        return [];
+    }
+
     // ── Character Stats ──────────────────────────────────────────────────
 
     public async Task<DndCharacterStatsDto?> GetCharacterStatsAsync(int wcId)

@@ -101,6 +101,23 @@ public static class WorldEndpoints
         group.MapGet("/{id:int}/campaigns", GetWorldCampaignsForMemberAsync)
             .WithName("GetWorldCampaignsForMember")
             .WithOpenApi();
+
+        // GET /api/worlds/my-character/{wcId} - Get a world character by its ID (for the current user)
+        group.MapGet("/my-character/{wcId:int}", GetWorldCharacterByIdAsync)
+            .WithName("GetWorldCharacterById")
+            .WithOpenApi();
+    }
+
+    private static async Task<IResult> GetWorldCharacterByIdAsync(
+        int wcId,
+        [FromServices] IWorldService worldService,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        var userId = GetUserId(httpContext);
+        if (userId == null) return Results.Unauthorized();
+        var wc = await worldService.GetWorldCharacterByIdAsync(wcId, userId.Value);
+        return wc is null ? Results.NotFound() : Results.Ok(wc);
     }
 
     private static async Task<IResult> CreateWorldAsync(
