@@ -710,6 +710,21 @@
   background: var(--color-bg-primary);
 }
 
+/* Combat pages need full-height layout without outer scroll */
+.app-main-wrapper:has(.combat-gm-shell),
+.app-main-wrapper:has(.combat-player-shell) {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-content:has(.combat-gm-shell),
+.app-content:has(.combat-player-shell) {
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ============================================
    DROPDOWN BACKDROP (click-outside to close)
    ============================================ */

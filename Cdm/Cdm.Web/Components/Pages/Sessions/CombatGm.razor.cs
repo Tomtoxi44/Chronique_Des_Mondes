@@ -34,7 +34,6 @@ public partial class CombatGm : IAsyncDisposable
     private HubConnection? _hub;
     private readonly Random _random = new();
 
-    private int HpInput;
     private string FreeActionText = "";
     private bool ShowEndConfirm = false;
     private string? VictorySide;
@@ -50,13 +49,11 @@ public partial class CombatGm : IAsyncDisposable
 
     private List<CombatParticipantDto> SortedParticipants =>
         Combat?.Participants
-            .Where(p => p.IsActive)
             .OrderBy(p => p.TurnOrder)
             .ToList() ?? new();
 
     private List<CombatParticipantDto> SortedByInitiative =>
         Combat?.Participants
-            .Where(p => p.IsActive)
             .OrderByDescending(p => p.Initiative.HasValue)
             .ThenByDescending(p => p.Initiative ?? 0)
             .ThenBy(p => p.Name)
@@ -125,10 +122,9 @@ public partial class CombatGm : IAsyncDisposable
     private async Task ReloadAsync()
     {
         Combat = await CombatClient.GetCombatAsync(CombatId);
-        if (ActiveParticipant != null) HpInput = ActiveParticipant.CurrentHp;
         await LoadActiveCharacterAsync();
         await InvokeAsync(StateHasChanged);
-    }    // --- Character sheet loading ---
+    }// --- Character sheet loading ---
 
     private async Task LoadActiveCharacterAsync()
     {
@@ -178,17 +174,6 @@ public partial class CombatGm : IAsyncDisposable
     {
         var updated = await CombatClient.NextTurnAsync(CombatId);
         if (updated != null) { Combat = updated; await LoadActiveCharacterAsync(); }
-    }
-
-    private async Task UpdateActiveHp()
-    {
-        if (ActiveParticipant == null) return;
-        var updated = await CombatClient.UpdateHpAsync(CombatId, ActiveParticipant.Id, new UpdateHpDto { NewHp = HpInput });
-        if (updated != null)
-        {
-            var p = Combat?.Participants.FirstOrDefault(x => x.Id == updated.Id);
-            if (p != null) p.CurrentHp = updated.CurrentHp;
-        }
     }
 
     private async Task SetParticipantInitiative(CombatParticipantDto participant, string? value)

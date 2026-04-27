@@ -2599,14 +2599,7 @@ textarea.form-control {
   color: var(--color-text-muted);
 }
 
-/* --- CombatGm shell --- */
-.combat-gm-shell {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - var(--topbar-height, 56px));
-  margin: calc(-1 * var(--spacing-xl));
-  overflow: hidden;
-}
+/* --- CombatGm shell (old duplicate removed — canonical definition is below at combat-gm-shell block) --- */
 
 .combat-topbar {
   display: flex;
@@ -3535,7 +3528,9 @@ textarea.form-control {
 .combat-player-shell {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   background: var(--color-bg-primary);
 }
@@ -3706,12 +3701,127 @@ textarea.form-control {
   color: var(--color-text-muted);
 }
 
-.combat-order-active-indicator {
+/* Inactive slot in order band */
+.combat-order-slot.inactive-participant {
+  opacity: 0.4;
+}
+
+/* Participants toggle list in GM left panel */
+.combat-participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.combat-participant-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  transition: opacity 0.2s;
+}
+
+.combat-participant-row.inactive {
+  opacity: 0.45;
+}
+
+.combat-participant-row.current-turn {
+  border-color: var(--color-primary);
+  background: var(--color-bg-elevated);
+}
+
+.combat-participant-avatar-sm {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.combat-participant-name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-switch input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  width: 32px;
+  height: 18px;
+  background: var(--color-danger);
+  border-radius: 9px;
+  transition: background 0.2s;
+  position: relative;
+}
+
+.toggle-switch input:checked + .toggle-track {
+  background: var(--color-success);
+}
+
+.toggle-track::after {
+  content: '';
   position: absolute;
   top: 2px;
-  right: 2px;
-  font-size: 0.6rem;
-  color: var(--color-primary);
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-track::after {
+  transform: translateX(14px);
+}
+
+/* Next turn button */
+.combat-next-turn-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.combat-next-turn-btn:hover {
+  background: var(--color-primary-hover, var(--color-primary));
+  filter: brightness(1.1);
 }
 
 /* ── CombatLog ───────────────────────────────────────────────── */

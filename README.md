@@ -567,6 +567,18 @@ Example: WorldEndpoints.MapEndpoints(app)
 Example: SessionHub, CombatHub, NotificationHub
 ```
 
+### Interdiction des emojis dans le code source
+
+**Les emojis sont strictement interdits** dans tout fichier source de l'application :
+- Fichiers `.razor` (templates HTML)
+- Fichiers `.cs` (code C#)
+- Fichiers `.css`
+- Fichiers `.html`
+
+Utiliser à la place les **Bootstrap Icons** (`<i class="bi bi-..."></i>`) ou des libellés textuels.
+
+Les emojis sont autorisés uniquement dans les fichiers de documentation (`.md`, instructions Copilot).
+
 ### Enums Principaux
 ```csharp
 GameType: Generic, D&D5e, Skyrim, Custom, Empty

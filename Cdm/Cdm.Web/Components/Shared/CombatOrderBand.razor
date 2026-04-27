@@ -5,24 +5,20 @@
     {
         var p = participant;
         var isActive = p.TurnOrder == CurrentTurnOrder;
-        <div class="combat-order-slot @(isActive ? "active-turn" : "")" style="border-bottom: 3px solid @p.GroupColor;">
+        <div class="combat-order-slot @(isActive ? "active-turn" : "") @(!p.IsActive ? "inactive-participant" : "")"
+             style="border-bottom: 3px solid @p.GroupColor;">
             <div class="combat-order-avatar" style="background: @(isActive ? p.GroupColor : "var(--color-bg-secondary)")">
                 @p.Name.Substring(0, Math.Min(2, p.Name.Length)).ToUpper()
             </div>
             <div class="combat-order-info">
                 <span class="combat-order-name">@p.Name</span>
-                <span class="combat-order-hp" style="color: @(p.CurrentHp > p.MaxHp / 3 ? "var(--color-success)" : "var(--color-danger)");">
-                    ❤️ @p.CurrentHp/@p.MaxHp
-                </span>
                 @if (p.Initiative.HasValue)
                 {
-                    <span class="combat-order-initiative">⚡ @p.Initiative</span>
+                    <span class="combat-order-initiative">
+                        <i class="bi bi-lightning-fill"></i> @p.Initiative
+                    </span>
                 }
             </div>
-            @if (isActive)
-            {
-                <div class="combat-order-active-indicator">▶</div>
-            }
         </div>
     }
 </div>

@@ -254,7 +254,9 @@ else
                                 <span class="initiative-preview-group" style="color:@p.GroupColor;">@p.GroupName</span>
                                 @if (p.Initiative.HasValue)
                                 {
-                                    <span class="initiative-preview-value">🎲 @p.Initiative</span>
+                                    <span class="initiative-preview-value">
+                                        <i class="bi bi-dice-5"></i> @p.Initiative
+                                    </span>
                                 }
                                 else
                                 {
@@ -312,7 +314,7 @@ else
                     <button class="btn btn-success" @onclick="ValidateAndStartCombat" disabled="@IsStartingCombat">
                         @if (IsStartingCombat) { <span class="btn-spinner"></span> }
                         else { <i class="bi bi-swords"></i> }
-                        Valider et démarrer ⚔️
+                        Valider et démarrer
                     </button>
                 </div>
             </div>
