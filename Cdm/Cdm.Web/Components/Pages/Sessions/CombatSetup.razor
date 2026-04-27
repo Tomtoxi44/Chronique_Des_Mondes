@@ -33,8 +33,12 @@ else
                 <span class="stepper-num">2</span> Participants
             </div>
             <div class="stepper-divider"></div>
-            <div class="stepper-step @(CurrentStep == 3 ? "active" : "")">
+            <div class="stepper-step @(CurrentStep == 3 ? "active" : CurrentStep > 3 ? "done" : "")">
                 <span class="stepper-num">3</span> Initiative
+            </div>
+            <div class="stepper-divider"></div>
+            <div class="stepper-step @(CurrentStep == 4 ? "active" : "")">
+                <span class="stepper-num">4</span> Ordre
             </div>
         </div>
 
@@ -93,8 +97,6 @@ else
                                     <div class="combat-participant-tag" style="border-color:@g.Color;">
                                         <span>@p.DisplayName</span>
                                         <div style="display:flex;align-items:center;gap:4px;">
-                                            <input type="number" class="form-control" style="width:60px;height:28px;font-size:0.75rem;"
-                                                   placeholder="PV Max" @bind="participant.MaxHp" min="1" />
                                             <button class="btn btn-ghost btn-xs" @onclick="() => RemoveParticipant(g, participant)">
                                                 <i class="bi bi-x"></i>
                                             </button>
@@ -221,6 +223,96 @@ else
                         @if (IsCreating) { <span class="btn-spinner"></span> }
                         else { <i class="bi bi-swords"></i> }
                         Lancer le combat !
+                    </button>
+                </div>
+            </div>
+        }
+        else if (CurrentStep == 4)
+        {
+            <!-- Étape 4: Aperçu de l'ordre d'initiative -->
+            <div class="combat-setup-card">
+                <h3><i class="bi bi-list-ol"></i> Ordre d'initiative</h3>
+                <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);">
+                    Vérifiez et ajustez l'ordre de passage. Les joueurs en attente doivent encore soumettre leur initiative.
+                </p>
+
+                <div class="initiative-preview-grid">
+                    <div>
+                        <h4 style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--spacing-sm);">
+                            Ordre de passage
+                        </h4>
+                        @for (int i = 0; i < _orderedParticipants.Count; i++)
+                        {
+                            var p = _orderedParticipants[i];
+                            var idx = i;
+                            <div class="initiative-preview-row" style="border-left: 3px solid @p.GroupColor;">
+                                <span class="initiative-preview-rank">@(idx + 1)</span>
+                                <span class="initiative-preview-name">
+                                    <i class="@(p.IsPlayerCharacter ? "bi bi-person-fill" : "bi bi-robot")"></i>
+                                    @p.Name
+                                </span>
+                                <span class="initiative-preview-group" style="color:@p.GroupColor;">@p.GroupName</span>
+                                @if (p.Initiative.HasValue)
+                                {
+                                    <span class="initiative-preview-value">🎲 @p.Initiative</span>
+                                }
+                                else
+                                {
+                                    <span class="initiative-preview-pending">
+                                        <span class="btn-spinner" style="width:12px;height:12px;"></span>
+                                        En attente…
+                                    </span>
+                                    <input type="number" class="form-control" style="width:60px;height:28px;font-size:0.75rem;"
+                                           placeholder="Force" @onchange="e => SetPlayerInitiativeFromGm(p, e)" />
+                                }
+                                <div class="initiative-preview-actions">
+                                    <button class="btn btn-ghost btn-xs" @onclick="() => MoveParticipantUp(p)" disabled="@(idx == 0)">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button class="btn btn-ghost btn-xs" @onclick="() => MoveParticipantDown(p)" disabled="@(idx == _orderedParticipants.Count - 1)">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @{
+                        var pendingCount = _orderedParticipants.Count(p => p.IsPlayerCharacter && !p.Initiative.HasValue);
+                    }
+                    @if (pendingCount > 0)
+                    {
+                        <div class="initiative-pending-panel">
+                            <h4 style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--spacing-sm);">
+                                <i class="bi bi-hourglass-split"></i> En attente (@pendingCount)
+                            </h4>
+                            @foreach (var p in _orderedParticipants.Where(p => p.IsPlayerCharacter && !p.Initiative.HasValue))
+                            {
+                                <div class="initiative-pending-item">
+                                    <span class="btn-spinner" style="width:14px;height:14px;"></span>
+                                    <span>@p.Name</span>
+                                </div>
+                            }
+                            <p style="color:var(--color-text-muted);font-size:var(--font-size-xs);margin-top:var(--spacing-sm);">
+                                Les joueurs ont reçu une notification pour lancer leur dé. Vous pouvez forcer une valeur via l'input ci-contre.
+                            </p>
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(StepError))
+                {
+                    <div class="alert-error" style="margin-top:var(--spacing-sm);">@StepError</div>
+                }
+
+                <div class="combat-setup-actions">
+                    <button class="btn btn-ghost" @onclick='() => CurrentStep = 3' disabled="@IsStartingCombat">
+                        <i class="bi bi-chevron-left"></i> Précédent
+                    </button>
+                    <button class="btn btn-success" @onclick="ValidateAndStartCombat" disabled="@IsStartingCombat">
+                        @if (IsStartingCombat) { <span class="btn-spinner"></span> }
+                        else { <i class="bi bi-swords"></i> }
+                        Valider et démarrer ⚔️
                     </button>
                 </div>
             </div>

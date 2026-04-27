@@ -262,7 +262,7 @@ public class CombatService(
     }
 
     /// <inheritdoc/>
-    public async Task<CombatDto?> StartCombatAsync(int combatId, int userId)
+    public async Task<CombatDto?> StartCombatAsync(int combatId, StartCombatDto? request, int userId)
     {
         try
         {
@@ -281,11 +281,28 @@ public class CombatService(
                 return null;
             }
 
-            // Sort active participants by initiative descending, assign TurnOrder.
-            var sorted = combat.Participants
-                .Where(p => p.IsActive)
-                .OrderByDescending(p => p.Initiative ?? 0)
-                .ToList();
+            // Use explicit order if provided (GM reordered in setup), else sort by initiative desc.
+            List<CombatParticipant> sorted;
+            if (request?.ParticipantIds != null && request.ParticipantIds.Count > 0)
+            {
+                sorted = request.ParticipantIds
+                    .Select(id => combat.Participants.FirstOrDefault(p => p.Id == id && p.IsActive))
+                    .Where(p => p != null)
+                    .Select(p => p!)
+                    .ToList();
+                // append any active participants not in the explicit list
+                var listed = sorted.Select(p => p.Id).ToHashSet();
+                sorted.AddRange(combat.Participants
+                    .Where(p => p.IsActive && !listed.Contains(p.Id))
+                    .OrderByDescending(p => p.Initiative ?? 0));
+            }
+            else
+            {
+                sorted = combat.Participants
+                    .Where(p => p.IsActive)
+                    .OrderByDescending(p => p.Initiative ?? 0)
+                    .ToList();
+            }
 
             for (int i = 0; i < sorted.Count; i++)
             {
@@ -483,6 +500,64 @@ public class CombatService(
         catch (Exception ex)
         {
             this.logger.LogError(ex, "Error ending combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<CombatDto?> ToggleParticipantActiveAsync(int combatId, int participantId, SetActiveDto request, int userId)
+    {
+        try
+        {
+            var combat = await this.dbContext.Combats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == combatId);
+
+            if (combat == null) return null;
+
+            if (!await this.IsGmOfSessionAsync(combat.SessionId, userId))
+            {
+                this.logger.LogWarning(
+                    "User {UserId} is not authorized to toggle participant active in combat {CombatId}",
+                    userId,
+                    combatId);
+                return null;
+            }
+
+            var participant = combat.Participants.FirstOrDefault(p => p.Id == participantId);
+            if (participant == null) return null;
+
+            participant.IsActive = request.IsActive;
+
+            // If deactivating the current active turn participant, advance the turn.
+            if (!request.IsActive && combat.CurrentTurnOrder == participant.TurnOrder && combat.Status == 2)
+            {
+                var activeParticipants = combat.Participants
+                    .Where(p => p.IsActive)
+                    .OrderBy(p => p.TurnOrder)
+                    .ToList();
+
+                if (activeParticipants.Count > 0)
+                {
+                    var next = activeParticipants.FirstOrDefault(p => p.TurnOrder > combat.CurrentTurnOrder)
+                        ?? activeParticipants.First();
+                    combat.CurrentTurnOrder = next.TurnOrder;
+                }
+            }
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation(
+                "Participant {ParticipantId} active status set to {IsActive} in combat {CombatId}",
+                participantId,
+                request.IsActive,
+                combatId);
+
+            return await this.LoadCombatDtoAsync(combatId);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error toggling participant {ParticipantId} active status", participantId);
             return null;
         }
     }

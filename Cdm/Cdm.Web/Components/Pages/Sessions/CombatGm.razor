@@ -247,23 +247,11 @@ else if (Combat != null)
                                     </span>
                                 </div>
 
-                                <div class="hp-tracker">
-                                    <span class="hp-label">PV</span>
-                                    <input type="number" class="form-control" style="width:70px;text-align:center;"
-                                           @bind="HpInput" min="0" max="@ActiveParticipant.MaxHp" />
-                                    <span style="color:var(--color-text-muted);">/ @ActiveParticipant.MaxHp</span>
-                                    <button class="btn btn-primary btn-sm" @onclick="UpdateActiveHp">Appliquer</button>
-                                </div>
-                                <div class="hp-bar-wrapper" style="margin-top:var(--spacing-xs);">
-                                    <div class="hp-bar-track">
-                                        <div class="hp-bar-fill @GetHpBarClass(ActiveParticipant.CurrentHp, ActiveParticipant.MaxHp)"
-                                             style="width:@(GetHpPercent(ActiveParticipant.CurrentHp, ActiveParticipant.MaxHp))%">
-                                        </div>
-                                    </div>
-                                    <small style="color:var(--color-text-muted);font-size:var(--font-size-xs);">
-                                        @ActiveParticipant.CurrentHp / @ActiveParticipant.MaxHp
-                                    </small>
-                                </div>
+                                <button class="btn @(ActiveParticipant.IsActive ? "btn-ghost" : "btn-danger") btn-sm"
+                                        @onclick="() => ToggleParticipantActive(ActiveParticipant)">
+                                    <i class="bi @(ActiveParticipant.IsActive ? "bi-person-check" : "bi-person-x")"></i>
+                                    @(ActiveParticipant.IsActive ? "Actif" : "Éliminé")
+                                </button>
                             </div>
                         }
 

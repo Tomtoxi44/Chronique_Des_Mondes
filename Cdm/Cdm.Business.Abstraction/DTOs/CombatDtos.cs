@@ -72,6 +72,19 @@ public class EndCombatDto
     public string? VictorySide { get; set; }
 }
 
+/// <summary>Request DTO to start combat with an optional explicit participant order.</summary>
+public class StartCombatDto
+{
+    /// <summary>Optional ordered list of participant IDs (first = first to act). If null, sorts by initiative desc.</summary>
+    public List<int>? ParticipantIds { get; set; }
+}
+
+/// <summary>Request DTO to set a participant's active status directly.</summary>
+public class SetActiveDto
+{
+    public bool IsActive { get; set; }
+}
+
 // ── Read DTOs ────────────────────────────────────────────────────────────────
 
 /// <summary>Full read DTO for a combat encounter.</summary>

@@ -29,7 +29,7 @@ public interface ICombatService
     Task<CombatDto?> SetInitiativeAsync(int combatId, int participantId, SetInitiativeDto request, int userId);
 
     /// <summary>Sorts participants by initiative and transitions the combat to Active (Status = 2).</summary>
-    Task<CombatDto?> StartCombatAsync(int combatId, int userId);
+    Task<CombatDto?> StartCombatAsync(int combatId, StartCombatDto? request, int userId);
 
     /// <summary>Records an action in the combat log.</summary>
     Task<CombatActionDto?> RecordActionAsync(int combatId, CreateCombatActionDto request, int userId);
@@ -42,4 +42,7 @@ public interface ICombatService
 
     /// <summary>Ends the combat encounter (Status = 3) with an optional victory side.</summary>
     Task<CombatDto?> EndCombatAsync(int combatId, EndCombatDto request, int userId);
+
+    /// <summary>Toggles a participant's active status (active or eliminated).</summary>
+    Task<CombatDto?> ToggleParticipantActiveAsync(int combatId, int participantId, SetActiveDto request, int userId);
 }

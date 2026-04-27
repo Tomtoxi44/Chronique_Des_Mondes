@@ -91,10 +91,7 @@ public partial class CombatGm : IAsyncDisposable
         if (Combat == null)
             ErrorMessage = "Combat introuvable.";
         else
-        {
-            HpInput = ActiveParticipant?.CurrentHp ?? 0;
             await LoadActiveCharacterAsync();
-        }
         IsLoading = false;
     }
 
@@ -131,9 +128,7 @@ public partial class CombatGm : IAsyncDisposable
         if (ActiveParticipant != null) HpInput = ActiveParticipant.CurrentHp;
         await LoadActiveCharacterAsync();
         await InvokeAsync(StateHasChanged);
-    }
-
-    // --- Character sheet loading ---
+    }    // --- Character sheet loading ---
 
     private async Task LoadActiveCharacterAsync()
     {
@@ -171,6 +166,12 @@ public partial class CombatGm : IAsyncDisposable
     {
         var updated = await CombatClient.StartCombatAsync(CombatId);
         if (updated != null) Combat = updated;
+    }
+
+    private async Task ToggleParticipantActive(CombatParticipantDto participant)
+    {
+        var updated = await CombatClient.ToggleParticipantActiveAsync(CombatId, participant.Id, !participant.IsActive);
+        if (updated != null) { Combat = updated; await LoadActiveCharacterAsync(); }
     }
 
     private async Task NextTurn()

@@ -76,6 +76,11 @@ public static class CombatEndpoints
         group.MapPost("/{id:int}/end", EndCombatAsync)
             .WithName("EndCombat")
             .WithOpenApi();
+
+        // PUT /api/combat/{id}/participants/{participantId}/active — Toggle participant active status
+        group.MapPut("/{id:int}/participants/{participantId:int}/active", ToggleParticipantActiveAsync)
+            .WithName("ToggleParticipantActive")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> CreateCombatAsync(
@@ -163,6 +168,7 @@ public static class CombatEndpoints
 
     private static async Task<IResult> StartCombatAsync(
         int id,
+        HttpRequest req,
         [FromServices] ICombatService combatService,
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
@@ -170,7 +176,13 @@ public static class CombatEndpoints
         var userId = GetUserId(httpContext);
         if (userId == null) return Results.Unauthorized();
 
-        var result = await combatService.StartCombatAsync(id, userId.Value);
+        StartCombatDto? request = null;
+        if (req.ContentLength > 0)
+        {
+            try { request = await req.ReadFromJsonAsync<StartCombatDto>(); } catch { }
+        }
+
+        var result = await combatService.StartCombatAsync(id, request, userId.Value);
         if (result == null)
             return Results.BadRequest(new { Error = "Failed to start combat. Check combat ID and authorization." });
 
@@ -241,6 +253,24 @@ public static class CombatEndpoints
         var result = await combatService.EndCombatAsync(id, request, userId.Value);
         if (result == null)
             return Results.BadRequest(new { Error = "Failed to end combat. Check combat ID and authorization." });
+
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ToggleParticipantActiveAsync(
+        int id,
+        int participantId,
+        [FromBody] SetActiveDto request,
+        [FromServices] ICombatService combatService,
+        ILogger<CombatEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        var userId = GetUserId(httpContext);
+        if (userId == null) return Results.Unauthorized();
+
+        var result = await combatService.ToggleParticipantActiveAsync(id, participantId, request, userId.Value);
+        if (result == null)
+            return Results.BadRequest(new { Error = "Failed to toggle participant active status." });
 
         return Results.Ok(result);
     }

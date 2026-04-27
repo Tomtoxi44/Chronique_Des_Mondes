@@ -105,7 +105,7 @@ public class CombatApiClient
         try
         {
             await AddAuthHeaderAsync();
-            var response = await this.httpClient.PostAsJsonAsync($"api/combat/{combatId}/initiative", dto);
+            var response = await this.httpClient.PostAsJsonAsync($"api/combat/{combatId}/initiative/start", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<CombatDto>();
 
@@ -125,7 +125,7 @@ public class CombatApiClient
         try
         {
             await AddAuthHeaderAsync();
-            var response = await this.httpClient.PutAsJsonAsync($"api/combat/{combatId}/participants/{participantId}/initiative", dto);
+            var response = await this.httpClient.PutAsJsonAsync($"api/combat/{combatId}/initiative/{participantId}", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<CombatDto>();
 
@@ -139,13 +139,13 @@ public class CombatApiClient
         }
     }
 
-    /// <summary>Starts the active combat phase.</summary>
-    public async Task<CombatDto?> StartCombatAsync(int combatId)
+    /// <summary>Starts the active combat phase with an optional explicit participant order.</summary>
+    public async Task<CombatDto?> StartCombatAsync(int combatId, StartCombatDto? dto = null)
     {
         try
         {
             await AddAuthHeaderAsync();
-            var response = await this.httpClient.PostAsync($"api/combat/{combatId}/start", null);
+            var response = await this.httpClient.PostAsJsonAsync($"api/combat/{combatId}/start", dto ?? new StartCombatDto());
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<CombatDto>();
 
@@ -165,7 +165,7 @@ public class CombatApiClient
         try
         {
             await AddAuthHeaderAsync();
-            var response = await this.httpClient.PostAsJsonAsync($"api/combat/{combatId}/actions", dto);
+            var response = await this.httpClient.PostAsJsonAsync($"api/combat/{combatId}/action", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<CombatActionDto>();
 
@@ -185,7 +185,7 @@ public class CombatApiClient
         try
         {
             await AddAuthHeaderAsync();
-            var response = await this.httpClient.PutAsJsonAsync($"api/combat/{combatId}/participants/{participantId}/hp", dto);
+            var response = await this.httpClient.PutAsJsonAsync($"api/combat/{combatId}/hp/{participantId}", dto);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<CombatParticipantDto>();
 
@@ -215,6 +215,28 @@ public class CombatApiClient
         catch (Exception ex)
         {
             this.logger.LogError(ex, "Error advancing turn for combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
+    /// <summary>Toggles a participant's active status (for generic mode — no HP tracking).</summary>
+    public async Task<CombatDto?> ToggleParticipantActiveAsync(int combatId, int participantId, bool isActive)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await this.httpClient.PutAsJsonAsync(
+                $"api/combat/{combatId}/participants/{participantId}/active",
+                new SetActiveDto { IsActive = isActive });
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<CombatDto>();
+
+            this.logger.LogWarning("Failed to toggle participant {ParticipantId} active. Status: {StatusCode}", participantId, response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error toggling participant {ParticipantId} active status", participantId);
             return null;
         }
     }

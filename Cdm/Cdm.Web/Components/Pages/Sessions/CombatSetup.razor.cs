@@ -12,7 +12,7 @@ using System.Security.Claims;
 
 namespace Cdm.Web.Components.Pages.Sessions;
 
-public partial class CombatSetup
+public partial class CombatSetup : IAsyncDisposable
 {
     [Parameter] public int SessionId { get; set; }
 
@@ -26,6 +26,7 @@ public partial class CombatSetup
     private bool IsLoading = true;
     private bool IsLoadingNpcs = false;
     private bool IsCreating = false;
+    private bool IsStartingCombat = false;
     private string? ErrorMessage;
     private string? StepError;
     private int CurrentStep = 1;
@@ -38,6 +39,10 @@ public partial class CombatSetup
     private int? SelectedChapterId;
     private List<GroupSetupModel> Groups = new();
     private List<AvailableParticipant> AllParticipants = new();
+
+    private CombatDto? CreatedCombat;
+    private List<CombatParticipantDto> _orderedParticipants = new();
+    private System.Threading.Timer? _pollTimer;
 
     protected override async Task OnInitializedAsync()
     {
@@ -199,7 +204,7 @@ public partial class CombatSetup
                     CharacterId = p.CharacterId,
                     NpcId = p.NpcId,
                     UserId = p.UserId,
-                    MaxHp = p.MaxHp > 0 ? p.MaxHp : 10
+                    MaxHp = 1
                 }).ToList()
             }).ToList()
         };
@@ -217,9 +222,101 @@ public partial class CombatSetup
             Mode = InitiativeMode,
             DiceExpression = InitiativeMode == "roll" ? InitiativeDiceExpression : null
         };
-        await CombatClient.StartInitiativePhaseAsync(combat.Id, initiativeDto);
+        var withInitiative = await CombatClient.StartInitiativePhaseAsync(combat.Id, initiativeDto);
+        CreatedCombat = withInitiative ?? combat;
 
-        Nav.NavigateTo($"/sessions/{SessionId}/combat/{combat.Id}/gm");
+        // Build the ordered list: sorted by initiative desc initially
+        _orderedParticipants = CreatedCombat.Participants
+            .Where(p => p.IsActive)
+            .OrderByDescending(p => p.Initiative.HasValue)
+            .ThenByDescending(p => p.Initiative ?? 0)
+            .ThenBy(p => p.Name)
+            .ToList();
+
+        IsCreating = false;
+        CurrentStep = 4;
+
+        // Start polling for player initiative updates
+        _pollTimer = new System.Threading.Timer(
+            _ => _ = PollInitiativeAsync(),
+            null,
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(2));
+    }
+
+    private async Task PollInitiativeAsync()
+    {
+        if (CreatedCombat == null) return;
+        var updated = await CombatClient.GetCombatAsync(CreatedCombat.Id);
+        if (updated == null) return;
+
+        // Merge updated initiative values into our ordered list
+        foreach (var p in _orderedParticipants)
+        {
+            var fresh = updated.Participants.FirstOrDefault(x => x.Id == p.Id);
+            if (fresh != null) p.Initiative = fresh.Initiative;
+        }
+
+        CreatedCombat = updated;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void MoveParticipantUp(CombatParticipantDto p)
+    {
+        var idx = _orderedParticipants.IndexOf(p);
+        if (idx <= 0) return;
+        _orderedParticipants.RemoveAt(idx);
+        _orderedParticipants.Insert(idx - 1, p);
+    }
+
+    private void MoveParticipantDown(CombatParticipantDto p)
+    {
+        var idx = _orderedParticipants.IndexOf(p);
+        if (idx < 0 || idx >= _orderedParticipants.Count - 1) return;
+        _orderedParticipants.RemoveAt(idx);
+        _orderedParticipants.Insert(idx + 1, p);
+    }
+
+    private async Task SetPlayerInitiativeFromGm(CombatParticipantDto p, ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out int val)) return;
+        if (CreatedCombat == null) return;
+        var updated = await CombatClient.SetInitiativeAsync(CreatedCombat.Id, p.Id, new SetInitiativeDto { Value = val });
+        if (updated != null)
+        {
+            CreatedCombat = updated;
+            var orderedP = _orderedParticipants.FirstOrDefault(x => x.Id == p.Id);
+            if (orderedP != null) orderedP.Initiative = val;
+        }
+    }
+
+    private async Task ValidateAndStartCombat()
+    {
+        if (CreatedCombat == null) return;
+        IsStartingCombat = true;
+        _pollTimer?.Dispose();
+        _pollTimer = null;
+
+        var orderedIds = _orderedParticipants.Select(p => p.Id).ToList();
+        var started = await CombatClient.StartCombatAsync(CreatedCombat.Id, new StartCombatDto { ParticipantIds = orderedIds });
+        if (started == null)
+        {
+            StepError = "Impossible de démarrer le combat.";
+            IsStartingCombat = false;
+            return;
+        }
+
+        Nav.NavigateTo($"/sessions/{SessionId}/combat/{CreatedCombat.Id}/gm");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_pollTimer != null)
+        {
+            _pollTimer.Dispose();
+            _pollTimer = null;
+        }
+        await ValueTask.CompletedTask;
     }
 
     private class GroupSetupModel
