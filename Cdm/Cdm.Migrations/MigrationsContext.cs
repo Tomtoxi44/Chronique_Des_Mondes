@@ -1,8 +1,9 @@
-﻿namespace Cdm.Migrations;
+namespace Cdm.Migrations;
 
 using Cdm.Common.Enums;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 /// <summary>
 /// Migration-specific DbContext
@@ -11,6 +12,12 @@ public class MigrationsContext : DbContext
 {
     public MigrationsContext(DbContextOptions<MigrationsContext> options) : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        // NOTE: ConfigureWarnings cannot be called here when DbContext pooling is enabled.
+        // The PendingModelChangesWarning suppression is configured at registration time in Program.cs.
     }
 
     /// <summary>
@@ -82,6 +89,29 @@ public class MigrationsContext : DbContext
     /// Session participants table
     /// </summary>
     public DbSet<SessionParticipant> SessionParticipants { get; set; } = null!;
+
+    // ── D&D 5e reference tables ──────────────────────────────────────────────
+    public DbSet<DndRace> DndRaces { get; set; } = null!;
+    public DbSet<DndClass> DndClasses { get; set; } = null!;
+    public DbSet<DndItem> DndItems { get; set; } = null!;
+    public DbSet<DndSpell> DndSpells { get; set; } = null!;
+    public DbSet<DndMonsterTemplate> DndMonsterTemplates { get; set; } = null!;
+    public DbSet<DndInventoryItem> DndInventoryItems { get; set; } = null!;
+    public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
+    public DbSet<DndBackground> DndBackgrounds { get; set; } = null!;
+    public DbSet<DndSkill> DndSkills { get; set; } = null!;
+
+    /// <summary>Combat encounters.</summary>
+    public DbSet<Combat> Combats { get; set; } = null!;
+
+    /// <summary>Combat groups (factions/teams).</summary>
+    public DbSet<CombatGroup> CombatGroups { get; set; } = null!;
+
+    /// <summary>Combat participants.</summary>
+    public DbSet<CombatParticipant> CombatParticipants { get; set; } = null!;
+
+    /// <summary>Combat action log entries.</summary>
+    public DbSet<CombatAction> CombatActions { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -213,6 +243,14 @@ public class MigrationsContext : DbContext
             entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(c => c.IsActive).HasDefaultValue(true);
             entity.Property(c => c.IsLocked).HasDefaultValue(false);
+            entity.Property(c => c.IsBaseCharacter).HasDefaultValue(false);
+
+            // Self-referencing FK for world copies
+            entity.HasOne<Character>()
+                .WithMany()
+                .HasForeignKey(c => c.SourceCharacterId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
         });
 
         // Configure WorldCharacter entity (characters adapted to worlds)
@@ -371,6 +409,119 @@ public class MigrationsContext : DbContext
             entity.Property(npc => npc.IsActive).HasDefaultValue(true);
         });
 
+        // D&D 5e entity configurations
+        modelBuilder.Entity<DndInventoryItem>(entity =>
+        {
+            entity.HasOne(i => i.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(i => i.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(i => i.DndItem)
+                .WithMany()
+                .HasForeignKey(i => i.DndItemId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(i => i.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<DndCharacterSpell>(entity =>
+        {
+            entity.HasOne(s => s.WorldCharacter)
+                .WithMany()
+                .HasForeignKey(s => s.WorldCharacterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.DndSpell)
+                .WithMany()
+                .HasForeignKey(s => s.DndSpellId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        modelBuilder.Entity<DndBackground>(entity =>
+        {
+            entity.HasIndex(b => b.Name).IsUnique().HasDatabaseName("IX_DndBackgrounds_Name");
+            entity.Property(b => b.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<DndSkill>(entity =>
+        {
+            entity.HasIndex(s => s.Name).IsUnique().HasDatabaseName("IX_DndSkills_Name");
+            entity.HasIndex(s => s.LinkedAbility).HasDatabaseName("IX_DndSkills_LinkedAbility");
+            entity.Property(s => s.IsActive).HasDefaultValue(true);
+        });
+
+        // Configure Combat entity
+        modelBuilder.Entity<Combat>(entity =>
+        {
+            entity.HasIndex(c => c.SessionId).HasDatabaseName("IX_Combats_SessionId");
+            entity.HasIndex(c => c.Status).HasDatabaseName("IX_Combats_Status");
+
+            entity.HasOne(c => c.Session)
+                .WithMany()
+                .HasForeignKey(c => c.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(c => c.StartedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(c => c.Status).HasDefaultValue(0);
+            entity.Property(c => c.CurrentTurnOrder).HasDefaultValue(0);
+        });
+
+        // Configure CombatGroup entity
+        modelBuilder.Entity<CombatGroup>(entity =>
+        {
+            entity.HasIndex(g => g.CombatId).HasDatabaseName("IX_CombatGroups_CombatId");
+
+            entity.HasOne(g => g.Combat)
+                .WithMany(c => c.Groups)
+                .HasForeignKey(g => g.CombatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(g => g.Color).HasDefaultValue("#6366f1");
+            entity.Property(g => g.DisplayOrder).HasDefaultValue(0);
+        });
+
+        // Configure CombatParticipant entity
+        modelBuilder.Entity<CombatParticipant>(entity =>
+        {
+            entity.HasIndex(p => p.CombatId).HasDatabaseName("IX_CombatParticipants_CombatId");
+            entity.HasIndex(p => p.GroupId).HasDatabaseName("IX_CombatParticipants_GroupId");
+
+            entity.HasOne(p => p.Combat)
+                .WithMany(c => c.Participants)
+                .HasForeignKey(p => p.CombatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(p => p.Group)
+                .WithMany(g => g.Participants)
+                .HasForeignKey(p => p.GroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(p => p.IsActive).HasDefaultValue(true);
+            entity.Property(p => p.IsPlayerCharacter).HasDefaultValue(false);
+            entity.Property(p => p.TurnOrder).HasDefaultValue(0);
+            entity.Property(p => p.CurrentHp).HasDefaultValue(0);
+            entity.Property(p => p.MaxHp).HasDefaultValue(1);
+        });
+
+        // Configure CombatAction entity
+        modelBuilder.Entity<CombatAction>(entity =>
+        {
+            entity.HasIndex(a => a.CombatId).HasDatabaseName("IX_CombatActions_CombatId");
+            entity.HasIndex(a => a.CreatedAt).HasDatabaseName("IX_CombatActions_CreatedAt");
+
+            entity.HasOne(a => a.Combat)
+                .WithMany(c => c.Actions)
+                .HasForeignKey(a => a.CombatId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(a => a.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(a => a.IsPrivate).HasDefaultValue(false);
+        });
+
         // Configure Session entity
         modelBuilder.Entity<Session>(entity =>
         {
@@ -393,7 +544,9 @@ public class MigrationsContext : DbContext
                 .HasForeignKey(s => s.CurrentChapterId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.Property(s => s.Status).HasDefaultValue(SessionStatus.Active);
+            entity.Property(s => s.Status)
+                .HasDefaultValue(SessionStatus.Active)
+                .HasSentinel((SessionStatus)(-1));
         });
 
         // Configure SessionParticipant entity

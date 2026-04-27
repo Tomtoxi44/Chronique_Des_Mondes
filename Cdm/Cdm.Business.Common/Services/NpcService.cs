@@ -52,6 +52,7 @@ public class NpcService(
                 Description = request.Description,
                 PhysicalDescription = request.PhysicalDescription,
                 Age = request.Age,
+                GameSpecificData = request.GameSpecificData,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -153,6 +154,7 @@ public class NpcService(
             npc.Description = request.Description;
             npc.PhysicalDescription = request.PhysicalDescription;
             npc.Age = request.Age;
+            npc.GameSpecificData = request.GameSpecificData;
             npc.UpdatedAt = DateTime.UtcNow;
 
             await this.dbContext.SaveChangesAsync();
@@ -228,6 +230,7 @@ public class NpcService(
             Description = npc.Description,
             PhysicalDescription = npc.PhysicalDescription,
             Age = npc.Age,
+            GameSpecificData = npc.GameSpecificData,
             CreatedAt = npc.CreatedAt,
             UpdatedAt = npc.UpdatedAt
         };

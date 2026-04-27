@@ -56,6 +56,16 @@ public class CharacterDto
     /// Gets or sets a value indicating whether the character is locked (already in a world)
     /// </summary>
     public bool IsLocked { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this is a base character (template for world copies).
+    /// </summary>
+    public bool IsBaseCharacter { get; set; }
+
+    /// <summary>
+    /// Gets or sets the source character ID for world copies (null for base characters).
+    /// </summary>
+    public int? SourceCharacterId { get; set; }
 }
 /// </summary>
 public class CreateCharacterDto

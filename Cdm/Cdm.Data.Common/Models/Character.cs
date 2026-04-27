@@ -52,8 +52,20 @@ public class Character
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether this is a base character (template).
+    /// A base character is the original created by the player; world-specific copies reference it via SourceCharacterId.
+    /// </summary>
+    public bool IsBaseCharacter { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the source character ID (for world copies).
+    /// Null for base characters. Points to the original Character that was duplicated.
+    /// </summary>
+    public int? SourceCharacterId { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether the character is locked (already joined a world).
-    /// A locked character cannot join another world.
+    /// Kept for backward compatibility; no longer used for new join logic.
     /// </summary>
     public bool IsLocked { get; set; } = false;
 

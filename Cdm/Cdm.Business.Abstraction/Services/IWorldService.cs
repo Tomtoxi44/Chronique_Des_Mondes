@@ -129,4 +129,12 @@ public interface IWorldService
     /// <param name="userId">The user identifier (must be GM or world member).</param>
     /// <returns>List of campaigns visible to the member.</returns>
     Task<IEnumerable<CampaignDto>> GetWorldCampaignsForMemberAsync(int worldId, int userId);
+
+    /// <summary>
+    /// Gets a world character by its ID (must belong to the requesting user or the user must be the world GM).
+    /// </summary>
+    /// <param name="wcId">The world character identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns>The world character DTO, or null if not found or unauthorized.</returns>
+    Task<WorldCharacterDto?> GetWorldCharacterByIdAsync(int wcId, int userId);
 }
