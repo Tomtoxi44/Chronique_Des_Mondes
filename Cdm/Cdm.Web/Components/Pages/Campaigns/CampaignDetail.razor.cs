@@ -1,4 +1,5 @@
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.DTOs.DnD5e;
 using Cdm.Common.Enums;
 using Cdm.Web.Components.Shared;
 using Cdm.Web.Resources;
@@ -7,6 +8,7 @@ using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Localization;
+using System.Linq;
 using System.Security.Claims;
 
 namespace Cdm.Web.Components.Pages.Campaigns;
@@ -16,6 +18,7 @@ public partial class CampaignDetail : IDisposable
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
     [Inject] private NpcApiClient NpcClient { get; set; } = default!;
+    [Inject] private DndApiClient DndClient { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -39,6 +42,7 @@ public partial class CampaignDetail : IDisposable
     // GM detection
     private int CurrentUserId;
     private bool IsGm => Campaign != null && Campaign.CreatedBy == CurrentUserId;
+    private bool IsDnd5e => Campaign?.GameType == GameType.DnD5e;
 
     // NPC management (GM only, per chapter)
     private List<NpcDto> Npcs = new();
@@ -48,6 +52,11 @@ public partial class CampaignDetail : IDisposable
     private NpcDto? NpcToDelete;
     private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
     private int? _lastNpcChapterId;
+
+    // D&D NPC extras
+    private CreateDndNpcDto NewDndNpc { get; set; } = new();
+    private List<DndMonsterTemplateDto> MonsterTemplates = new();
+    private int SelectedMonsterTemplateId = 0;
 
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
@@ -97,6 +106,9 @@ public partial class CampaignDetail : IDisposable
             {
                 Chapters = await ChapterClient.GetChaptersByCampaignAsync(CampaignId);
                 SetSecondaryNav();
+
+                if (Campaign.GameType == GameType.DnD5e && IsGm)
+                    MonsterTemplates = await DndClient.GetMonstersAsync();
             }
         }
         finally
@@ -233,12 +245,17 @@ public partial class CampaignDetail : IDisposable
 
     private async Task LoadNpcsForChapterAsync(int chapterId)
     {
-        Npcs = await NpcClient.GetNpcsByChapterAsync(chapterId);
+        if (IsDnd5e)
+            Npcs = (await DndClient.GetDndNpcsAsync(chapterId)).Cast<NpcDto>().ToList();
+        else
+            Npcs = await NpcClient.GetNpcsByChapterAsync(chapterId);
     }
 
     private void ShowAddNpc()
     {
         NewNpc = new CreateNpcDto { ChapterId = SelectedChapter!.Id };
+        NewDndNpc = new CreateDndNpcDto { ChapterId = SelectedChapter!.Id };
+        SelectedMonsterTemplateId = 0;
         ShowNpcForm = true;
     }
 
@@ -246,14 +263,34 @@ public partial class CampaignDetail : IDisposable
     {
         if (SelectedChapter == null) return;
         IsSavingNpc = true;
-        NewNpc.ChapterId = SelectedChapter.Id;
-        var result = await NpcClient.CreateNpcAsync(NewNpc);
-        if (result != null)
+
+        if (IsDnd5e)
         {
-            Npcs.Add(result);
-            NewNpc = new CreateNpcDto { ChapterId = SelectedChapter.Id };
-            ShowNpcForm = false;
+            NewDndNpc.ChapterId = SelectedChapter.Id;
+            if (SelectedMonsterTemplateId > 0)
+                NewDndNpc.MonsterTemplateId = SelectedMonsterTemplateId;
+
+            var dndResult = await DndClient.CreateDndNpcAsync(SelectedChapter.Id, NewDndNpc);
+            if (dndResult != null)
+            {
+                Npcs.Add(dndResult);
+                NewDndNpc = new CreateDndNpcDto { ChapterId = SelectedChapter.Id };
+                SelectedMonsterTemplateId = 0;
+                ShowNpcForm = false;
+            }
         }
+        else
+        {
+            NewNpc.ChapterId = SelectedChapter.Id;
+            var result = await NpcClient.CreateNpcAsync(NewNpc);
+            if (result != null)
+            {
+                Npcs.Add(result);
+                NewNpc = new CreateNpcDto { ChapterId = SelectedChapter.Id };
+                ShowNpcForm = false;
+            }
+        }
+
         IsSavingNpc = false;
     }
 

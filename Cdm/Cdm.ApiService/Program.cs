@@ -1,6 +1,8 @@
 using Cdm.ApiService.Endpoints;
 using Cdm.Business.Abstraction.Services;
+using Cdm.Business.Abstraction.Services.DnD5e;
 using Cdm.Business.Common.Services;
+using Cdm.Business.DnD5e.Services;
 using Cdm.Common.Services;
 using Cdm.Data.Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -94,6 +96,12 @@ builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<INpcService, NpcService>();
+builder.Services.AddScoped<ICombatService, CombatService>();
+
+// D&D 5e services
+builder.Services.AddScoped<IDndReferenceService, DndReferenceService>();
+builder.Services.AddScoped<IDndNpcService, DndNpcService>();
+builder.Services.AddScoped<IDndCharacterService, DndCharacterService>();
 // Email service is optional for MVP
 // builder.Services.AddScoped<IEmailService, AzureEmailService>();
 
@@ -291,6 +299,8 @@ app.MapAchievementEndpoints();
 app.MapNotificationEndpoints();
 app.MapSessionEndpoints();
 app.MapNpcEndpoints();
+app.MapCombatEndpoints();
+app.MapDndEndpoints();
 
 // Map SignalR hubs
 app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");

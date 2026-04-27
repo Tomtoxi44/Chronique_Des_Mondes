@@ -61,6 +61,12 @@ public class NonPlayerCharacter
     public int? Age { get; set; }
 
     /// <summary>
+    /// Gets or sets game-specific data stored as JSON (for D&amp;D 5e stats, etc.).
+    /// </summary>
+    [Column(TypeName = "nvarchar(max)")]
+    public string? GameSpecificData { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether the NPC is active (soft delete).
     /// </summary>
     [Required]

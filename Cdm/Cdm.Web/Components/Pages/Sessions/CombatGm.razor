@@ -1,0 +1,303 @@
+@page "/sessions/{SessionId:int}/combat/{CombatId:int}/gm"
+@attribute [Authorize]
+
+<PageTitle>Combat en cours — MJ</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display:flex;justify-content:center;align-items:center;height:60vh;">
+        <AppLoadingSpinner />
+    </div>
+}
+else if (ErrorMessage != null)
+{
+    <AppEmptyState Icon="bi-exclamation-circle" Title="Erreur" Message="@ErrorMessage" />
+}
+else if (Combat != null)
+{
+    <div class="combat-gm-shell">
+        <!-- Topbar -->
+        <div class="combat-topbar">
+            <div style="display:flex;align-items:center;gap:var(--spacing-md);">
+                <i class="bi bi-swords" style="color:var(--color-danger);font-size:1.3rem;"></i>
+                <strong>Combat en cours</strong>
+                @if (Combat.Status == 1)
+                {
+                    <span class="status-badge status-pending">Phase d'initiative</span>
+                    <span class="initiative-counter @(AllReadyForCombat ? "all-ready" : "")">
+                        @SubmittedCount / @TotalActiveCount prêts
+                    </span>
+                }
+                else if (Combat.Status == 2)
+                {
+                    <span class="status-badge status-active">Combat actif</span>
+                }
+            </div>
+            <div style="display:flex;gap:var(--spacing-sm);">
+                @if (Combat.Status == 1)
+                {
+                    <button class="btn btn-primary btn-sm" @onclick="StartCombat" disabled="@(!AllReadyForCombat)"
+                            title="@(!AllReadyForCombat ? "En attente des initiatives de tous les participants" : "Lancer le combat")">
+                        <i class="bi bi-swords"></i> Démarrer le combat
+                    </button>
+                    <button class="btn btn-ghost btn-sm" @onclick="StartCombat"
+                            title="Démarrer même si tout le monde n'a pas soumis son initiative">
+                        Forcer le démarrage
+                    </button>
+                }
+                <button class="btn btn-danger btn-sm" @onclick="() => ShowEndConfirm = true">
+                    <i class="bi bi-stop-fill"></i> Fin de combat
+                </button>
+            </div>
+        </div>
+
+        @if (Combat.Status == 1)
+        {
+            <!-- Phase initiative: layout plein écran -->
+            <div class="combat-initiative-phase">
+                <div class="combat-initiative-list">
+                    @foreach (var p in SortedByInitiative)
+                    {
+                        var participant = p;
+                        <div class="initiative-row @(p.Initiative.HasValue ? "submitted" : "pending")">
+                            <div class="initiative-rank" style="background:@p.GroupColor;color:#fff;">
+                                @(p.Initiative.HasValue ? p.Initiative.Value.ToString() : "?")
+                            </div>
+                            <span class="initiative-name">@p.Name</span>
+                            <span class="initiative-type-badge">
+                                @(p.IsPlayerCharacter ? "Joueur" : "PNJ")
+                            </span>
+
+                            @if (p.Initiative.HasValue)
+                            {
+                                <span class="initiative-value-display">@p.Initiative</span>
+                                @if (!p.IsPlayerCharacter)
+                                {
+                                    <button class="btn btn-ghost btn-sm" @onclick="() => RollNpcInitiative(participant)"
+                                            title="Relancer l'initiative">
+                                        <i class="bi bi-arrow-clockwise"></i> Relancer
+                                    </button>
+                                }
+                            }
+                            else if (p.IsPlayerCharacter)
+                            {
+                                <span class="initiative-pending-indicator">
+                                    <span class="initiative-spinner"></span>
+                                    En attente
+                                </span>
+                                <div class="initiative-gm-input">
+                                    <input type="number" class="form-control" style="width:72px;" placeholder="0"
+                                           value="@GetInitiativeInput(participant.Id)"
+                                           @onchange="e => SetInitiativeInputValue(participant.Id, e)" />
+                                    <button class="btn btn-ghost btn-sm"
+                                            @onclick="() => SetParticipantInitiative(participant, GetInitiativeInput(participant.Id).ToString())">
+                                        Forcer
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- NPC sans initiative -->
+                                <div class="initiative-gm-input">
+                                    <button class="btn btn-primary btn-sm" @onclick="() => RollNpcInitiative(participant)">
+                                        <i class="bi bi-dice-5"></i> Lancer
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Dés du MJ accessibles en phase initiative -->
+                <div style="max-width:720px;margin:var(--spacing-lg) auto 0;width:100%;">
+                    <div class="gm-dice-panel">
+                        <div class="gm-dice-panel-title"><i class="bi bi-dice-5"></i> Dés du MJ</div>
+                        <DiceRoller IsPrivate="true" ParticipantName="MJ" OnActionRecorded="RecordActionFromDice" />
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Bande d'ordre (Status == 2) -->
+            <CombatOrderBand Participants="@SortedParticipants" CurrentTurnOrder="@Combat.CurrentTurnOrder" />
+
+            <!-- Body split: participant actif | log -->
+            <div class="combat-gm-body">
+                <!-- Panel gauche -->
+                <div class="combat-active-panel">
+                    @if (ActiveParticipant != null)
+                    {
+                        @if (ActiveParticipant.IsPlayerCharacter && ActiveCharacterSheet != null)
+                        {
+                            <!-- Mini-fiche joueur -->
+                            <div class="cdm-card">
+                                <div class="character-mini-sheet">
+                                    <div class="character-mini-header">
+                                        @if (!string.IsNullOrEmpty(ActiveCharacterSheet.AvatarUrl))
+                                        {
+                                            <img src="@ActiveCharacterSheet.AvatarUrl"
+                                                 alt="@ActiveCharacterSheet.CharacterName"
+                                                 class="character-mini-avatar" />
+                                        }
+                                        else
+                                        {
+                                            <div class="character-mini-avatar-placeholder">
+                                                @GetInitials(ActiveCharacterSheet.CharacterName)
+                                            </div>
+                                        }
+                                        <div class="character-mini-info">
+                                            <div class="character-mini-name">@ActiveCharacterSheet.CharacterName</div>
+                                            <div class="character-mini-subtitle">
+                                                @if (ActiveDndStats != null)
+                                                {
+                                                    @($"Niv. {ActiveDndStats.Level ?? ActiveCharacterSheet.Level ?? 1}")
+                                                    @if (!string.IsNullOrEmpty(ActiveDndStats.CharacterClass))
+                                                    {
+                                                        <text> · @ActiveDndStats.CharacterClass</text>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(ActiveDndStats.Race))
+                                                    {
+                                                        <text> · @ActiveDndStats.Race</text>
+                                                    }
+                                                }
+                                                else if (ActiveCharacterSheet.Level.HasValue)
+                                                {
+                                                    @($"Niv. {ActiveCharacterSheet.Level}")
+                                                }
+                                                <span style="margin-left:var(--spacing-xs);color:@ActiveParticipant.GroupColor;">
+                                                    @ActiveParticipant.GroupName
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (ActiveDndStats != null)
+                                    {
+                                        <div class="character-mini-stats">
+                                            @foreach (var (label, val) in new[] {
+                                                ("FOR", ActiveDndStats.Strength), ("DEX", ActiveDndStats.Dexterity),
+                                                ("CON", ActiveDndStats.Constitution), ("INT", ActiveDndStats.Intelligence),
+                                                ("SAG", ActiveDndStats.Wisdom), ("CHA", ActiveDndStats.Charisma)
+                                            })
+                                            {
+                                                @if (val.HasValue)
+                                                {
+                                                    var mod = (val.Value - 10) / 2;
+                                                    <div class="character-mini-stat">
+                                                        <span class="character-mini-stat-value">@val</span>
+                                                        <span style="font-size:var(--font-size-xs);color:@(mod >= 0 ? "var(--color-success)" : "var(--color-danger)");">
+                                                            @(mod >= 0 ? $"+{mod}" : mod.ToString())
+                                                        </span>
+                                                        <span class="character-mini-stat-label">@label</span>
+                                                    </div>
+                                                }
+                                            }
+                                            @if (ActiveDndStats.ArmorClass.HasValue)
+                                            {
+                                                <div class="character-mini-stat">
+                                                    <span class="character-mini-stat-value">@ActiveDndStats.ArmorClass</span>
+                                                    <span class="character-mini-stat-label">CA</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Fiche PNJ (ou joueur sans fiche chargée) -->
+                            <div class="cdm-card">
+                                <div style="display:flex;align-items:center;gap:var(--spacing-sm);margin-bottom:var(--spacing-sm);">
+                                    <div class="character-avatar-circle" style="background:@ActiveParticipant.GroupColor;">
+                                        @GetInitials(ActiveParticipant.Name)
+                                    </div>
+                                    <div>
+                                        <h3 style="margin:0;">@ActiveParticipant.Name</h3>
+                                        <span style="font-size:var(--font-size-xs);color:@ActiveParticipant.GroupColor;">@ActiveParticipant.GroupName</span>
+                                    </div>
+                                    <span style="margin-left:auto;font-size:var(--font-size-xs);color:var(--color-text-muted);">
+                                        @(ActiveParticipant.IsPlayerCharacter ? "Joueur" : "PNJ")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Dés du MJ: toujours visibles -->
+                        <div class="cdm-card">
+                            <div class="gm-dice-panel-title"><i class="bi bi-dice-5"></i> Dés du MJ</div>
+                            <DiceRoller IsPrivate="true"
+                                        ParticipantName="@(ActiveParticipant?.Name ?? "MJ")"
+                                        OnActionRecorded="RecordActionFromDice" />
+                        </div>
+
+                        <!-- Action libre -->
+                        <div class="cdm-card">
+                            <h4>Action libre</h4>
+                            <textarea class="form-control" rows="2" placeholder="Décrire l'action du MJ" @bind="FreeActionText"></textarea>
+                            <button class="btn btn-ghost btn-sm" style="margin-top:var(--spacing-xs);" @onclick="RecordFreeAction">
+                                <i class="bi bi-plus-circle"></i> Enregistrer
+                            </button>
+                        </div>
+
+                        <!-- Passer le tour -->
+                        <button class="combat-next-turn-btn" @onclick="NextTurn">
+                            <i class="bi bi-chevron-double-right"></i> Passer le tour
+                        </button>
+                    }
+
+                    <!-- Liste de tous les participants avec toggle actif/inactif -->
+                    <div class="cdm-card" style="margin-top:var(--spacing-md);">
+                        <h4 style="margin-bottom:var(--spacing-sm);">Participants</h4>
+                        <div class="combat-participants-list">
+                            @foreach (var p in SortedParticipants)
+                            {
+                                var participant = p;
+                                var isCurrent = p.TurnOrder == Combat.CurrentTurnOrder;
+                                <div class="combat-participant-row @(!p.IsActive ? "inactive" : "") @(isCurrent ? "current-turn" : "")">
+                                    <div class="combat-participant-avatar-sm" style="background:@p.GroupColor;">
+                                        @GetInitials(p.Name)
+                                    </div>
+                                    <span class="combat-participant-name">@p.Name</span>
+                                    <label class="toggle-switch" title="@(p.IsActive ? "Actif — cliquer pour éliminer" : "Éliminé — cliquer pour rétablir")">
+                                        <input type="checkbox" checked="@p.IsActive"
+                                               @onchange="() => ToggleParticipantActive(participant)" />
+                                        <span class="toggle-track"></span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel droit: log -->
+                <div class="combat-log-panel">
+                    <CombatLog Actions="@VisibleActionsForGm" Title="Journal de combat" />
+                </div>
+            </div>
+        }
+
+        <!-- Modal fin de combat -->
+        @if (ShowEndConfirm)
+        {
+            <div class="modal-backdrop" @onclick='() => ShowEndConfirm = false'>
+                <div class="modal-card" @onclick:stopPropagation>
+                    <h3>Terminer le combat</h3>
+                    <label class="form-label">Vainqueur (optionnel)</label>
+                    <select class="form-control" @bind="VictorySide">
+                        <option value="">— Aucun —</option>
+                        @foreach (var g in Combat.Groups)
+                        {
+                            <option value="@g.Name">@g.Name</option>
+                        }
+                    </select>
+                    <div style="display:flex;gap:var(--spacing-sm);margin-top:var(--spacing-md);justify-content:flex-end;">
+                        <button class="btn btn-ghost" @onclick='() => ShowEndConfirm = false'>Annuler</button>
+                        <button class="btn btn-danger" @onclick="ConfirmEndCombat">Terminer</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

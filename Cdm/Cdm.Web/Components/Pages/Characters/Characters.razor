@@ -67,6 +67,19 @@ else
                     }
                 </h3>
 
+                @if (character.IsBaseCharacter)
+                {
+                    <span class="card-meta-badge" style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); font-size: var(--font-size-xs);">
+                        <i class="bi bi-bookmark-star"></i> Personnage de base
+                    </span>
+                }
+                else if (character.SourceCharacterId.HasValue)
+                {
+                    <span class="card-meta-badge" style="background: var(--color-primary); color: white; font-size: var(--font-size-xs);">
+                        <i class="bi bi-globe2"></i> Copie monde
+                    </span>
+                }
+
                 @if (character.Age.HasValue)
                 {
                     <span class="card-meta-badge">@character.Age ans</span>

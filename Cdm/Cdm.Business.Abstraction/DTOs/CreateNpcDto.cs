@@ -40,4 +40,9 @@ public class CreateNpcDto
     /// Gets or sets the NPC's age (nullable).
     /// </summary>
     public int? Age { get; set; }
+
+    /// <summary>
+    /// Gets or sets game-specific data as a JSON string (e.g. D&amp;D 5e stat block).
+    /// </summary>
+    public string? GameSpecificData { get; set; }
 }

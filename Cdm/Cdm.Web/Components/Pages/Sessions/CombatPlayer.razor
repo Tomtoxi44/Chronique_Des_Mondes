@@ -1,0 +1,71 @@
+@page "/sessions/{SessionId:int}/combat/{CombatId:int}/player"
+@attribute [Authorize]
+
+<PageTitle>Combat — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display:flex;justify-content:center;align-items:center;height:60vh;"><AppLoadingSpinner /></div>
+}
+else if (ErrorMessage != null)
+{
+    <AppEmptyState Icon="bi-exclamation-circle" Title="Erreur" Message="@ErrorMessage" />
+}
+else if (Combat != null)
+{
+    <div class="combat-player-shell">
+        <!-- Banner tour -->
+        @if (IsMyTurn)
+        {
+            <div class="combat-turn-banner my-turn">
+                <i class="bi bi-swords"></i> C'est votre tour, <strong>@MyParticipant?.Name</strong> !
+                <button class="btn btn-ghost btn-sm" @onclick="PassTurn">Passer mon tour</button>
+            </div>
+        }
+        else if (ActiveParticipant != null)
+        {
+            <div class="combat-turn-banner other-turn">
+                <i class="bi bi-hourglass-split"></i> Tour de <strong>@ActiveParticipant.Name</strong>…
+            </div>
+        }
+
+        <!-- Bande d'ordre -->
+        <CombatOrderBand Participants="@SortedParticipants" CurrentTurnOrder="@Combat.CurrentTurnOrder" />
+
+        <!-- Corps principal -->
+        <div class="combat-player-body">
+            <!-- Colonne gauche: ma fiche -->
+            <div class="combat-player-left">
+                <div class="cdm-card">
+                    <h3><i class="bi bi-person"></i> Mon personnage</h3>
+                    @if (MyParticipant != null)
+                    {
+                        <div class="hp-tracker" style="margin:var(--spacing-sm) 0;">
+                            <span class="hp-label">PV</span>
+                            <span style="font-size:1.5rem;font-weight:700;color:@(MyParticipant.CurrentHp > MyParticipant.MaxHp / 3 ? "var(--color-success)" : "var(--color-danger)");">
+                                @MyParticipant.CurrentHp
+                            </span>
+                            <span style="color:var(--color-text-muted);">/ @MyParticipant.MaxHp</span>
+                        </div>
+                        <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);">
+                            Groupe: <span style="color:@MyParticipant.GroupColor;font-weight:600;">@MyParticipant.GroupName</span>
+                        </div>
+                    }
+                </div>
+
+                @if (IsMyTurn)
+                {
+                    <div class="cdm-card" style="margin-top:var(--spacing-md);">
+                        <h4><i class="bi bi-dice-6"></i> Lancer des dés</h4>
+                        <DiceRoller IsPrivate="false" ParticipantName="@(MyParticipant?.Name ?? "Joueur")" OnActionRecorded="RecordMyAction" />
+                    </div>
+                }
+            </div>
+
+            <!-- Colonne droite: log -->
+            <div class="combat-player-right">
+                <CombatLog Actions="@VisibleActionsForPlayer" Title="Journal de combat" />
+            </div>
+        </div>
+    </div>
+}

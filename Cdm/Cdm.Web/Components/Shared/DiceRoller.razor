@@ -1,0 +1,85 @@
+@* Composant DiceRoller — permet de lancer des dés et enregistrer le résultat *@
+
+<div class="dice-roller-widget">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="dice-roller-title">@Title</div>
+    }
+
+    <div class="dice-selector">
+        @foreach (var d in new[] { 4, 6, 8, 10, 12, 20, 100 })
+        {
+            var faces = d;
+            <button class="dice-btn @(SelectedDie == faces ? "selected" : "")"
+                    @onclick="() => SelectedDie = faces">
+                d@(faces)
+            </button>
+        }
+    </div>
+
+    <div class="dice-roller-controls" style="margin-top:var(--spacing-sm);">
+        <div style="display:flex;align-items:center;gap:var(--spacing-sm);">
+            <label style="font-size:var(--font-size-xs);color:var(--color-text-muted);">Quantité</label>
+            <input type="number" class="form-control" style="width:60px;" @bind="DiceCount" min="1" max="20" />
+            <label style="font-size:var(--font-size-xs);color:var(--color-text-muted);">Modificateur</label>
+            <input type="number" class="form-control" style="width:70px;" @bind="Modifier" />
+        </div>
+        <button class="btn btn-primary btn-sm" @onclick="RollDice" style="margin-top:var(--spacing-xs);">
+            <i class="bi bi-dice-3"></i> Lancer @DiceCount&#x202F;d@(SelectedDie)@(Modifier != 0 ? (Modifier > 0 ? $" +{Modifier}" : $" {Modifier}") : "")
+        </button>
+    </div>
+
+    @if (LastResult != null)
+    {
+        <div class="dice-result-display @(IsPrivate ? "private-result" : "")">
+            @if (IsPrivate) { <span class="private-badge"><i class="bi bi-eye-slash"></i> Privé</span> }
+            <span class="dice-result-expression">@LastExpression</span>
+            <span class="dice-result-arrow">→</span>
+            <span class="dice-result-value">@LastTotal</span>
+            @if (LastRolls?.Length > 1)
+            {
+                <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);">(@string.Join(", ", LastRolls))</span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsPrivate { get; set; }
+    [Parameter] public string ParticipantName { get; set; } = string.Empty;
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public EventCallback<Cdm.Business.Abstraction.DTOs.CreateCombatActionDto> OnActionRecorded { get; set; }
+
+    private int SelectedDie = 20;
+    private int DiceCount = 1;
+    private int Modifier = 0;
+
+    private int[]? LastRolls;
+    private int? LastResult;
+    private int LastTotal;
+    private string LastExpression = "";
+
+    private async Task RollDice()
+    {
+        LastRolls = Enumerable.Range(0, DiceCount)
+            .Select(_ => Random.Shared.Next(1, SelectedDie + 1))
+            .ToArray();
+        LastResult = LastRolls.Sum();
+        LastTotal = LastResult.Value + Modifier;
+        LastExpression = $"{DiceCount}d{SelectedDie}{(Modifier != 0 ? (Modifier > 0 ? $"+{Modifier}" : $"{Modifier}") : "")}";
+
+        if (OnActionRecorded.HasDelegate)
+        {
+            var action = new Cdm.Business.Abstraction.DTOs.CreateCombatActionDto
+            {
+                ParticipantName = ParticipantName,
+                ActionType = "dice",
+                DiceExpression = LastExpression,
+                DiceResult = LastTotal,
+                Description = $"{ParticipantName} lance {LastExpression} → {LastTotal}",
+                IsPrivate = IsPrivate
+            };
+            await OnActionRecorded.InvokeAsync(action);
+        }
+    }
+}

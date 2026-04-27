@@ -23,6 +23,7 @@ public partial class SessionGm : IAsyncDisposable
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private NpcApiClient NpcClient { get; set; } = default!;
+    [Inject] private CombatApiClient CombatClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -195,6 +196,15 @@ public partial class SessionGm : IAsyncDisposable
             ErrorMessage = "Impossible de terminer la session.";
             IsEnding = false;
         }
+    }
+
+    private async Task TriggerCombat()
+    {
+        var activeCombat = await CombatClient.GetActiveCombatForSessionAsync(SessionId);
+        if (activeCombat != null)
+            Nav.NavigateTo($"/sessions/{SessionId}/combat/{activeCombat.Id}/gm");
+        else
+            Nav.NavigateTo($"/sessions/{SessionId}/combat/setup");
     }
 
     private void TogglePlayerSheet(SessionParticipantDto participant)

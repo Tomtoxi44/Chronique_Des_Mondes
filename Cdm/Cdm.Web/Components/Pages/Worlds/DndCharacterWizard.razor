@@ -1,0 +1,672 @@
+@page "/worlds/dnd-wizard/{WorldId:int}"
+@attribute [Authorize]
+
+<PageTitle>Configuration D&D 5e — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+        <AppLoadingSpinner Label="Chargement du wizard D&D..." />
+    </div>
+}
+else if (IsComplete)
+{
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+        <div style="text-align: center; max-width: 520px;">
+            <div style="font-size: 3.5rem; color: var(--color-success); margin-bottom: var(--spacing-md);">
+                <i class="bi bi-shield-check-fill"></i>
+            </div>
+            <h2 style="margin-bottom: var(--spacing-sm);">Personnage prêt pour l'aventure !</h2>
+            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-xl);">
+                Votre personnage a été configuré selon les règles de D&D 5e. Vous pouvez compléter ou modifier ces informations à tout moment.
+            </p>
+            <div style="display: flex; gap: var(--spacing-sm); justify-content: center; flex-wrap: wrap;">
+                <a href="/worlds/@WorldId" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i>
+                    Voir le monde
+                </a>
+                <button class="btn btn-ghost" @onclick="RestartWizard">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Recommencer
+                </button>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div style="max-width: 720px; margin: var(--spacing-xl) auto; padding: 0 var(--spacing-md);">
+
+        @* Titre *@
+        <div style="text-align: center; margin-bottom: var(--spacing-xl);">
+            <div style="font-size: 2.5rem; margin-bottom: var(--spacing-sm);">
+                <i class="bi bi-dice-6" style="color: var(--color-primary);"></i>
+            </div>
+            <h1 style="font-size: var(--font-size-xl); margin-bottom: var(--spacing-xs);">Configuration D&D 5e</h1>
+            <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">
+                Configurez votre personnage selon les règles de Donjons & Dragons 5ème édition
+            </p>
+        </div>
+
+        @* Stepper *@
+        <div class="dnd-wizard-stepper" style="display: flex; gap: 0; margin-bottom: var(--spacing-xl); position: relative;">
+            @for (int i = 0; i < StepLabels.Length; i++)
+            {
+                int stepIndex = i;
+                bool isDone = stepIndex < CurrentStep;
+                bool isActive = stepIndex == CurrentStep;
+                <div class="wizard-step @(isActive ? "active" : "") @(isDone ? "done" : "")"
+                     style="flex: 1; text-align: center; position: relative; cursor: @(isDone ? "pointer" : "default");"
+                     @onclick="() => GoToStep(stepIndex)">
+                    <div class="step-circle" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--spacing-xs); font-weight: 700; font-size: var(--font-size-sm);
+                        background: @(isDone ? "var(--color-success)" : isActive ? "var(--color-primary)" : "var(--color-bg-tertiary)");
+                        color: @(isDone || isActive ? "white" : "var(--color-text-secondary)");
+                        border: 2px solid @(isDone ? "var(--color-success)" : isActive ? "var(--color-primary)" : "var(--color-border)");">
+                        @if (isDone)
+                        {
+                            <i class="bi bi-check-lg"></i>
+                        }
+                        else
+                        {
+                            <span>@(stepIndex + 1)</span>
+                        }
+                    </div>
+                    <div style="font-size: var(--font-size-xs); color: @(isActive ? "var(--color-primary)" : "var(--color-text-muted)"); font-weight: @(isActive ? "600" : "400");">
+                        @StepLabels[stepIndex]
+                    </div>
+                    @if (stepIndex < StepLabels.Length - 1)
+                    {
+                        <div style="position: absolute; top: 18px; left: 50%; right: -50%; height: 2px; background: @(isDone ? "var(--color-success)" : "var(--color-border)"); z-index: -1;"></div>
+                    }
+                </div>
+            }
+        </div>
+
+        @* Step 1 — Infos de base *@
+        @if (CurrentStep == 0)
+        {
+            <div class="cdm-card">
+                <h3 style="margin-bottom: var(--spacing-sm);">
+                    <i class="bi bi-person-circle" style="color: var(--color-primary);"></i>
+                    Informations de base
+                </h3>
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
+                    Personnalisez l'identité de votre personnage pour ce monde. Ces informations peuvent différer de votre personnage de base.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+                    <div class="form-group">
+                        <label class="form-label">Prénom *</label>
+                        <input class="form-control" @bind="CharacterFirstName" placeholder="Ex: Elara" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nom</label>
+                        <input class="form-control" @bind="CharacterName" placeholder="Ex: Lumenveil" />
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 3fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                    <div class="form-group">
+                        <label class="form-label">Âge</label>
+                        <input type="number" class="form-control" @bind="CharacterAge" min="0" max="10000" placeholder="Ex: 127" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="CharacterDescription" placeholder="Décrivez votre personnage..."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-lg);">
+                    <button class="btn btn-primary" @onclick="GoToNextStep" disabled="@(string.IsNullOrWhiteSpace(CharacterFirstName))">
+                        Suivant <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+
+        @* Step 2 — Niveau, Classe, Race, Stats *@
+        @if (CurrentStep == 1)
+        {
+            <div class="cdm-card">
+                <h3 style="margin-bottom: var(--spacing-sm);">
+                    <i class="bi bi-bar-chart" style="color: var(--color-primary);"></i>
+                    Classe, Race &amp; Caractéristiques
+                </h3>
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
+                    Les bonus de race seront automatiquement appliqués à vos caractéristiques lors de la sauvegarde.
+                </p>
+
+                @* Niveau + Classe + Race *@
+                <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                    <div class="form-group">
+                        <label class="form-label">Niveau (1-20)</label>
+                        <input type="number" class="form-control" @bind="Stats.Level" @bind:after="OnStatsChanged" min="1" max="20" placeholder="1" />
+                        @if (Stats.Level.HasValue)
+                        {
+                            <small class="text-muted">Bonus prof. : +@GetProficiencyBonus(Stats.Level.Value)</small>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Classe</label>
+                        <select class="form-select" @bind="SelectedClassId" @bind:after="OnClassSelected">
+                            <option value="0">— Choisir une classe —</option>
+                            @foreach (var cls in AvailableClasses)
+                            {
+                                <option value="@cls.Id">@cls.Name (d@(cls.HitDie))</option>
+                            }
+                        </select>
+                        @if (SelectedClass != null)
+                        {
+                            <small class="text-muted">@(SelectedClass.IsSpellcaster ? "✨ Classe magique" : "⚔️ Classe non-magique")</small>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Race</label>
+                        <select class="form-select" @bind="SelectedRaceId" @bind:after="OnRaceSelected">
+                            <option value="0">— Choisir une race —</option>
+                            @foreach (var race in AvailableRaces)
+                            {
+                                <option value="@race.Id">@race.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @* Sous-race (si disponible) *@
+                @if (SelectedRace?.Subraces?.Count > 0)
+                {
+                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                        <label class="form-label">Sous-race</label>
+                        <select class="form-select" @bind="Stats.Subrace" @bind:after="OnStatsChanged">
+                            <option value="">— Pas de sous-race —</option>
+                            @foreach (var sr in SelectedRace.Subraces)
+                            {
+                                <option value="@sr">@sr</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                @* Background *@
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">Background (historique)</label>
+                    <select class="form-select" @bind="SelectedBackgroundId" @bind:after="OnBackgroundSelected">
+                        <option value="0">— Choisir un background —</option>
+                        @foreach (var bg in AvailableBackgrounds)
+                        {
+                            <option value="@bg.Id">@bg.Name</option>
+                        }
+                    </select>
+                    @if (SelectedBackground != null)
+                    {
+                        <div style="margin-top: var(--spacing-xs); padding: var(--spacing-sm); background: var(--color-bg-secondary); border-radius: var(--border-radius-sm); font-size: var(--font-size-xs);">
+                            @if (!string.IsNullOrEmpty(SelectedBackground.Description))
+                            {
+                                <div style="color: var(--color-text-secondary); margin-bottom: var(--spacing-xs);">@SelectedBackground.Description</div>
+                            }
+                            <div>
+                                <strong><i class="bi bi-bookmark-fill"></i> Aptitude :</strong>
+                                <span style="color: var(--color-warning);"> @SelectedBackground.Feature</span>
+                            </div>
+                            @if (SelectedBackground.SkillProficiencies.Count > 0)
+                            {
+                                <div style="margin-top: var(--spacing-xs);">
+                                    <strong>Compétences accordées :</strong>
+                                    @foreach (var skill in SelectedBackground.SkillProficiencies)
+                                    {
+                                        <span style="margin-left: 4px; padding: 1px 6px; background: var(--color-primary); color: white; border-radius: 9999px; font-size: 11px;">@skill</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @* Choix de compétences de classe *@
+                @if (SelectedClass?.AvailableSkills?.Count > 0)
+                {
+                    var maxChoices = GetMaxClassSkillChoices();
+                    var currentChoices = ClassSkillChoices.Count;
+                    <div style="margin-bottom: var(--spacing-md); padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); background: var(--color-bg-secondary);">
+                        <div style="font-size: var(--font-size-sm); font-weight: 600; margin-bottom: var(--spacing-xs);">
+                            <i class="bi bi-check2-square"></i>
+                            Compétences de classe — choisissez @maxChoices
+                            <span style="color: @(currentChoices == maxChoices ? "var(--color-success)" : "var(--color-text-muted)"); font-size: var(--font-size-xs); margin-left: var(--spacing-xs);">
+                                (@currentChoices/@maxChoices sélectionnée@(currentChoices > 1 ? "s" : ""))
+                            </span>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs);">
+                            @foreach (var skill in SelectedClass.AvailableSkills)
+                            {
+                                var fromBg = IsSkillFromBackground(skill);
+                                var chosen = ClassSkillChoices.Contains(skill);
+                                var canSelect = !fromBg && (!chosen ? currentChoices < maxChoices : true);
+                                <button type="button"
+                                        style="padding: 3px 10px; border-radius: 9999px; font-size: var(--font-size-xs); border: 1px solid; cursor: @(fromBg ? "default" : "pointer");
+                                               background: @(fromBg ? "var(--color-primary)" : chosen ? "var(--color-success)" : "var(--color-bg-tertiary)");
+                                               color: @(fromBg || chosen ? "white" : canSelect ? "var(--color-text-primary)" : "var(--color-text-muted)");
+                                               border-color: @(fromBg ? "var(--color-primary)" : chosen ? "var(--color-success)" : "var(--color-border)");
+                                               opacity: @(!fromBg && !chosen && !canSelect ? "0.5" : "1");"
+                                        @onclick="() => ToggleClassSkill(skill)"
+                                        disabled="@(!canSelect && !chosen && !fromBg)"
+                                        title="@(fromBg ? $"Accordé par le background {Stats.Background}" : "")">
+                                    @if (fromBg)
+                                    {
+                                        <i class="bi bi-bookmark-fill"></i>
+                                    }
+                                    else if (chosen)
+                                    {
+                                        <i class="bi bi-check-lg"></i>
+                                    }
+                                    @skill
+                                </button>
+                            }
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-muted); margin-top: var(--spacing-xs);">
+                            <i class="bi bi-bookmark-fill" style="color: var(--color-primary);"></i> = accordé par background
+                        </div>
+                    </div>
+                }
+
+                @* Bonus de race preview *@
+                @if (SelectedRace != null)
+                {
+                    <div class="alert" style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: var(--spacing-sm); margin-bottom: var(--spacing-md); font-size: var(--font-size-xs);">
+                        <strong><i class="bi bi-stars"></i> Bonus de race @SelectedRace.Name :</strong>
+                        @foreach (var bonus in GetDisplayBonuses())
+                        {
+                            <span style="margin-left: var(--spacing-sm); color: var(--color-success);">@bonus</span>
+                        }
+                        <span style="color: var(--color-text-muted); margin-left: var(--spacing-sm);">• Vitesse : @SelectedRace.Speed m</span>
+                    </div>
+                }
+
+                @* Caractéristiques *@
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                    <div class="form-group" style="text-align: center;">
+                        <label class="form-label" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">Force</label>
+                        <input type="number" class="form-control" style="text-align: center; font-weight: 700;" min="1" max="30" placeholder="—"
+                               @bind="Stats.Strength" @bind:event="oninput" @bind:after="OnStatsChanged" />
+                        @if (Stats.Strength.HasValue)
+                        {
+                            var m = (Stats.Strength.Value - 10) / 2;
+                            <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
+                        }
+                    </div>
+                    <div class="form-group" style="text-align: center;">
+                        <label class="form-label" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">Dextérité</label>
+                        <input type="number" class="form-control" style="text-align: center; font-weight: 700;" min="1" max="30" placeholder="—"
+                               @bind="Stats.Dexterity" @bind:event="oninput" @bind:after="OnStatsChanged" />
+                        @if (Stats.Dexterity.HasValue)
+                        {
+                            var m = (Stats.Dexterity.Value - 10) / 2;
+                            <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
+                        }
+                    </div>
+                    <div class="form-group" style="text-align: center;">
+                        <label class="form-label" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">Constitution</label>
+                        <input type="number" class="form-control" style="text-align: center; font-weight: 700;" min="1" max="30" placeholder="—"
+                               @bind="Stats.Constitution" @bind:event="oninput" @bind:after="OnStatsChanged" />
+                        @if (Stats.Constitution.HasValue)
+                        {
+                            var m = (Stats.Constitution.Value - 10) / 2;
+                            <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
+                        }
+                    </div>
+                    <div class="form-group" style="text-align: center;">
+                        <label class="form-label" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">Intelligence</label>
+                        <input type="number" class="form-control" style="text-align: center; font-weight: 700;" min="1" max="30" placeholder="—"
+                               @bind="Stats.Intelligence" @bind:event="oninput" @bind:after="OnStatsChanged" />
+                        @if (Stats.Intelligence.HasValue)
+                        {
+                            var m = (Stats.Intelligence.Value - 10) / 2;
+                            <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
+                        }
+                    </div>
+                    <div class="form-group" style="text-align: center;">
+                        <label class="form-label" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">Sagesse</label>
+                        <input type="number" class="form-control" style="text-align: center; font-weight: 700;" min="1" max="30" placeholder="—"
+                               @bind="Stats.Wisdom" @bind:event="oninput" @bind:after="OnStatsChanged" />
+                        @if (Stats.Wisdom.HasValue)
+                        {
+                            var m = (Stats.Wisdom.Value - 10) / 2;
+                            <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
+                        }
+                    </div>
+                    <div class="form-group" style="text-align: center;">
+                        <label class="form-label" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">Charisme</label>
+                        <input type="number" class="form-control" style="text-align: center; font-weight: 700;" min="1" max="30" placeholder="—"
+                               @bind="Stats.Charisma" @bind:event="oninput" @bind:after="OnStatsChanged" />
+                        @if (Stats.Charisma.HasValue)
+                        {
+                            var m = (Stats.Charisma.Value - 10) / 2;
+                            <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
+                        }
+                    </div>
+                </div>
+
+                @* PV et CA *@
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                    <div class="form-group">
+                        <label class="form-label">Points de vie max</label>
+                        <input type="number" class="form-control" @bind="Stats.MaxHitPoints" min="1" placeholder="@GetSuggestedHp()" />
+                        @if (SelectedClass != null && Stats.Level.HasValue)
+                        {
+                            <small class="text-muted">Suggéré : @GetSuggestedHp() (d@(SelectedClass.HitDie) + CON×niv)</small>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Classe d'armure</label>
+                        <input type="number" class="form-control" @bind="Stats.ArmorClass" min="1" placeholder="10" />
+                        <small class="text-muted">Base = 10 + mod. DEX</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vitesse (m)</label>
+                        <input type="number" class="form-control" @bind="Stats.Speed" min="0" placeholder="@(SelectedRace?.Speed ?? 9)" />
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-lg);">
+                    <button class="btn btn-ghost" @onclick="GoToPrevStep">
+                        <i class="bi bi-arrow-left"></i> Précédent
+                    </button>
+                    <button class="btn btn-primary" @onclick="SaveStatsAndContinue" disabled="@IsSavingStats">
+                        @if (IsSavingStats)
+                        {
+                            <span class="spinner-border spinner-border-sm"></span>
+                        }
+                        Suivant <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+
+        @* Step 3 — Inventaire *@
+        @if (CurrentStep == 2)
+        {
+            <div class="cdm-card">
+                <h3 style="margin-bottom: var(--spacing-sm);">
+                    <i class="bi bi-bag" style="color: var(--color-primary);"></i>
+                    Inventaire
+                </h3>
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
+                    Ajoutez les objets que porte votre personnage. Vous pouvez choisir depuis le référentiel ou saisir un objet personnalisé.
+                </p>
+
+                @* Objets existants *@
+                @if (InventoryItems.Count > 0)
+                {
+                    <div style="margin-bottom: var(--spacing-lg);">
+                        @foreach (var item in InventoryItems)
+                        {
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-xs); background: var(--color-bg-secondary);">
+                                <i class="bi @GetItemIcon(item.Category)" style="color: var(--color-text-muted);"></i>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: var(--font-size-sm);">@item.Name <span style="color: var(--color-text-muted); font-weight: 400;">×@item.Quantity</span></div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        @item.Category
+                                        @if (!string.IsNullOrEmpty(item.DamageDice))
+                                        {
+                                            <span> • Dégâts : @item.DamageDice @item.DamageType</span>
+                                        }
+                                        @if (item.AttackBonus.HasValue && item.AttackBonus != 0)
+                                        {
+                                            <span> • Attaque : @(item.AttackBonus >= 0 ? "+" : "")@item.AttackBonus</span>
+                                        }
+                                    </div>
+                                </div>
+                                <button class="btn btn-ghost btn-icon danger" @onclick="() => RemoveInventoryItem(item)" title="Retirer">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* Formulaire ajout *@
+                <div style="border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: var(--spacing-md); background: var(--color-bg-tertiary);">
+                    <h5 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-sm);">
+                        <i class="bi bi-plus-circle"></i> Ajouter un objet
+                    </h5>
+
+                    @* Sélecteur depuis référentiel *@
+                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                        <label class="form-label">Choisir depuis le référentiel</label>
+                        <select class="form-select" @onchange="OnReferenceItemSelected">
+                            <option value="0">— Saisie libre —</option>
+                            @foreach (var cat in AvailableItems.GroupBy(i => i.Category))
+                            {
+                                <optgroup label="@cat.Key">
+                                    @foreach (var refItem in cat)
+                                    {
+                                        <option value="@refItem.Id">@refItem.Name (@refItem.DamageDice)</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-sm);">
+                        <div class="form-group">
+                            <label class="form-label">Nom de l'objet *</label>
+                            <input class="form-control" @bind="NewItem.Name" placeholder="Ex: Épée courte" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantité</label>
+                            <input type="number" class="form-control" @bind="NewItem.Quantity" min="1" />
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                        <div class="form-group">
+                            <label class="form-label">Catégorie</label>
+                            <select class="form-select" @bind="NewItem.Category">
+                                <option value="Arme">Arme</option>
+                                <option value="Armure">Armure</option>
+                                <option value="Potion">Potion</option>
+                                <option value="Objet magique">Objet magique</option>
+                                <option value="Équipement">Équipement</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        @if (NewItem.Category == "Arme")
+                        {
+                            <div class="form-group">
+                                <label class="form-label">Bonus d'attaque</label>
+                                <input type="number" class="form-control" @bind="NewItem.AttackBonus" placeholder="Ex: +1" />
+                            </div>
+                        }
+                    </div>
+                    @if (NewItem.Category == "Arme")
+                    {
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                            <div class="form-group">
+                                <label class="form-label">Dés de dégâts</label>
+                                <input class="form-control" @bind="NewItem.DamageDice" placeholder="Ex: 1d6, 2d4+2" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Type de dégâts</label>
+                                <input class="form-control" @bind="NewItem.DamageType" placeholder="Ex: Perforant" />
+                            </div>
+                        </div>
+                    }
+                    <div class="form-group" style="margin-top: var(--spacing-sm);">
+                        <label class="form-label">Notes</label>
+                        <input class="form-control" @bind="NewItem.Notes" placeholder="Propriétés spéciales, histoire de l'objet..." />
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-sm);">
+                        <button class="btn btn-secondary btn-sm" @onclick="AddInventoryItem" disabled="@(string.IsNullOrWhiteSpace(NewItem.Name) || IsAddingItem)">
+                            @if (IsAddingItem)
+                            {
+                                <span class="spinner-border spinner-border-sm"></span>
+                            }
+                            <i class="bi bi-plus-lg"></i> Ajouter
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-lg);">
+                    <button class="btn btn-ghost" @onclick="GoToPrevStep">
+                        <i class="bi bi-arrow-left"></i> Précédent
+                    </button>
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <button class="btn btn-ghost" @onclick="GoToNextStep">
+                            Passer <i class="bi bi-skip-end"></i>
+                        </button>
+                        <button class="btn btn-primary" @onclick="GoToNextStep">
+                            Suivant <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* Step 4 — Sorts *@
+        @if (CurrentStep == 3)
+        {
+            <div class="cdm-card">
+                <h3 style="margin-bottom: var(--spacing-sm);">
+                    <i class="bi bi-magic" style="color: var(--color-primary);"></i>
+                    Sorts &amp; Magie
+                </h3>
+                @if (SelectedClass != null && !SelectedClass.IsSpellcaster)
+                {
+                    <div class="alert" style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: var(--spacing-md);">
+                        <i class="bi bi-info-circle"></i>
+                        La classe <strong>@SelectedClass.Name</strong> n'est pas une classe magique. Vous pouvez quand même ajouter des sorts si votre personnage a des capacités spéciales.
+                    </div>
+                }
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
+                    Ajoutez les sorts connus ou préparés de votre personnage.
+                </p>
+
+                @* Sorts existants *@
+                @if (CharacterSpells.Count > 0)
+                {
+                    <div style="margin-bottom: var(--spacing-lg);">
+                        @foreach (var spell in CharacterSpells.OrderBy(s => s.Level).ThenBy(s => s.Name))
+                        {
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-xs); background: var(--color-bg-secondary);">
+                                <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); font-weight: 700; flex-shrink: 0;">
+                                    @(spell.Level == 0 ? "T" : spell.Level.ToString())
+                                </span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: var(--font-size-sm);">
+                                        @spell.Name
+                                        @if (spell.IsPrepared)
+                                        {
+                                            <span style="color: var(--color-warning); font-size: var(--font-size-xs);">★ Préparé</span>
+                                        }
+                                    </div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        @spell.School
+                                        @if (!string.IsNullOrEmpty(spell.DamageDice))
+                                        {
+                                            <span> • @spell.DamageDice @spell.DamageType</span>
+                                        }
+                                    </div>
+                                </div>
+                                <button class="btn btn-ghost btn-icon danger" @onclick="() => RemoveSpell(spell)" title="Retirer">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* Formulaire ajout *@
+                <div style="border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: var(--spacing-md); background: var(--color-bg-tertiary);">
+                    <h5 style="margin-bottom: var(--spacing-md); font-size: var(--font-size-sm);">
+                        <i class="bi bi-plus-circle"></i> Ajouter un sort
+                    </h5>
+
+                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+                        <label class="form-label">Choisir depuis le référentiel</label>
+                        <select class="form-select" @onchange="OnReferenceSpellSelected">
+                            <option value="0">— Saisie libre —</option>
+                            @foreach (var lvlGroup in AvailableSpells.GroupBy(s => s.Level).OrderBy(g => g.Key))
+                            {
+                                <optgroup label="@(lvlGroup.Key == 0 ? "Tours de magie" : $"Niveau {lvlGroup.Key}")">
+                                    @foreach (var refSpell in lvlGroup.OrderBy(s => s.Name))
+                                    {
+                                        <option value="@refSpell.Id">@refSpell.Name (@refSpell.School)</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-sm);">
+                        <div class="form-group">
+                            <label class="form-label">Nom du sort *</label>
+                            <input class="form-control" @bind="NewSpell.Name" placeholder="Ex: Boule de feu" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Niveau (0=tour)</label>
+                            <input type="number" class="form-control" @bind="NewSpell.Level" min="0" max="9" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">École</label>
+                            <select class="form-select" @bind="NewSpell.School">
+                                <option value="">—</option>
+                                <option value="Abjuration">Abjuration</option>
+                                <option value="Conjuration">Conjuration</option>
+                                <option value="Divination">Divination</option>
+                                <option value="Enchantement">Enchantement</option>
+                                <option value="Évocation">Évocation</option>
+                                <option value="Illusion">Illusion</option>
+                                <option value="Nécromancie">Nécromancie</option>
+                                <option value="Transmutation">Transmutation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                        <div class="form-group">
+                            <label class="form-label">Dés de dégâts</label>
+                            <input class="form-control" @bind="NewSpell.DamageDice" placeholder="Ex: 8d6" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Type de dégâts</label>
+                            <input class="form-control" @bind="NewSpell.DamageType" placeholder="Ex: Feu" />
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                        <label style="display: flex; align-items: center; gap: var(--spacing-xs); cursor: pointer; font-size: var(--font-size-sm);">
+                            <input type="checkbox" @bind="NewSpell.IsPrepared" />
+                            Sort préparé
+                        </label>
+                    </div>
+                    <div class="form-group" style="margin-top: var(--spacing-sm);">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="2" @bind="NewSpell.Description" placeholder="Décrivez l'effet du sort..."></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-sm);">
+                        <button class="btn btn-secondary btn-sm" @onclick="AddSpell" disabled="@(string.IsNullOrWhiteSpace(NewSpell.Name) || IsAddingSpell)">
+                            @if (IsAddingSpell)
+                            {
+                                <span class="spinner-border spinner-border-sm"></span>
+                            }
+                            <i class="bi bi-plus-lg"></i> Ajouter
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-lg);">
+                    <button class="btn btn-ghost" @onclick="GoToPrevStep">
+                        <i class="bi bi-arrow-left"></i> Précédent
+                    </button>
+                    <button class="btn btn-success" @onclick="FinishWizard" disabled="@IsSavingBase">
+                        @if (IsSavingBase)
+                        {
+                            <span class="spinner-border spinner-border-sm"></span>
+                        }
+                        <i class="bi bi-check-circle"></i> Terminer la configuration
+                    </button>
+                </div>
+            </div>
+        }
+
+    </div>
+}

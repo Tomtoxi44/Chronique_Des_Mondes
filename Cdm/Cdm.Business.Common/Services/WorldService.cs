@@ -542,10 +542,10 @@ public class WorldService(
                 return null;
             }
 
-            var character = await this.dbContext.Characters
+            var baseCharacter = await this.dbContext.Characters
                 .FirstOrDefaultAsync(c => c.Id == characterId && c.UserId == userId && c.IsActive);
 
-            if (character == null)
+            if (baseCharacter == null)
             {
                 this.logger.LogWarning(
                     "Character {CharacterId} not found or not owned by user {UserId}",
@@ -553,40 +553,63 @@ public class WorldService(
                 return null;
             }
 
-            if (character.IsLocked)
-            {
-                this.logger.LogWarning("Character {CharacterId} is already locked in another world", characterId);
-                return null;
-            }
+            // Check if this base character already has a copy in this world
+            var existingCopy = await this.dbContext.WorldCharacters
+                .Include(wc => wc.Character)
+                .FirstOrDefaultAsync(wc =>
+                    wc.WorldId == world.Id &&
+                    wc.Character.SourceCharacterId == baseCharacter.Id &&
+                    wc.Character.UserId == userId);
 
-            // Check if already in this world
-            var existing = await this.dbContext.WorldCharacters
-                .FirstOrDefaultAsync(wc => wc.WorldId == world.Id && wc.CharacterId == characterId);
-            if (existing != null)
+            if (existingCopy != null)
             {
-                if (existing.IsActive)
+                if (existingCopy.IsActive)
                 {
-                    this.logger.LogWarning("Character {CharacterId} is already in world {WorldId}", characterId, world.Id);
+                    this.logger.LogWarning(
+                        "Character {CharacterId} already has an active copy in world {WorldId}",
+                        characterId, world.Id);
                     return null;
                 }
 
-                // Reactivate if previously removed
-                existing.IsActive = true;
-                existing.UpdatedAt = DateTime.UtcNow;
-                character.IsLocked = true;
+                // Reactivate existing copy
+                existingCopy.IsActive = true;
+                existingCopy.UpdatedAt = DateTime.UtcNow;
                 await this.dbContext.SaveChangesAsync();
-                return this.MapToWorldCharacterDto(existing);
+                return this.MapToWorldCharacterDto(existingCopy);
             }
+
+            // Mark original as base character (allows re-use in multiple worlds)
+            if (!baseCharacter.IsBaseCharacter)
+            {
+                baseCharacter.IsBaseCharacter = true;
+                baseCharacter.UpdatedAt = DateTime.UtcNow;
+            }
+
+            // Duplicate the character for this world
+            var worldCopy = new Character
+            {
+                UserId = userId,
+                Name = baseCharacter.Name,
+                FirstName = baseCharacter.FirstName,
+                Description = baseCharacter.Description,
+                Age = baseCharacter.Age,
+                AvatarUrl = baseCharacter.AvatarUrl,
+                IsActive = true,
+                IsBaseCharacter = false,
+                SourceCharacterId = baseCharacter.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            this.dbContext.Characters.Add(worldCopy);
+            await this.dbContext.SaveChangesAsync();
 
             var worldCharacter = new WorldCharacter
             {
                 WorldId = world.Id,
-                CharacterId = characterId,
+                CharacterId = worldCopy.Id,
                 IsActive = true,
                 JoinedAt = DateTime.UtcNow
             };
-
-            character.IsLocked = true;
 
             this.dbContext.WorldCharacters.Add(worldCharacter);
             await this.dbContext.SaveChangesAsync();
@@ -597,7 +620,7 @@ public class WorldService(
                 UserId = world.UserId,
                 Type = NotificationType.WorldInvite,
                 Title = "Un joueur a rejoint votre monde",
-                Message = $"Le personnage '{character.Name}' a rejoint le monde '{world.Name}'.",
+                Message = $"Le personnage '{baseCharacter.Name}' a rejoint le monde '{world.Name}'.",
                 RelatedEntityId = world.Id,
                 RelatedEntityType = "World",
                 ActionUrl = $"/worlds/{world.Id}",
@@ -609,8 +632,8 @@ public class WorldService(
             await this.dbContext.Entry(worldCharacter).Reference(wc => wc.World).LoadAsync();
 
             this.logger.LogInformation(
-                "Character {CharacterId} joined world {WorldId}",
-                characterId, world.Id);
+                "Character {CharacterId} joined world {WorldId} (copy id={CopyId})",
+                characterId, world.Id, worldCopy.Id);
 
             return this.MapToWorldCharacterDto(worldCharacter);
         }
@@ -689,6 +712,33 @@ public class WorldService(
         catch (Exception ex)
         {
             this.logger.LogError(ex, "Error updating world character for user {UserId} in world {WorldId}", userId, worldId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<WorldCharacterDto?> GetWorldCharacterByIdAsync(int wcId, int userId)
+    {
+        try
+        {
+            var wc = await this.dbContext.WorldCharacters
+                .Include(w => w.Character)
+                .Include(w => w.World)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.Id == wcId && w.IsActive &&
+                    (w.Character.UserId == userId || w.World.UserId == userId));
+
+            if (wc == null)
+            {
+                this.logger.LogWarning("World character {WcId} not found or not accessible by user {UserId}", wcId, userId);
+                return null;
+            }
+
+            return this.MapToWorldCharacterDto(wc);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error retrieving world character {WcId} for user {UserId}", wcId, userId);
             return null;
         }
     }

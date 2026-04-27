@@ -1,0 +1,46 @@
+@* Journal d'actions du combat *@
+
+<div class="combat-log-widget">
+    <div class="combat-log-header">
+        <i class="bi bi-journal-text"></i> @(Title ?? "Journal")
+    </div>
+    <div class="combat-log-feed" id="combat-log-feed">
+        @if (!Actions.Any())
+        {
+            <p style="color:var(--color-text-muted);font-style:italic;font-size:var(--font-size-xs);text-align:center;margin-top:var(--spacing-md);">
+                Aucune action pour l'instant.
+            </p>
+        }
+        @foreach (var action in Actions)
+        {
+            <div class="combat-log-entry @(action.IsPrivate ? "private-action" : "") action-@action.ActionType">
+                <div class="combat-log-meta">
+                    <span class="combat-log-actor">@action.ParticipantName</span>
+                    @if (action.IsPrivate) { <span class="private-badge"><i class="bi bi-eye-slash"></i> Privé</span> }
+                    <span class="combat-log-time">@action.CreatedAt.ToLocalTime().ToString("HH:mm")</span>
+                </div>
+                @if (action.ActionType == "dice")
+                {
+                    <div class="combat-log-dice">
+                        <span class="chat-dice-type">@action.DiceExpression</span>
+                        <span>→</span>
+                        <span class="chat-dice-result">@action.DiceResult</span>
+                    </div>
+                }
+                else if (action.ActionType == "pass")
+                {
+                    <span style="color:var(--color-text-muted);font-style:italic;font-size:var(--font-size-xs);">Passe son tour</span>
+                }
+                else if (!string.IsNullOrEmpty(action.Description))
+                {
+                    <span class="combat-log-desc">@action.Description</span>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<Cdm.Business.Abstraction.DTOs.CombatActionDto> Actions { get; set; } = new();
+    [Parameter] public string? Title { get; set; }
+}

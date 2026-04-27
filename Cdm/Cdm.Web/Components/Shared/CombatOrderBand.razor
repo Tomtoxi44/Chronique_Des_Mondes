@@ -1,0 +1,29 @@
+@* Bande d'ordre du combat — affiche les participants dans l'ordre d'initiative *@
+
+<div class="combat-order-band">
+    @foreach (var participant in Participants)
+    {
+        var p = participant;
+        var isActive = p.TurnOrder == CurrentTurnOrder;
+        <div class="combat-order-slot @(isActive ? "active-turn" : "") @(!p.IsActive ? "inactive-participant" : "")"
+             style="border-bottom: 3px solid @p.GroupColor;">
+            <div class="combat-order-avatar" style="background: @(isActive ? p.GroupColor : "var(--color-bg-secondary)")">
+                @p.Name.Substring(0, Math.Min(2, p.Name.Length)).ToUpper()
+            </div>
+            <div class="combat-order-info">
+                <span class="combat-order-name">@p.Name</span>
+                @if (p.Initiative.HasValue)
+                {
+                    <span class="combat-order-initiative">
+                        <i class="bi bi-lightning-fill"></i> @p.Initiative
+                    </span>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<Cdm.Business.Abstraction.DTOs.CombatParticipantDto> Participants { get; set; } = new();
+    [Parameter] public int CurrentTurnOrder { get; set; }
+}

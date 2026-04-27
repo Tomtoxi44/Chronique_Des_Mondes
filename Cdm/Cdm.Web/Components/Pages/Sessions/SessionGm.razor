@@ -39,6 +39,9 @@ else if (Session != null)
                         Suivant <i class="bi bi-chevron-right"></i>
                     </button>
                 }
+                <button class="btn btn-warning btn-sm" @onclick="TriggerCombat" title="Déclencher un combat">
+                    <i class="bi bi-swords"></i> Combat
+                </button>
                 <button class="btn btn-danger btn-sm" @onclick="EndSession" disabled="@IsEnding">
                     @if (IsEnding)
                     {

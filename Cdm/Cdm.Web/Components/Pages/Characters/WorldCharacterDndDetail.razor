@@ -1,0 +1,647 @@
+@page "/world-character/{WorldCharacterId:int}/dnd"
+@attribute [Authorize]
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Business.Abstraction.DTOs.DnD5e
+
+<PageTitle>@(WorldCharacter?.CharacterName ?? "Fiche") — D&amp;D 5e — Chronique des Mondes</PageTitle>
+
+@if (IsLoading)
+{
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+        <AppLoadingSpinner Label="Chargement de la fiche de personnage..." />
+    </div>
+}
+else if (ErrorMessage != null)
+{
+    <div style="text-align: center; padding: var(--spacing-2xl);">
+        <i class="bi bi-exclamation-triangle" style="font-size: 2.5rem; color: var(--color-error);"></i>
+        <p style="margin-top: var(--spacing-md); color: var(--color-text-secondary);">@ErrorMessage</p>
+        <button class="btn btn-ghost" @onclick="@(() => Nav.NavigateTo("/characters"))">
+            <i class="bi bi-arrow-left"></i> Retour
+        </button>
+    </div>
+}
+else
+{
+    <div style="max-width: 900px; margin: 0 auto; padding: var(--spacing-md);">
+
+        @* ── Back nav ── *@
+        <button class="btn btn-ghost" style="margin-bottom: var(--spacing-md);"
+                @onclick="@(() => Nav.NavigateTo($"/worlds/{WorldCharacter?.WorldId}"))">
+            <i class="bi bi-arrow-left"></i> @WorldCharacter?.WorldName
+        </button>
+
+        @* ── Header card ── *@
+        <div class="cdm-card" style="margin-bottom: var(--spacing-lg); position: relative;">
+            <div style="display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap;">
+                @if (!string.IsNullOrEmpty(WorldCharacter?.AvatarUrl))
+                {
+                    <img src="@WorldCharacter.AvatarUrl" alt="Avatar" style="width:72px; height:72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--color-primary);" />
+                }
+                else
+                {
+                    <div style="width:72px; height:72px; border-radius: 50%; background: var(--color-bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid var(--color-primary);">
+                        <i class="bi bi-person-fill" style="color: var(--color-primary);"></i>
+                    </div>
+                }
+                <div style="flex: 1; min-width: 180px;">
+                    <h1 style="font-size: var(--font-size-xl); margin: 0 0 var(--spacing-xs);">@WorldCharacter?.CharacterName</h1>
+                    <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+                        @if (!string.IsNullOrEmpty(Stats.CharacterClass))
+                        {
+                            <span class="card-meta-badge" style="background: var(--color-primary); color: white;">
+                                <i class="bi bi-shield-fill"></i> @Stats.CharacterClass@(Stats.Subclass != null ? $" ({Stats.Subclass})" : "")
+                            </span>
+                        }
+                        @if (Stats.Level.HasValue)
+                        {
+                            <span class="card-meta-badge" style="background: var(--color-bg-tertiary);">
+                                Niv. @Stats.Level
+                            </span>
+                        }
+                        @if (!string.IsNullOrEmpty(Stats.Race))
+                        {
+                            <span class="card-meta-badge"><i class="bi bi-person-arms-up"></i> @Stats.Race@(Stats.Subrace != null ? $" ({Stats.Subrace})" : "")</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Stats.Background))
+                        {
+                            <span class="card-meta-badge">@Stats.Background</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Stats.Alignment))
+                        {
+                            <span class="card-meta-badge" style="background: var(--color-bg-tertiary);">@Stats.Alignment</span>
+                        }
+                    </div>
+                </div>
+                @if (Stats.ExperiencePoints.HasValue)
+                {
+                    <div style="text-align: center; min-width: 80px;">
+                        <div style="font-size: var(--font-size-lg); font-weight: 700; color: var(--color-warning);">@Stats.ExperiencePoints</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">XP</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* ── Tabs nav ── *@
+        <div style="display: flex; border-bottom: 2px solid var(--color-border); margin-bottom: var(--spacing-lg); gap: 0;">
+            @foreach (var tab in new[] { ("fiche","bi-layout-text-window-reverse","Fiche"), ("competences","bi-check2-square","Compétences"), ("inventaire","bi-bag-fill","Inventaire"), ("sorts","bi-stars","Sorts") })
+            {
+                <button @onclick="@(() => ActiveTab = tab.Item1)"
+                        style="padding: var(--spacing-sm) var(--spacing-md); background: none; border: none; border-bottom: 3px solid @(ActiveTab == tab.Item1 ? "var(--color-primary)" : "transparent"); color: @(ActiveTab == tab.Item1 ? "var(--color-primary)" : "var(--color-text-secondary)"); font-weight: @(ActiveTab == tab.Item1 ? "600" : "400"); cursor: pointer; font-size: var(--font-size-sm); display: flex; align-items: center; gap: var(--spacing-xs); white-space: nowrap; margin-bottom: -2px; transition: color .15s;">
+                    <i class="bi @tab.Item2"></i> @tab.Item3
+                </button>
+            }
+        </div>
+
+        @* ══════════════════════════════════════════════════════════ *@
+        @* TAB: FICHE                                                 *@
+        @* ══════════════════════════════════════════════════════════ *@
+        @if (ActiveTab == "fiche")
+        {
+            @* Action bar *@
+            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md); gap: var(--spacing-sm);">
+                @if (!IsEditingStats)
+                {
+                    <button class="btn btn-primary" @onclick="BeginEditStats">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-ghost" @onclick="CancelEditStats" disabled="@IsSavingStats">Annuler</button>
+                    <button class="btn btn-primary" @onclick="SaveStats" disabled="@IsSavingStats">
+                        @if (IsSavingStats) { <i class="bi bi-hourglass-split"></i> } else { <i class="bi bi-floppy"></i> }
+                        Sauvegarder
+                    </button>
+                }
+            </div>
+            @if (StatsSaveMessage != null)
+            {
+                <div style="padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-md); background: @(StatsSaveSuccess ? "var(--color-success-bg)" : "var(--color-error-bg)"); color: @(StatsSaveSuccess ? "var(--color-success)" : "var(--color-error)"); margin-bottom: var(--spacing-md); font-size: var(--font-size-sm);">
+                    <i class="bi @(StatsSaveSuccess ? "bi-check-circle" : "bi-exclamation-triangle")"></i> @StatsSaveMessage
+                </div>
+            }
+
+            @* Ability scores *@
+            <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
+                <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-md);">Caractéristiques</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--spacing-md);">
+                    @{
+                        var abilities = new[]
+                        {
+                            ("Force", "FOR", Stats.Strength, (Action<int?>)(v => Stats.Strength = v)),
+                            ("Dextérité", "DEX", Stats.Dexterity, (Action<int?>)(v => Stats.Dexterity = v)),
+                            ("Constitution", "CON", Stats.Constitution, (Action<int?>)(v => Stats.Constitution = v)),
+                            ("Intelligence", "INT", Stats.Intelligence, (Action<int?>)(v => Stats.Intelligence = v)),
+                            ("Sagesse", "SAG", Stats.Wisdom, (Action<int?>)(v => Stats.Wisdom = v)),
+                            ("Charisme", "CHA", Stats.Charisma, (Action<int?>)(v => Stats.Charisma = v)),
+                        };
+                    }
+                    @foreach (var (label, abCode, score, setter) in abilities)
+                    {
+                        var mod = CalcMod(score);
+                        <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm) var(--spacing-xs); text-align: center;">
+                            <div style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-muted); margin-bottom: var(--spacing-xs);">@abCode</div>
+                            @if (IsEditingStats)
+                            {
+                                <input type="number" min="1" max="30"
+                                       value="@score"
+                                       @onchange="@(e => setter(e.Value is null ? null : int.TryParse(e.Value.ToString(), out var v) ? v : score))"
+                                       style="width: 56px; text-align: center; font-size: var(--font-size-xl); font-weight: 700; background: var(--color-bg-primary); border: 1px solid var(--color-primary); border-radius: var(--radius-sm); color: var(--color-text-primary); padding: var(--spacing-xs);" />
+                            }
+                            else
+                            {
+                                <div style="font-size: var(--font-size-2xl); font-weight: 700; line-height: 1; color: var(--color-text-primary);">@(score?.ToString() ?? "—")</div>
+                            }
+                            <div style="margin-top: var(--spacing-xs); width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-sm); font-weight: 600;">
+                                @Fmt(mod)
+                            </div>
+                            <div style="font-size: 10px; color: var(--color-text-muted); margin-top: var(--spacing-xs);">@label</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Secondary stats *@
+            <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
+                <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-md);">Statistiques secondaires</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: var(--spacing-md);">
+                    @{
+                        var secondaries = new (string Icon, string Label, string Value)[]
+                        {
+                            ("bi-heart-fill", "PV actuels / max",
+                             IsEditingStats ? "" : $"{Stats.CurrentHitPoints?.ToString() ?? "—"} / {Stats.MaxHitPoints?.ToString() ?? "—"}"),
+                            ("bi-shield-fill", "Classe d'armure", IsEditingStats ? "" : (Stats.ArmorClass?.ToString() ?? "—")),
+                            ("bi-lightning-fill", "Vitesse", IsEditingStats ? "" : (Stats.Speed.HasValue ? $"{Stats.Speed} m" : "—")),
+                            ("bi-wind", "Initiative", IsEditingStats ? "" : Fmt(CalcMod(Stats.Dexterity))),
+                            ("bi-star-fill", "Bonus de maîtrise", IsEditingStats ? "" : $"+{ProfBonus}"),
+                        };
+                    }
+                    @if (!IsEditingStats)
+                    {
+                        @foreach (var (icon, lbl, val) in secondaries)
+                        {
+                            <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm); text-align: center;">
+                                <i class="bi @icon" style="font-size: 1.2rem; color: var(--color-primary); margin-bottom: var(--spacing-xs);"></i>
+                                <div style="font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-primary);">@val</div>
+                                <div style="font-size: 10px; color: var(--color-text-muted); margin-top: 2px;">@lbl</div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        @* Edit mode: show number inputs *@
+                        <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
+                            <i class="bi bi-heart-fill" style="color: var(--color-error); margin-bottom: var(--spacing-xs);"></i>
+                            <div style="display:flex;gap:4px;align-items:center;">
+                                <input type="number" min="0" value="@Stats.CurrentHitPoints"
+                                       @onchange="@(e => Stats.CurrentHitPoints = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.CurrentHitPoints)"
+                                       style="width:44px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
+                                <span>/</span>
+                                <input type="number" min="0" value="@Stats.MaxHitPoints"
+                                       @onchange="@(e => Stats.MaxHitPoints = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.MaxHitPoints)"
+                                       style="width:44px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
+                            </div>
+                            <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">PV</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
+                            <i class="bi bi-shield-fill" style="color: var(--color-info); margin-bottom: var(--spacing-xs);"></i>
+                            <input type="number" min="0" value="@Stats.ArmorClass"
+                                   @onchange="@(e => Stats.ArmorClass = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.ArmorClass)"
+                                   style="width:48px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
+                            <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">CA</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
+                            <i class="bi bi-lightning-fill" style="color: var(--color-warning); margin-bottom: var(--spacing-xs);"></i>
+                            <input type="number" min="0" value="@Stats.Speed"
+                                   @onchange="@(e => Stats.Speed = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.Speed)"
+                                   style="width:48px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
+                            <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">Vitesse (m)</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
+                            <i class="bi bi-wind" style="color: var(--color-success); margin-bottom: var(--spacing-xs);"></i>
+                            <input type="number" value="@Stats.Level"
+                                   @onchange="@(e => Stats.Level = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.Level)"
+                                   style="width:48px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
+                            <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">Niveau</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
+                            <i class="bi bi-book" style="color: var(--color-violet-500, var(--color-primary)); margin-bottom: var(--spacing-xs);"></i>
+                            <input type="number" value="@Stats.ExperiencePoints"
+                                   @onchange="@(e => Stats.ExperiencePoints = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.ExperiencePoints)"
+                                   style="width:64px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
+                            <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">XP</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* ══════════════════════════════════════════════════════════ *@
+        @* TAB: COMPÉTENCES                                           *@
+        @* ══════════════════════════════════════════════════════════ *@
+        @if (ActiveTab == "competences")
+        {
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+
+                @* Skills panel *@
+                <div class="cdm-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                        <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin: 0;">Compétences</h3>
+                        <button class="btn btn-primary" style="font-size: var(--font-size-xs); padding: var(--spacing-xs) var(--spacing-sm);"
+                                @onclick="SaveSkillProficiencies" disabled="@IsSavingSkills">
+                            @if (IsSavingSkills) { <i class="bi bi-hourglass-split"></i> } else { <i class="bi bi-floppy"></i> }
+                            Sauvegarder
+                        </button>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        @foreach (var (skillName, abilityCode) in AllSkills)
+                        {
+                            var total = GetSkillTotal(skillName, abilityCode);
+                            var prof = IsSkillProficient(skillName);
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: 4px var(--spacing-xs); border-radius: var(--radius-sm); @(prof ? "background: var(--color-primary-subtle, rgba(99,102,241,.08));" : "")">
+                                <input type="checkbox" checked="@prof"
+                                       @onchange="@(() => ToggleSkillProficiency(skillName))"
+                                       style="accent-color: var(--color-primary); width:14px; height:14px; cursor:pointer;" />
+                                <span style="min-width: 30px; font-weight: 700; font-size: var(--font-size-sm); color: @(total >= 0 ? "var(--color-success)" : "var(--color-error)");">@Fmt(total)</span>
+                                <span style="flex: 1; font-size: var(--font-size-sm); color: var(--color-text-primary);">@skillName</span>
+                                <span style="font-size: 10px; color: var(--color-text-muted);">@abilityCode</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @* Saving throws panel *@
+                <div class="cdm-card" style="align-self: start;">
+                    <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-md);">Jets de sauvegarde</h3>
+                    <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                        @foreach (var (code, label) in SavingThrows)
+                        {
+                            var mod = AbilityModByCode(code);
+                            var totalSave = mod + (IsSavingThrowProficient(code) ? ProfBonus : 0);
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                <input type="checkbox" checked="@IsSavingThrowProficient(code)"
+                                       @onchange="@(() => ToggleSavingThrow(code))"
+                                       style="accent-color: var(--color-primary); width:14px; height:14px; cursor:pointer;" />
+                                <span style="min-width: 30px; font-weight: 700; font-size: var(--font-size-sm); color: @(totalSave >= 0 ? "var(--color-success)" : "var(--color-error)");">@Fmt(totalSave)</span>
+                                <span style="font-size: var(--font-size-sm); color: var(--color-text-primary);">@label</span>
+                            </div>
+                        }
+                    </div>
+                    <div style="margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px solid var(--color-border);">
+                        <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm);">
+                            <span style="color: var(--color-text-muted);">Bonus de maîtrise</span>
+                            <span style="font-weight: 700; color: var(--color-primary);">+@ProfBonus</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        }
+
+        @* ══════════════════════════════════════════════════════════ *@
+        @* TAB: INVENTAIRE                                            *@
+        @* ══════════════════════════════════════════════════════════ *@
+        @if (ActiveTab == "inventaire")
+        {
+            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md);">
+                <button class="btn btn-primary" @onclick="OpenItemModal">
+                    <i class="bi bi-plus-lg"></i> Ajouter un objet
+                </button>
+            </div>
+
+            @if (!InventoryItems.Any())
+            {
+                <div class="cdm-card" style="text-align: center; padding: var(--spacing-2xl);">
+                    <i class="bi bi-bag" style="font-size: 2.5rem; color: var(--color-text-muted);"></i>
+                    <p style="color: var(--color-text-muted); margin-top: var(--spacing-md);">L'inventaire est vide.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var cat in ItemCategories)
+                {
+                    <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
+                        <h3 style="display: flex; align-items: center; gap: var(--spacing-sm); font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-sm);">
+                            <i class="bi @GetItemIcon(cat)"></i> @cat
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                            @foreach (var item in GetItemsByCategory(cat))
+                            {
+                                <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm); background: var(--color-bg-secondary); border-radius: var(--radius-md);">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; font-size: var(--font-size-sm);">@item.Name</div>
+                                        <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap; margin-top: 2px;">
+                                            @if (!string.IsNullOrEmpty(item.DamageDice))
+                                            {
+                                                <span style="font-size: 10px; color: var(--color-error);">@item.DamageDice @item.DamageType</span>
+                                            }
+                                            @if (item.AttackBonus.HasValue)
+                                            {
+                                                <span style="font-size: 10px; color: var(--color-warning);">ATK @Fmt(item.AttackBonus.Value)</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(item.Notes))
+                                            {
+                                                <span style="font-size: 10px; color: var(--color-text-muted);">@item.Notes</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); background: var(--color-bg-tertiary); border-radius: var(--radius-sm); padding: 2px 8px;">×@item.Quantity</span>
+                                        <button class="btn btn-ghost btn-icon danger" @onclick="@(() => RemoveInventoryItem(item))" title="Supprimer">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        }
+
+        @* ══════════════════════════════════════════════════════════ *@
+        @* TAB: SORTS                                                 *@
+        @* ══════════════════════════════════════════════════════════ *@
+        @if (ActiveTab == "sorts")
+        {
+            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md);">
+                <button class="btn btn-primary" @onclick="OpenSpellModal">
+                    <i class="bi bi-plus-lg"></i> Ajouter un sort
+                </button>
+            </div>
+
+            @if (!CharacterSpells.Any())
+            {
+                <div class="cdm-card" style="text-align: center; padding: var(--spacing-2xl);">
+                    <i class="bi bi-stars" style="font-size: 2.5rem; color: var(--color-text-muted);"></i>
+                    <p style="color: var(--color-text-muted); margin-top: var(--spacing-md);">Aucun sort connu.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var spellLevel in SpellLevelsPresent)
+                {
+                    <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
+                        <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-sm);">
+                            @GetSpellLevelLabel(spellLevel)
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                            @foreach (var spell in CharacterSpells.Where(s => s.Level == spellLevel))
+                            {
+                                var expanded = ExpandedSpells.Contains(spell.Id);
+                                <div style="background: var(--color-bg-secondary); border-radius: var(--radius-md); overflow: hidden;">
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm);">
+                                        <input type="checkbox" checked="@spell.IsPrepared" title="Préparé"
+                                               @onchange="@(async e => { spell.IsPrepared = (bool)(e.Value ?? false); await DndClient.AddSpellAsync(WorldCharacterId, spell); })"
+                                               style="accent-color: var(--color-primary); cursor: pointer;" />
+                                        <div style="flex: 1; cursor: pointer;" @onclick="@(() => ToggleSpellDescription(spell.Id))">
+                                            <span style="font-weight: 600; font-size: var(--font-size-sm);">@spell.Name</span>
+                                            @if (!string.IsNullOrEmpty(spell.School))
+                                            {
+                                                <span style="font-size: 10px; color: @GetSchoolColor(spell.School); margin-left: var(--spacing-xs);">@spell.School</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(spell.DamageDice))
+                                            {
+                                                <span style="font-size: 10px; color: var(--color-error); margin-left: var(--spacing-xs);">@spell.DamageDice @spell.DamageType</span>
+                                            }
+                                        </div>
+                                        <button class="btn btn-ghost btn-icon danger" @onclick="@(() => RemoveSpell(spell))" title="Retirer">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+                                    @if (expanded && !string.IsNullOrEmpty(spell.Description))
+                                    {
+                                        <div style="padding: 0 var(--spacing-sm) var(--spacing-sm); border-top: 1px solid var(--color-border); font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.5;">
+                                            @spell.Description
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        }
+
+    </div>
+
+    @* ══════════════════════════════════════════════════════════════ *@
+    @* MODAL: Add item                                               *@
+    @* ══════════════════════════════════════════════════════════════ *@
+    @if (ShowItemModal)
+    {
+        <div class="dialog-backdrop" @onclick="@(() => ShowItemModal = false)" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;">
+            <div class="dialog-panel" @onclick:stopPropagation style="background:var(--color-bg-primary);border-radius:var(--radius-xl);padding:var(--spacing-xl);max-width:560px;width:95%;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-xl);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-lg);">
+                    <h2 style="margin:0;font-size:var(--font-size-lg);">Ajouter un objet</h2>
+                    <button class="btn btn-ghost btn-icon" @onclick="@(() => ShowItemModal = false)"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                @* Modal tabs *@
+                <div style="display:flex;border-bottom:1px solid var(--color-border);margin-bottom:var(--spacing-md);gap:0;">
+                    @foreach (var t in new[] { ("library","Bibliothèque"), ("custom","Personnalisé") })
+                    {
+                        <button @onclick="@(() => ItemModalTab = t.Item1)"
+                                style="padding:var(--spacing-sm) var(--spacing-md);background:none;border:none;border-bottom:2px solid @(ItemModalTab == t.Item1 ? "var(--color-primary)" : "transparent");color:@(ItemModalTab == t.Item1 ? "var(--color-primary)" : "var(--color-text-secondary)");cursor:pointer;font-size:var(--font-size-sm);font-weight:@(ItemModalTab == t.Item1 ? "600" : "400");margin-bottom:-1px;">
+                            @t.Item2
+                        </button>
+                    }
+                </div>
+
+                @if (ItemModalTab == "library")
+                {
+                    <input type="text" @bind="LibraryItemFilter" @bind:event="oninput" placeholder="Rechercher un objet..."
+                           style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);font-size:var(--font-size-sm);margin-bottom:var(--spacing-md);" />
+                    <div style="display:flex;flex-direction:column;gap:var(--spacing-xs);max-height:300px;overflow-y:auto;">
+                        @foreach (var item in FilteredLibraryItems)
+                        {
+                            <div style="display:flex;align-items:center;gap:var(--spacing-sm);padding:var(--spacing-sm);background:var(--color-bg-secondary);border-radius:var(--radius-md);cursor:pointer;"
+                                 @onclick="@(() => AddItemFromLibrary(item))">
+                                <i class="bi @GetItemIcon(item.Category)" style="color:var(--color-primary);"></i>
+                                <div style="flex:1;">
+                                    <div style="font-size:var(--font-size-sm);font-weight:600;">@item.Name</div>
+                                    <div style="font-size:10px;color:var(--color-text-muted);">
+                                        @item.Category
+                                        @if (!string.IsNullOrEmpty(item.DamageDice)) { <span> · @item.DamageDice @item.DamageType</span> }
+                                        @if (item.CostGp.HasValue) { <span> · @item.CostGp po</span> }
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" style="font-size:var(--font-size-xs);padding:4px 10px;" disabled="@IsAddingItem">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        }
+                        @if (!FilteredLibraryItems.Any())
+                        {
+                            <p style="text-align:center;color:var(--color-text-muted);font-size:var(--font-size-sm);">Aucun objet trouvé.</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @* Custom item form *@
+                    <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+                        <div>
+                            <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Nom <span style="color:var(--color-error)">*</span></label>
+                            <input type="text" @bind="NewItem.Name" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                        </div>
+                        <div>
+                            <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Catégorie</label>
+                            <select @bind="NewItem.Category" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);">
+                                @foreach (var cat in new[] { "Arme", "Armure", "Potion", "Objet magique", "Équipement", "Autre" })
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </select>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-sm);">
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Quantité</label>
+                                <input type="number" min="1" @bind="NewItem.Quantity" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                            </div>
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Bonus d'attaque</label>
+                                <input type="number" @bind="NewItem.AttackBonus" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-sm);">
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Dés de dégâts</label>
+                                <input type="text" placeholder="ex: 1d8" @bind="NewItem.DamageDice" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                            </div>
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Type de dégâts</label>
+                                <input type="text" placeholder="ex: tranchant" @bind="NewItem.DamageType" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Notes</label>
+                            <input type="text" @bind="NewItem.Notes" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                        </div>
+                        <button class="btn btn-primary" @onclick="AddCustomItem" disabled="@(IsAddingItem || string.IsNullOrWhiteSpace(NewItem.Name))">
+                            @if (IsAddingItem) { <i class="bi bi-hourglass-split"></i> } else { <i class="bi bi-plus-lg"></i> }
+                            Ajouter
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* ══════════════════════════════════════════════════════════════ *@
+    @* MODAL: Add spell                                              *@
+    @* ══════════════════════════════════════════════════════════════ *@
+    @if (ShowSpellModal)
+    {
+        <div class="dialog-backdrop" @onclick="@(() => ShowSpellModal = false)" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;">
+            <div class="dialog-panel" @onclick:stopPropagation style="background:var(--color-bg-primary);border-radius:var(--radius-xl);padding:var(--spacing-xl);max-width:560px;width:95%;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-xl);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-lg);">
+                    <h2 style="margin:0;font-size:var(--font-size-lg);">Ajouter un sort</h2>
+                    <button class="btn btn-ghost btn-icon" @onclick="@(() => ShowSpellModal = false)"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                @* Modal tabs *@
+                <div style="display:flex;border-bottom:1px solid var(--color-border);margin-bottom:var(--spacing-md);gap:0;">
+                    @foreach (var t in new[] { ("library","Bibliothèque"), ("custom","Personnalisé") })
+                    {
+                        <button @onclick="@(() => SpellModalTab = t.Item1)"
+                                style="padding:var(--spacing-sm) var(--spacing-md);background:none;border:none;border-bottom:2px solid @(SpellModalTab == t.Item1 ? "var(--color-primary)" : "transparent");color:@(SpellModalTab == t.Item1 ? "var(--color-primary)" : "var(--color-text-secondary)");cursor:pointer;font-size:var(--font-size-sm);font-weight:@(SpellModalTab == t.Item1 ? "600" : "400");margin-bottom:-1px;">
+                            @t.Item2
+                        </button>
+                    }
+                </div>
+
+                @if (SpellModalTab == "library")
+                {
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:var(--spacing-sm);margin-bottom:var(--spacing-md);">
+                        <input type="text" @bind="LibrarySpellFilter" @bind:event="oninput" placeholder="Rechercher un sort..."
+                               style="padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);font-size:var(--font-size-sm);" />
+                        <select @bind="SpellLevelFilter" style="padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);font-size:var(--font-size-sm);">
+                            <option value="">Tous niveaux</option>
+                            @for (int lvl = 0; lvl <= 9; lvl++)
+                            {
+                                int l = lvl;
+                                <option value="@l">@(l == 0 ? "Tour de magie" : $"Niveau {l}")</option>
+                            }
+                        </select>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:var(--spacing-xs);max-height:300px;overflow-y:auto;">
+                        @foreach (var spell in FilteredLibrarySpells)
+                        {
+                            <div style="display:flex;align-items:center;gap:var(--spacing-sm);padding:var(--spacing-sm);background:var(--color-bg-secondary);border-radius:var(--radius-md);">
+                                <div style="flex:1;">
+                                    <div style="font-size:var(--font-size-sm);font-weight:600;">@spell.Name</div>
+                                    <div style="font-size:10px;color:var(--color-text-muted);">
+                                        @(spell.Level == 0 ? "Tour de magie" : $"Niv. {spell.Level}")
+                                        @if (!string.IsNullOrEmpty(spell.School)) { <span style="color:@GetSchoolColor(spell.School)"> · @spell.School</span> }
+                                        @if (!string.IsNullOrEmpty(spell.DamageDice)) { <span> · @spell.DamageDice @spell.DamageType</span> }
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" style="font-size:var(--font-size-xs);padding:4px 10px;"
+                                        @onclick="@(() => AddSpellFromLibrary(spell))" disabled="@IsAddingSpell">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        }
+                        @if (!FilteredLibrarySpells.Any())
+                        {
+                            <p style="text-align:center;color:var(--color-text-muted);font-size:var(--font-size-sm);">Aucun sort trouvé.</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @* Custom spell form *@
+                    <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+                        <div>
+                            <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Nom <span style="color:var(--color-error)">*</span></label>
+                            <input type="text" @bind="NewSpell.Name" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-sm);">
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Niveau</label>
+                                <select @bind="NewSpell.Level" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);">
+                                    @for (int lvl = 0; lvl <= 9; lvl++)
+                                    {
+                                        int l = lvl;
+                                        <option value="@l">@(l == 0 ? "Tour de magie" : $"Niveau {l}")</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">École</label>
+                                <select @bind="NewSpell.School" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);">
+                                    <option value="">—</option>
+                                    @foreach (var school in new[] { "Abjuration","Divination","Enchantement","Évocation","Illusion","Invocation","Nécromancie","Transmutation" })
+                                    {
+                                        <option value="@school">@school</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-sm);">
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Dés de dégâts</label>
+                                <input type="text" placeholder="ex: 3d6" @bind="NewSpell.DamageDice" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                            </div>
+                            <div>
+                                <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Type de dégâts</label>
+                                <input type="text" placeholder="ex: feu" @bind="NewSpell.DamageType" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);" />
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size:var(--font-size-sm);color:var(--color-text-secondary);display:block;margin-bottom:4px;">Description</label>
+                            <textarea @bind="NewSpell.Description" rows="3" style="width:100%;padding:var(--spacing-sm);border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-secondary);color:var(--color-text-primary);resize:vertical;"></textarea>
+                        </div>
+                        <button class="btn btn-primary" @onclick="AddCustomSpell" disabled="@(IsAddingSpell || string.IsNullOrWhiteSpace(NewSpell.Name))">
+                            @if (IsAddingSpell) { <i class="bi bi-hourglass-split"></i> } else { <i class="bi bi-plus-lg"></i> }
+                            Ajouter
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
