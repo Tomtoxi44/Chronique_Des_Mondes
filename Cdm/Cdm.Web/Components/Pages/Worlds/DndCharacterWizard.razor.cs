@@ -18,6 +18,7 @@ public partial class DndCharacterWizard
 
     private bool IsLoading = true;
     private bool IsComplete = false;
+    private bool HasLoadError = false;
     private bool IsSavingBase = false;
     private bool IsSavingStats = false;
     private bool IsAddingItem = false;
@@ -114,6 +115,9 @@ public partial class DndCharacterWizard
         AvailableItems = itemsTask.Result;
         AvailableSpells = spellsTask.Result;
 
+        if (AvailableRaces.Count == 0 || AvailableClasses.Count == 0)
+            HasLoadError = true;
+
         // Restore selections from existing stats
         if (!string.IsNullOrEmpty(Stats.Race))
             SelectedRace = AvailableRaces.FirstOrDefault(r => r.Name == Stats.Race);
@@ -164,7 +168,22 @@ public partial class DndCharacterWizard
     private void RestartWizard()
     {
         IsComplete = false;
+        HasLoadError = false;
         CurrentStep = 0;
+    }
+
+    private async Task RetryLoadReferenceDataAsync()
+    {
+        HasLoadError = false;
+        var racesTask = DndClient.GetRacesAsync();
+        var classesTask = DndClient.GetClassesAsync();
+        var backgroundsTask = DndClient.GetBackgroundsAsync();
+        await Task.WhenAll(racesTask, classesTask, backgroundsTask);
+        AvailableRaces = racesTask.Result;
+        AvailableClasses = classesTask.Result;
+        AvailableBackgrounds = backgroundsTask.Result;
+        if (AvailableRaces.Count == 0 || AvailableClasses.Count == 0)
+            HasLoadError = true;
     }
 
     // ── Step 1 — Save base info ──────────────────────────────────────────
@@ -284,7 +303,7 @@ public partial class DndCharacterWizard
     private string GetSuggestedHp()
     {
         if (SelectedClass == null || !Stats.Level.HasValue) return "—";
-        var conMod = Stats.Constitution.HasValue ? (Stats.Constitution.Value - 10) / 2 : 0;
+        var conMod = Stats.Constitution.HasValue ? (int)Math.Floor((Stats.Constitution.Value - 10.0) / 2.0) : 0;
         return (SelectedClass.HitDie + (Stats.Level.Value - 1) * (SelectedClass.HitDie / 2 + 1) + conMod * Stats.Level.Value).ToString();
     }
 

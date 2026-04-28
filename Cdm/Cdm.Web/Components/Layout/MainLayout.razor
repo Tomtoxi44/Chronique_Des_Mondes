@@ -229,10 +229,21 @@
                                             <div class="notification-message">@n.Message</div>
                                             <div class="notification-time">@n.TimeAgoDisplay</div>
                                         </div>
-                                        @if (!n.IsRead)
-                                        {
-                                            <div class="notification-dot"></div>
-                                        }
+                                        <div class="notification-actions">
+                                            @if (!n.IsRead)
+                                            {
+                                                <button class="btn-notif-action" title="Marquer comme lu"
+                                                        @onclick="() => MarkNotificationRead(n.Id)"
+                                                        @onclick:stopPropagation="true">
+                                                    <i class="bi bi-check2"></i>
+                                                </button>
+                                            }
+                                            <button class="btn-notif-action btn-notif-delete" title="Supprimer"
+                                                    @onclick="() => DeleteNotification(n.Id)"
+                                                    @onclick:stopPropagation="true">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 }
                             </div>

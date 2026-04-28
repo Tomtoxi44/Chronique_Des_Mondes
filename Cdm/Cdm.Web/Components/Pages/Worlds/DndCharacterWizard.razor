@@ -33,6 +33,25 @@ else if (IsComplete)
         </div>
     </div>
 }
+else if (HasLoadError)
+{
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+        <div style="text-align: center; max-width: 480px;">
+            <div style="font-size: 3rem; color: var(--color-danger); margin-bottom: var(--spacing-md);">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <h2 style="margin-bottom: var(--spacing-sm);">Données de référence indisponibles</h2>
+            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-xl);">
+                Les races, classes et autres données D&D 5e n'ont pas pu être chargées.
+                Vérifiez que les migrations ont été appliquées sur la base de données.
+            </p>
+            <button class="btn btn-primary" @onclick="RetryLoadReferenceDataAsync">
+                <i class="bi bi-arrow-clockwise"></i>
+                Réessayer
+            </button>
+        </div>
+    </div>
+}
 else
 {
     <div style="max-width: 720px; margin: var(--spacing-xl) auto; padding: 0 var(--spacing-md);">
@@ -288,7 +307,7 @@ else
                                @bind="Stats.Strength" @bind:event="oninput" @bind:after="OnStatsChanged" />
                         @if (Stats.Strength.HasValue)
                         {
-                            var m = (Stats.Strength.Value - 10) / 2;
+                            var m = (int)Math.Floor((Stats.Strength.Value - 10.0) / 2.0);
                             <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
                         }
                     </div>
@@ -298,7 +317,7 @@ else
                                @bind="Stats.Dexterity" @bind:event="oninput" @bind:after="OnStatsChanged" />
                         @if (Stats.Dexterity.HasValue)
                         {
-                            var m = (Stats.Dexterity.Value - 10) / 2;
+                            var m = (int)Math.Floor((Stats.Dexterity.Value - 10.0) / 2.0);
                             <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
                         }
                     </div>
@@ -308,7 +327,7 @@ else
                                @bind="Stats.Constitution" @bind:event="oninput" @bind:after="OnStatsChanged" />
                         @if (Stats.Constitution.HasValue)
                         {
-                            var m = (Stats.Constitution.Value - 10) / 2;
+                            var m = (int)Math.Floor((Stats.Constitution.Value - 10.0) / 2.0);
                             <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
                         }
                     </div>
@@ -318,7 +337,7 @@ else
                                @bind="Stats.Intelligence" @bind:event="oninput" @bind:after="OnStatsChanged" />
                         @if (Stats.Intelligence.HasValue)
                         {
-                            var m = (Stats.Intelligence.Value - 10) / 2;
+                            var m = (int)Math.Floor((Stats.Intelligence.Value - 10.0) / 2.0);
                             <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
                         }
                     </div>
@@ -328,7 +347,7 @@ else
                                @bind="Stats.Wisdom" @bind:event="oninput" @bind:after="OnStatsChanged" />
                         @if (Stats.Wisdom.HasValue)
                         {
-                            var m = (Stats.Wisdom.Value - 10) / 2;
+                            var m = (int)Math.Floor((Stats.Wisdom.Value - 10.0) / 2.0);
                             <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
                         }
                     </div>
@@ -338,7 +357,7 @@ else
                                @bind="Stats.Charisma" @bind:event="oninput" @bind:after="OnStatsChanged" />
                         @if (Stats.Charisma.HasValue)
                         {
-                            var m = (Stats.Charisma.Value - 10) / 2;
+                            var m = (int)Math.Floor((Stats.Charisma.Value - 10.0) / 2.0);
                             <div style="font-size: var(--font-size-xs); font-weight: 700; color: @(m >= 0 ? "var(--color-success)" : "var(--color-danger)");">@(m >= 0 ? "+" : "")@m</div>
                         }
                     </div>
