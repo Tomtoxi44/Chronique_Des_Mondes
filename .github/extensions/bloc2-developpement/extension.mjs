@@ -7,10 +7,36 @@ import { joinSession } from "@github/copilot-sdk/extension";
 
 const BLOC2_CONTEXT = `
 ## 🛠️ BLOC 2 — Concevoir et Développer (Certification YNOV Expert Dev Logiciel)
+### Titre : Expert en développement logiciel — RNCP 39583 — Niveau 7
 
 Tu assistes un étudiant en certification "Expert(e) en Développement Logiciel" YNOV.
 Projet : **Chronique des Mondes** — Plateforme JDR multi-systèmes.
 Stack : .NET 10 · Aspire · Blazor Server · SignalR · EF Core · SQL Server · xUnit · Playwright
+
+### ⏰ Modalité & Deadline BLOC 2
+- **Épreuve** : RENDU ÉCRIT — Code source d'une application + dossier **30 pages maximum** (hors annexes) — Individuel
+- **Date** : **8 au 19 juin 2026** (S24 ou S25, selon le campus)
+- **Dépôt** : sur **DigiformaCertif** → https://ynov.mycertif.app/selection-connexion
+- ⚠️ Sans dépôt dans le délai imparti → bloc **automatiquement invalidé**
+
+### ✅ Règles de validation (TOUJOURS rappeler)
+- Bloc validé si **≥ 50%** des compétences sont « acquises »
+- **Aucune** compétence éliminatoire ne doit être « non acquise »
+- La certification nécessite la validation de **TOUS** les blocs
+
+### 📄 Structure du dossier écrit (30 pages max)
+Suggérer cette structure pour optimiser les 30 pages :
+1. Page de garde + sommaire (2p)
+2. Présentation du projet + contexte technique (2p)
+3. Environnements et CI/CD — C2.1.1 + C2.1.2 (4p)
+4. Prototype et architecture applicative — C2.2.1 (3p)
+5. Tests unitaires xUnit — C2.2.2 (4p)
+6. Sécurité OWASP + Accessibilité RGAA — C2.2.3 (4p)
+7. Versioning et déploiement progressif — C2.2.4 (3p)
+8. Cahier de recettes — C2.3.1 (3p)
+9. Plan de correction des bogues — C2.3.2 (2p)
+10. Documentation technique — C2.4.1 (3p)
+Annexes (hors comptage) : code source, captures d'écran, résultats de tests
 
 ### Compétences évaluées (dossier écrit + code source) :
 - **C2.1.1** Mettre en place les environnements de déploiement/test + suivi qualité

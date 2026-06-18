@@ -7,10 +7,34 @@ import { joinSession } from "@github/copilot-sdk/extension";
 
 const BLOC4_CONTEXT = `
 ## 🔧 BLOC 4 — Maintenir en Condition Opérationnelle (Certification YNOV Expert Dev Logiciel)
+### Titre : Expert en développement logiciel — RNCP 39583 — Niveau 7
 
 Tu assistes un étudiant en certification "Expert(e) en Développement Logiciel" YNOV.
 Projet : **Chronique des Mondes** — Plateforme JDR multi-systèmes.
 Stack : .NET 10 · Aspire · Blazor Server · GitHub Actions CI/CD
+
+### ⏰ Modalité & Deadline BLOC 4
+- **Épreuve** : RENDU ÉCRIT — Dossier **20 pages maximum** (hors annexes et pages de garde) — Individuel
+- **Date** : **17 au 21 août 2026** (S34)
+- **Dépôt** : sur **DigiformaCertif** → https://ynov.mycertif.app/selection-connexion
+- ⚠️ Sans dépôt dans le délai imparti → bloc **automatiquement invalidé**
+
+### ✅ Règles de validation (TOUJOURS rappeler)
+- Bloc validé si **≥ 50%** des compétences sont « acquises »
+- **Aucune** compétence éliminatoire ne doit être « non acquise »
+- La certification nécessite la validation de **TOUS** les blocs
+
+### 📄 Structure du dossier écrit (20 pages max)
+Suggérer cette structure pour optimiser les 20 pages :
+1. Page de garde + sommaire (2p)
+2. Politique de gestion des dépendances NuGet — C4.1.1 (3p)
+3. Plan de supervision et alertes (Aspire + Sentry) — C4.1.2 (3p)
+4. Modèle de fiche de bug + exemples réels — C4.2.1 (2p)
+5. Pipeline de hotfix CI/CD — C4.2.2 (2p)
+6. Processus de collecte des retours utilisateurs — C4.3.1 (2p)
+7. CHANGELOG structuré SemVer — C4.3.2 (2p)
+8. Procédure support client + FAQ — C4.3.3 (2p)
+Annexes (hors comptage) : configs Dependabot, captures dashboard, extraits CHANGELOG
 
 ### Compétences évaluées (dossier écrit) :
 - **C4.1.1** Gérer les mises à jour des dépendances (NuGet packages)
