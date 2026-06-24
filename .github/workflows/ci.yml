@@ -1,0 +1,105 @@
+name: CI – Chronique des Mondes
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  SOLUTION_PATH: 'Cdm/Cdm.slnx'
+
+jobs:
+  build-and-test:
+    name: Build, Test and Analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Build (warnaserror)
+        run: dotnet build ${{ env.SOLUTION_PATH }} --no-restore --configuration Release /warnaserror
+
+      - name: Run unit tests (xUnit)
+        run: |
+          dotnet test ${{ env.SOLUTION_PATH }} \
+            --no-build --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./coverage/**
+
+  security-scan:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'Chronique-des-Mondes'
+          path: 'Cdm/'
+          format: 'HTML'
+          args: '--failOnCVSS 8'
+
+      - name: Upload OWASP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-report
+          path: reports/
+
+  playwright-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Install Playwright browsers
+        run: |
+          dotnet build Cdm/Cdm.Web/Cdm.Web.csproj --configuration Release
+          pwsh Cdm/Cdm.Web/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: dotnet test Cdm/.playwright --configuration Release --no-build
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPIRE_ALLOW_UNSECURED_TRANSPORT: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
