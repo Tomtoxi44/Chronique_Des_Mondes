@@ -6,56 +6,61 @@
 import { joinSession } from "@github/copilot-sdk/extension";
 
 const BLOC2_CONTEXT = `
-## 🛠️ BLOC 2 — Concevoir et Développer (Certification YNOV Expert Dev Logiciel)
-### Titre : Expert en développement logiciel — RNCP 39583 — Niveau 7
+BLOC 2 – Concevoir et développer (Certification YNOV Expert en Développement Logiciel)
+Titre : Expert en développement logiciel – RNCP 39583 – Niveau 7
 
-Tu assistes un étudiant en certification "Expert(e) en Développement Logiciel" YNOV.
-Projet : **Chronique des Mondes** — Plateforme JDR multi-systèmes.
-Stack : .NET 10 · Aspire · Blazor Server · SignalR · EF Core · SQL Server · xUnit · Playwright
+Tu assistes un étudiant en certification « Expert(e) en Développement Logiciel » YNOV.
+Projet : Chronique des Mondes – Plateforme de gestion de campagnes de jeu de rôle multi-systèmes.
+Stack : .NET 10, Aspire, Blazor Server, SignalR, EF Core, SQL Server, xUnit, Playwright
 
-### ⏰ Modalité & Deadline BLOC 2
-- **Épreuve** : RENDU ÉCRIT — Code source d'une application + dossier **30 pages maximum** (hors annexes) — Individuel
-- **Date** : **8 au 19 juin 2026** (S24 ou S25, selon le campus)
-- **Dépôt** : sur **DigiformaCertif** → https://ynov.mycertif.app/selection-connexion
-- ⚠️ Sans dépôt dans le délai imparti → bloc **automatiquement invalidé**
+Modalité et deadline BLOC 2 :
+- Epreuve : rendu écrit – code source d'une application + dossier 30 pages maximum (hors annexes) – Individuel
+- Date : 23 juillet 2026
+- Dépôt : sur DigiformaCertif – https://ynov.mycertif.app/selection-connexion
+- Attention : sans dépôt dans le délai imparti, le bloc est automatiquement invalidé
 
-### ✅ Règles de validation (TOUJOURS rappeler)
-- Bloc validé si **≥ 50%** des compétences sont « acquises »
-- **Aucune** compétence éliminatoire ne doit être « non acquise »
-- La certification nécessite la validation de **TOUS** les blocs
+Règles de validation :
+- Bloc validé si au moins 50 % des compétences sont « acquises »
+- Aucune compétence éliminatoire ne doit être « non acquise »
+- La certification nécessite la validation de tous les blocs
 
-### 📄 Structure du dossier écrit (30 pages max)
-Suggérer cette structure pour optimiser les 30 pages :
-1. Page de garde + sommaire (2p)
-2. Présentation du projet + contexte technique (2p)
-3. Environnements et CI/CD — C2.1.1 + C2.1.2 (4p)
-4. Prototype et architecture applicative — C2.2.1 (3p)
-5. Tests unitaires xUnit — C2.2.2 (4p)
-6. Sécurité OWASP + Accessibilité RGAA — C2.2.3 (4p)
-7. Versioning et déploiement progressif — C2.2.4 (3p)
-8. Cahier de recettes — C2.3.1 (3p)
-9. Plan de correction des bogues — C2.3.2 (2p)
-10. Documentation technique — C2.4.1 (3p)
+Structure du dossier écrit (30 pages maximum) :
+1. Page de garde + sommaire (2 p)
+2. Présentation du projet + contexte technique (2 p)
+3. Environnements et CI/CD – C2.1.1 + C2.1.2 (4 p)
+4. Prototype et architecture applicative – C2.2.1 (3 p)
+5. Tests unitaires xUnit – C2.2.2 (4 p)
+6. Sécurité OWASP + Accessibilité RGAA – C2.2.3 (4 p)
+7. Versioning et déploiement progressif – C2.2.4 (3 p)
+8. Cahier de recettes – C2.3.1 (3 p)
+9. Plan de correction des bogues – C2.3.2 (2 p)
+10. Documentation technique – C2.4.1 (3 p)
 Annexes (hors comptage) : code source, captures d'écran, résultats de tests
 
-### Compétences évaluées (dossier écrit + code source) :
-- **C2.1.1** Mettre en place les environnements de déploiement/test + suivi qualité
-- **C2.1.2** Mettre en place l'intégration continue (CI GitHub Actions)
-- **C2.2.1** Prototyper l'application (ergonomie, sécurité)
-- **C2.2.2** Écrire des tests unitaires (harnais de test xUnit)
-- **C2.2.3** Écrire du code sécurisé (OWASP Top 10), accessible (RGAA/OPQUAST)
-- **C2.2.4** Déploiement progressif avec versioning (SemVer)
-- **C2.3.1** Rédiger un cahier de recettes (scénarios de tests)
-- **C2.3.2** Établir un plan de correction des bogues
-- **C2.4.1** Rédiger la documentation technique (déploiement, utilisation, MàJ)
+Compétences évaluées (dossier écrit + code source) :
+- C2.1.1 : Mettre en place les environnements de déploiement/test + suivi qualité
+- C2.1.2 : Mettre en place l'intégration continue (CI GitHub Actions)
+- C2.2.1 : Prototyper l'application (ergonomie, sécurité)
+- C2.2.2 : Ecrire des tests unitaires (harnais de test xUnit)
+- C2.2.3 : Ecrire du code sécurisé (OWASP Top 10), accessible (RGAA/OPQUAST)
+- C2.2.4 : Déploiement progressif avec versioning (SemVer)
+- C2.3.1 : Rédiger un cahier de recettes (scénarios de tests)
+- C2.3.2 : Etablir un plan de correction des bogues
+- C2.4.1 : Rédiger la documentation technique (déploiement, utilisation, mise à jour)
 
-### Standards de code projet :
+Standards de code projet :
 - Indentation 4 espaces, Allman braces (SA1500)
-- this. prefix obligatoire (SA1101)
-- XML documentation en anglais sur tous les membres publics
+- Préfixe this. obligatoire (SA1101)
+- Documentation XML en anglais sur tous les membres publics
 - Logging structuré (jamais de données sensibles)
 - BCrypt work factor 12 pour les mots de passe
 - Validation server-side avec Data Annotations
+
+Règles de génération des livrables :
+- Aucun émoji dans les réponses
+- Guillemets français : « » pour les citations et termes techniques
+- Tiret demi-cadratin : – (U+2013) pour les listes et séparations, jamais le tiret cadratin —
+- Contenu concis et factuel, adapté à un document professionnel
 
 Indique toujours la compétence C2.X.X visée et produis des livrables prêts pour le dossier écrit.
 `;
@@ -71,7 +76,7 @@ const session = await joinSession({
                 "harnais","semver","opquast"].some(k => p.includes(k));
             if (!relevant) return;
             return {
-                additionalContext: `⚡ BLOC 2 actif — Mentionne la compétence C2.X.X visée, applique les standards .NET 10/StyleCop, produis du code ou un livrable prêt pour le dossier écrit.`,
+                additionalContext: `BLOC 2 actif – Mentionne la compétence C2.X.X visée, applique les standards .NET 10/StyleCop, produis du code ou un livrable prêt pour le dossier écrit.`,
             };
         },
     },
@@ -120,10 +125,10 @@ const session = await joinSession({
                 const githubSha = "${{ github.sha }}";
                 const githubRef = "${{ github.ref }}";
                 return `# Pipeline CI/CD GitHub Actions [C2.1.2 + C2.2.4]
-## Fichier : \`.github/workflows/ci.yml\`
+Fichier : .github/workflows/ci.yml
 
 \`\`\`yaml
-name: CI/CD — Chronique des Mondes
+name: CI/CD – Chronique des Mondes
 
 on:
   push:
@@ -205,79 +210,77 @@ ${playwrightJob}
       - name: Build Docker image
         run: docker build -t cdm-api:${githubSha} ./Cdm/Cdm.ApiService
       - name: Deploy to staging
-        run: echo "Deploy to staging — à implémenter selon votre infra"
+        run: echo "Deploy to staging – a implementer selon l infrastructure"
 \`\`\`
 
----
-> **Livrable C2.1.2 + C2.2.4** — Pipeline CI/CD complet.`;
+Compétences visées : C2.1.2 + C2.2.4 – Pipeline CI/CD complet.`;
             },
         },
         {
             name: "bloc2_owasp_checklist",
             description: "Génère la checklist de sécurité OWASP Top 10 appliquée au projet .NET 10 (C2.2.3)",
             parameters: { type: "object", properties: {} },
-            handler: async () => `# Checklist Sécurité OWASP Top 10 — Chronique des Mondes [C2.2.3]
+            handler: async () => `# Checklist Sécurité OWASP Top 10 – Chronique des Mondes [C2.2.3]
 
-## A01 — Contrôle d'accès défaillant
-- [ ] Authorization Policies ASP.NET Core pour chaque endpoint (\`IsCampaignOwner\`, \`IsCampaignPlayer\`)
+A01 – Contrôle d'accès défaillant :
+- [ ] Authorization Policies ASP.NET Core pour chaque endpoint (IsCampaignOwner, IsCampaignPlayer)
 - [ ] Query Filters EF Core pour isolation des données par utilisateur
 - [ ] Validation server-side : un joueur ne peut pas modifier un personnage qui ne lui appartient pas
-- [ ] **Code** : \`[Authorize(Policy = "IsCampaignOwner")]\` sur tous les endpoints sensibles
+- [ ] Code : [Authorize(Policy = "IsCampaignOwner")] sur tous les endpoints sensibles
 
-## A02 — Défaillances cryptographiques
-- [ ] BCrypt work factor 12 pour tous les mots de passe (\`BCrypt.Net.BCrypt.HashPassword(pwd, 12)\`)
+A02 – Défaillances cryptographiques :
+- [ ] BCrypt work factor 12 pour tous les mots de passe (BCrypt.Net.BCrypt.HashPassword(pwd, 12))
 - [ ] HTTPS forcé (HSTS) en production
-- [ ] Pas de données sensibles dans les logs (userId, campagneId OK — jamais password/token)
+- [ ] Pas de données sensibles dans les logs (userId, campagneId autorisés – jamais password/token)
 - [ ] JWT signé avec clé asymétrique RS256 (pas HS256 en prod)
 
-## A03 — Injection
-- [ ] EF Core paramétré par défaut — vérifier TOUTES les requêtes raw SQL
+A03 – Injection :
+- [ ] EF Core paramétré par défaut – vérifier toutes les requêtes raw SQL
 - [ ] Validation des entrées avec Data Annotations + FluentValidation
-- [ ] Sanitisation des données JSON polymorphiques (\`AttributesJson\`)
-- [ ] **Code** : Jamais de \`context.Database.ExecuteSqlRaw($"... {userInput}")\`
+- [ ] Sanitisation des données JSON polymorphiques (AttributesJson)
+- [ ] Jamais de context.Database.ExecuteSqlRaw avec interpolation de variable utilisateur
 
-## A04 — Conception non sécurisée
+A04 – Conception non sécurisée :
 - [ ] Dés lancés côté serveur uniquement (anti-triche)
 - [ ] Rate limiting sur les endpoints d'authentification
 - [ ] Validation GameType côté serveur (pas seulement header)
 
-## A05 — Configuration de sécurité incorrecte
-- [ ] Suppression des pages d'erreur détaillées en prod (\`app.UseExceptionHandler\`)
+A05 – Configuration de sécurité incorrecte :
+- [ ] Suppression des pages d'erreur détaillées en prod (app.UseExceptionHandler)
 - [ ] Headers sécurité : CSP, X-Frame-Options, X-Content-Type-Options
 - [ ] Aspire Dashboard inaccessible en production
-- [ ] \`.env\` / secrets via User Secrets ou Azure Key Vault — jamais dans le code
+- [ ] Secrets via User Secrets ou Azure Key Vault – jamais dans le code
 
-## A06 — Composants vulnérables et obsolètes
+A06 – Composants vulnérables et obsolètes :
 - [ ] OWASP Dependency Check dans CI (voir pipeline C2.1.2)
-- [ ] \`dotnet list package --vulnerable\` à chaque sprint
+- [ ] dotnet list package --vulnerable à chaque sprint
 - [ ] Politique de mise à jour des dépendances documentée (C4.1.1)
 
-## A07 — Défaillances d'authentification
-- [ ] Expiration JWT configurable (1h access / 7j refresh)
+A07 – Défaillances d'authentification :
+- [ ] Expiration JWT configurable (1 h access / 7 j refresh)
 - [ ] Révocation des tokens (blacklist Redis ou rotation)
-- [ ] Limitation des tentatives de connexion (brute force protection)
+- [ ] Limitation des tentatives de connexion (protection brute force)
 
-## A08 — Défaillances d'intégrité
+A08 – Défaillances d'intégrité :
 - [ ] Validation des données reçues via SignalR (mêmes règles que l'API REST)
-- [ ] Vérification intégrité des mises à jour progressives (C2.2.4)
+- [ ] Vérification de l'intégrité des mises à jour progressives (C2.2.4)
 
-## A09 — Défaillances de journalisation
+A09 – Défaillances de journalisation :
 - [ ] Logging structuré Serilog avec contexte métier (UserId, CampaignId, Action)
-- [ ] Pas d'interpolation de string dans les logs
+- [ ] Pas d'interpolation de chaîne dans les logs
 - [ ] Alertes sur erreurs 500 et tentatives d'accès non autorisées (C4.1.2)
 
-## A10 — Falsification de requête côté serveur (SSRF)
+A10 – Falsification de requête côté serveur (SSRF) :
 - [ ] Validation des URLs dans les intégrations externes
-- [ ] Whitelist des domaines autorisés pour les ressources externes
+- [ ] Liste blanche des domaines autorisés pour les ressources externes
 
-## Accessibilité RGAA / OPQUAST
-- [ ] Contrastes couleurs >= 4.5:1 (WCAG AA)
-- [ ] Navigation clavier complète (Tab, Enter, Escape)
+Accessibilité RGAA / OPQUAST :
+- [ ] Contrastes couleurs supérieurs à 4,5:1 (WCAG AA)
+- [ ] Navigation clavier complète (Tab, Entrée, Echap)
 - [ ] Attributs ARIA sur les composants Blazor dynamiques
 - [ ] Tests Playwright accessibilité avec axe-core
 
----
-> **Livrable C2.2.3** — Audit de sécurité + accessibilité à intégrer dans le dossier écrit.`,
+Compétence visée : C2.2.3 – Audit de sécurité + accessibilité à intégrer dans le dossier écrit.`,
         },
         {
             name: "bloc2_test_recipe",
@@ -326,19 +329,18 @@ ${playwrightJob}
 | CO-004 | Déconnexion en combat | Joueur connecté | 1. Couper la connexion | État combat préservé, reconnexion possible | ⬜ |
 | CO-005 | Notification tour suivant | Combat actif | 1. MJ passe au tour suivant | Tous les joueurs notifiés via PlayerTurnNotification | ⬜ |`,
                 };
-                return `# Cahier de Recettes — Chronique des Mondes [C2.3.1]
-## Module : ${feature}
+                return `# Cahier de Recettes – Chronique des Mondes [C2.3.1]
+Module : ${feature}
 
 ${recipes[feature]}
 
-## Critères de validation
-- ✅ Tests manuels validés par le MJ/joueur référent
-- ✅ Tests automatisés Playwright couvrant les scénarios UI
-- ✅ Tests unitaires xUnit couvrant la logique métier
-- ✅ Aucune régression sur les scénarios existants
+Critères de validation :
+- Tests manuels validés par le MJ/joueur référent
+- Tests automatisés Playwright couvrant les scénarios UI
+- Tests unitaires xUnit couvrant la logique métier
+- Aucune régression sur les scénarios existants
 
----
-> **Livrable C2.3.1** — À compléter et faire valider lors des sprints de recette.`;
+Compétence visée : C2.3.1 – A compléter et faire valider lors des sprints de recette.`;
             },
         },
         {
@@ -478,64 +480,53 @@ dotnet test Cdm/Cdm.slnx --filter "FullyQualifiedName~${svc}Tests" --logger "con
             name: "bloc2_bug_fix_plan",
             description: "Génère un plan de correction des bogues structuré (C2.3.2)",
             parameters: { type: "object", properties: {} },
-            handler: async () => `# Plan de Correction des Bogues — Chronique des Mondes [C2.3.2]
+            handler: async () => `# Plan de Correction des Bogues – Chronique des Mondes [C2.3.2]
 
-## Processus de gestion des bogues
+Processus de gestion des bogues
 
-### 1. Signalement (Fiche de bug)
-\`\`\`markdown
-## 🐛 Bug Report — [ID]: [Titre court]
-**Priorité** : P0 (Bloquant) | P1 (Critique) | P2 (Majeur) | P3 (Mineur)
-**Environnement** : Dev | Staging | Production
-**Version** : x.y.z
+1. Signalement (fiche de bug)
 
-### Description
-[Description claire du comportement observé]
+ID : [numéro]
+Titre : [description courte]
+Priorité : P0 (Bloquant) | P1 (Critique) | P2 (Majeur) | P3 (Mineur)
+Environnement : Dev | Staging | Production
+Version : x.y.z
 
-### Étapes de reproduction
+Description : [comportement observé]
+
+Etapes de reproduction :
 1. ...
 2. ...
 
-### Comportement attendu vs Observé
-- **Attendu** : ...
-- **Observé** : ...
+Comportement attendu : ...
+Comportement observé : ...
 
-### Logs / Stack trace
-\`\`\`
+Logs / Stack trace : [à joindre]
 
-### 2. Triage et priorisation
-| Priorité | Critère | SLA |
-|----------|---------|-----|
-| P0 — Bloquant | Application inaccessible, perte de données | Correction en 4h |
-| P1 — Critique | Fonctionnalité principale cassée (combat, auth) | Correction en 24h |
-| P2 — Majeur | Fonctionnalité secondaire dégradée | Correction en 1 sprint |
-| P3 — Mineur | UI/UX, cosmétique | Backlog |
+2. Triage et priorisation
 
-### 3. Processus de correction
-\`\`\`
+| Priorité   | Critère                                             | SLA                    |
+|------------|-----------------------------------------------------|------------------------|
+| P0 Bloquant | Application inaccessible, perte de données          | Correction en 4 h      |
+| P1 Critique | Fonctionnalité principale cassée (combat, auth)     | Correction en 24 h     |
+| P2 Majeur   | Fonctionnalité secondaire dégradée                 | Correction en 1 sprint |
+| P3 Mineur   | Interface, cosmétique                               | Backlog                |
+
+3. Processus de correction
+
 Bug signalé
-    ↓
-Reproductible ? → Non → Demander plus d'infos → Fermer si pas reproductible
-    ↓ Oui
-Créer issue GitHub + label "bug" + priorité
-    ↓
-Branche : fix/BUG-XXX-description
-    ↓
-Corriger + test unitaire xUnit pour non-régression
-    ↓
-CI pipeline passe (build + tests + OWASP)
-    ↓
-PR vers dev → Review → Merge
-    ↓
-Déploiement staging → Validation recette
-    ↓
-Release note mise à jour (C4.3.2)
-    ↓
-Clôture issue GitHub
-\`\`\`
+–> Reproductible ? Non –> Demander plus d'informations –> Fermer si non reproductible
+–> Oui : créer issue GitHub + label "bug" + priorité
+–> Branche : fix/BUG-XXX-description
+–> Corriger + test unitaire xUnit pour non-régression
+–> CI pipeline passe (build + tests + OWASP)
+–> PR vers dev –> revue –> merge
+–> Déploiement staging –> validation recette
+–> Release note mise à jour (C4.3.2)
+–> Clôture issue GitHub
 
-### 4. Template de commit pour correctif
-\`\`\`
+4. Template de commit pour correctif
+
 fix(BUG-XXX): Description courte du correctif
 
 - Cause racine : ...
@@ -544,12 +535,55 @@ fix(BUG-XXX): Description courte du correctif
 - Closes #XXX
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-\`\`\`
 
----
-> **Livrable C2.3.2** — Plan de correction à inclure dans le dossier écrit.`,
+Compétence visée : C2.3.2 – Plan de correction à inclure dans le dossier écrit.`,
+        },
+        {
+            name: "bloc2_project_summary",
+            description: "Génère la présentation du projet pour le dossier écrit Bloc 2 (section 2 du dossier)",
+            parameters: { type: "object", properties: {} },
+            handler: async () => `# Présentation du Projet [Dossier Bloc 2 – Section 2]
+
+Chronique des Mondes
+
+Chronique des Mondes est une plateforme web de gestion de campagnes de jeu de rôle (JDR)
+multi-systèmes. Elle permet aux maîtres de jeu de créer et d'administrer des campagnes, et
+aux joueurs de gérer leurs personnages, de participer à des sessions et de jouer des combats
+en temps réel depuis un navigateur, sans installation logicielle.
+
+La plateforme supporte plusieurs systèmes de règles, notamment D&D 5e (via le SRD 5.1 OGL)
+et un système générique paramétrable. Les dés sont lancés côté serveur pour garantir
+l'impartialité des résultats.
+
+Contexte technique :
+
+| Couche            | Technologie                                |
+|-------------------|--------------------------------------------|
+| Orchestration     | .NET 10 + Aspire AppHost                   |
+| Backend API       | ASP.NET Core 10 – API REST + SignalR       |
+| Frontend          | Blazor Server                              |
+| Temps réel        | SignalR (combat, notifications)            |
+| Persistance       | EF Core 10 + SQL Server (dev/prod)         |
+| Authentification  | JWT (RS256) + BCrypt (work factor 12)      |
+| Tests             | xUnit (unitaires) + Playwright (E2E)       |
+| CI/CD             | GitHub Actions + déploiement progressif    |
+| Monitoring        | Aspire Dashboard + Serilog                 |
+
+Profils utilisateurs :
+- Maître de Jeu (MJ) : création et gestion de campagnes, sessions, PNJ, scénarios
+- Joueur : création et gestion de personnages, participation aux sessions, combat
+- Administrateur : gestion de la plateforme, modération, configuration
+
+Architecture :
+L'application suit une architecture microservices orchestrée par .NET Aspire. Chaque service
+(API, Identity, Business) est isolé dans son propre projet .NET. La communication interne
+s'effectue via HTTP/REST. Le frontend Blazor Server maintient une connexion SignalR persistante
+pour les mises à jour temps réel.
+
+Ce projet constitue la réalisation pratique de la certification RNCP 39583 – Expert en
+Développement Logiciel, Niveau 7 – YNOV, promotion 2025/2026.`,
         },
     ],
 });
 
-await session.log("✅ Bloc 2 — Développement chargé (C2.1.1→C2.4.1). Outils : bloc2_ci_pipeline · bloc2_owasp_checklist · bloc2_test_recipe · bloc2_unit_test_template · bloc2_bug_fix_plan");
+await session.log("Bloc 2 – Developpement charge (C2.1.1 a C2.4.1). Outils : bloc2_project_summary · bloc2_ci_pipeline · bloc2_owasp_checklist · bloc2_test_recipe · bloc2_unit_test_template · bloc2_bug_fix_plan");
