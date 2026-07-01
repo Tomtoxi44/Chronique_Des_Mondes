@@ -286,20 +286,26 @@ L'accès à Azure SQL se fait via EntraID. Ça veut dire qu'aucun mot de passe d
 ## Section 4 – Prototype et architecture applicative
 *Compétence visée : C2.2.1 – Prototyper l'application (ergonomie, sécurité, architecture)*
 
-La première version de l'interface était un prototype Blazor avec une navigation plate et
-aucun système de thèmes. Rapidement, un problème est apparu : quand on passe d'une campagne
-D&D à une campagne Cthulhu, le visuel doit refléter l'univers – sinon l'outil perd son âme.
-Cela a conduit à la création d'un **Design System CDM** avec un système de thèmes CSS par
-type de jeu, appliqué dynamiquement à chaque navigation. L'architecture présentée ci-dessous
-est le résultat de ces itérations successives, depuis le prototype initial jusqu'à la version
-en production aujourd'hui.
+La première version de l'interface était fonctionnelle mais générique : même mise en page,
+mêmes couleurs, que ce soit une campagne D&D 5e ou une campagne Cthulhu. En jouant
+de rôle moi-même, je savais que l'ambiance visuelle compte autant que les règles. D&D, c'est
+de la fantasy héroïque. Cthulhu, c'est l'horreur et le mystère. Servir les deux avec la
+même interface sans âme n'avait aucun sens. J'ai donc créé un **Design System CDM** avec
+des variables CSS par thème, appliquées dynamiquement selon le type de jeu de la campagne.
+
+L'architecture elle-même a été repensée plusieurs fois avant d'être stabilisée. Le point le
+plus difficile à trancher a été la modélisation des personnages : comment stocker les
+attributs d'un guerrier D&D (FOR, DEX, CON...) et ceux d'un investigateur Cthulhu dans la
+même base, sans créer une table par système ? La solution, discutée avec mon formateur, a
+été de stocker les attributs spécifiques à chaque jeu comme des métadonnées JSON sur le
+personnage. Un personnage générique existe dans toutes les campagnes ; ses métadonnées
+varient selon le système. Ce choix a guidé toute l'organisation de la solution.
 
 ### 4.0 User Stories – Backlog représentatif
 
 Les fonctionnalités ont été formalisées en User Stories selon la convention
-*"En tant que… je veux… afin de…"*. Le backlog complet est accessible sur GitHub
-(issues #38 à #50). Le tableau ci-dessous présente un sous-ensemble représentatif des
-4 epics principaux :
+*"En tant que… je veux… afin de…"*. Le tableau ci-dessous présente un sous-ensemble
+représentatif des 4 épics principaux :
 
 | N° | Titre | Epic | SP | Statut |
 |---|---|---|---|---|
@@ -494,28 +500,27 @@ stateDiagram-v2
 
 ### 4.6 Ergonomie et prototype
 
-L'interface Blazor Server repose sur un Design System CDM (fichiers CSS variables + thèmes)
-permettant de changer l'apparence visuelle selon le type de jeu de la campagne.
-Les éléments d'ergonomie principaux sont :
+J'ai structuré l'interface autour de quelques principes simples : tout doit être accessible
+en deux clics, le contexte de navigation doit toujours être visible, et les notifications
+(invitations, actions de combat) ne doivent jamais interrompre le flux de jeu.
 
-- Navigation latérale persistante avec sidebar contextuelle secondaire par section
-- Fil d'Ariane dynamique dans la topbar
-- Notifications temps réel (invitations de session) via SignalR avec toast visuel
-- Mode sombre / mode clair mémorisé dans `localStorage`
-- Interface responsive avec menu mobile adaptatif
+Les éléments principaux de l'interface :
+
+- Navigation latérale persistante avec une sidebar contextuelle par section
+- Fil d'Ariane dans la barre du haut pour situer l'utilisateur dans la hiérarchie
+- Toasts de notification en temps réel via SignalR (invitations de session, alertes combat)
+- Mode sombre mémorisé dans `localStorage`
+- Interface responsive avec un menu mobile adaptatif
 
 #### 4.6.1 Capture d'écran – Dashboard "Mes Mondes"
 
-La page ci-dessous est la page d'accueil principale après connexion. Elle illustre plusieurs
-décisions d'architecture UX : la **navigation latérale contextuelle** (Accueil, Mondes,
-Personnages, Sessions), les **cartes de monde** avec leur badge de système de jeu
-(Générique, Cyberpunk, D&D 5e), et le bouton d'action primaire "Créer un monde" en position
-haute-droite selon les conventions Material Design.
+La page ci-dessous est la page d'accueil principale après connexion. On y voit la navigation
+latérale contextuelle, les cartes de monde avec leur badge de système de jeu, et le bouton
+"Créer un monde" en haut à droite.
 
-On peut y voir en production les trois univers de jeu créés lors des tests :
-**Test** (Générique, 2 campagnes), **Cyber** (Cyberpunk, 1 campagne), **D&D TEST**
-(D&D 5e, 2 campagnes). Chaque carte affiche le nombre de campagnes et de personnages
-associés, permettant au MJ d'avoir un aperçu rapide avant de naviguer.
+Les trois univers visibles sont ceux créés lors des tests :
+**Test** (Générique, 2 campagnes), **Cyber** (Cyberpunk, 1 campagne) et **D&D TEST**
+(D&D 5e, 2 campagnes).
 
 ![Dashboard Mes Mondes – Chronique des Mondes en production](docs/screenshots/screen-mes-mondes.png)
 
@@ -530,13 +535,12 @@ thème sombre, navigation latérale, cards par système de jeu*
 ## Section 5 – Tests unitaires xUnit
 *Compétence visée : C2.2.2 – Ecrire des tests unitaires (harnais de test xUnit)*
 
-Lors d'une évolution du module d'authentification, un bug de validation de token a été
-introduit sans que je m'en rende compte pendant deux jours. La suite de tests xUnit existante
-l'a détecté au prochain push, avant que le code atteigne la branche `dev`. Cet épisode m'a
-convaincu de **traiter les tests comme une documentation vivante du comportement attendu**,
-pas comme une contrainte. Chaque service métier dispose de sa propre suite, avec trois
-niveaux de scénarios : le cas nominal, les cas limites, et les cas de sécurité
-(accès non autorisé, token expiré).
+Sur un projet solo, personne ne relit ton code. Il est très facile de penser qu'un service
+fonctionne correctement sans jamais le vérifier formellement. J'ai mis en place des tests
+xUnit pour deux raisons concrètes : m'assurer que chaque service métier se comporte bien
+selon ce que la User Story demande, et garantir qu'une modification future ne casse pas
+silencieusement quelque chose qui fonctionnait. Un test cassé après une modification, c'est
+un signal immédiat : quelque chose a changé et il faut comprendre pourquoi.
 
 ### 5.1 Organisation des tests
 
@@ -635,14 +639,17 @@ Les tests couvrent trois niveaux de scénarios :
 ## Section 6 – Sécurité OWASP + Accessibilité RGAA
 *Compétence visée : C2.2.3 – Ecrire du code sécurisé (OWASP Top 10) et accessible (RGAA/OPQUAST)*
 
-La sécurité n'a pas été ajoutée en fin de projet : elle a été intégrée dès la conception.
-Le choix de BCrypt work factor 12 a été fait dès le premier sprint d'authentification, après
-lecture du guide OWASP sur le stockage des mots de passe. De même, la décision de lancer
-les dés **côté serveur uniquement** (et non côté client) est directement liée à la prévention
-de la triche – une exigence métier du jeu de rôle. Concernant l'accessibilité, un audit
-informel sur la version initiale a révélé qu'aucun lien d'évitement n'était présent et que
-les formulaires n'indiquaient pas leurs champs obligatoires aux technologies d'assistance.
-Ces lacunes ont été corrigées dans le sprint de qualité (commit `6e7f26b`).
+Une bonne partie des protections de sécurité du projet viennent directement des choix
+techniques : EF Core génère des requêtes SQL paramétrées par défaut, ce qui évite les
+injections SQL sans que j'aie à y penser. BCrypt est la librairie standard pour hacher
+les mots de passe en .NET. HTTPS est activable en une ligne dans `Program.cs`.
+
+Ce qui m'a demandé des décisions conscientes, c'est ce que le framework ne fait pas
+automatiquement : le work factor de BCrypt (12, pour que chaque calcul prenne ~250 ms
+et rende une attaque par force brute non viable), la durée de vie des tokens JWT (1 heure
+pour l'access token, 7 jours pour le refresh avec rotation), le scan automatique des
+dépendances NuGet via OWASP Dependency Check dans le pipeline CI, et les en-têtes HTTP de
+sécurité (HSTS, X-Frame-Options, X-Content-Type-Options) ajoutés manuellement.
 
 ### 6.1 Sécurité – OWASP Top 10
 
@@ -728,10 +735,10 @@ sont présents dans le DOM mais invisibles visuellement.*
 ## Section 7 – Versioning et déploiement progressif
 *Compétence visée : C2.2.4 – Déploiement progressif avec versioning SemVer*
 
-Gérer seul un projet en production oblige à une discipline de versioning rigoureuse : sans
-CHANGELOG ni stratégie de branches claire, il devient difficile de savoir quelle version tourne
-en production après plusieurs semaines de développement. La convention SemVer a été adoptée
-dès le sprint 2, avec un CHANGELOG maintenu à chaque merge sur `main`.
+Je tague chaque déploiement avec un numéro de version SemVer. Le CHANGELOG est maintenu,
+même de façon basique : je note ce qui a changé à chaque merge sur `main`. Ce n'est pas
+toujours exhaustif, mais c'est suffisant pour retrouver ce que contenait chaque version
+sans avoir à relire tous les commits.
 
 ### 7.1 Convention de versionnage SemVer
 
