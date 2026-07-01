@@ -11,6 +11,33 @@
 @import url('layouts/layout-shell.css');
 @import url('layouts/auth-layout.css');
 @import url('components/components.css');
+@import url('components/toasts.css');
+
+/* ============================================
+   ACCESSIBILITE – RGAA
+   ============================================ */
+
+/* Lien d'évitement (RGAA 12.7 / WCAG 2.4.1) */
+.skip-to-content {
+    position: absolute;
+    top: -48px;
+    left: 0;
+    background: var(--color-primary);
+    color: #fff;
+    padding: 10px 20px;
+    z-index: 10000;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    border-radius: 0 0 6px 0;
+    text-decoration: none;
+    transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+    top: 0;
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
 
 /* ============================================
    RESET & BASE

@@ -223,4 +223,81 @@
   <!-- Visibility -->
   <data name="Visibility_Private" xml:space="preserve"><value>Private</value></data>
   <data name="Visibility_Public" xml:space="preserve"><value>Public</value></data>
+
+  <!-- Toasts – generic labels -->
+  <data name="Toast_TitleSuccess" xml:space="preserve"><value>Success</value></data>
+  <data name="Toast_TitleError" xml:space="preserve"><value>Error</value></data>
+  <data name="Toast_TitleWarning" xml:space="preserve"><value>Warning</value></data>
+  <data name="Toast_TitleInfo" xml:space="preserve"><value>Information</value></data>
+
+  <!-- Toasts – Business success messages -->
+  <data name="Toast_World_Created" xml:space="preserve"><value>World created successfully!</value></data>
+  <data name="Toast_World_Updated" xml:space="preserve"><value>World updated.</value></data>
+  <data name="Toast_World_Deleted" xml:space="preserve"><value>World deleted.</value></data>
+  <data name="Toast_Campaign_Created" xml:space="preserve"><value>Campaign created successfully!</value></data>
+  <data name="Toast_Campaign_Updated" xml:space="preserve"><value>Campaign updated.</value></data>
+  <data name="Toast_Campaign_Deleted" xml:space="preserve"><value>Campaign deleted.</value></data>
+  <data name="Toast_Character_Created" xml:space="preserve"><value>Character created successfully!</value></data>
+  <data name="Toast_Character_Updated" xml:space="preserve"><value>Character updated.</value></data>
+  <data name="Toast_Character_Deleted" xml:space="preserve"><value>Character deleted.</value></data>
+  <data name="Toast_Profile_Updated" xml:space="preserve"><value>Your profile has been updated.</value></data>
+
+  <!-- Errors – Generic -->
+  <data name="Error_Unknown" xml:space="preserve"><value>An unexpected error occurred. Please try again.</value></data>
+  <data name="Error_Unauthorized" xml:space="preserve"><value>You are not authenticated. Please log in.</value></data>
+  <data name="Error_Forbidden" xml:space="preserve"><value>You do not have the necessary permissions for this action.</value></data>
+  <data name="Error_NotFound" xml:space="preserve"><value>The requested resource was not found.</value></data>
+  <data name="Error_ValidationFailed" xml:space="preserve"><value>The submitted data is invalid. Please correct the errors.</value></data>
+  <data name="Error_NetworkError" xml:space="preserve"><value>Unable to reach the server. Please check your connection.</value></data>
+
+  <!-- Errors – Authentication -->
+  <data name="Error_Auth_InvalidCredentials" xml:space="preserve"><value>Incorrect email or password.</value></data>
+  <data name="Error_Auth_EmailAlreadyUsed" xml:space="preserve"><value>This email address is already registered.</value></data>
+  <data name="Error_Auth_WeakPassword" xml:space="preserve"><value>Password does not meet security requirements (8+ chars, uppercase, number, special).</value></data>
+  <data name="Error_Auth_TokenExpired" xml:space="preserve"><value>Your session has expired. Please log in again.</value></data>
+  <data name="Error_Auth_TokenInvalid" xml:space="preserve"><value>Invalid authentication token. Please log in again.</value></data>
+  <data name="Error_Auth_RefreshTokenExpired" xml:space="preserve"><value>Your session has expired. Please log in again.</value></data>
+
+  <!-- Errors – World -->
+  <data name="Error_World_NotFound" xml:space="preserve"><value>This world was not found or you do not have access.</value></data>
+  <data name="Error_World_Unauthorized" xml:space="preserve"><value>You are not the Game Master of this world.</value></data>
+  <data name="Error_World_NameTooLong" xml:space="preserve"><value>World name is too long (100 characters max).</value></data>
+  <data name="Error_World_InviteTokenInvalid" xml:space="preserve"><value>This invitation link is invalid.</value></data>
+  <data name="Error_World_InviteTokenExpired" xml:space="preserve"><value>This invitation link has expired. Ask the GM for a new one.</value></data>
+  <data name="Error_World_AlreadyMember" xml:space="preserve"><value>You are already a member of this world.</value></data>
+  <data name="Error_World_CreateFailed" xml:space="preserve"><value>Failed to create world. Please try again.</value></data>
+  <data name="Error_World_UpdateFailed" xml:space="preserve"><value>Failed to update world. Please try again.</value></data>
+  <data name="Error_World_DeleteFailed" xml:space="preserve"><value>Failed to delete world. Please try again.</value></data>
+
+  <!-- Errors – Campaign -->
+  <data name="Error_Campaign_NotFound" xml:space="preserve"><value>Campaign not found.</value></data>
+  <data name="Error_Campaign_Unauthorized" xml:space="preserve"><value>You do not have access to this campaign.</value></data>
+  <data name="Error_Campaign_MaxPlayersReached" xml:space="preserve"><value>Maximum player count reached for this campaign.</value></data>
+  <data name="Error_Campaign_CreateFailed" xml:space="preserve"><value>Failed to create campaign. Please try again.</value></data>
+  <data name="Error_Campaign_UpdateFailed" xml:space="preserve"><value>Failed to update campaign. Please try again.</value></data>
+  <data name="Error_Campaign_DeleteFailed" xml:space="preserve"><value>Failed to delete campaign. Please try again.</value></data>
+
+  <!-- Errors – Character -->
+  <data name="Error_Character_NotFound" xml:space="preserve"><value>Character not found.</value></data>
+  <data name="Error_Character_Unauthorized" xml:space="preserve"><value>This character does not belong to you.</value></data>
+  <data name="Error_Character_AlreadyInWorld" xml:space="preserve"><value>This character is already enrolled in a world.</value></data>
+  <data name="Error_Character_Locked" xml:space="preserve"><value>This character is locked by an active session.</value></data>
+  <data name="Error_Character_CreateFailed" xml:space="preserve"><value>Failed to create character. Please try again.</value></data>
+  <data name="Error_Character_UpdateFailed" xml:space="preserve"><value>Failed to update character. Please try again.</value></data>
+  <data name="Error_Character_DeleteFailed" xml:space="preserve"><value>Failed to delete character. Please try again.</value></data>
+
+  <!-- Errors – Session / Combat -->
+  <data name="Error_Session_NotFound" xml:space="preserve"><value>Game session not found.</value></data>
+  <data name="Error_Session_Unauthorized" xml:space="preserve"><value>You are not authorized to access this session.</value></data>
+  <data name="Error_Session_AlreadyActive" xml:space="preserve"><value>A session is already active for this campaign.</value></data>
+  <data name="Error_Session_CreateFailed" xml:space="preserve"><value>Failed to start the session. Please try again.</value></data>
+  <data name="Error_Combat_InvalidAction" xml:space="preserve"><value>Invalid combat action.</value></data>
+  <data name="Error_Combat_NotYourTurn" xml:space="preserve"><value>It is not your turn to act.</value></data>
+  <data name="Error_Combat_SessionNotActive" xml:space="preserve"><value>Combat is not in progress.</value></data>
+
+  <!-- Errors – Profile -->
+  <data name="Error_Profile_NotFound" xml:space="preserve"><value>Profile not found.</value></data>
+  <data name="Error_Profile_NicknameAlreadyUsed" xml:space="preserve"><value>This nickname is already taken by another player.</value></data>
+  <data name="Error_Profile_UpdateFailed" xml:space="preserve"><value>Failed to update profile. Please try again.</value></data>
+  <data name="Error_Profile_AvatarUploadFailed" xml:space="preserve"><value>Failed to upload avatar. Check format (PNG/JPG, max 5 MB).</value></data>
 </root>

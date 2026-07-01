@@ -38,9 +38,10 @@
                 <div class="input-with-icon">
                     <i class="bi bi-person input-icon"></i>
                     <InputText id="nickname" @bind-Value="Model.Nickname" class="form-control with-icon"
-                               placeholder="MonPseudo" autocomplete="nickname" />
+                               placeholder="MonPseudo" autocomplete="nickname"
+                               aria-required="true" aria-describedby="nickname-error" />
                 </div>
-                <ValidationMessage For="() => Model.Nickname" class="form-error" />
+                <ValidationMessage id="nickname-error" For="() => Model.Nickname" class="form-error" />
             </div>
 
             <div class="form-group">
@@ -48,9 +49,10 @@
                 <div class="input-with-icon">
                     <i class="bi bi-envelope input-icon"></i>
                     <InputText id="email" @bind-Value="Model.Email" class="form-control with-icon"
-                               type="email" placeholder="votre@email.com" autocomplete="email" />
+                               type="email" placeholder="votre@email.com" autocomplete="email"
+                               aria-required="true" aria-describedby="email-error" />
                 </div>
-                <ValidationMessage For="() => Model.Email" class="form-error" />
+                <ValidationMessage id="email-error" For="() => Model.Email" class="form-error" />
             </div>
 
             <div class="form-group">
@@ -58,10 +60,11 @@
                 <div class="input-with-icon">
                     <i class="bi bi-lock input-icon"></i>
                     <InputText id="password" @bind-Value="Model.Password" class="form-control with-icon"
-                               type="password" placeholder="••••••••" autocomplete="new-password" />
+                               type="password" placeholder="••••••••" autocomplete="new-password"
+                               aria-required="true" aria-describedby="password-error password-hint" />
                 </div>
-                <ValidationMessage For="() => Model.Password" class="form-error" />
-                <span class="form-hint">@L["Auth_PasswordRequirements"]</span>
+                <ValidationMessage id="password-error" For="() => Model.Password" class="form-error" />
+                <span id="password-hint" class="form-hint">@L["Auth_PasswordRequirements"]</span>
             </div>
 
             <div class="form-group">
@@ -69,9 +72,10 @@
                 <div class="input-with-icon">
                     <i class="bi bi-lock-fill input-icon"></i>
                     <InputText id="confirm-password" @bind-Value="Model.ConfirmPassword" class="form-control with-icon"
-                               type="password" placeholder="••••••••" autocomplete="new-password" />
+                               type="password" placeholder="••••••••" autocomplete="new-password"
+                               aria-required="true" aria-describedby="confirm-password-error" />
                 </div>
-                <ValidationMessage For="() => Model.ConfirmPassword" class="form-error" />
+                <ValidationMessage id="confirm-password-error" For="() => Model.ConfirmPassword" class="form-error" />
             </div>
 
             <button type="submit" class="btn btn-primary btn-full" disabled="@IsLoading">

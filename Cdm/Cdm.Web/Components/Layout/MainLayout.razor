@@ -14,19 +14,23 @@
         <nav class="sidebar-nav" aria-label="Navigation principale">
             <span class="nav-section-label">@L["Nav_Navigation"]</span>
 
-            <a href="/" class="nav-item @ActiveClass("/")" title="@L["Nav_Home"]">
+            <a href="/" class="nav-item @ActiveClass("/")" title="@L["Nav_Home"]"
+               aria-current="@(ActiveClass("/") == "active" ? "page" : null)">
                 <i class="bi bi-house nav-icon"></i>
                 <span class="nav-label">@L["Nav_Home"]</span>
             </a>
-            <a href="/worlds" class="nav-item @ActiveClass("/worlds")" title="@L["Nav_Worlds"]">
+            <a href="/worlds" class="nav-item @ActiveClass("/worlds")" title="@L["Nav_Worlds"]"
+               aria-current="@(ActiveClass("/worlds") == "active" ? "page" : null)">
                 <i class="bi bi-globe2 nav-icon"></i>
                 <span class="nav-label">@L["Nav_Worlds"]</span>
             </a>
-            <a href="/characters" class="nav-item @ActiveClass("/characters")" title="@L["Nav_Characters"]">
+            <a href="/characters" class="nav-item @ActiveClass("/characters")" title="@L["Nav_Characters"]"
+               aria-current="@(ActiveClass("/characters") == "active" ? "page" : null)">
                 <i class="bi bi-people nav-icon"></i>
                 <span class="nav-label">@L["Nav_Characters"]</span>
             </a>
-            <a href="/sessions" class="nav-item @ActiveClass("/sessions")" title="@L["Nav_Sessions"]">
+            <a href="/sessions" class="nav-item @ActiveClass("/sessions")" title="@L["Nav_Sessions"]"
+               aria-current="@(ActiveClass("/sessions") == "active" ? "page" : null)">
                 <span class="nav-icon-wrapper">
                     <i class="bi bi-play-circle nav-icon"></i>
                     @if (HasActiveSession)
@@ -40,11 +44,13 @@
             <div class="nav-divider"></div>
             <span class="nav-section-label">@L["Nav_Account"]</span>
 
-            <a href="/profile" class="nav-item @ActiveClass("/profile")" title="@L["Nav_Profile"]">
+            <a href="/profile" class="nav-item @ActiveClass("/profile")" title="@L["Nav_Profile"]"
+               aria-current="@(ActiveClass("/profile") == "active" ? "page" : null)">
                 <i class="bi bi-person nav-icon"></i>
                 <span class="nav-label">@L["Nav_Profile"]</span>
             </a>
-            <a href="/settings" class="nav-item @ActiveClass("/settings")" title="@L["Nav_Settings"]">
+            <a href="/settings" class="nav-item @ActiveClass("/settings")" title="@L["Nav_Settings"]"
+               aria-current="@(ActiveClass("/settings") == "active" ? "page" : null)">
                 <i class="bi bi-gear nav-icon"></i>
                 <span class="nav-label">@L["Nav_Settings"]</span>
             </a>
@@ -52,7 +58,10 @@
 
         <div class="sidebar-footer">
             <button class="sidebar-collapse-btn" @onclick="ToggleSidebar"
-                    title="@(IsCollapsed ? L["Nav_Expand"] : L["Nav_Collapse"])">
+                    title="@(IsCollapsed ? L["Nav_Expand"] : L["Nav_Collapse"])"
+                    aria-expanded="@(!IsCollapsed).ToString().ToLower()"
+                    aria-controls="main-sidebar"
+                    aria-label="@(IsCollapsed ? L["Nav_Expand"] : L["Nav_Collapse"])">
                 <i class="bi @(IsCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></i>
                 <span class="nav-label" style="font-size: var(--font-size-xs)">
                     @(IsCollapsed ? "" : L["Nav_Collapse"])
@@ -148,13 +157,16 @@
     }
 
     <!-- ZONE PRINCIPALE -->
-    <div class="app-main-wrapper @GetMainClass()" id="main-content">
+    <div class="app-main-wrapper @GetMainClass()">
 
         <!-- TOPBAR -->
         <header class="app-topbar">
             <div class="topbar-left">
                 <button class="topbar-icon-btn mobile-menu-btn" @onclick="ToggleMobile"
-                        title="Menu" id="mobile-toggle">
+                        title="Menu" id="mobile-toggle"
+                        aria-expanded="@IsMobileOpen.ToString().ToLower()"
+                        aria-controls="main-sidebar"
+                        aria-label="Ouvrir le menu de navigation">
                     <i class="bi bi-list"></i>
                 </button>
                 @if (NavContext.TopbarBreadcrumbs?.Count > 0)
@@ -182,7 +194,9 @@
                 <!-- Notification bell -->
                 <div class="notification-bell-wrapper @(IsNotificationOpen ? "open" : "")">
                     <button class="topbar-icon-btn notification-bell-btn" @onclick="ToggleNotifications"
-                            title="Notifications" aria-label="Notifications">
+                            title="Notifications" aria-label="Notifications"
+                            aria-expanded="@IsNotificationOpen.ToString().ToLower()"
+                            aria-controls="notification-dropdown">
                         <i class="bi bi-bell"></i>
                         @if (UnreadNotificationCount > 0)
                         {
@@ -190,7 +204,7 @@
                         }
                     </button>
 
-                    <div class="notification-dropdown">
+                    <div class="notification-dropdown" id="notification-dropdown" role="region" aria-label="Liste des notifications">
                         <div class="notification-dropdown-header">
                             <span>Notifications</span>
                             @if (Notifications.Any(n => !n.IsRead))
@@ -258,11 +272,13 @@
 
                 <div class="topbar-dropdown @(IsDropdownOpen ? "open" : "")" id="user-dropdown">
                     <button class="topbar-avatar" @onclick="ToggleDropdown"
-                            title="@UserInitials" aria-label="Menu utilisateur">
+                            title="@UserInitials" aria-label="Menu utilisateur"
+                            aria-expanded="@IsDropdownOpen.ToString().ToLower()"
+                            aria-controls="user-dropdown-menu">
                         @UserInitials
                     </button>
 
-                    <div class="topbar-dropdown-menu">
+                    <div class="topbar-dropdown-menu" id="user-dropdown-menu">
                         @if (!string.IsNullOrEmpty(UserName))
                         {
                             <div style="padding: var(--spacing-sm) var(--spacing-md); font-size: var(--font-size-xs); color: var(--color-text-muted);">
@@ -305,11 +321,14 @@
         }
 
         <!-- CONTENU -->
-        <main class="app-content">
+        <main class="app-content" id="main-content" tabindex="-1">
             @Body
         </main>
     </div>
 </div>
 
 <!-- Aucun script JS nécessaire pour la navigation : tout est géré en C# / CSS -->
+
+<!-- Toasts système (ToastService) -->
+<AppToastContainer />
 
