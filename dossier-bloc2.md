@@ -14,10 +14,7 @@ Expert(e) en Développement Logiciel – YNOV
 **Date de dépôt :** 23 juillet 2026
 **Dépôt :** DigiformaCertif – https://ynov.mycertif.app
 
-**Équipe projet :**
-– 1 Lead Tech / Architecte
-– 3 Développeurs Full-Stack
-– 1 Product Owner
+**Porteur du projet :** Tommy ANGIBAUD (projet solo)
 
 ---
 
@@ -46,29 +43,23 @@ Le point de départ de ce projet est simple : en tant que joueur de jeu de rôle
 disponibles sur le marché (Roll20, FoundryVTT) sont soit trop lourds à installer, soit trop
 fermés à un seul système de règles. L'objectif de **Chronique des Mondes** était de concevoir
 une plateforme web légère, accessible depuis un navigateur, capable de s'adapter à n'importe
-quel univers de jeu – D&D 5e, Pathfinder, Cthulhu ou un système maison.
+quel univers de jeu : D&D 5e, Pathfinder, Cthulhu ou un système maison.
 
-Ce projet a également été l'occasion de mettre en pratique une architecture professionnelle
-de bout en bout : depuis la conception des API jusqu'au déploiement continu en production,
-en passant par la sécurité, les tests automatisés et l'accessibilité.
+C'est aussi un projet de certification. Je voulais construire quelque chose de réel, avec une
+architecture professionnelle de bout en bout : conception des API, déploiement continu,
+sécurité, tests automatisés et accessibilité.
 
-Les fonctionnalités principales sont :
-– Création et gestion de campagnes multi-systèmes avec univers, chapitres et événements narratifs
-– Gestion de personnages avec feuilles de statistiques polymorphiques (attributs spécifiques
-  au système de règles stockés en JSON)
-– Sessions de jeu en temps réel avec résolution de combats (dés lancés côté serveur, anti-triche)
-– Notifications en temps réel par SignalR (invitations de session, alertes de combat)
-– Gestion des rôles : Administrateur, Maître de Jeu, Joueur
+Les fonctionnalités principales sont les suivantes :
 
-### 2.2 Équipe projet
+- Création et gestion de campagnes multi-systèmes avec univers, chapitres et événements narratifs
+- Gestion de personnages avec feuilles de statistiques adaptables au système de jeu (attributs stockés en JSON)
+- Sessions de jeu en temps réel avec résolution de combats (dés lancés côté serveur pour éviter la triche)
+- Notifications en temps réel via SignalR (invitations de session, alertes de combat)
+- Gestion des rôles : Administrateur, Maître de Jeu, Joueur
 
-| Rôle | Responsabilités |
-|---|---|
-| Lead Tech / Architecte | Décisions d'architecture, revue de code, CI/CD, sécurité |
-| Développeur Full-Stack 1 | Module authentification, gestion des utilisateurs et profils |
-| Développeur Full-Stack 2 | Module campagnes, chapitres, événements narratifs |
-| Développeur Full-Stack 3 | Module combat temps réel, SignalR, D&D 5e |
-| Product Owner | Backlog, priorisation, cahier des charges, recettes |
+### 2.2 Organisation du projet
+
+Ce projet est solo. Je suis la seule personne à avoir écrit du code, défini l'architecture, géré le backlog et effectué les déploiements. J'ai travaillé en sprints informels, avec GitHub Issues pour suivre mes User Stories et GitHub Projects pour visualiser l'avancement.
 
 ### 2.3 Stack technique
 
@@ -88,23 +79,27 @@ Les fonctionnalités principales sont :
 
 ### 2.4 Décisions d'architecture
 
-La première question posée en équipe a été : **comment supporter D&D 5e, Pathfinder et un
-système générique sans dupliquer le code pour chaque système ?** La réponse choisie est une
+La question centrale au départ était : comment supporter D&D 5e, Pathfinder et un système
+générique sans dupliquer le code pour chaque système ? La réponse choisie est une
 architecture en couches avec un noyau commun (`Cdm.Business.Common`) et des extensions par
 système de règles (`Cdm.Business.DnD5e`). Les attributs spécifiques à chaque jeu sont
 sérialisés en JSON dans la base de données, ce qui permet d'ajouter un nouveau système sans
-modifier le schéma. Cette décision a été la plus structurante du projet – elle guide encore
+modifier le schéma. C'est la décision la plus structurante du projet et elle guide encore
 aujourd'hui l'organisation de tous les projets de la solution.
 
-– `Cdm.AppHost` – Orchestration Aspire : déclare les services, gère la découverte de services
-– `Cdm.ApiService` – API REST + Hubs SignalR : exposition des endpoints métier
-– `Cdm.Web` – Blazor Server : interface utilisateur, communication API via clients HTTP typés
-– `Cdm.Business.Common` – Logique métier : services, règles, validation
-– `Cdm.Data.Common` – Accès aux données : modèles EF Core, repositories
-– `Cdm.Common` – Transverse : JWT, BCrypt, logging structuré
-– `Cdm.Business.DnD5e` – Extension D&D 5e : règles, calculs de modificateurs, SRD
+La solution est composée de sept projets :
 
-Cette séparation permet l'ajout de nouveaux systèmes de règles (Pathfinder, Appel de Cthulhu)
+| Projet | Rôle |
+|---|---|
+| `Cdm.AppHost` | Orchestration Aspire : déclare les services, gère la découverte |
+| `Cdm.ApiService` | API REST + Hubs SignalR : exposition des endpoints métier |
+| `Cdm.Web` | Blazor Server : interface utilisateur, clients HTTP typés |
+| `Cdm.Business.Common` | Logique métier : services, règles, validation |
+| `Cdm.Data.Common` | Accès aux données : modèles EF Core, repositories |
+| `Cdm.Common` | Transverse : JWT, BCrypt, gestion centralisée des erreurs |
+| `Cdm.Business.DnD5e` | Extension D&D 5e : règles, calculs de modificateurs |
+
+Cette séparation permet d'ajouter de nouveaux systèmes de règles (Pathfinder, Appel de Cthulhu)
 sans modifier le noyau de l'application.
 
 ---
@@ -112,50 +107,40 @@ sans modifier le noyau de l'application.
 ## Section 3 – Environnements et CI/CD
 *Compétences visées : C2.1.1 – Environnements de déploiement et suivi qualité, C2.1.2 – Intégration continue GitHub Actions*
 
-En début de projet, les déploiements se faisaient manuellement : clone, build, restart du
-service Azure. Lors du sprint 3, un oubli de `dotnet restore` a mis l'API hors service
-pendant 40 minutes. C'est cet incident concret qui a motivé la mise en place d'un pipeline
-CI/CD automatisé : **aucun code ne peut atteindre `main` sans avoir compilé, passé les tests
-unitaires et l'analyse de dépendances OWASP**. Le principe est simple : si une vérification
-échoue, le pipeline s'arrête et le déploiement n'a pas lieu.
+### 3.1 Poste de développement et outillage (C2.1.1)
 
-### 3.0 Poste de développement et outillage (C2.1.1)
+Je travaille seul sur ce projet, depuis mon poste Windows 11. Il n'y a pas de second développeur à synchroniser, mais ça ne veut pas dire que la rigueur est facultative. Au contraire : quand tout repose sur un seul poste, une mauvaise configuration peut bloquer n'importe quelle session de travail. Voici l'environnement exact que j'utilise.
 
-La maîtrise de l'environnement de développement est aussi importante que le code lui-même :
-un poste mal configuré génère des bugs qui n'existent qu'en local, des comportements
-différents entre développeurs, et ralentit les livraisons. Voici la configuration exacte
-utilisée pour ce projet.
-
-#### 3.0.1 Environnement de travail
+#### 3.1.1 Environnement de travail
 
 | Outil | Version | Rôle |
 |---|---|---|
 | **Windows 11** | 23H2 | Système d'exploitation |
 | **Visual Studio 2022** | 17.13 | IDE principal (IntelliSense, débogueur, tests) |
 | **.NET SDK** | 10.0 | Compilateur, CLI (`dotnet build`, `dotnet test`) |
-| **Docker Desktop** | 4.x | Conteneurisation locale pour SQL Server + Aspire |
-| **GitKraken** | dernière | Client Git graphique (branches, cherry-pick, conflits) |
-| **Git CLI** | 2.x | Commits, hooks pre-commit, scripts CI |
-| **SQL Server LocalDB** | 2022 | Base de données locale (via `(localdb)\mssqllocaldb`) |
-| **Node.js** | 20 LTS | Build des assets CSS (Tailwind / sass) |
-| **Postman** | dernière | Tests manuels des endpoints REST + SignalR |
+| **Docker Desktop** | 4.x | SQL Server local via conteneur |
+| **GitKraken** | dernière | Client Git graphique |
+| **Git CLI** | 2.x | Commits, scripts CI |
+| **SQL Server LocalDB** | 2022 | Base de données locale |
+| **Node.js** | 20 LTS | Build des assets CSS |
+| **Postman** | dernière | Tests manuels des endpoints REST |
 
-#### 3.0.2 Extensions Visual Studio 2022
+#### 3.1.2 Extensions Visual Studio 2022
 
 | Extension | Utilité |
 |---|---|
 | **.NET Aspire Workload** | Orchestration multi-services en local |
 | **GitHub Copilot** | Assistance à la génération de code |
-| **xUnit runner** | Exécution des tests directement dans l'IDE |
-| **Playwright** | Débogage des tests E2E depuis VS |
+| **xUnit runner** | Exécution des tests dans l'IDE |
+| **Playwright** | Débogage des tests E2E |
 | **EditorConfig** | Application des règles de style StyleCop |
 
-#### 3.0.3 Configuration du poste et reproductibilité
+#### 3.1.3 Reproductibilité entre local et pipeline
 
-Pour garantir la reproductibilité de l'environnement entre développeurs (et entre le poste
-local et le runner GitHub Actions), les contraintes suivantes sont appliquées :
+Pour que le code qui compile sur mon poste compile aussi sur le runner Linux de GitHub Actions, j'ai mis en place deux contraintes simples :
 
-- **`global.json`** à la racine du dépôt épingle la version du SDK .NET :
+Un fichier `global.json` à la racine épingle la version exacte du SDK .NET :
+
 ```json
 {
   "sdk": {
@@ -164,74 +149,50 @@ local et le runner GitHub Actions), les contraintes suivantes sont appliquées :
   }
 }
 ```
-- **`.editorconfig`** normalise l'indentation (espaces, pas de tabulations), les fins de
-  ligne (LF), l'encodage (UTF-8 BOM pour les fichiers .cs) — éliminant les diffs parasites
-  entre Windows et le runner Linux de GitHub Actions.
-- **User Secrets .NET** stockent les clés JWT et chaînes de connexion localement
-  (`%APPDATA%\Microsoft\UserSecrets\`) sans jamais toucher le dépôt.
-- **`.gitignore`** exclut systématiquement `bin/`, `obj/`, `*.user`, `appsettings.*.json`
-  des environnements non-development.
 
-#### 3.0.4 Accès aux environnements
+Un fichier `.editorconfig` normalise l'indentation, les fins de ligne et l'encodage des fichiers `.cs`. Sans ça, un fichier édité sous Windows (CRLF) produisait des diffs parasites sur le runner Linux (LF).
 
-| Environnement | URL d'accès | Branche source |
+Les clés JWT et les chaînes de connexion ne sont jamais dans le dépôt. En local, j'utilise les User Secrets .NET (stockés dans `%APPDATA%\Microsoft\UserSecrets\`). En production, ce sont des variables d'environnement Azure App Service.
+
+#### 3.1.4 Accès aux environnements
+
+| Environnement | URL | Branche source |
 |---|---|---|
 | Local (Aspire) | `https://localhost:7081` (Web) / `https://localhost:7080` (API) | toute branche |
 | Aspire Dashboard | `http://localhost:17223` | local uniquement |
-| Production | `https://app-chronique-des-mondes-web.azurewebsites.net` | `main` (via CI/CD) |
-| Azure SQL | `cdm-server-sql.database.windows.net` | géré par migrations EF Core |
+| Production | `https://app-chronique-des-mondes-web.azurewebsites.net` | `main` uniquement |
+| Azure SQL | `cdm-server-sql.database.windows.net` | migrations EF Core |
 
 ---
 
-### 3.1 Environnements de déploiement (C2.1.1)
+### 3.2 Environnements de déploiement (C2.1.1)
 
-#### 3.1.1 Architecture des environnements
+Le projet a deux environnements : local et production. Je n'ai pas créé de staging. Sur un projet solo en phase de test, un environnement intermédiaire représente un coût Azure supplémentaire sans apporter de valeur réelle. Dans un contexte professionnel avec des clients, je le mettrais en place pour valider les livraisons avant de toucher la production.
 
-Le projet dispose de deux environnements distincts, adaptés à un projet personnel
-mono-développeur effectif :
+**Local** : Aspire lance automatiquement le frontend Blazor, l'API et la base de données. Je peux déboguer les deux projets simultanément depuis Visual Studio et consulter les traces distribuées et les logs en temps réel via le tableau de bord Aspire sur `http://localhost:17223`.
 
-**Environnement local (développement)**
-– Orchestration : .NET Aspire AppHost (lance automatiquement Web + API + SQL Server)
-– Configuration : `appsettings.Development.json` + User Secrets .NET
-  (aucun secret en clair dans le dépôt)
-– Base de données : SQL Server LocalDB ou conteneur Docker
-– Monitoring : Aspire Dashboard accessible sur `http://localhost:17223`
-  – traces distribuées, métriques, logs structurés
-– Hot reload activé (`dotnet watch`)
-
-**Environnement de production**
-– Hébergement : Azure App Service (Plan Standard)
-– Deux services distincts : `cdm-web` (Blazor Server) et `cdm-api` (API REST + SignalR)
-– Configuration : variables d'environnement Azure App Service
-  (jamais de secrets dans les fichiers de configuration)
-– Base de données : Azure SQL Database (DTU S1)
-– HTTPS forcé avec HSTS (Strict-Transport-Security: max-age=31536000)
-– Déploiement déclenché automatiquement par le pipeline CI/CD sur la branche `main`
-
-**Justification du choix à deux environnements**
-Pour un projet solo à usage personnel, un troisième environnement « staging » n'est pas
-justifié économiquement. Dans un contexte professionnel avec plusieurs développeurs et des
-clients réels, un environnement de staging serait systématiquement ajouté entre `dev` et
-`production` pour permettre les recettes utilisateurs sans impacter la production.
-
-#### 3.1.2 Gestion de la configuration
+**Production** : deux services distincts sur Azure App Service. `cdm-web` héberge le frontend Blazor Server, `cdm-api` héberge l'API REST et les hubs SignalR. La base de données est une Azure SQL Database. Le HTTPS est forcé, et la connexion à la base de données se fait via EntraID (l'identité managée Azure) plutôt qu'un mot de passe SQL.
 
 | Fichier | Environnement | Contenu |
 |---|---|---|
-| `appsettings.json` | Tous | Valeurs par défaut, structure |
-| `appsettings.Development.json` | Local | URLs Aspire, niveaux de log détaillés |
-| `appsettings.Production.json` | Azure | URLs de production, log Warning uniquement |
-| User Secrets / Variables Azure | Secret | JWT secret key, chaînes de connexion |
+| `appsettings.json` | Tous | Valeurs par défaut |
+| `appsettings.Development.json` | Local | URLs Aspire, logs détaillés |
+| `appsettings.Production.json` | Azure | URLs de production, log Warning |
+| User Secrets / Variables Azure | Secrets | Clé JWT, chaîne de connexion SQL |
 
-#### 3.1.3 Suivi qualité
+---
 
-Le suivi qualité s'appuie sur plusieurs indicateurs mesurés à chaque exécution du pipeline CI :
-– Zéro erreur de build (`/warnaserror` en Release)
-– Taux de couverture des tests unitaires (cible : 70 %)
-– Rapport OWASP Dependency Check (blocage si CVSS ≥ 8)
-– Résultats des tests xUnit exportés au format TRX (artefacts GitHub Actions)
+### 3.3 Pipeline CI/CD GitHub Actions (C2.1.2)
 
-#### 3.1.4 Diagramme de Gantt – Phases de développement
+#### 3.3.1 Pourquoi j'ai mis le CI/CD en place tôt
+
+J'ai configuré les pipelines dès la Phase 1, avant même d'avoir du code métier. Ce n'était pas une obligation, c'était un choix personnel. Avoir un pipeline qui tourne à chaque push me donnait un retour immédiat sur l'état du projet. Quand on code seul, on n'a pas de collègue pour relire. Le pipeline joue ce rôle.
+
+Ça m'a aussi permis de tester avec des amis sans risquer de leur servir une version cassée. Je déploie uniquement à la fin d'un sprint ou lors d'une montée de version, pas à chaque fonctionnalité.
+
+#### 3.3.2 Phases de développement
+
+[SCHEMA — Gantt phases de développement]
 
 ```mermaid
 gantt
@@ -259,9 +220,9 @@ gantt
     Deploiement et preparation         :done, 2026-05-19, 12d
 ```
 
-### 3.2 Pipeline CI/CD GitHub Actions (C2.1.2)
+#### 3.3.3 Pipeline d'intégration continue (ci.yml)
 
-Le fichier `.github/workflows/ci.yml` définit un pipeline en trois jobs parallèles :
+Ce pipeline se déclenche à chaque push ou pull request vers `main` et `dev`. Il est organisé en trois jobs :
 
 ```
 push/PR → main, dev
@@ -270,26 +231,55 @@ push/PR → main, dev
     │       dotnet restore
     │       dotnet build /warnaserror
     │       dotnet test --collect XPlat Code Coverage
-    │       upload artefact test-results
+    │       export resultats TRX → artefact GitHub
     │
-    ├─ [Job 2] security-scan (needs: build-and-test)
+    ├─ [Job 2] security-scan (après build-and-test)
     │       OWASP Dependency Check
-    │       --failOnCVSS 8
-    │       upload artefact owasp-report
+    │       bloque si score CVSS >= 8
+    │       export rapport HTML → artefact GitHub
     │
-    └─ [Job 3] playwright-tests (needs: build-and-test)
+    └─ [Job 3] playwright-tests (après build-and-test)
             uniquement sur main et dev
-            install Playwright + chromium
+            installe Chromium
             dotnet test .playwright
-            upload artefact playwright-report (si échec)
+            export rapport → artefact GitHub (si echec)
 ```
 
-**Détail du job principal :**
-– `actions/checkout@v4` avec `fetch-depth: 0`
-– `actions/setup-dotnet@v4` avec `dotnet-version: 10.0.x`
-– Build en configuration `Release` avec `/warnaserror`
-– Collecte de couverture XPlat Code Coverage
-– Export des résultats au format TRX
+Le flag `/warnaserror` mérite une explication. Il demande au compilateur de traiter les avertissements comme des erreurs. Un avertissement C# signale souvent un problème réel : variable non utilisée, null non géré, méthode dépréciée. Sans ce flag, on peut ignorer ces signaux et accumuler de la dette silencieusement. Avec ce flag, le build échoue dès qu'un avertissement apparaît. Ça force à corriger les problèmes au moment où ils surgissent plutôt que de les laisser s'accumuler.
+
+Le scan OWASP vérifie les librairies NuGet utilisées dans le projet. Si une dépendance contient une faille de sécurité avec un score de criticité supérieur ou égal à 8 sur 10, le pipeline s'arrête et le déploiement est bloqué.
+
+#### 3.3.4 Pipeline de déploiement (azure-deploy.yml)
+
+Ce pipeline est séparé du CI. Il ne se déclenche que sur push vers `main`, ou manuellement. La séparation est intentionnelle : je ne veux pas déployer chaque branche de fonctionnalité. Un déploiement sur Azure représente une version que mes testeurs peuvent utiliser. Je l'effectue à la fin d'un sprint ou lors d'une montée de version.
+
+```
+push → main (ou manuel)
+    │
+    ├─ [Job 1] build-web      → artefact web-app
+    ├─ [Job 2] build-api      → artefact api-app
+    ├─ [Job 3] run-migrations (après build-api)
+    │       connexion Azure via EntraID (sans mot de passe SQL)
+    │       dotnet ef database update
+    ├─ [Job 4] deploy-web (après build-web)
+    │       azure/webapps-deploy → app-chronique-des-mondes-web
+    └─ [Job 5] deploy-api (après run-migrations)
+            azure/webapps-deploy → app-chroniquedesmondes-api
+```
+
+L'accès à Azure SQL se fait via EntraID. Ça veut dire qu'aucun mot de passe de base de données n'est stocké dans les secrets GitHub ni dans les fichiers de configuration. Le pipeline récupère un token d'accès temporaire auprès d'Azure, qui est valable uniquement pour cette exécution.
+
+#### 3.3.5 Suivi qualité
+
+À chaque exécution du pipeline CI, plusieurs indicateurs sont mesurés et archivés comme artefacts GitHub :
+
+| Indicateur | Seuil | Action en cas d'échec |
+|---|---|---|
+| Build sans erreur ni warning | 0 avertissement | Build échoue |
+| Tests xUnit | 100% des tests passants | Build échoue |
+| Couverture de code | Cible 70% | Rapport seulement |
+| OWASP Dependency Check | CVSS < 8 | Pipeline bloqué |
+| Tests Playwright E2E | Tous passants | Rapport d'échec archivé |
 
 ---
 
@@ -507,11 +497,12 @@ stateDiagram-v2
 L'interface Blazor Server repose sur un Design System CDM (fichiers CSS variables + thèmes)
 permettant de changer l'apparence visuelle selon le type de jeu de la campagne.
 Les éléments d'ergonomie principaux sont :
-– Navigation latérale persistante avec sidebar contextuelle secondaire par section
-– Fil d'Ariane dynamique dans la topbar
-– Notifications temps réel (invitations de session) via SignalR avec toast visuel
-– Mode sombre / mode clair mémorisé dans `localStorage`
-– Interface responsive avec menu mobile adaptatif
+
+- Navigation latérale persistante avec sidebar contextuelle secondaire par section
+- Fil d'Ariane dynamique dans la topbar
+- Notifications temps réel (invitations de session) via SignalR avec toast visuel
+- Mode sombre / mode clair mémorisé dans `localStorage`
+- Interface responsive avec menu mobile adaptatif
 
 #### 4.6.1 Capture d'écran – Dashboard "Mes Mondes"
 
@@ -522,13 +513,13 @@ Personnages, Sessions), les **cartes de monde** avec leur badge de système de j
 haute-droite selon les conventions Material Design.
 
 On peut y voir en production les trois univers de jeu créés lors des tests :
-**Test** (Générique – 2 campagnes), **Cyber** (Cyberpunk – 1 campagne), **D&D TEST**
-(D&D 5e – 2 campagnes). Chaque carte affiche le nombre de campagnes et de personnages
+**Test** (Générique, 2 campagnes), **Cyber** (Cyberpunk, 1 campagne), **D&D TEST**
+(D&D 5e, 2 campagnes). Chaque carte affiche le nombre de campagnes et de personnages
 associés, permettant au MJ d'avoir un aperçu rapide avant de naviguer.
 
 ![Dashboard Mes Mondes – Chronique des Mondes en production](docs/screenshots/screen-mes-mondes.png)
 
-*Figure 1 – Page "Mes Mondes" sur `app-chronique-des-mondes-web.azurewebsites.net` –
+*Figure 1 – Page "Mes Mondes" sur `app-chronique-des-mondes-web.azurewebsites.net`,
 thème sombre, navigation latérale, cards par système de jeu*
 
 > **Note jury** : D'autres captures (page de connexion, détail campagne, interface de combat)
@@ -539,13 +530,13 @@ thème sombre, navigation latérale, cards par système de jeu*
 ## Section 5 – Tests unitaires xUnit
 *Compétence visée : C2.2.2 – Ecrire des tests unitaires (harnais de test xUnit)*
 
-Lors d'une évolution du module d'authentification (renforcement de la validation des tokens JWT),
-un bug de validation de token a été introduit sans qu'on s'en rende compte pendant deux
-jours. La suite de tests xUnit existante l'a détecté au prochain push – avant que le code
-atteigne la branche `dev`. Cet épisode a convaincu l'équipe de **traiter les tests comme une
-documentation vivante du comportement attendu**, pas comme une contrainte. Chaque service
-métier dispose de sa propre suite, avec trois niveaux de scénarios : le cas nominal, les
-cas limites, et les cas de sécurité (accès non autorisé, token expiré).
+Lors d'une évolution du module d'authentification, un bug de validation de token a été
+introduit sans que je m'en rende compte pendant deux jours. La suite de tests xUnit existante
+l'a détecté au prochain push, avant que le code atteigne la branche `dev`. Cet épisode m'a
+convaincu de **traiter les tests comme une documentation vivante du comportement attendu**,
+pas comme une contrainte. Chaque service métier dispose de sa propre suite, avec trois
+niveaux de scénarios : le cas nominal, les cas limites, et les cas de sécurité
+(accès non autorisé, token expiré).
 
 ### 5.1 Organisation des tests
 
@@ -634,10 +625,10 @@ Les résultats TRX sont publiés comme artefacts GitHub Actions à chaque pipeli
 ### 5.4 Stratégie de test
 
 Les tests couvrent trois niveaux de scénarios :
-– **Happy path** : flux nominal, données valides, comportement attendu
-– **Edge cases** : valeurs limites (ID nul ou négatif), chaînes vides, collections vides
-– **Sécurité** : accès non autorisé, token expiré, tentative de modification de ressource
-  appartenant à un autre utilisateur
+
+- **Happy path** : flux nominal, données valides, comportement attendu
+- **Edge cases** : valeurs limites (ID nul ou négatif), chaînes vides, collections vides
+- **Sécurité** : accès non autorisé, token expiré, tentative de modification d'une ressource appartenant à un autre utilisateur
 
 ---
 
@@ -664,11 +655,10 @@ données par utilisateur au niveau de la couche d'accès aux données.
 
 #### A02 – Défaillances cryptographiques
 
-– Mots de passe hachés avec BCrypt, work factor 12
-  (`PasswordService.cs` : `private const int WorkFactor = 12`)
-– Aucune donnée sensible dans les logs
-– HTTPS forcé en production avec HSTS (`max-age=31536000`)
-– JWT signé avec clé secrète ≥ 32 caractères, vérifiée au démarrage
+- Mots de passe hachés avec BCrypt, work factor 12 (`PasswordService.cs` : `private const int WorkFactor = 12`)
+- Aucune donnée sensible dans les logs
+- HTTPS forcé en production avec HSTS (`max-age=31536000`)
+- JWT signé avec clé secrète de 32 caractères minimum, vérifiée au démarrage
 
 #### A03 – Injection
 
@@ -679,15 +669,16 @@ de code. La validation server-side avec Data Annotations est systématique sur t
 #### A05 – Configuration de sécurité incorrecte
 
 En production (`ASPNETCORE_ENVIRONMENT=Production`) :
-– Pages d'erreur détaillées remplacées par `app.UseExceptionHandler("/Error")`
-– Dashboard Aspire non déployé en production
-– Secrets stockés dans les variables d'environnement Azure App Service
+
+- Pages d'erreur détaillées remplacées par `app.UseExceptionHandler("/Error")`
+- Dashboard Aspire non déployé en production
+- Secrets stockés dans les variables d'environnement Azure App Service
 
 #### A07 – Défaillances d'authentification
 
-– Access token JWT : durée de vie 1 heure
-– Refresh token : durée de vie 7 jours, rotation à chaque utilisation
-– Protection anti-brute-force : à implémenter (prévu sprint suivant)
+- Access token JWT : durée de vie 1 heure
+- Refresh token : durée de vie 7 jours, rotation à chaque utilisation
+- Protection anti-brute-force : à implémenter (prévu sprint suivant)
 
 ### 6.2 Accessibilité RGAA
 
@@ -708,14 +699,11 @@ Les améliorations d'accessibilité suivantes ont été implémentées dans Blaz
 #### 6.2.1 Capture d'écran – Page de connexion (RGAA appliqué)
 
 La page de connexion illustre directement les critères RGAA implémentés :
-– Les labels "Adresse e-mail" et "Mot de passe" sont explicites et associés à leur champ
-  via `<label for="...">` (critère RGAA 11.1)
-– Les champs portent `aria-required="true"` et `aria-describedby` pointant vers leur
-  `ValidationMessage` (critères 11.10 et 11.13)
-– Le lien "Inscription" en bas du formulaire a un intitulé de lien compréhensible
-  hors contexte (critère 6.1)
-– Le contraste texte blanc sur fond bleu foncé (#1e1b4b) dépasse le ratio 4.5:1
-  requis par le critère RGAA 3.2 / WCAG 1.4.3
+
+- Les labels "Adresse e-mail" et "Mot de passe" sont explicites et associés à leur champ via `<label for="...">` (critère RGAA 11.1)
+- Les champs portent `aria-required="true"` et `aria-describedby` pointant vers leur `ValidationMessage` (critères 11.10 et 11.13)
+- Le lien "Inscription" en bas du formulaire a un intitulé compréhensible hors contexte (critère 6.1)
+- Le contraste texte blanc sur fond bleu foncé (#1e1b4b) dépasse le ratio 4.5:1 requis par le critère RGAA 3.2 / WCAG 1.4.3
 
 ![Page de connexion – Chronique des Mondes](docs/screenshots/screen-login.png)
 
@@ -741,17 +729,15 @@ sont présents dans le DOM mais invisibles visuellement.*
 *Compétence visée : C2.2.4 – Déploiement progressif avec versioning SemVer*
 
 Gérer seul un projet en production oblige à une discipline de versioning rigoureuse : sans
-CHANGELOG ni stratégie de branches claire, il est impossible de savoir quelle version tourne
-en production après plusieurs semaines. La convention SemVer a été adoptée dès le sprint 2,
-avec un CHANGELOG maintenu à chaque merge sur `main`. Cette rigueur a payé lors d'un
-rollback nécessaire : sachant exactement ce qu'apportait chaque version, la décision de
-revenir à `0.9.2` a pris moins de 5 minutes.
+CHANGELOG ni stratégie de branches claire, il devient difficile de savoir quelle version tourne
+en production après plusieurs semaines de développement. La convention SemVer a été adoptée
+dès le sprint 2, avec un CHANGELOG maintenu à chaque merge sur `main`.
 
 ### 7.1 Convention de versionnage SemVer
 
-– **MAJOR** (X.y.z) : changement d'API incompatible ou refonte architecturale
-– **MINOR** (x.Y.z) : ajout de fonctionnalité rétrocompatible
-– **PATCH** (x.y.Z) : correctif de bogue rétrocompatible
+- **MAJOR** (X.y.z) : changement d'API incompatible ou refonte architecturale
+- **MINOR** (x.Y.z) : ajout de fonctionnalité rétrocompatible
+- **PATCH** (x.y.Z) : correctif de bogue rétrocompatible
 
 Version actuelle : `1.0.0`
 
@@ -773,47 +759,47 @@ Version actuelle : `1.0.0`
 ### 7.4 Extrait CHANGELOG (CHANGELOG.md)
 
 ```markdown
-## [0.9.0] – 2026-06-24
+## [0.9.0] - 2026-06-24
 ### Ajouté
-– Pipeline CI/CD complet : tests xUnit, OWASP Dependency Check, couverture de code
-– Documentation README mise à jour
+- Pipeline CI/CD complet : tests xUnit, OWASP Dependency Check, couverture de code
+- Documentation README mise à jour
 
-## [0.8.0] – 2026-06-10
+## [0.8.0] - 2026-06-10
 ### Corrigé
-– Combat : authentification SignalR, modificateurs D&D (Math.Floor), état d'erreur wizard
-– Notifications : comportement UX amélioré
-– En-têtes de sécurité : HSTS, X-Frame-Options, X-Content-Type-Options
+- Combat : authentification SignalR, modificateurs D&D (Math.Floor), état d'erreur wizard
+- Notifications : comportement UX amélioré
+- En-têtes de sécurité : HSTS, X-Frame-Options, X-Content-Type-Options
 
-## [0.7.0] – 2026-05-28
+## [0.7.0] - 2026-05-28
 ### Ajouté
-– Système de combat générique SignalR (tours, initiative, attaques, dégâts)
-– Interface MJ améliorée : phase d'initiative, lanceur de dés, fiche joueur
+- Système de combat générique SignalR (tours, initiative, attaques, dégâts)
+- Interface MJ améliorée : phase d'initiative, lanceur de dés, fiche joueur
 
-## [0.6.0] – 2026-05-10
+## [0.6.0] - 2026-05-10
 ### Ajouté
-– D&D 5e : seeder complet (sorts, races, classes, équipements)
-– Vue détaillée personnage D&D 5e
+- D&D 5e : seeder complet (sorts, races, classes, équipements)
+- Vue détaillée personnage D&D 5e
 
-## [0.5.0] – 2026-04-15
+## [0.5.0] - 2026-04-15
 ### Ajouté
-– Logique métier D&D 5e complète (`Cdm.Business.DnD5e`)
-– JWT : mécanisme de rafraîchissement des tokens (RefreshTokens)
+- Logique métier D&D 5e complète (`Cdm.Business.DnD5e`)
+- JWT : mécanisme de rafraîchissement des tokens (RefreshTokens)
 
-## [0.3.0] – 2026-02-15
+## [0.3.0] - 2026-02-15
 ### Ajouté
-– Sessions de jeu temps réel (SignalR) : `/hubs/session`, `/hubs/combat`, `/hubs/notifications`
+- Sessions de jeu temps réel (SignalR) : `/hubs/session`, `/hubs/combat`, `/hubs/notifications`
 ### Corrigé
-– Schéma `Sessions` / `SessionParticipants` en production (BUG-002)
+- Schéma `Sessions` / `SessionParticipants` en production (BUG-002)
 
-## [0.2.0] – 2025-12-20
+## [0.2.0] - 2025-12-20
 ### Ajouté
-– CRUD Campagnes + Personnages + Mondes avec support GameType multi-systèmes
-– Authentification JWT HS256 + BCrypt work factor 12
+- CRUD Campagnes + Personnages + Mondes avec support GameType multi-systèmes
+- Authentification JWT HS256 + BCrypt work factor 12
 
-## [0.1.0] – 2025-11-01
+## [0.1.0] - 2025-11-01
 ### Ajouté
-– Initialisation projet .NET 10 + Aspire
-– Structure multi-projets (ApiService, Web, Business.Common, Data.Common)
+- Initialisation projet .NET 10 + Aspire
+- Structure multi-projets (ApiService, Web, Business.Common, Data.Common)
 ```
 
 ---
@@ -821,18 +807,17 @@ Version actuelle : `1.0.0`
 ## Section 8 – Cahier de recettes
 *Compétence visée : C2.3.1 – Rédiger un cahier de recettes (scénarios de tests fonctionnels)*
 
-Le cahier de recettes est né d'un constat : lors des premières démonstrations, le Product
-Owner validait les fonctionnalités à l'œil, sans critères formels. Résultat : une
-fonctionnalité considérée comme "validée" a été remise en cause trois sprints plus tard
-parce que le comportement attendu n'était pas documenté. Depuis, **chaque fonctionnalité est
-décrite par des scénarios avec préconditions, étapes et résultat attendu précis**, testés
-manuellement par le PO et automatisés via Playwright pour les flux critiques.
+Le cahier de recettes formalise les critères de validation de chaque fonctionnalité. Au
+début du projet, je validais les fonctionnalités à l'oeil, sans critères précis. Le
+résultat : une fonctionnalité considérée comme terminée pouvait être remise en cause deux
+semaines plus tard parce que le comportement attendu n'était pas écrit. Depuis, **chaque
+fonctionnalité est décrite par des scénarios avec préconditions, étapes et résultat attendu
+précis**.
 
 ### 8.1 Périmètre et méthode
 
 Le cahier de recettes couvre les quatre modules fonctionnels principaux. Chaque scénario
-est exécuté manuellement par le Product Owner et automatisé via Playwright E2E pour les
-flux critiques.
+est exécuté manuellement et automatisé via Playwright E2E pour les flux critiques.
 
 ### 8.2 Module Authentification
 
@@ -968,20 +953,18 @@ services (commit dans cette session) :
 ## Section 9 – Plan de correction des bogues
 *Compétence visée : C2.3.2 – Etablir un plan de correction des bogues*
 
-Sans processus de correction formalisé, chaque bug est traité différemment selon l'humeur
-du moment : parfois corrigé directement sur `main` (catastrophique), parfois ignoré
-(dangereux), parfois documenté mais jamais assigné (inutile). Le plan décrit ici a été
-formalisé après un incident de production où deux développeurs travaillaient sur le même
-bug sans le savoir, produisant des corrections conflictuelles. La règle est désormais
-simple : **tout bug passe par une issue GitHub, une branche `fix/`, un test de régression
-xUnit et une PR** – même pour un bug d'une ligne.
+Sans processus de correction formalisé, chaque bug risque d'être traité différemment selon
+le contexte : parfois corrigé directement sur `main`, parfois ignoré, parfois documenté mais
+jamais résolu. La règle est simple : **tout bug passe par une issue GitHub, une branche
+`fix/`, un test de régression xUnit et une PR** — même pour un bug d'une ligne.
 
 ### 9.1 Système de suivi
 
 Les anomalies sont suivies via GitHub Issues avec les labels :
-– `bug` – anomalie confirmée
-– `priority: P0/P1/P2/P3` – niveau de criticité
-– `status: in-progress` / `status: resolved` – état de traitement
+
+- `bug` : anomalie confirmée
+- `priority: P0/P1/P2/P3` : niveau de criticité
+- `status: in-progress` / `status: resolved` : état de traitement
 
 ### 9.2 Niveaux de priorité et SLA
 
@@ -1153,20 +1136,19 @@ public async Task NextTurn_SessionStarterWhoIsNotOwner_Succeeds()
 ## Section 10 – Documentation technique
 *Compétence visée : C2.4.1 – Rédiger la documentation technique (déploiement, utilisation, mise à jour)*
 
-La documentation n'est pas une formalité de fin de projet : c'est ce qui rend le code
-compréhensible par un nouveau développeur à 3h du matin en cas d'incident. Le README du
-projet a été écrit dès le sprint 1 et mis à jour à chaque changement d'architecture. Les
-choix techniques (Blazor Server vs Client, EF Core vs Dapper, SignalR vs polling) sont
-documentés avec leur contexte et les alternatives considérées – pas pour justifier les
-décisions *a posteriori*, mais pour que la prochaine personne comprenne **pourquoi** le
-projet est structuré ainsi.
+La documentation n'est pas une formalité de fin de projet. C'est ce qui permet de
+comprendre le code rapidement quand on revient dessus après plusieurs semaines. Le README
+du projet a été écrit dès le sprint 1 et mis à jour à chaque changement d'architecture.
+Les choix techniques (Blazor Server vs Client, EF Core vs Dapper, SignalR vs polling) sont
+documentés avec leur contexte et les alternatives considérées.
 
 ### 10.1 Documentation de déploiement
 
 **Prérequis :**
-– .NET SDK 10.0 ou supérieur
-– SQL Server (LocalDB pour local, Azure SQL pour production)
-– Docker Desktop (optionnel)
+
+- .NET SDK 10.0 ou supérieur
+- SQL Server (LocalDB pour local, Azure SQL pour production)
+- Docker Desktop (optionnel)
 
 **Déploiement local :**
 ```bash
@@ -1209,10 +1191,11 @@ public sealed class PasswordService : IPasswordService
 
 Les endpoints REST sont documentés via **OpenAPI** (accessible en développement via
 `MapOpenApi()`, visualisable avec Scalar sur `/scalar/v1`). Chaque endpoint précise :
-– La description fonctionnelle
-– Les paramètres d'entrée avec types et contraintes
-– Les codes de réponse (200, 201, 400, 401, 403, 404, 500)
-– Le modèle de données retourné
+
+- La description fonctionnelle
+- Les paramètres d'entrée avec types et contraintes
+- Les codes de réponse (200, 201, 400, 401, 403, 404, 500)
+- Le modèle de données retourné
 
 ### 10.4 Guide de mise à jour
 
@@ -1344,13 +1327,13 @@ tout développeur qui rejoindrait le projet.
 | Latence UI | < 50 ms (calcul serveur) | < 50 ms (calcul client) | 100–300 ms (WASM init) |
 | Taille bundle initial | Minimal (HTML pur) | 200–500 KB JS | 10+ MB WASM |
 | Sécurité (secrets) | Secrets restent serveur | Exposés côté client | Exposés côté client |
-| Maîtrise de l'équipe | C# / .NET natif | TypeScript requis | C# mais perf WASM |
+| Maîtrise technique | C# / .NET natif | TypeScript requis | C# mais perf WASM |
 | CDN requis | Non | Oui (assets JS) | Oui (WASM bundle) |
 
 **Décision :** Blazor Server a été choisi car le projet repose fondamentalement sur SignalR
 (combat temps réel, notifications, état partagé). Avec Blazor Server, la connexion SignalR
-est déjà établie pour l'UI — il n'y a pas de seconde connexion à gérer. De plus, l'équipe
-maîtrise C# nativement, ce qui élimine le coût d'apprentissage TypeScript/React. Le seul
+est déjà établie pour l'UI — il n'y a pas de seconde connexion à gérer. De plus, je travaille
+en C# au quotidien, ce qui élimine le coût d'apprentissage TypeScript/React. Le seul
 inconvénient accepté : la dépendance à une connexion serveur permanente (gérée par la
 reconnexion automatique Blazor).
 
@@ -1442,19 +1425,19 @@ La migration vers Argon2id est prévue comme amélioration future.
 **Décision :** SQL Server a été retenu pour son intégration native avec l'écosystème Azure
 (Azure SQL Database, Managed Identity, backups automatiques) et le coût minimal en tier S1.
 PostgreSQL aurait été préférable pour les colonnes JSON (jsonb est plus performant que
-nvarchar JSON de SQL Server), mais le coût supérieur sur Azure et la maîtrise moindre de
-l'équipe ont été déterminants. MongoDB a été écarté : les données de jeu de rôle (personnages,
+nvarchar JSON de SQL Server), mais le coût supérieur sur Azure et ma maîtrise moindre de
+PostgreSQL ont été déterminants. MongoDB a été écarté : les données de jeu de rôle (personnages,
 campagnes, sessions) ont des relations fortes que les transactions ACID gèrent naturellement.
 
 ---
 
 ## Annexes *(hors comptage)*
 
-– **Annexe A** : Code source complet – https://github.com/Tomtoxi44/Chronique_Des_Mondes
-– **Annexe B** : Captures d'écran – Section 4.6.1 (Mes Mondes) + Section 6.2.1 (Login) incluses dans ce dossier
-– **Annexe C** : Résultats du pipeline CI/CD (artefacts test-results, owasp-report) – GitHub Actions
-– **Annexe D** : Rapport de couverture de tests xUnit (coverage.cobertura.xml – artefact CI)
-– **Annexe E** : Captures Aspire Dashboard (traces distribuées) – disponible sur demande
+- **Annexe A** : Code source complet - https://github.com/Tomtoxi44/Chronique_Des_Mondes
+- **Annexe B** : Captures d'écran - Section 4.6.1 (Mes Mondes) + Section 6.2.1 (Login) incluses dans ce dossier
+- **Annexe C** : Résultats du pipeline CI/CD (artefacts test-results, owasp-report) - GitHub Actions
+- **Annexe D** : Rapport de couverture de tests xUnit (coverage.cobertura.xml - artefact CI)
+- **Annexe E** : Captures Aspire Dashboard (traces distribuées) - disponible sur demande
 
 ---
 
