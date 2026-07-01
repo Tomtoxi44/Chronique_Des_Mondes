@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- WithOpenApi() is deprecated in ASP.NET Core 10 (ASPDEPR002) but still functional.
+         Migration to the new implicit OpenAPI generation is tracked separately. -->
+    <NoWarn>ASPDEPR002</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
