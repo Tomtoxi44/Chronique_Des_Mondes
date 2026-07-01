@@ -118,6 +118,70 @@ CI/CD automatisé : **aucun code ne peut atteindre `main` sans avoir compilé, p
 unitaires et l'analyse de dépendances OWASP**. Le principe est simple : si une vérification
 échoue, le pipeline s'arrête et le déploiement n'a pas lieu.
 
+### 3.0 Poste de développement et outillage (C2.1.1)
+
+La maîtrise de l'environnement de développement est aussi importante que le code lui-même :
+un poste mal configuré génère des bugs qui n'existent qu'en local, des comportements
+différents entre développeurs, et ralentit les livraisons. Voici la configuration exacte
+utilisée pour ce projet.
+
+#### 3.0.1 Environnement de travail
+
+| Outil | Version | Rôle |
+|---|---|---|
+| **Windows 11** | 23H2 | Système d'exploitation |
+| **Visual Studio 2022** | 17.13 | IDE principal (IntelliSense, débogueur, tests) |
+| **.NET SDK** | 10.0 | Compilateur, CLI (`dotnet build`, `dotnet test`) |
+| **Docker Desktop** | 4.x | Conteneurisation locale pour SQL Server + Aspire |
+| **GitKraken** | dernière | Client Git graphique (branches, cherry-pick, conflits) |
+| **Git CLI** | 2.x | Commits, hooks pre-commit, scripts CI |
+| **SQL Server LocalDB** | 2022 | Base de données locale (via `(localdb)\mssqllocaldb`) |
+| **Node.js** | 20 LTS | Build des assets CSS (Tailwind / sass) |
+| **Postman** | dernière | Tests manuels des endpoints REST + SignalR |
+
+#### 3.0.2 Extensions Visual Studio 2022
+
+| Extension | Utilité |
+|---|---|
+| **.NET Aspire Workload** | Orchestration multi-services en local |
+| **GitHub Copilot** | Assistance à la génération de code |
+| **xUnit runner** | Exécution des tests directement dans l'IDE |
+| **Playwright** | Débogage des tests E2E depuis VS |
+| **EditorConfig** | Application des règles de style StyleCop |
+
+#### 3.0.3 Configuration du poste et reproductibilité
+
+Pour garantir la reproductibilité de l'environnement entre développeurs (et entre le poste
+local et le runner GitHub Actions), les contraintes suivantes sont appliquées :
+
+- **`global.json`** à la racine du dépôt épingle la version du SDK .NET :
+```json
+{
+  "sdk": {
+    "version": "10.0.300-preview.0.26177.108",
+    "rollForward": "latestMinor"
+  }
+}
+```
+- **`.editorconfig`** normalise l'indentation (espaces, pas de tabulations), les fins de
+  ligne (LF), l'encodage (UTF-8 BOM pour les fichiers .cs) — éliminant les diffs parasites
+  entre Windows et le runner Linux de GitHub Actions.
+- **User Secrets .NET** stockent les clés JWT et chaînes de connexion localement
+  (`%APPDATA%\Microsoft\UserSecrets\`) sans jamais toucher le dépôt.
+- **`.gitignore`** exclut systématiquement `bin/`, `obj/`, `*.user`, `appsettings.*.json`
+  des environnements non-development.
+
+#### 3.0.4 Accès aux environnements
+
+| Environnement | URL d'accès | Branche source |
+|---|---|---|
+| Local (Aspire) | `https://localhost:7081` (Web) / `https://localhost:7080` (API) | toute branche |
+| Aspire Dashboard | `http://localhost:17223` | local uniquement |
+| Production | `https://cdm-web.azurewebsites.net` | `main` (via CI/CD) |
+| Azure SQL | `cdm-server-sql.database.windows.net` | géré par migrations EF Core |
+
+---
+
 ### 3.1 Environnements de déploiement (C2.1.1)
 
 #### 3.1.1 Architecture des environnements
