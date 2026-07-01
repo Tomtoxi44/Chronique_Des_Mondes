@@ -574,7 +574,8 @@ public class CombatService(
         if (session == null) return false;
 
         return session.Campaign.World?.UserId == userId
-            || session.Campaign.CreatedBy == userId;
+            || session.Campaign.CreatedBy == userId
+            || session.StartedById == userId;
     }
 
     /// <summary>

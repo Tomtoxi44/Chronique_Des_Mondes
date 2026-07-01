@@ -1,0 +1,34 @@
+# EditorConfig – Chronique des Mondes
+# https://editorconfig.org
+
+root = true
+
+# Tous les fichiers
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Fichiers C# – UTF-8 BOM requis par StyleCop/MSBuild
+[*.cs]
+charset = utf-8-bom
+indent_size = 4
+
+# Fichiers Razor / HTML
+[*.{razor,html,cshtml}]
+indent_size = 4
+
+# JSON / YAML
+[*.{json,yml,yaml}]
+indent_size = 2
+
+# Markdown – pas de trim sur les espaces (double-espace = <br>)
+[*.md]
+trim_trailing_whitespace = false
+
+# Scripts PowerShell
+[*.ps1]
+indent_size = 4

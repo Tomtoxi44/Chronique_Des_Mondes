@@ -241,6 +241,13 @@ public partial class MainLayout : IAsyncDisposable
         UnreadNotificationCount = 0;
     }
 
+    private async Task DeleteNotification(int id)
+    {
+        await NotificationClient.DeleteNotificationAsync(id);
+        Notifications.RemoveAll(x => x.Id == id);
+        UnreadNotificationCount = Notifications.Count(x => !x.IsRead);
+    }
+
     private async Task NavigateFromNotification(NotificationModel n)
     {
         if (!n.IsRead) await MarkNotificationRead(n.Id);

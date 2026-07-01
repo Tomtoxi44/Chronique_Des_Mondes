@@ -98,7 +98,7 @@ public class CampaignService(
                 if (coverImageUrl != null)
                 {
                     var actualImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
-                        dto.CoverImageBase64,
+                        dto.CoverImageBase64!,
                         campaign.Id);
 
                     if (actualImageUrl != null)
