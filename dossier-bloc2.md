@@ -993,6 +993,133 @@ fix(BUG-XXX): Description courte du correctif
 - Closes #XXX
 ```
 
+### 9.5 Analyse de bugs réels (C2.3.2)
+
+Les trois bogues documentés ci-dessous ont été identifiés en production ou lors de tests
+d'intégration. Chacun illustre une cause racine différente et a donné lieu à un test de
+non-régression.
+
+---
+
+#### BUG-001 – Modificateur D&D 5e incorrect pour scores impairs inférieurs à 10
+
+| Champ | Valeur |
+|---|---|
+| **Commit** | `128cb17` |
+| **Priorité** | P1 – Critique (donnée métier incorrecte) |
+| **Composant** | `DndCharacterWizard.razor` |
+| **Environnement** | Production + Local |
+| **Détecté par** | Test utilisateur lors de la création d'un personnage avec CON=9 |
+
+**Symptôme :** Le modificateur de Constitution calculé pour un score de 9 affichait 0
+au lieu de −1. Pour un score de 7, affichait −1 au lieu de −2.
+
+**Cause racine :**
+La formule utilisait la division entière C# (int) :
+```csharp
+// AVANT – division entière : (9-10)/2 = -1/2 = 0 en C# (tronque vers zéro)
+var modifier = (score - 10) / 2;
+```
+La division entière C# tronque vers zéro, pas vers moins l'infini. Résultat : tous les
+scores impairs inférieurs à 10 produisaient un modificateur incorrect.
+
+**Correction appliquée (`Math.Floor`) :**
+```csharp
+// APRÈS – Math.Floor arrondit vers moins l'infini (comportement D&D correct)
+var modifier = (int)Math.Floor((score - 10.0) / 2.0);
+```
+
+**Impact :** 6 champs de statistiques + calcul des HP suggérés corrigés.
+**Test de non-régression :**
+```csharp
+[Theory]
+[InlineData(9,  -1)]  // Impair < 10
+[InlineData(7,  -2)]  // Impair < 10
+[InlineData(10,  0)]  // Base
+[InlineData(15,  2)]  // Impair > 10
+public void GetModifier_VariousScores_ReturnsCorrectValue(int score, int expected)
+    => Assert.Equal(expected, DndRules.GetModifier(score));
+```
+
+---
+
+#### BUG-002 – Schéma de base de données incorrect en production (colonnes Session)
+
+| Champ | Valeur |
+|---|---|
+| **Commit** | `c8dece2` (correctif) / `6a2b1ed` (hotfix initial défectueux) |
+| **Priorité** | P0 – Bloquant (l'API ne démarrait pas, sessions inaccessibles) |
+| **Composant** | `Cdm.ApiService/Program.cs` + `AppDbContext` |
+| **Environnement** | Production uniquement (Azure SQL) |
+| **Détecté par** | Monitoring – l'API retournait 500 sur tous les endpoints Session |
+
+**Symptôme :** Après le déploiement du sprint 7, toutes les requêtes liées aux sessions
+retournaient 500. Les logs Azure montraient : `Invalid column name 'StartedById'`.
+
+**Cause racine :**
+Un hotfix d'urgence (`6a2b1ed`) avait créé la table `Sessions` avec `GmUserId` comme
+colonne propriétaire, alors que le code EF Core attendait `StartedById`. La migration
+automatique n'avait pas été relancée car le déploiement utilisait un safety net SQL
+manuel plutôt que `dotnet ef database update`.
+
+**Correction appliquée :**
+Un safety net de démarrage détecte la présence de la colonne incorrecte et reconstruit
+les tables avec le bon schéma :
+```csharp
+// Détection + suppression de la table avec mauvais schéma
+IF COL_LENGTH('[dbo].[Sessions]', 'GmUserId') IS NOT NULL
+BEGIN
+    DROP TABLE [dbo].[SessionParticipants];
+    DROP TABLE [dbo].[Sessions];
+END
+// Puis re-création avec le bon schéma (StartedById, CurrentChapterId...)
+```
+
+**Mesures préventives ajoutées :**
+- PR de déploiement inclut désormais une checklist "schéma validé en staging"
+- Test d'intégration vérifiant les noms de colonnes via `INFORMATION_SCHEMA`
+
+---
+
+#### BUG-003 – GM non reconnu comme propriétaire lors d'une action de combat
+
+| Champ | Valeur |
+|---|---|
+| **Commit** | `128cb17` |
+| **Priorité** | P1 – Critique (fonctionnalité combat inutilisable pour certains MJ) |
+| **Composant** | `CombatService.IsGmOfSessionAsync()` |
+| **Environnement** | Production |
+| **Détecté par** | Rapport utilisateur – "Tour Suivant" retournait 403 pour le MJ |
+
+**Symptôme :** Le MJ qui avait *lancé* la session obtenait 403 Forbidden en cliquant
+"Tour Suivant", alors que la même action fonctionnait pour le créateur de la campagne.
+
+**Cause racine :**
+La méthode `IsGmOfSessionAsync` ne vérifiait que `Campaign.CreatedBy` (le propriétaire
+de la campagne), sans prendre en compte `Session.StartedById` (l'utilisateur qui a
+lancé la session, potentiellement un co-MJ avec le rôle `GameMaster`).
+
+```csharp
+// AVANT – vérifie uniquement le propriétaire de la campagne
+return session.Campaign.CreatedBy == userId;
+
+// APRÈS – vérifie aussi le lanceur de session
+return session.Campaign.CreatedBy == userId
+    || session.StartedById == userId;
+```
+
+**Test de non-régression :**
+```csharp
+[Fact]
+public async Task NextTurn_SessionStarterWhoIsNotOwner_Succeeds()
+{
+    // Arrange : campagne créée par userId=1, session lancée par userId=2 (co-GM)
+    var combat = CreateCombatWithSessionStartedBy(userId: 2);
+    // Act & Assert : userId=2 peut appeler NextTurn sans 403
+    await _service.NextTurnAsync(combat.Id, userId: 2);
+}
+```
+
 ---
 
 ## Section 10 – Documentation technique
