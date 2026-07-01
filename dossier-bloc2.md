@@ -1194,6 +1194,109 @@ Les endpoints REST sont documentés via OpenAPI/Swagger (accessible en développ
 4. Mettre à jour le `CHANGELOG.md` avec la nouvelle version SemVer
 5. Merger sur `main` → déploiement automatique Azure déclenché
 
+### 10.5 Guide utilisateur – Maître du Jeu (C2.4.1)
+
+Ce guide décrit le parcours complet d'un Maître du Jeu (MJ) depuis la création de son
+compte jusqu'à la fin d'une session de combat. L'URL de production est :
+**https://app-chronique-des-mondes-web.azurewebsites.net**
+
+#### 10.5.1 Créer un compte et se connecter
+
+1. Aller sur `/register`
+2. Renseigner : adresse e-mail + mot de passe (min 8 car., 1 majuscule, 1 chiffre, 1 spécial)
+3. Cliquer **"S'inscrire"** → redirection automatique vers `/login`
+4. Saisir e-mail + mot de passe → cliquer **"Se connecter"**
+5. Dashboard "Mes Mondes" s'affiche (page `/worlds`)
+
+> Le rôle **Maître du Jeu** est attribué par défaut à tout utilisateur qui crée un monde.
+
+#### 10.5.2 Créer un monde et une campagne
+
+| Étape | Action | URL |
+|---|---|---|
+| 1 | Cliquer **"Créer un monde"** (bouton violet, haut-droite) | `/worlds` |
+| 2 | Renseigner : Nom du monde, Système de jeu (Générique / D&D 5e / Cyberpunk…), description | `/worlds/create` |
+| 3 | Valider → monde créé, redirection vers sa page de détail | `/worlds/{id}` |
+| 4 | Dans le monde, cliquer **"+ Nouvelle Campagne"** | `/worlds/{id}` |
+| 5 | Renseigner : Nom de la campagne, description, nombre max de joueurs | `/campaigns/create` |
+| 6 | Valider → campagne créée | `/campaigns/{id}` |
+
+#### 10.5.3 Inviter des joueurs
+
+1. Depuis la page de la campagne, cliquer **"Inviter des joueurs"**
+2. Un code à 6 caractères est généré (valable 48h) — ex : `AB7X2K`
+3. Partager ce code aux joueurs ; ils l'entrent sur `/join`
+4. Le MJ reçoit une notification en temps réel (cloche en haut à droite) quand un joueur rejoint
+
+#### 10.5.4 Lancer une session et gérer le combat
+
+**Démarrer la session :**
+1. Depuis la page de la campagne, cliquer **"▶ Lancer la Session"**
+2. Les joueurs connectés reçoivent une notification SignalR et rejoignent automatiquement
+3. La session passe en statut **Active**
+
+**Déclencher un combat :**
+1. Dans la session active, cliquer **"⚔ Lancer le Combat"**
+2. Sélectionner les participants (personnages des joueurs + PNJ souhaités)
+3. Cliquer **"Démarrer"** → l'écran de combat s'ouvre pour tous
+
+**Gérer les tours :**
+1. L'ordre d'initiative est affiché dans le tracker (trié par score décroissant)
+2. Le participant actif est mis en évidence (bordure verte)
+3. Cliquer **"Tour Suivant →"** pour passer au participant suivant
+4. En fin de round : le compteur de round s'incrémente automatiquement
+5. Cliquer **"Terminer le Combat"** quand la condition de fin est atteinte
+
+**Lancer des dés :**
+- Saisir l'expression dans le champ dé : `1d20`, `2d6+3`, `4d6kh3`
+- Cliquer **"Lancer"** → résultat calculé côté serveur et broadcasté à tous les joueurs
+
+#### 10.5.5 Terminer une session
+
+1. Cliquer **"⏹ Terminer la Session"** dans la barre de session
+2. Confirmer dans la popup de confirmation
+3. La session passe en statut **Ended** ; l'historique est conservé dans l'onglet "Sessions"
+
+---
+
+### 10.6 Guide utilisateur – Joueur (C2.4.1)
+
+#### 10.6.1 Créer un compte et rejoindre une campagne
+
+1. Aller sur `/register` → créer son compte (même procédure que le MJ)
+2. Se connecter → page `/worlds` (vide si aucun monde personnel)
+3. Cliquer **"Rejoindre une campagne"** dans la navigation
+4. Saisir le **code d'invitation** fourni par le MJ (6 caractères)
+5. Confirmer → la campagne apparaît dans son dashboard
+
+#### 10.6.2 Créer un personnage
+
+1. Naviguer vers **"Personnages"** → **"+ Créer un Personnage"**
+2. Choisir le type de fiche selon la campagne :
+   - **Générique** : Nom, HP max, attributs libres (clé/valeur)
+   - **D&D 5e** : Classe, Race, 6 caractéristiques (FOR/DEX/CON/INT/SAG/CHA), sorts, équipement
+3. Remplir les champs → **"Créer"** → personnage disponible dans la liste
+4. Depuis la page de la campagne, **sélectionner son personnage** pour y participer
+
+#### 10.6.3 Participer à une session de combat
+
+**Rejoindre la session :**
+- Quand le MJ lance une session, une notification apparaît en haut à droite
+- Cliquer sur la notification → page de session s'ouvre automatiquement
+
+**Pendant un combat :**
+
+| Situation | Action disponible |
+|---|---|
+| Ce n'est pas votre tour | Voir le tracker (lecture seule), attendre |
+| C'est votre tour | Bouton **"Terminer mon Tour"** devient actif |
+| Lancer un dé | Saisir l'expression + cliquer **"Lancer"** (résultat visible par tous) |
+| Personnage hors combat | Indicateur "Hors combat" sur votre carte |
+
+**Déconnexion :** En cas de déconnexion, la session passe en état **Suspendu** pour votre
+personnage. À la reconnexion, le jeu reprend automatiquement là où vous vous étiez arrêté
+(timeout de 5 minutes avant abandon automatique du tour).
+
 ---
 
 ## Annexes *(hors comptage)*
