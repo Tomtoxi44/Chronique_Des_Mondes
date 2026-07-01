@@ -435,46 +435,49 @@ erDiagram
         int Id PK
         string Name
         string GameType
-        int OwnerId FK
-        bit IsActive
+        int CreatedBy FK
+        int WorldId FK
         datetime CreatedAt
-    }
-    CAMPAIGN_PLAYERS {
-        int CampaignId PK,FK
-        int UserId PK,FK
-        datetime JoinedAt
     }
     CHARACTERS {
         int Id PK
         string Name
-        string GameType
         nvarchar AttributesJson
-        int OwnerId FK
-        int CampaignId FK
+        int UserId FK
+        datetime CreatedAt
     }
-    GAME_SESSIONS {
+    WORLDS {
         int Id PK
-        string Status
+        string Name
+        string GameType
+        int CreatedBy FK
+    }
+    SESSIONS {
+        int Id PK
+        int Status
         int CampaignId FK
+        int StartedById FK
         datetime StartedAt
         datetime EndedAt
     }
     COMBAT_ACTIONS {
         int Id PK
-        string DiceExpression
-        int RollResult
-        string ActionType
-        int SessionId FK
-        int CharacterId FK
+        string DiceType
+        int Count
+        nvarchar Results
+        int Total
+        int ChapterId FK
+        int UserId FK
         datetime RolledAt
     }
 
-    USERS ||--o{ CAMPAIGNS : "possede (Owner)"
-    USERS }o--o{ CAMPAIGNS : "participe (Player)"
-    CAMPAIGNS ||--o{ CHARACTERS : "contient"
-    CAMPAIGNS ||--o{ GAME_SESSIONS : "heberge"
-    GAME_SESSIONS ||--o{ COMBAT_ACTIONS : "enregistre"
-    CHARACTERS ||--o{ COMBAT_ACTIONS : "realise"
+    USERS ||--o{ CAMPAIGNS : "cree (CreatedBy)"
+    USERS ||--o{ CHARACTERS : "possede (UserId)"
+    USERS ||--o{ SESSIONS : "lance (StartedById)"
+    USERS ||--o{ WORLDS : "cree (CreatedBy)"
+    WORLDS ||--o{ CAMPAIGNS : "contient"
+    CAMPAIGNS ||--o{ SESSIONS : "heberge"
+    SESSIONS ||--o{ COMBAT_ACTIONS : "enregistre"
 ```
 
 ### 4.5 Machine d'états – Système de combat SignalR
@@ -836,7 +839,7 @@ flux critiques.
 | ID | Scénario | Préconditions | Étapes | Résultat attendu | Statut |
 |---|---|---|---|---|---|
 | AUTH-001 | Connexion compte valide | Compte existant | POST /api/auth/login avec identifiants corrects | JWT retourné – 200 OK | VALIDE |
-| AUTH-002 | Connexion mot de passe incorrect | Compte existant | POST /api/auth/login avec mauvais mdp | 401 Unauthorized – message générique | VALIDE |
+| AUTH-002 | Connexion mot de passe incorrect | Compte existant | POST /api/auth/login avec mauvais mdp | 400 Bad Request – message générique (sécurité : pas de hint email/mdp) | VALIDE |
 | AUTH-003 | Token expiré | Token > 1 h | Appel API avec token expiré | 401 + refresh proposé automatiquement | VALIDE |
 | AUTH-004 | Accès ressource non autorisée | Connecté en joueur | Modifier la campagne d'un autre MJ | 403 Forbidden | VALIDE |
 | AUTH-005 | Inscription compte | Aucune | POST /api/auth/register avec données valides | Compte créé – 201 Created | VALIDE |
@@ -1458,16 +1461,6 @@ campagnes, sessions) ont des relations fortes que les transactions ACID gèrent 
 ## Notes de révision
 *(à supprimer avant le dépôt final)*
 
-- [x] ~~Remplacer [Prénom NOM] en Section 1~~ → Tommy ANGIBAUD ✅
-- [x] ~~Ajouter les captures d'écran réelles~~ → Sections 4.6.1 + 6.2.1 ✅
-- [x] ~~Taux de couverture xUnit~~ → Section 8.6 (~82% lignes) ✅
-- [x] ~~RS256 → HMAC SHA256~~ ✅
-- [x] ~~URL prod incorrecte~~ ✅
-- [x] ~~CHANGELOG aligné sur v0.9.0 réel~~ ✅
-- [x] ~~SEC-010 anti-brute-force non implémenté~~ → marqué ⚠️ prévu ✅
-- [x] ~~SEC-012 anti-replay inexact~~ → corrigé ✅
-- [x] ~~9 vs 11 suites de tests~~ → 9 suites corrigées ✅
-- [x] ~~Swagger → MapOpenApi/Scalar~~ ✅
-- [x] ~~ConnectionStrings:CdmDb → DefaultConnection~~ ✅
-- [ ] **À vérifier avant dépôt** : diagrammes ER/classes (OwnerId vs CreatedBy) — mettre à jour avec le modèle EF Core réel si le jury lit le code
-- [ ] **À vérifier avant dépôt** : codes HTTP cahier de recettes (AUTH-002 → 400 vs 401, CAMP-002 → 404 vs 403) — aligner sur les réponses API réelles
+- [x] Toutes les corrections de relecture appliquées ✅
+- [x] Diagramme ER aligné avec le modèle EF Core réel (CreatedBy, UserId, StartedById, WorldId) ✅
+- [x] AUTH-002 : 401 → 400 Bad Request (comportement réel de l'API) ✅
