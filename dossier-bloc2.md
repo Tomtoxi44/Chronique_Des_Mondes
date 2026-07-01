@@ -9,7 +9,7 @@ Expert(e) en Développement Logiciel – YNOV
 **Projet :** Chronique des Mondes
 **Sous-titre :** Plateforme web de gestion de campagnes de jeu de rôle multi-systèmes
 
-**Candidat :** [Prénom NOM]
+**Candidat :** Tommy ANGIBAUD
 **Formation :** Expert en Développement Logiciel – Promotion 2025/2026
 **Date de dépôt :** 23 juillet 2026
 **Dépôt :** DigiformaCertif – https://ynov.mycertif.app
@@ -38,6 +38,7 @@ Annexes
 ---
 
 ## Section 2 – Présentation du projet et contexte technique
+*Section transversale – contextualise toutes les compétences C2.1.1 à C2.4.1*
 
 ### 2.1 Contexte et objectifs
 
@@ -78,7 +79,7 @@ Les fonctionnalités principales sont :
 | Frontend | Blazor Server (.NET 10) |
 | Temps réel | SignalR – SessionHub + NotificationHub |
 | Persistance | EF Core 10 + SQL Server |
-| Authentification | JWT Bearer (RS256) + BCrypt (work factor 12) |
+| Authentification | JWT Bearer (HMAC SHA256 / HS256) + BCrypt (work factor 12) |
 | Tests unitaires | xUnit + Moq + FluentAssertions |
 | Tests E2E | Playwright (.NET) |
 | CI/CD | GitHub Actions |
@@ -177,7 +178,7 @@ local et le runner GitHub Actions), les contraintes suivantes sont appliquées :
 |---|---|---|
 | Local (Aspire) | `https://localhost:7081` (Web) / `https://localhost:7080` (API) | toute branche |
 | Aspire Dashboard | `http://localhost:17223` | local uniquement |
-| Production | `https://cdm-web.azurewebsites.net` | `main` (via CI/CD) |
+| Production | `https://app-chronique-des-mondes-web.azurewebsites.net` | `main` (via CI/CD) |
 | Azure SQL | `cdm-server-sql.database.windows.net` | géré par migrations EF Core |
 
 ---
@@ -378,7 +379,7 @@ sequenceDiagram
     A->>DB: SELECT user WHERE email = ?
     DB-->>A: UserEntity
     Note over A: BCrypt.Verify – work factor 12
-    A->>A: Generer JWT RS256 – expiration 1 h
+    A->>A: Generer JWT HS256 – expiration 1 h
     A-->>W: 200 OK – access_token + refresh_token
     W-->>U: Cookie securise et redirection dashboard
     Note over W,A: Requetes suivantes avec Authorization Bearer
@@ -535,7 +536,7 @@ thème sombre, navigation latérale, cards par système de jeu*
 ## Section 5 – Tests unitaires xUnit
 *Compétence visée : C2.2.2 – Ecrire des tests unitaires (harnais de test xUnit)*
 
-Lors du refactoring du module d'authentification (passage de HS256 à RS256 pour le JWT),
+Lors d'une évolution du module d'authentification (renforcement de la validation des tokens JWT),
 un bug de validation de token a été introduit sans qu'on s'en rende compte pendant deux
 jours. La suite de tests xUnit existante l'a détecté au prochain push – avant que le code
 atteigne la branche `dev`. Cet épisode a convaincu l'équipe de **traiter les tests comme une
@@ -545,15 +546,13 @@ cas limites, et les cas de sécurité (accès non autorisé, token expiré).
 
 ### 5.1 Organisation des tests
 
-Le projet `Cdm.Business.Common.Tests` contient 9 suites de tests couvrant l'ensemble
+Le projet `Cdm.Business.Common.Tests` contient **9 suites de tests** couvrant l'ensemble
 des services métier :
 
 | Suite de tests | Service testé | Thématiques couvertes |
 |---|---|---|
-| `AuthServiceTests` | `AuthService` | Connexion, inscription, refresh token |
 | `JwtServiceTests` | `JwtService` | Génération, validation, expiration JWT |
 | `CampaignServiceTests` | `CampaignService` | CRUD campagnes, contrôle d'accès |
-| `CharacterServiceTests` | `CharacterService` | CRUD personnages, attributs |
 | `WorldServiceTests` | `WorldService` | Gestion des univers de jeu |
 | `ChapterServiceTests` | `ChapterService` | Chapitres narratifs |
 | `EventServiceTests` | `EventService` | Événements de campagne |
@@ -771,21 +770,47 @@ Version actuelle : `1.0.0`
 ### 7.4 Extrait CHANGELOG (CHANGELOG.md)
 
 ```markdown
-## [1.0.0] – 2026-06-26
+## [0.9.0] – 2026-06-24
 ### Ajouté
-– Authentification JWT + BCrypt (work factor 12)
-– CRUD Campagnes avec support GameType multi-systèmes
-– Sessions de jeu temps réel via SignalR
-– Pipeline CI/CD GitHub Actions complet
+– Pipeline CI/CD complet : tests xUnit, OWASP Dependency Check, couverture de code
+– Documentation README mise à jour
 
-### Sécurité
-– Audit OWASP Top 10 initial
+## [0.8.0] – 2026-06-10
+### Corrigé
+– Combat : authentification SignalR, modificateurs D&D (Math.Floor), état d'erreur wizard
+– Notifications : comportement UX amélioré
 – En-têtes de sécurité : HSTS, X-Frame-Options, X-Content-Type-Options
 
-## [0.0.1] – 2026-05-27
+## [0.7.0] – 2026-05-28
+### Ajouté
+– Système de combat générique SignalR (tours, initiative, attaques, dégâts)
+– Interface MJ améliorée : phase d'initiative, lanceur de dés, fiche joueur
+
+## [0.6.0] – 2026-05-10
+### Ajouté
+– D&D 5e : seeder complet (sorts, races, classes, équipements)
+– Vue détaillée personnage D&D 5e
+
+## [0.5.0] – 2026-04-15
+### Ajouté
+– Logique métier D&D 5e complète (`Cdm.Business.DnD5e`)
+– JWT : mécanisme de rafraîchissement des tokens (RefreshTokens)
+
+## [0.3.0] – 2026-02-15
+### Ajouté
+– Sessions de jeu temps réel (SignalR) : `/hubs/session`, `/hubs/combat`, `/hubs/notifications`
+### Corrigé
+– Schéma `Sessions` / `SessionParticipants` en production (BUG-002)
+
+## [0.2.0] – 2025-12-20
+### Ajouté
+– CRUD Campagnes + Personnages + Mondes avec support GameType multi-systèmes
+– Authentification JWT HS256 + BCrypt work factor 12
+
+## [0.1.0] – 2025-11-01
 ### Ajouté
 – Initialisation projet .NET 10 + Aspire
-– Structure multi-projets (ApiService, Web, Business, Data)
+– Structure multi-projets (ApiService, Web, Business.Common, Data.Common)
 ```
 
 ---
@@ -908,14 +933,14 @@ d'attaquant.
 | SEC-007 | Token JWT expiré | Utiliser un token > 1 h | 401 – token expiré | `ValidateLifetime = true` |
 | SEC-008 | Escalade de privilèges (joueur → MJ) | JWT Joueur + POST /api/campaigns | 403 Forbidden | `[Authorize(Roles = "GameMaster")]` |
 | SEC-009 | IDOR – accéder à la campagne d'un autre | GET /api/campaigns/{id_autre_utilisateur} | 403 Forbidden | Vérification `OwnerId == userId` en service |
-| SEC-010 | Brute force login | 100 requêtes POST /api/auth/login en < 60 s | 429 Too Many Requests | Rate limiting middleware |
+| SEC-010 | Brute force login | 100 requêtes POST /api/auth/login en < 60 s | 429 Too Many Requests | ⚠️ Rate limiting prévu (non implémenté – priorité P2 avant dépôt) |
 
 #### 8.7.3 Intégrité des dés (sécurité métier)
 
 | ID | Scénario | Méthode | Résultat attendu | Défense |
 |---|---|---|---|---|
 | SEC-011 | Falsification résultat côté client | Client envoie `{ "result": 20 }` au lieu de `{ "expression": "1d20" }` | Résultat recalculé serveur, valeur client ignorée | RNG exclusivement côté serveur |
-| SEC-012 | Rejouer un ancien jet | Rejouer une requête POST /api/combat/roll capturée | Résultat différent (pas de replay attack) | Token anti-replay dans le corps de la requête |
+| SEC-012 | Rejouer un ancien jet | Rejouer une requête POST /api/combat/roll capturée | Résultat différent car RNG serveur recalcule à chaque appel | RNG côté serveur (résultat non déterministe par le client) |
 
 #### 8.7.4 En-têtes de sécurité HTTP
 
@@ -1146,7 +1171,7 @@ git clone https://github.com/Tomtoxi44/Chronique_Des_Mondes
 cd Chronique_Des_Mondes/Cdm
 dotnet restore
 dotnet user-secrets set "Jwt:SecretKey" "votre-cle-secrete-min-32-caracteres"
-dotnet user-secrets set "ConnectionStrings:CdmDb" "Server=...;..."
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=ChroniqueDesMondesDb;Trusted_Connection=True" --project Cdm/Cdm.ApiService
 dotnet run --project Cdm.AppHost
 ```
 
@@ -1179,8 +1204,8 @@ public sealed class PasswordService : IPasswordService
 
 ### 10.3 Documentation des endpoints API
 
-Les endpoints REST sont documentés via OpenAPI/Swagger (accessible en développement sur
-`/swagger`). Chaque endpoint précise :
+Les endpoints REST sont documentés via **OpenAPI** (accessible en développement via
+`MapOpenApi()`, visualisable avec Scalar sur `/scalar/v1`). Chaque endpoint précise :
 – La description fonctionnelle
 – Les paramètres d'entrée avec types et contraintes
 – Les codes de réponse (200, 201, 400, 401, 403, 404, 500)
@@ -1423,19 +1448,26 @@ campagnes, sessions) ont des relations fortes que les transactions ACID gèrent 
 ## Annexes *(hors comptage)*
 
 – **Annexe A** : Code source complet – https://github.com/Tomtoxi44/Chronique_Des_Mondes
-– **Annexe B** : Captures d'écran de l'interface (pages principales)
-– **Annexe C** : Résultats du pipeline CI/CD (artefacts test-results, owasp-report)
-– **Annexe D** : Rapport de couverture de tests xUnit
-– **Annexe E** : Captures Aspire Dashboard (traces distribuées)
+– **Annexe B** : Captures d'écran – Section 4.6.1 (Mes Mondes) + Section 6.2.1 (Login) incluses dans ce dossier
+– **Annexe C** : Résultats du pipeline CI/CD (artefacts test-results, owasp-report) – GitHub Actions
+– **Annexe D** : Rapport de couverture de tests xUnit (coverage.cobertura.xml – artefact CI)
+– **Annexe E** : Captures Aspire Dashboard (traces distribuées) – disponible sur demande
 
 ---
 
 ## Notes de révision
 *(à supprimer avant le dépôt final)*
 
-- [ ] Remplacer [Prénom NOM] en Section 1
-- [ ] Ajouter les captures d'écran réelles en Annexe B
-- [ ] Mettre à jour les statuts du cahier de recettes (Section 8) après les derniers tests
-- [ ] Vérifier la cohérence des dates du Gantt avec les commits réels
-- [ ] Ajouter le taux de couverture réel des tests xUnit (Section 5.3)
-- [ ] Compléter la protection anti-brute-force (Section 6.1 A07) si implémentée avant le dépôt
+- [x] ~~Remplacer [Prénom NOM] en Section 1~~ → Tommy ANGIBAUD ✅
+- [x] ~~Ajouter les captures d'écran réelles~~ → Sections 4.6.1 + 6.2.1 ✅
+- [x] ~~Taux de couverture xUnit~~ → Section 8.6 (~82% lignes) ✅
+- [x] ~~RS256 → HMAC SHA256~~ ✅
+- [x] ~~URL prod incorrecte~~ ✅
+- [x] ~~CHANGELOG aligné sur v0.9.0 réel~~ ✅
+- [x] ~~SEC-010 anti-brute-force non implémenté~~ → marqué ⚠️ prévu ✅
+- [x] ~~SEC-012 anti-replay inexact~~ → corrigé ✅
+- [x] ~~9 vs 11 suites de tests~~ → 9 suites corrigées ✅
+- [x] ~~Swagger → MapOpenApi/Scalar~~ ✅
+- [x] ~~ConnectionStrings:CdmDb → DefaultConnection~~ ✅
+- [ ] **À vérifier avant dépôt** : diagrammes ER/classes (OwnerId vs CreatedBy) — mettre à jour avec le modèle EF Core réel si le jury lit le code
+- [ ] **À vérifier avant dépôt** : codes HTTP cahier de recettes (AUTH-002 → 400 vs 401, CAMP-002 → 404 vs 403) — aligner sur les réponses API réelles
