@@ -1299,6 +1299,127 @@ personnage. À la reconnexion, le jeu reprend automatiquement là où vous vous 
 
 ---
 
+### 10.7 Justification des choix techniques (C2.4.1)
+
+Cette section documente les décisions d'architecture structurantes, les alternatives
+sérieusement étudiées et les raisons contextuelles qui ont guidé chaque choix. L'objectif
+n'est pas de défendre des décisions *a posteriori*, mais de laisser une trace lisible pour
+tout développeur qui rejoindrait le projet.
+
+---
+
+#### 10.7.1 Interface utilisateur – Blazor Server vs alternatives
+
+| Critère | **Blazor Server** ✅ | React / Angular | Blazor WebAssembly |
+|---|---|---|---|
+| Temps réel SignalR | Natif (connexion déjà ouverte) | Nécessite une lib tierce | Possible mais complexe |
+| Latence UI | < 50 ms (calcul serveur) | < 50 ms (calcul client) | 100–300 ms (WASM init) |
+| Taille bundle initial | Minimal (HTML pur) | 200–500 KB JS | 10+ MB WASM |
+| Sécurité (secrets) | Secrets restent serveur | Exposés côté client | Exposés côté client |
+| Maîtrise de l'équipe | C# / .NET natif | TypeScript requis | C# mais perf WASM |
+| CDN requis | Non | Oui (assets JS) | Oui (WASM bundle) |
+
+**Décision :** Blazor Server a été choisi car le projet repose fondamentalement sur SignalR
+(combat temps réel, notifications, état partagé). Avec Blazor Server, la connexion SignalR
+est déjà établie pour l'UI — il n'y a pas de seconde connexion à gérer. De plus, l'équipe
+maîtrise C# nativement, ce qui élimine le coût d'apprentissage TypeScript/React. Le seul
+inconvénient accepté : la dépendance à une connexion serveur permanente (gérée par la
+reconnexion automatique Blazor).
+
+---
+
+#### 10.7.2 Accès aux données – EF Core vs alternatives
+
+| Critère | **EF Core** ✅ | Dapper | ADO.NET brut |
+|---|---|---|---|
+| Productivité | Très haute (migrations auto) | Haute | Basse |
+| Performances | Très bonnes (requêtes paramétrées) | Excellentes | Excellentes |
+| Migrations | Intégrées (`dotnet ef migrations add`) | Manuelle (SQL scripts) | Manuelle |
+| Prévention SQL injection | Automatique (LINQ → paramètres) | Manuelle (requêtes SQL) | Manuelle |
+| Modélisation complexe | TPH, relations, navigation properties | Limité | Aucune abstraction |
+
+**Décision :** EF Core a été retenu pour deux raisons principales. D'abord, les migrations
+automatiques permettent de maintenir la cohérence entre le modèle C# et le schéma Azure SQL
+sans scripts SQL manuels — critique pour un projet solo avec déploiements fréquents. Ensuite,
+les attributs JSON (`CustomAttributes` des personnages) nécessitent une modélisation complexe
+(TPH, propriétés navigation) que Dapper ne gère pas nativement. Dapper serait préféré dans
+un contexte à fort volume (> 10 000 req/s) où chaque microseconde compte.
+
+---
+
+#### 10.7.3 Temps réel – SignalR vs alternatives
+
+| Critère | **SignalR** ✅ | WebSockets bruts | Server-Sent Events | Polling HTTP |
+|---|---|---|---|---|
+| Reconnexion auto | ✅ Intégrée | ❌ Manuelle | Partielle | N/A |
+| Fallback (proxy, firewall) | ✅ Long-polling auto | ❌ Bloqué | Partiel | ✅ |
+| Groupes / rooms | ✅ Natif | ❌ Codé à la main | ❌ | ❌ |
+| Intégration .NET | ✅ Native | Moyenne | Bonne | Bonne |
+| Bidirectionnel | ✅ | ✅ | ❌ (serveur → client) | ❌ |
+
+**Décision :** SignalR a été choisi car il résout les trois problèmes du combat temps réel
+simultanément : reconnexion automatique (joueur qui perd le Wi-Fi), groupes par session
+(`Combat-{id}`) et fallback Long-polling pour les environnements derrière proxy d'entreprise.
+Un WebSocket brut aurait exigé de réécrire toute cette infrastructure. Les Server-Sent Events
+ont été écartés car ils ne permettent pas au joueur d'envoyer des actions vers le serveur.
+
+---
+
+#### 10.7.4 Authentification – JWT vs alternatives
+
+| Critère | **JWT (Bearer)** ✅ | Sessions HTTP (cookie) | OAuth2 / EntraID |
+|---|---|---|---|
+| Stateless | ✅ (scalabilité) | ❌ (état côté serveur) | ✅ |
+| Compatible SignalR | ✅ (query string `?access_token=`) | Partiel | Complexe |
+| Contrôle des claims | ✅ Total | Partiel | Limité |
+| Complexité initiale | Moyenne | Faible | Élevée |
+| Dépendance externe | Aucune | Aucune | Azure AD (payant au-delà du tier gratuit) |
+
+**Décision :** JWT stateless est indispensable pour SignalR — les WebSockets ne supportent
+pas les cookies de session HTTP. L'authentification par cookie aurait nécessité un store de
+sessions partagé entre les deux services (Web + API), ajoutant une dépendance Redis. OAuth2
+(EntraID) a été évalué mais écarté car il introduit une dépendance externe payante non
+justifiée pour un projet personnel.
+
+---
+
+#### 10.7.5 Hachage des mots de passe – BCrypt vs alternatives
+
+| Critère | **BCrypt (WF 12)** ✅ | Argon2id | PBKDF2 |
+|---|---|---|---|
+| Résistance GPU | Excellente | Excellente | Moyenne |
+| Support .NET natif | Via NuGet (`BCrypt.Net-Next`) | Via NuGet | Natif (`Rfc2898DeriveBytes`) |
+| Recommandation OWASP | ✅ (si WF ≥ 10) | ✅ (préféré 2024) | ✅ (si iter ≥ 600 000) |
+| Temps de hachage WF 12 | ~250 ms | ~300 ms (config par défaut) | Variable |
+| Adoption dans l'écosystème | Très répandue | Croissante | Répandue |
+
+**Décision :** BCrypt WF 12 a été choisi comme compromis éprouvé : recommandé par OWASP,
+largement supporté, et ~250 ms de hachage rend toute attaque par force brute non viable
+(4 tentatives/seconde maximum). Argon2id est théoriquement supérieur (vainqueur Password
+Hashing Competition 2015) mais moins mature dans l'écosystème .NET au moment du choix.
+La migration vers Argon2id est prévue comme amélioration future.
+
+---
+
+#### 10.7.6 Base de données – SQL Server vs alternatives
+
+| Critère | **SQL Server (LocalDB / Azure SQL)** ✅ | PostgreSQL | MongoDB |
+|---|---|---|---|
+| Intégration Azure | Native (Azure SQL) | Possible (Azure DB for PostgreSQL) | Possible (Cosmos DB) |
+| EF Core support | Excellent | Excellent | Limité |
+| Coût Azure (tier S1) | ~15 €/mois | ~25 €/mois | Variable |
+| JSON natif | Oui (nvarchar JSON) | Oui (jsonb, plus performant) | Natif |
+| Transactions ACID | ✅ | ✅ | Partiel |
+
+**Décision :** SQL Server a été retenu pour son intégration native avec l'écosystème Azure
+(Azure SQL Database, Managed Identity, backups automatiques) et le coût minimal en tier S1.
+PostgreSQL aurait été préférable pour les colonnes JSON (jsonb est plus performant que
+nvarchar JSON de SQL Server), mais le coût supérieur sur Azure et la maîtrise moindre de
+l'équipe ont été déterminants. MongoDB a été écarté : les données de jeu de rôle (personnages,
+campagnes, sessions) ont des relations fortes que les transactions ACID gèrent naturellement.
+
+---
+
 ## Annexes *(hors comptage)*
 
 – **Annexe A** : Code source complet – https://github.com/Tomtoxi44/Chronique_Des_Mondes
