@@ -1,0 +1,68 @@
+@implements IDisposable
+@inject Cdm.Web.Services.ToastService Toast
+
+<div class="toast-container" aria-live="polite" aria-atomic="false" role="status">
+    @foreach (var toast in Toast.Toasts)
+    {
+        <div class="toast-item toast-@toast.Type.ToString().ToLower()"
+             role="alert"
+             aria-label="@toast.Message">
+            <div class="toast-icon">
+                <i class="bi @GetIcon(toast.Type)"></i>
+            </div>
+            <div class="toast-body">
+                @if (!string.IsNullOrEmpty(toast.Title))
+                {
+                    <div class="toast-title">@toast.Title</div>
+                }
+                <div class="toast-message">@toast.Message</div>
+            </div>
+            <button class="toast-close" @onclick="() => Toast.Dismiss(toast.Id)"
+                    aria-label="Fermer la notification">
+                <i class="bi bi-x"></i>
+            </button>
+            <div class="toast-progress" style="animation-duration: @(toast.DurationMs)ms"></div>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly HashSet<Guid> _scheduled = [];
+
+    protected override void OnInitialized()
+        => Toast.OnChange += HandleChange;
+
+    private void HandleChange()
+    {
+        InvokeAsync(() =>
+        {
+            // Schedule auto-dismiss only for toasts not yet scheduled
+            foreach (var toast in Toast.Toasts.ToList())
+            {
+                if (_scheduled.Add(toast.Id))
+                {
+                    _ = AutoDismissAsync(toast);
+                }
+            }
+            StateHasChanged();
+        });
+    }
+
+    private async Task AutoDismissAsync(ToastMessage toast)
+    {
+        await Task.Delay(toast.DurationMs);
+        Toast.Dismiss(toast.Id);
+    }
+
+    private static string GetIcon(ToastType type) => type switch
+    {
+        ToastType.Success => "bi-check-circle-fill",
+        ToastType.Error   => "bi-x-circle-fill",
+        ToastType.Warning => "bi-exclamation-triangle-fill",
+        ToastType.Info    => "bi-info-circle-fill",
+        _                 => "bi-bell-fill"
+    };
+
+    public void Dispose()
+        => Toast.OnChange -= HandleChange;
+}

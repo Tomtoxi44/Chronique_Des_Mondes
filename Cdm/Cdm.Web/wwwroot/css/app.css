@@ -11,6 +11,7 @@
 @import url('layouts/layout-shell.css');
 @import url('layouts/auth-layout.css');
 @import url('components/components.css');
+@import url('components/toasts.css');
 
 /* ============================================
    ACCESSIBILITE – RGAA
