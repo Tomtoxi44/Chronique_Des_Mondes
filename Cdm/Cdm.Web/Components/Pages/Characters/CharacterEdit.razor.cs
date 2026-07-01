@@ -37,7 +37,7 @@ public partial class CharacterEdit
             Model = new UpdateCharacterDto
             {
                 Name = Character.Name,
-                FirstName = Character.FirstName,
+                FirstName = Character.FirstName ?? string.Empty,
                 Description = Character.Description,
                 Age = Character.Age,
                 AvatarUrl = Character.AvatarUrl
