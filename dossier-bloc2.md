@@ -303,6 +303,36 @@ type de jeu, appliqué dynamiquement à chaque navigation. L'architecture prése
 est le résultat de ces itérations successives, depuis le prototype initial jusqu'à la version
 en production aujourd'hui.
 
+### 4.0 User Stories – Backlog représentatif
+
+Les fonctionnalités ont été formalisées en User Stories selon la convention
+*"En tant que… je veux… afin de…"*. Le backlog complet est accessible sur GitHub
+(issues #38 à #50). Le tableau ci-dessous présente un sous-ensemble représentatif des
+4 epics principaux :
+
+| N° | Titre | Epic | SP | Statut |
+|---|---|---|---|---|
+| US-001 | Inscription utilisateur (BCrypt WF12) | Auth | 5 | ✅ Terminé |
+| US-002 | Connexion utilisateur (JWT) | Auth | 5 | ✅ Terminé |
+| US-006 | Gestion des rôles MJ / Joueur | Auth | 3 | ✅ Terminé |
+| US-011 | Création de campagne | Campagnes | 5 | 🔄 En cours |
+| US-013 | Liste des campagnes (dashboard) | Campagnes | 3 | 🔄 En cours |
+| US-015 | Invitation de joueurs (code 48h) | Campagnes | 5 | 📝 Planifié |
+| US-018 | Lancement d'une session (SignalR) | Sessions | 5 | 📝 Planifié |
+| US-023 | Création de personnage générique | Personnages | 5 | 📝 Planifié |
+| US-025 | Liste et gestion de mes personnages | Personnages | 3 | 📝 Planifié |
+| US-032 | Déclenchement d'un combat (MJ) | Combat | 5 | 📝 Planifié |
+| US-034 | Gestion des tours (SignalR) | Combat | 8 | 📝 Planifié |
+| US-036 | Lanceur de dés côté serveur | Combat | 8 | 📝 Planifié |
+| US-049 | Fiche personnage D&D 5e | D&D 5e | 8 | 📝 Planifié |
+
+**Total backlog représentatif** : 13 US · 68 story points · 4 épics
+
+> *Le backlog complet est disponible dans le dépôt GitHub du projet :
+> `.github/backlog/` (50+ User Stories structurées par epic)*
+
+---
+
 ### 4.1 Architecture applicative (niveau Conteneurs – modèle C4)
 
 ```mermaid
@@ -478,6 +508,27 @@ Les éléments d'ergonomie principaux sont :
 – Notifications temps réel (invitations de session) via SignalR avec toast visuel
 – Mode sombre / mode clair mémorisé dans `localStorage`
 – Interface responsive avec menu mobile adaptatif
+
+#### 4.6.1 Capture d'écran – Dashboard "Mes Mondes"
+
+La page ci-dessous est la page d'accueil principale après connexion. Elle illustre plusieurs
+décisions d'architecture UX : la **navigation latérale contextuelle** (Accueil, Mondes,
+Personnages, Sessions), les **cartes de monde** avec leur badge de système de jeu
+(Générique, Cyberpunk, D&D 5e), et le bouton d'action primaire "Créer un monde" en position
+haute-droite selon les conventions Material Design.
+
+On peut y voir en production les trois univers de jeu créés lors des tests :
+**Test** (Générique – 2 campagnes), **Cyber** (Cyberpunk – 1 campagne), **D&D TEST**
+(D&D 5e – 2 campagnes). Chaque carte affiche le nombre de campagnes et de personnages
+associés, permettant au MJ d'avoir un aperçu rapide avant de naviguer.
+
+![Dashboard Mes Mondes – Chronique des Mondes en production](docs/screenshots/screen-mes-mondes.png)
+
+*Figure 1 – Page "Mes Mondes" sur `app-chronique-des-mondes-web.azurewebsites.net` –
+thème sombre, navigation latérale, cards par système de jeu*
+
+> **Note jury** : D'autres captures (page de connexion, détail campagne, interface de combat)
+> peuvent être fournies sur demande ou sont disponibles à l'URL de production ci-dessus.
 
 ---
 
