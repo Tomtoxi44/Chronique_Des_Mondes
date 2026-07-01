@@ -194,31 +194,7 @@ J'ai configuré les pipelines dès la Phase 1, avant même d'avoir du code méti
 
 [SCHEMA — Gantt phases de développement]
 
-```mermaid
-gantt
-    title Phases de Developpement – Chronique des Mondes
-    dateFormat YYYY-MM-DD
-    axisFormat %b %Y
-
-    section Phase 1 – Architecture
-    Setup Aspire + CI/CD               :done, 2025-10-01, 18d
-    Authentification JWT               :done, 2025-10-20, 6d
-
-    section Phase 2 – Backend Core
-    CRUD Campagnes et Personnages      :done, 2025-11-01, 18d
-    Combat cote serveur                :done, 2025-11-25, 12d
-    Tests unitaires xUnit              :done, 2025-12-20, 8d
-
-    section Phase 3 – Frontend Blazor
-    Layout navigation et UI            :done, 2026-02-01, 4d
-    Pages metier et SignalR            :done, 2026-02-06, 28d
-    Tests Playwright et RGAA           :done, 2026-03-20, 8d
-
-    section Phase 4 – Qualite
-    Documentation technique            :done, 2026-05-01, 6d
-    Audit securite OWASP               :done, 2026-05-13, 4d
-    Deploiement et preparation         :done, 2026-05-19, 12d
-```
+![Diagramme](docs/diagrams/diagram_0.png)
 
 #### 3.3.3 Pipeline d'intégration continue (ci.yml)
 
@@ -332,171 +308,23 @@ représentatif des 4 épics principaux :
 
 ### 4.1 Architecture applicative (niveau Conteneurs – modèle C4)
 
-```mermaid
-graph TB
-    Browser["Navigateur Web"]
-
-    subgraph Aspire["Orchestration .NET 10 – Aspire AppHost"]
-        Web["Cdm.Web – Blazor Server :5001"]
-        API["Cdm.ApiService – REST + SignalR :5000"]
-        Mig["Cdm.MigrationsManager – EF Core"]
-    end
-
-    subgraph Persistance["Persistance"]
-        DB[("SQL Server")]
-    end
-
-    subgraph Infra["Infrastructure"]
-        GH["GitHub Actions – CI/CD"]
-        ASPD["Aspire Dashboard – :17223"]
-    end
-
-    Browser -->|"HTTP + WebSocket"| Web
-    Web -->|"HTTP REST"| API
-    Web -->|"SignalR"| API
-    API -->|"EF Core 10"| DB
-    Mig -->|"migrations"| DB
-    GH -->|"deploiement"| API
-    API -.->|"metriques"| ASPD
-    Web -.->|"logs"| ASPD
-```
+![Diagramme](docs/diagrams/diagram_1.png)
 
 ### 4.2 Flux d'authentification (diagramme de séquence)
 
-```mermaid
-sequenceDiagram
-    participant U as Utilisateur
-    participant W as Blazor Server
-    participant A as ApiService
-    participant DB as SQL Server
-
-    U->>W: Saisie email et mot de passe
-    W->>A: POST /api/auth/login
-    A->>DB: SELECT user WHERE email = ?
-    DB-->>A: UserEntity
-    Note over A: BCrypt.Verify – work factor 12
-    A->>A: Generer JWT HS256 – expiration 1 h
-    A-->>W: 200 OK – access_token + refresh_token
-    W-->>U: Cookie securise et redirection dashboard
-    Note over W,A: Requetes suivantes avec Authorization Bearer
-```
+![Diagramme](docs/diagrams/diagram_2.png)
 
 ### 4.3 Modèle de données – domaine Campagnes (diagramme de classes)
 
-```mermaid
-classDiagram
-    class Campaign {
-        +int Id
-        +string Name
-        +GameType GameType
-        +bool IsActive
-        +int OwnerId
-    }
-    class GameType {
-        <<enumeration>>
-        Generic
-        DnD5e
-        Pathfinder
-        CallOfCthulhu
-    }
-    class GameSession {
-        +int Id
-        +SessionStatus Status
-        +int CampaignId
-        +DateTime StartedAt
-    }
-    class SessionStatus {
-        <<enumeration>>
-        Pending
-        Active
-        Ended
-    }
-    Campaign "1" --> "*" GameSession
-    Campaign --> GameType
-    GameSession --> SessionStatus
-```
+![Diagramme](docs/diagrams/diagram_3.png)
 
 ### 4.4 Schéma Entité-Relation (base de données)
 
-```mermaid
-erDiagram
-    USERS {
-        int Id PK
-        string Email UK
-        string PasswordHash
-        string Role
-        datetime CreatedAt
-    }
-    CAMPAIGNS {
-        int Id PK
-        string Name
-        string GameType
-        int CreatedBy FK
-        int WorldId FK
-        datetime CreatedAt
-    }
-    CHARACTERS {
-        int Id PK
-        string Name
-        nvarchar AttributesJson
-        int UserId FK
-        datetime CreatedAt
-    }
-    WORLDS {
-        int Id PK
-        string Name
-        string GameType
-        int CreatedBy FK
-    }
-    SESSIONS {
-        int Id PK
-        int Status
-        int CampaignId FK
-        int StartedById FK
-        datetime StartedAt
-        datetime EndedAt
-    }
-    COMBAT_ACTIONS {
-        int Id PK
-        string DiceType
-        int Count
-        nvarchar Results
-        int Total
-        int ChapterId FK
-        int UserId FK
-        datetime RolledAt
-    }
-
-    USERS ||--o{ CAMPAIGNS : "cree (CreatedBy)"
-    USERS ||--o{ CHARACTERS : "possede (UserId)"
-    USERS ||--o{ SESSIONS : "lance (StartedById)"
-    USERS ||--o{ WORLDS : "cree (CreatedBy)"
-    WORLDS ||--o{ CAMPAIGNS : "contient"
-    CAMPAIGNS ||--o{ SESSIONS : "heberge"
-    SESSIONS ||--o{ COMBAT_ACTIONS : "enregistre"
-```
+![Diagramme](docs/diagrams/diagram_4.png)
 
 ### 4.5 Machine d'états – Système de combat SignalR
 
-```mermaid
-stateDiagram-v2
-    [*] --> Inactif
-    Inactif --> Initialisation : MJ lance le combat
-    Initialisation --> EnAttente : Initiatives calculees
-    EnAttente --> TourJoueur : Ordre etabli
-    TourJoueur --> ActionEnCours : Joueur choisit
-    ActionEnCours --> JetDeDe : Jet requis
-    ActionEnCours --> TourJoueur : Sans jet de de
-    JetDeDe --> CalcServeur : RNG cote serveur
-    CalcServeur --> BroadcastSignalR : Resultat calcule
-    BroadcastSignalR --> TourJoueur : Tour suivant
-    TourJoueur --> Suspendu : Joueur deconnecte
-    Suspendu --> TourJoueur : Reconnexion reussie
-    Suspendu --> Abandonne : Timeout 5 min
-    TourJoueur --> Termine : Condition de fin atteinte
-    Abandonne --> [*]
-    Termine --> [*]
-```
+![Diagramme](docs/diagrams/diagram_5.png)
 
 ### 4.6 Ergonomie et prototype
 
