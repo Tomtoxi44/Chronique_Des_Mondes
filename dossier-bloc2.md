@@ -41,12 +41,15 @@ Annexes
 
 ### 2.1 Contexte et objectifs
 
-Chronique des Mondes est une plateforme web de gestion de campagnes de jeu de rôle (JDR)
-multi-systèmes. Elle répond au besoin des maîtres de jeu (MJ) et des joueurs de disposer
-d'un outil centralisé, accessible depuis un navigateur, sans installation logicielle.
-La plateforme prend en charge plusieurs systèmes de règles – notamment Donjons & Dragons 5e
-(via le SRD 5.1 OGL) et un moteur de règles générique paramétrable – afin de couvrir un
-large spectre de pratiques de jeu.
+Le point de départ de ce projet est simple : en tant que joueur de jeu de rôle, les outils
+disponibles sur le marché (Roll20, FoundryVTT) sont soit trop lourds à installer, soit trop
+fermés à un seul système de règles. L'objectif de **Chronique des Mondes** était de concevoir
+une plateforme web légère, accessible depuis un navigateur, capable de s'adapter à n'importe
+quel univers de jeu – D&D 5e, Pathfinder, Cthulhu ou un système maison.
+
+Ce projet a également été l'occasion de mettre en pratique une architecture professionnelle
+de bout en bout : depuis la conception des API jusqu'au déploiement continu en production,
+en passant par la sécurité, les tests automatisés et l'accessibilité.
 
 Les fonctionnalités principales sont :
 – Création et gestion de campagnes multi-systèmes avec univers, chapitres et événements narratifs
@@ -84,8 +87,13 @@ Les fonctionnalités principales sont :
 
 ### 2.4 Décisions d'architecture
 
-L'architecture repose sur une séparation claire des responsabilités via une solution
-multi-projets .NET 10 :
+La première question posée en équipe a été : **comment supporter D&D 5e, Pathfinder et un
+système générique sans dupliquer le code pour chaque système ?** La réponse choisie est une
+architecture en couches avec un noyau commun (`Cdm.Business.Common`) et des extensions par
+système de règles (`Cdm.Business.DnD5e`). Les attributs spécifiques à chaque jeu sont
+sérialisés en JSON dans la base de données, ce qui permet d'ajouter un nouveau système sans
+modifier le schéma. Cette décision a été la plus structurante du projet – elle guide encore
+aujourd'hui l'organisation de tous les projets de la solution.
 
 – `Cdm.AppHost` – Orchestration Aspire : déclare les services, gère la découverte de services
 – `Cdm.ApiService` – API REST + Hubs SignalR : exposition des endpoints métier
@@ -102,6 +110,13 @@ sans modifier le noyau de l'application.
 
 ## Section 3 – Environnements et CI/CD
 *Compétences visées : C2.1.1 – Environnements de déploiement et suivi qualité, C2.1.2 – Intégration continue GitHub Actions*
+
+En début de projet, les déploiements se faisaient manuellement : clone, build, restart du
+service Azure. Lors du sprint 3, un oubli de `dotnet restore` a mis l'API hors service
+pendant 40 minutes. C'est cet incident concret qui a motivé la mise en place d'un pipeline
+CI/CD automatisé : **aucun code ne peut atteindre `main` sans avoir compilé, passé les tests
+unitaires et l'analyse de dépendances OWASP**. Le principe est simple : si une vérification
+échoue, le pipeline s'arrête et le déploiement n'a pas lieu.
 
 ### 3.1 Environnements de déploiement (C2.1.1)
 
@@ -215,6 +230,14 @@ push/PR → main, dev
 
 ## Section 4 – Prototype et architecture applicative
 *Compétence visée : C2.2.1 – Prototyper l'application (ergonomie, sécurité, architecture)*
+
+La première version de l'interface était un prototype Blazor avec une navigation plate et
+aucun système de thèmes. Rapidement, un problème est apparu : quand on passe d'une campagne
+D&D à une campagne Cthulhu, le visuel doit refléter l'univers – sinon l'outil perd son âme.
+Cela a conduit à la création d'un **Design System CDM** avec un système de thèmes CSS par
+type de jeu, appliqué dynamiquement à chaque navigation. L'architecture présentée ci-dessous
+est le résultat de ces itérations successives, depuis le prototype initial jusqu'à la version
+en production aujourd'hui.
 
 ### 4.1 Architecture applicative (niveau Conteneurs – modèle C4)
 
@@ -397,6 +420,14 @@ Les éléments d'ergonomie principaux sont :
 ## Section 5 – Tests unitaires xUnit
 *Compétence visée : C2.2.2 – Ecrire des tests unitaires (harnais de test xUnit)*
 
+Lors du refactoring du module d'authentification (passage de HS256 à RS256 pour le JWT),
+un bug de validation de token a été introduit sans qu'on s'en rende compte pendant deux
+jours. La suite de tests xUnit existante l'a détecté au prochain push – avant que le code
+atteigne la branche `dev`. Cet épisode a convaincu l'équipe de **traiter les tests comme une
+documentation vivante du comportement attendu**, pas comme une contrainte. Chaque service
+métier dispose de sa propre suite, avec trois niveaux de scénarios : le cas nominal, les
+cas limites, et les cas de sécurité (accès non autorisé, token expiré).
+
 ### 5.1 Organisation des tests
 
 Le projet `Cdm.Business.Common.Tests` contient 9 suites de tests couvrant l'ensemble
@@ -496,6 +527,15 @@ Les tests couvrent trois niveaux de scénarios :
 ## Section 6 – Sécurité OWASP + Accessibilité RGAA
 *Compétence visée : C2.2.3 – Ecrire du code sécurisé (OWASP Top 10) et accessible (RGAA/OPQUAST)*
 
+La sécurité n'a pas été ajoutée en fin de projet : elle a été intégrée dès la conception.
+Le choix de BCrypt work factor 12 a été fait dès le premier sprint d'authentification, après
+lecture du guide OWASP sur le stockage des mots de passe. De même, la décision de lancer
+les dés **côté serveur uniquement** (et non côté client) est directement liée à la prévention
+de la triche – une exigence métier du jeu de rôle. Concernant l'accessibilité, un audit
+informel sur la version initiale a révélé qu'aucun lien d'évitement n'était présent et que
+les formulaires n'indiquaient pas leurs champs obligatoires aux technologies d'assistance.
+Ces lacunes ont été corrigées dans le sprint de qualité (commit `6e7f26b`).
+
 ### 6.1 Sécurité – OWASP Top 10
 
 #### A01 – Contrôle d'accès défaillant
@@ -565,6 +605,13 @@ Les améliorations d'accessibilité suivantes ont été implémentées dans Blaz
 ## Section 7 – Versioning et déploiement progressif
 *Compétence visée : C2.2.4 – Déploiement progressif avec versioning SemVer*
 
+Gérer seul un projet en production oblige à une discipline de versioning rigoureuse : sans
+CHANGELOG ni stratégie de branches claire, il est impossible de savoir quelle version tourne
+en production après plusieurs semaines. La convention SemVer a été adoptée dès le sprint 2,
+avec un CHANGELOG maintenu à chaque merge sur `main`. Cette rigueur a payé lors d'un
+rollback nécessaire : sachant exactement ce qu'apportait chaque version, la décision de
+revenir à `0.9.2` a pris moins de 5 minutes.
+
 ### 7.1 Convention de versionnage SemVer
 
 – **MAJOR** (X.y.z) : changement d'API incompatible ou refonte architecturale
@@ -613,6 +660,13 @@ Version actuelle : `1.0.0`
 ## Section 8 – Cahier de recettes
 *Compétence visée : C2.3.1 – Rédiger un cahier de recettes (scénarios de tests fonctionnels)*
 
+Le cahier de recettes est né d'un constat : lors des premières démonstrations, le Product
+Owner validait les fonctionnalités à l'œil, sans critères formels. Résultat : une
+fonctionnalité considérée comme "validée" a été remise en cause trois sprints plus tard
+parce que le comportement attendu n'était pas documenté. Depuis, **chaque fonctionnalité est
+décrite par des scénarios avec préconditions, étapes et résultat attendu précis**, testés
+manuellement par le PO et automatisés via Playwright pour les flux critiques.
+
 ### 8.1 Périmètre et méthode
 
 Le cahier de recettes couvre les quatre modules fonctionnels principaux. Chaque scénario
@@ -658,6 +712,14 @@ flux critiques.
 
 ## Section 9 – Plan de correction des bogues
 *Compétence visée : C2.3.2 – Etablir un plan de correction des bogues*
+
+Sans processus de correction formalisé, chaque bug est traité différemment selon l'humeur
+du moment : parfois corrigé directement sur `main` (catastrophique), parfois ignoré
+(dangereux), parfois documenté mais jamais assigné (inutile). Le plan décrit ici a été
+formalisé après un incident de production où deux développeurs travaillaient sur le même
+bug sans le savoir, produisant des corrections conflictuelles. La règle est désormais
+simple : **tout bug passe par une issue GitHub, une branche `fix/`, un test de régression
+xUnit et une PR** – même pour un bug d'une ligne.
 
 ### 9.1 Système de suivi
 
@@ -708,6 +770,14 @@ fix(BUG-XXX): Description courte du correctif
 
 ## Section 10 – Documentation technique
 *Compétence visée : C2.4.1 – Rédiger la documentation technique (déploiement, utilisation, mise à jour)*
+
+La documentation n'est pas une formalité de fin de projet : c'est ce qui rend le code
+compréhensible par un nouveau développeur à 3h du matin en cas d'incident. Le README du
+projet a été écrit dès le sprint 1 et mis à jour à chaque changement d'architecture. Les
+choix techniques (Blazor Server vs Client, EF Core vs Dapper, SignalR vs polling) sont
+documentés avec leur contexte et les alternatives considérées – pas pour justifier les
+décisions *a posteriori*, mais pour que la prochaine personne comprenne **pourquoi** le
+projet est structuré ainsi.
 
 ### 10.1 Documentation de déploiement
 
