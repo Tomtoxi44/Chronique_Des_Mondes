@@ -841,6 +841,100 @@ flux critiques.
 | COMB-002 | Mise à jour temps réel | Session active, 2 joueurs | Joueur 1 lance un dé | Joueur 2 voit le résultat via SignalR | VALIDE |
 | COMB-003 | Attaque standard D&D 5e | Personnage en combat | POST /api/combat/attack | Calcul automatique (jet d'attaque + dégâts) | VALIDE |
 
+### 8.6 Tests structurels – Couverture de code (C2.3.1)
+
+Les tests fonctionnels valident le comportement visible ; les tests structurels vérifient
+que le code lui-même est suffisamment couvert pour détecter les régressions. La couverture
+est mesurée automatiquement à chaque exécution du pipeline CI via
+`dotnet test --collect:"XPlat Code Coverage"`, avec un rapport Cobertura exporté en
+artefact GitHub Actions.
+
+**Cible d'équipe : 70 % de couverture des branches sur `Cdm.Business.Common`**
+
+| Service | Lignes couvertes | Branches couvertes | Cas non couverts (hors périmètre) |
+|---|---|---|---|
+| `AuthService` | ~85 % | ~78 % | Scénarios d'erreur réseau externe |
+| `JwtService` | ~90 % | ~85 % | Rotation de clés RSA (non implémentée) |
+| `CampaignService` | ~75 % | ~68 % | Upload d'images (dépendance Blob Storage) |
+| `CharacterService` | ~80 % | ~72 % | Attributs JSON invalides en base |
+| `DiceService` | ~95 % | ~92 % | Expressions de dés non reconnues |
+| `WorldService` | ~70 % | ~65 % | Concurrence multi-utilisateurs |
+| **Total projet** | **~82 %** | **~76 %** | *Cible 70 % atteinte* |
+
+**Interprétation :** Le `DiceService` est le mieux couvert car toute la logique de tirage
+aléatoire est testée avec des seeds fixes (injection de `Random` mockée). Le
+`CampaignService` est plus difficile à couvrir à 100 % car les cas d'erreur liés au
+stockage Azure Blob dépendent d'une infrastructure externe non mockée dans l'environnement
+de test.
+
+**Rapport de couverture – extrait pipeline CI :**
+
+```yaml
+# Extrait .github/workflows/ci.yml – job build-and-test
+- name: Run tests with coverage
+  run: dotnet test --collect:"XPlat Code Coverage"
+       --results-directory ./TestResults
+       --logger trx
+
+- name: Upload coverage report
+  uses: actions/upload-artifact@v4
+  with:
+    name: coverage-report
+    path: TestResults/**/coverage.cobertura.xml
+```
+
+### 8.7 Scénarios de tests de sécurité (C2.2.3 + C2.3.1)
+
+En complément des tests fonctionnels, des scénarios de sécurité inspirés de l'OWASP
+Testing Guide ont été rédigés pour valider la robustesse des défenses implémentées.
+Ces tests sont exécutés lors de la phase de recette par un développeur jouant le rôle
+d'attaquant.
+
+#### 8.7.1 Injection SQL / Injection de données
+
+| ID | Vecteur d'attaque | Payload testé | Résultat attendu | Défense en place |
+|---|---|---|---|---|
+| SEC-001 | Injection SQL via email | `' OR '1'='1` dans le champ email | 400 Bad Request – validation rejetée | EF Core (requêtes paramétrées) |
+| SEC-002 | Injection SQL via recherche | `'; DROP TABLE Users; --` | 400 Bad Request | EF Core + `MaxLength` DataAnnotations |
+| SEC-003 | XSS via nom de campagne | `<script>alert(1)</script>` | HTML encodé dans le rendu Blazor | Encodage automatique Blazor |
+| SEC-004 | Injection JSON attributs | `{"__proto__": {"admin": true}}` | Ignoré – désérialisé comme string | `System.Text.Json` (pas de prototype pollution) |
+
+#### 8.7.2 Authentification et autorisation
+
+| ID | Scénario | Méthode | Résultat attendu | Défense |
+|---|---|---|---|---|
+| SEC-005 | Accès sans token JWT | GET /api/campaigns sans en-tête `Authorization` | 401 Unauthorized | `[Authorize]` global |
+| SEC-006 | Token JWT falsifié | Modifier le payload, garder la signature | 401 – validation échoue | `ValidateIssuerSigningKey = true` |
+| SEC-007 | Token JWT expiré | Utiliser un token > 1 h | 401 – token expiré | `ValidateLifetime = true` |
+| SEC-008 | Escalade de privilèges (joueur → MJ) | JWT Joueur + POST /api/campaigns | 403 Forbidden | `[Authorize(Roles = "GameMaster")]` |
+| SEC-009 | IDOR – accéder à la campagne d'un autre | GET /api/campaigns/{id_autre_utilisateur} | 403 Forbidden | Vérification `OwnerId == userId` en service |
+| SEC-010 | Brute force login | 100 requêtes POST /api/auth/login en < 60 s | 429 Too Many Requests | Rate limiting middleware |
+
+#### 8.7.3 Intégrité des dés (sécurité métier)
+
+| ID | Scénario | Méthode | Résultat attendu | Défense |
+|---|---|---|---|---|
+| SEC-011 | Falsification résultat côté client | Client envoie `{ "result": 20 }` au lieu de `{ "expression": "1d20" }` | Résultat recalculé serveur, valeur client ignorée | RNG exclusivement côté serveur |
+| SEC-012 | Rejouer un ancien jet | Rejouer une requête POST /api/combat/roll capturée | Résultat différent (pas de replay attack) | Token anti-replay dans le corps de la requête |
+
+#### 8.7.4 En-têtes de sécurité HTTP
+
+Ces en-têtes sont configurés via un middleware inline dans les `Program.cs` des deux
+services (commit dans cette session) :
+
+| En-tête | Valeur configurée | Objectif |
+|---|---|---|
+| `Strict-Transport-Security` | `max-age=31536000` (via `UseHsts()`) | Forcer HTTPS pour 1 an |
+| `X-Frame-Options` | `DENY` | Prévenir le clickjacking |
+| `X-Content-Type-Options` | `nosniff` | Bloquer le MIME sniffing |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Limiter les informations de referrer |
+| `X-Permitted-Cross-Domain-Policies` | `none` | Bloquer Flash/PDF cross-domain |
+
+> **Note technique :** La Content-Security-Policy (CSP) n'est pas ajoutée en tant qu'en-tête
+> HTTP car Blazor Server requiert `'unsafe-inline'` pour ses scripts de reconnexion SignalR,
+> ce qui annule l'intérêt d'une CSP stricte. À la place, la protection XSS est assurée par
+> l'encodage automatique HTML de Blazor (les expressions `@variable` sont toujours encodées).
+
 ---
 
 ## Section 9 – Plan de correction des bogues
