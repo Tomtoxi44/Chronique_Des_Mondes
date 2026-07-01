@@ -703,6 +703,24 @@ Les améliorations d'accessibilité suivantes ont été implémentées dans Blaz
 | **4.1** | 1.1.1 Non-text Content | Attributs `alt` sur toutes les images |
 | **10.1** | 1.3.1 Info + Relationships | `role="alert"` sur les messages d'erreur de formulaire |
 
+#### 6.2.1 Capture d'écran – Page de connexion (RGAA appliqué)
+
+La page de connexion illustre directement les critères RGAA implémentés :
+– Les labels "Adresse e-mail" et "Mot de passe" sont explicites et associés à leur champ
+  via `<label for="...">` (critère RGAA 11.1)
+– Les champs portent `aria-required="true"` et `aria-describedby` pointant vers leur
+  `ValidationMessage` (critères 11.10 et 11.13)
+– Le lien "Inscription" en bas du formulaire a un intitulé de lien compréhensible
+  hors contexte (critère 6.1)
+– Le contraste texte blanc sur fond bleu foncé (#1e1b4b) dépasse le ratio 4.5:1
+  requis par le critère RGAA 3.2 / WCAG 1.4.3
+
+![Page de connexion – Chronique des Mondes](docs/screenshots/screen-login.png)
+
+*Figure 2 – Page `/login` en production : formulaire accessible, thème sombre, labels
+explicites, lien d'inscription. Les attributs `aria-required` et `aria-describedby`
+sont présents dans le DOM mais invisibles visuellement.*
+
 **Extrait de code illustratif (`Login.razor`) :**
 
 ```razor
