@@ -62,13 +62,11 @@ Les fonctionnalités principales sont :
 
 ### 2.2 Équipe projet
 
-| Rôle | Responsabilités |
-|---|---|
-| Lead Tech / Architecte | Décisions d'architecture, revue de code, CI/CD, sécurité |
-| Développeur Full-Stack 1 | Module authentification, gestion des utilisateurs et profils |
-| Développeur Full-Stack 2 | Module campagnes, chapitres, événements narratifs |
-| Développeur Full-Stack 3 | Module combat temps réel, SignalR, D&D 5e |
-| Product Owner | Backlog, priorisation, cahier des charges, recettes |
+L'équipe est composée de profils Full-Stack généralistes : chaque développeur intervient sur
+l'ensemble des modules de l'application (authentification, campagnes, combat, etc.), sans
+spécialisation figée par domaine. Le Lead Tech / Architecte porte les décisions d'architecture,
+la revue de code, la mise en place de la CI/CD et le cadrage sécurité. Le Product Owner porte
+le backlog, la priorisation du cahier des charges et l'animation des recettes fonctionnelles.
 
 ### 2.3 Stack technique
 
@@ -78,7 +76,7 @@ Les fonctionnalités principales sont :
 | Backend API | ASP.NET Core 10 – REST + SignalR |
 | Frontend | Blazor Server (.NET 10) |
 | Temps réel | SignalR – SessionHub + NotificationHub |
-| Persistance | EF Core 10 + SQL Server |
+| Persistance | EF Core 10 + SQL Server 2022 (Azure SQL Database en production) |
 | Authentification | JWT Bearer (HMAC SHA256 / HS256) + BCrypt (work factor 12) |
 | Tests unitaires | xUnit + Moq + FluentAssertions |
 | Tests E2E | Playwright (.NET) |
@@ -88,13 +86,11 @@ Les fonctionnalités principales sont :
 
 ### 2.4 Décisions d'architecture
 
-La première question posée en équipe a été : **comment supporter D&D 5e, Pathfinder et un
-système générique sans dupliquer le code pour chaque système ?** La réponse choisie est une
-architecture en couches avec un noyau commun (`Cdm.Business.Common`) et des extensions par
-système de règles (`Cdm.Business.DnD5e`). Les attributs spécifiques à chaque jeu sont
-sérialisés en JSON dans la base de données, ce qui permet d'ajouter un nouveau système sans
-modifier le schéma. Cette décision a été la plus structurante du projet – elle guide encore
-aujourd'hui l'organisation de tous les projets de la solution.
+#### 2.4.1 Architecture globale de la solution
+
+La solution est structurée selon une architecture n-tier classique, découpée en sept projets
+.NET. Ce découpage s'applique à l'ensemble de l'application, indépendamment du système de jeu
+utilisé :
 
 – `Cdm.AppHost` – Orchestration Aspire : déclare les services, gère la découverte de services
 – `Cdm.ApiService` – API REST + Hubs SignalR : exposition des endpoints métier
@@ -104,20 +100,31 @@ aujourd'hui l'organisation de tous les projets de la solution.
 – `Cdm.Common` – Transverse : JWT, BCrypt, logging structuré
 – `Cdm.Business.DnD5e` – Extension D&D 5e : règles, calculs de modificateurs, SRD
 
-Cette séparation permet l'ajout de nouveaux systèmes de règles (Pathfinder, Appel de Cthulhu)
-sans modifier le noyau de l'application.
+Ce découpage garantit la séparation des responsabilités (présentation / API / métier / données
+/ transverse).
+
+#### 2.4.2 Stratégie de support multi-système
+
+Au sein de la couche métier, la question spécifique à résoudre était : **comment supporter
+D&D 5e, Pathfinder et un système générique sans dupliquer le code pour chaque système ?**
+La réponse retenue repose sur un noyau commun (`Cdm.Business.Common`) complété par des
+extensions par système de règles (`Cdm.Business.DnD5e`) ; les attributs spécifiques à chaque
+jeu sont sérialisés en JSON dans la base de données. Cette approche permet d'ajouter un nouveau
+système de règles (Pathfinder, Appel de Cthulhu) sans modifier le schéma de données ni le
+noyau applicatif — elle a été la décision la plus structurante du projet.
 
 ---
 
 ## Section 3 – Environnements et CI/CD
 *Compétences visées : C2.1.1 – Environnements de déploiement et suivi qualité, C2.1.2 – Intégration continue GitHub Actions*
 
-En début de projet, les déploiements se faisaient manuellement : clone, build, restart du
-service Azure. Lors du sprint 3, un oubli de `dotnet restore` a mis l'API hors service
-pendant 40 minutes. C'est cet incident concret qui a motivé la mise en place d'un pipeline
-CI/CD automatisé : **aucun code ne peut atteindre `main` sans avoir compilé, passé les tests
-unitaires et l'analyse de dépendances OWASP**. Le principe est simple : si une vérification
-échoue, le pipeline s'arrête et le déploiement n'a pas lieu.
+Un pipeline CI/CD automatisé a été mis en place dès le début du projet, plutôt que de reposer
+sur des déploiements manuels : **aucun code ne peut atteindre `main` sans avoir compilé, passé
+les tests unitaires et l'analyse de dépendances OWASP**. Le principe est simple : si une
+vérification échoue, le pipeline s'arrête et le déploiement n'a pas lieu. Cette rigueur,
+appliquée dès les premiers commits, a par exemple permis à plusieurs reprises de bloquer une
+fusion sur `main` suite à un test unitaire en échec ou à une dépendance vulnérable détectée par
+l'analyse OWASP, évitant qu'un défaut n'atteigne la production.
 
 ### 3.0 Poste de développement et outillage (C2.1.1)
 
@@ -131,7 +138,7 @@ utilisée pour ce projet.
 | Outil | Version | Rôle |
 |---|---|---|
 | **Windows 11** | 23H2 | Système d'exploitation |
-| **Visual Studio 2022** | 17.13 | IDE principal (IntelliSense, débogueur, tests) |
+| **Visual Studio 2026** | – | IDE principal (IntelliSense, débogueur, tests) |
 | **.NET SDK** | 10.0 | Compilateur, CLI (`dotnet build`, `dotnet test`) |
 | **Docker Desktop** | 4.x | Conteneurisation locale pour SQL Server + Aspire |
 | **GitKraken** | dernière | Client Git graphique (branches, cherry-pick, conflits) |
@@ -140,7 +147,7 @@ utilisée pour ce projet.
 | **Node.js** | 20 LTS | Build des assets CSS (Tailwind / sass) |
 | **Postman** | dernière | Tests manuels des endpoints REST + SignalR |
 
-#### 3.0.2 Extensions Visual Studio 2022
+#### 3.0.2 Extensions Visual Studio 2026
 
 | Extension | Utilité |
 |---|---|
@@ -272,13 +279,12 @@ push/PR → main, dev
 ## Section 4 – Prototype et architecture applicative
 *Compétence visée : C2.2.1 – Prototyper l'application (ergonomie, sécurité, architecture)*
 
-La première version de l'interface était un prototype Blazor avec une navigation plate et
-aucun système de thèmes. Rapidement, un problème est apparu : quand on passe d'une campagne
-D&D à une campagne Cthulhu, le visuel doit refléter l'univers – sinon l'outil perd son âme.
-Cela a conduit à la création d'un **Design System CDM** avec un système de thèmes CSS par
-type de jeu, appliqué dynamiquement à chaque navigation. L'architecture présentée ci-dessous
-est le résultat de ces itérations successives, depuis le prototype initial jusqu'à la version
-en production aujourd'hui.
+L'interface repose sur un **Design System CDM** : un système de thèmes CSS appliqué
+dynamiquement selon le type de jeu de la campagne (D&D 5e, Cthulhu, Cyberpunk, générique…),
+afin que le visuel reflète l'univers consulté. Par exemple, la navigation d'une campagne D&D
+vers une campagne Cthulhu déclenche un changement complet de thème (palette, typographie,
+iconographie), donnant à chaque univers une identité visuelle propre. L'architecture présentée
+ci-dessous détaille cette organisation, de l'interface Blazor jusqu'à la base de données.
 
 ### 4.0 User Stories – Backlog représentatif
 
@@ -367,13 +373,13 @@ thème sombre, navigation latérale, cards par système de jeu*
 ## Section 5 – Tests unitaires xUnit
 *Compétence visée : C2.2.2 – Ecrire des tests unitaires (harnais de test xUnit)*
 
-Lors d'une évolution du module d'authentification (renforcement de la validation des tokens JWT),
-un bug de validation de token a été introduit sans qu'on s'en rende compte pendant deux
-jours. La suite de tests xUnit existante l'a détecté au prochain push – avant que le code
-atteigne la branche `dev`. Cet épisode a convaincu l'équipe de **traiter les tests comme une
-documentation vivante du comportement attendu**, pas comme une contrainte. Chaque service
-métier dispose de sa propre suite, avec trois niveaux de scénarios : le cas nominal, les
-cas limites, et les cas de sécurité (accès non autorisé, token expiré).
+Chaque service métier dispose de sa propre suite de tests xUnit, avec trois niveaux de
+scénarios : le cas nominal, les cas limites, et les cas de sécurité (accès non autorisé, token
+expiré). Les tests sont traités comme une **documentation vivante du comportement attendu**,
+et non comme une simple contrainte de qualité. Par exemple, lors d'une évolution du module
+d'authentification (renforcement de la validation des tokens JWT), la suite de tests xUnit a
+détecté une régression sur la validation de token dès le push suivant, avant que le code
+n'atteigne la branche `dev`.
 
 ### 5.1 Organisation des tests
 
@@ -461,14 +467,13 @@ Les tests couvrent trois niveaux de scénarios :
 ## Section 6 – Sécurité OWASP + Accessibilité RGAA
 *Compétence visée : C2.2.3 – Ecrire du code sécurisé (OWASP Top 10) et accessible (RGAA/OPQUAST)*
 
-La sécurité n'a pas été ajoutée en fin de projet : elle a été intégrée dès la conception.
-Le choix de BCrypt work factor 12 a été fait dès le premier sprint d'authentification, après
-lecture du guide OWASP sur le stockage des mots de passe. De même, la décision de lancer
-les dés **côté serveur uniquement** (et non côté client) est directement liée à la prévention
-de la triche – une exigence métier du jeu de rôle. Concernant l'accessibilité, un audit
-informel sur la version initiale a révélé qu'aucun lien d'évitement n'était présent et que
-les formulaires n'indiquaient pas leurs champs obligatoires aux technologies d'assistance.
-Ces lacunes ont été corrigées dans le sprint de qualité (commit `6e7f26b`).
+La sécurité et l'accessibilité ont été intégrées dès la conception. Le choix de BCrypt work
+factor 12 pour le stockage des mots de passe s'appuie sur les recommandations OWASP. De même,
+le lancer de dés **côté serveur uniquement** répond à une exigence métier : empêcher toute
+triche côté client. Concernant l'accessibilité, une démarche RGAA a été appliquée sur les
+formulaires et la navigation ; un audit a par exemple permis d'identifier l'absence de lien
+d'évitement et de champs obligatoires signalés aux technologies d'assistance, corrigés dans le
+sprint qualité (commit `6e7f26b`).
 
 ### 6.1 Sécurité – OWASP Top 10
 
@@ -557,12 +562,11 @@ sont présents dans le DOM mais invisibles visuellement.*
 ## Section 7 – Versioning et déploiement progressif
 *Compétence visée : C2.2.4 – Déploiement progressif avec versioning SemVer*
 
-Gérer seul un projet en production oblige à une discipline de versioning rigoureuse : sans
-CHANGELOG ni stratégie de branches claire, il est impossible de savoir quelle version tourne
-en production après plusieurs semaines. La convention SemVer a été adoptée dès le sprint 2,
-avec un CHANGELOG maintenu à chaque merge sur `main`. Cette rigueur a payé lors d'un
-rollback nécessaire : sachant exactement ce qu'apportait chaque version, la décision de
-revenir à `0.9.2` a pris moins de 5 minutes.
+La convention **SemVer** a été adoptée dès le sprint 2, avec un CHANGELOG maintenu à chaque
+merge sur `main`, afin de garantir une traçabilité claire des versions déployées en production.
+Cette rigueur a par exemple permis un rollback rapide vers la version `0.9.2` : sachant
+précisément ce qu'apportait chaque version, la décision et l'exécution du retour arrière ont
+pris moins de 5 minutes.
 
 ### 7.1 Convention de versionnage SemVer
 
@@ -633,12 +637,10 @@ Version actuelle : `1.0.0`
 ## Section 8 – Cahier de recettes
 *Compétence visée : C2.3.1 – Rédiger un cahier de recettes (scénarios de tests fonctionnels)*
 
-Le cahier de recettes est né d'un constat : lors des premières démonstrations, le Product
-Owner validait les fonctionnalités à l'œil, sans critères formels. Résultat : une
-fonctionnalité considérée comme "validée" a été remise en cause trois sprints plus tard
-parce que le comportement attendu n'était pas documenté. Depuis, **chaque fonctionnalité est
-décrite par des scénarios avec préconditions, étapes et résultat attendu précis**, testés
-manuellement par le PO et automatisés via Playwright pour les flux critiques.
+**Chaque fonctionnalité est décrite par des scénarios avec préconditions, étapes et résultat
+attendu précis**, testés manuellement par le Product Owner et automatisés via Playwright pour
+les flux critiques. Cette formalisation évite qu'une fonctionnalité validée « à l'œil » soit
+remise en cause plus tard faute de comportement attendu documenté.
 
 ### 8.1 Périmètre et méthode
 
@@ -780,13 +782,9 @@ services (commit dans cette session) :
 ## Section 9 – Plan de correction des bogues
 *Compétence visée : C2.3.2 – Etablir un plan de correction des bogues*
 
-Sans processus de correction formalisé, chaque bug est traité différemment selon l'humeur
-du moment : parfois corrigé directement sur `main` (catastrophique), parfois ignoré
-(dangereux), parfois documenté mais jamais assigné (inutile). Le plan décrit ici a été
-formalisé après un incident de production où deux développeurs travaillaient sur le même
-bug sans le savoir, produisant des corrections conflictuelles. La règle est désormais
-simple : **tout bug passe par une issue GitHub, une branche `fix/`, un test de régression
-xUnit et une PR** – même pour un bug d'une ligne.
+**Tout bug passe par une issue GitHub, une branche `fix/`, un test de régression xUnit et une
+PR** – même pour un bug d'une ligne. Ce processus formalisé garantit une traçabilité complète
+de chaque correctif et évite les corrections concurrentes ou non testées.
 
 ### 9.1 Système de suivi
 
@@ -965,13 +963,10 @@ public async Task NextTurn_SessionStarterWhoIsNotOwner_Succeeds()
 ## Section 10 – Documentation technique
 *Compétence visée : C2.4.1 – Rédiger la documentation technique (déploiement, utilisation, mise à jour)*
 
-La documentation n'est pas une formalité de fin de projet : c'est ce qui rend le code
-compréhensible par un nouveau développeur à 3h du matin en cas d'incident. Le README du
-projet a été écrit dès le sprint 1 et mis à jour à chaque changement d'architecture. Les
-choix techniques (Blazor Server vs Client, EF Core vs Dapper, SignalR vs polling) sont
-documentés avec leur contexte et les alternatives considérées – pas pour justifier les
-décisions *a posteriori*, mais pour que la prochaine personne comprenne **pourquoi** le
-projet est structuré ainsi.
+Le README du projet a été écrit dès le sprint 1 et mis à jour à chaque changement
+d'architecture. Les choix techniques (Blazor Server vs Client, EF Core vs Dapper, SignalR vs
+polling) sont documentés avec leur contexte et les alternatives considérées, afin que tout
+développeur rejoignant le projet comprenne **pourquoi** il est structuré ainsi.
 
 ### 10.1 Documentation de déploiement
 
