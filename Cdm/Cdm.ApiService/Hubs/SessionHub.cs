@@ -45,11 +45,12 @@ public class SessionHub : Hub
         var userName = this.GetUserName();
         var groupName = $"chapter_{chapterId}";
 
-        // Authorization: only members of the related campaign may join the chapter group (audit fix #6)
-        if (!await this.IsAuthorizedForChapterAsync(chapterId, userId))
+        // Authorization: only members of the related campaign may join the session group (audit fix #6).
+        // NB: the client passes the SessionId here (the parameter name is historical).
+        if (!await this.IsAuthorizedForSessionAsync(chapterId, userId))
         {
             this.logger.LogWarning(
-                "User {UserId} denied access to chapter {ChapterId}",
+                "User {UserId} denied access to session {SessionId}",
                 userId,
                 chapterId);
             throw new HubException("You are not authorized to join this session.");
@@ -282,44 +283,42 @@ public class SessionHub : Hub
     }
 
     /// <summary>
-    /// Checks whether a user belongs to the campaign owning the given chapter,
+    /// Checks whether a user belongs to the campaign owning the given session,
     /// either as the Game Master or as a player participant.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="userId">The user identifier.</param>
     /// <returns><c>true</c> if the user is authorized.</returns>
-    private async Task<bool> IsAuthorizedForChapterAsync(int chapterId, int userId)
+    private async Task<bool> IsAuthorizedForSessionAsync(int sessionId, int userId)
     {
         if (userId <= 0)
         {
             return false;
         }
 
-        var chapter = await this.db.Chapters
+        var session = await this.db.Sessions
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == chapterId);
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
 
-        if (chapter is null)
+        if (session is null)
         {
             return false;
         }
 
-        var campaignId = chapter.CampaignId;
-
         // Game Master of the campaign
         var isGameMaster = await this.db.Campaigns
             .AsNoTracking()
-            .AnyAsync(c => c.Id == campaignId && c.CreatedBy == userId);
+            .AnyAsync(c => c.Id == session.CampaignId && c.CreatedBy == userId);
 
         if (isGameMaster)
         {
             return true;
         }
 
-        // Player participating in a session of this campaign through a character they own
+        // Player participating in this session through a character they own
         return await this.db.SessionParticipants
             .AsNoTracking()
-            .AnyAsync(sp => sp.Session.CampaignId == campaignId
+            .AnyAsync(sp => sp.SessionId == sessionId
                 && sp.WorldCharacter.Character.UserId == userId);
     }
 
