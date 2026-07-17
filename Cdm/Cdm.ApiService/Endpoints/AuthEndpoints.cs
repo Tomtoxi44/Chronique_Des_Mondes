@@ -1,5 +1,6 @@
 ﻿namespace Cdm.ApiService.Endpoints;
 
+using Cdm.ApiService.Filters;
 using Cdm.Business.Abstraction.DTOs.Models;
 using Cdm.Business.Abstraction.DTOs.ViewModels;
 using Cdm.Business.Abstraction.Services;
@@ -17,7 +18,8 @@ public static class AuthEndpoints
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/auth")
-            .WithTags("Authentication");
+            .WithTags("Authentication")
+            .RequireRateLimiting("auth"); // audit fix #3
 
         // POST /api/auth/register
         group.MapPost("/register", async (
@@ -51,6 +53,7 @@ public static class AuthEndpoints
                 Error = result.ErrorMessage ?? "Registration failed"
             });
         })
+        .AddEndpointFilter<ValidationFilter<RegisterRequest>>() // audit fix #5
         .WithName("Register")
         .WithSummary("Register a new user")
         .WithDescription("Creates a new user account with email and password")
@@ -79,6 +82,7 @@ public static class AuthEndpoints
                 Error = result.ErrorMessage ?? "Login failed"
             });
         })
+        .AddEndpointFilter<ValidationFilter<LoginRequest>>() // audit fix #5
         .WithName("Login")
         .WithSummary("Authenticate a user")
         .WithDescription("Authenticate with email and password to receive a JWT token")

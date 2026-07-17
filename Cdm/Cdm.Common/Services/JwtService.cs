@@ -61,9 +61,10 @@ public class JwtService : IJwtService
         this.audience = configuration["Jwt:Audience"] ?? "ChroniqueDesMondesWeb";
         this.expirationHours = int.TryParse(configuration["Jwt:ExpirationHours"], out var hours) ? hours : 1;
 
+        // Fail-fast on an insecure key (audit fix #8)
         if (this.secretKey.Length < 32)
         {
-            this.logger.LogWarning("JWT secret key is less than 32 characters, which is not secure for production");
+            throw new InvalidOperationException("JWT secret key must be at least 32 characters long to be secure.");
         }
     }
 
@@ -72,7 +73,7 @@ public class JwtService : IJwtService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(this.secretKey);
+            var key = Encoding.UTF8.GetBytes(this.secretKey);
             
             // Build claims list with user info
             var claimsList = new List<Claim>
@@ -121,7 +122,7 @@ public class JwtService : IJwtService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(this.secretKey);
+            var key = Encoding.UTF8.GetBytes(this.secretKey);
             
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
@@ -160,7 +161,7 @@ public class JwtService : IJwtService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(this.secretKey);
+            var key = Encoding.UTF8.GetBytes(this.secretKey);
             
             var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
             {

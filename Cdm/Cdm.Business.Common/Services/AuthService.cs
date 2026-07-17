@@ -125,6 +125,8 @@ public class AuthService : IAuthService
                 Email = user.Email,
                 Nickname = user.Nickname,
                 Token = token,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiry = refreshToken.ExpiresAt,
                 Message = "Account created successfully"
             };
 
