@@ -89,6 +89,29 @@ Réalisé à deux comptes : `TesteurAudit` (MJ) et le compte du propriétaire (`
 6. **Densité du panneau Chat & Dés.** Compact en bas à droite : à surveiller en responsive/mobile.
 7. **Bandeau « Message de session ».** Utile, mais pourrait être masquable une fois lu.
 
+## 3e passage — fonctions annexes & UI/UX
+
+| Fonction | Résultat | Détail |
+|----------|----------|--------|
+| Profil (`/profile`) | ✅ | Avatar, infos, champ pseudo + Enregistrer |
+| Paramètres (`/settings`) | ✅ | Sections Apparence / Langue / À propos |
+| Thème clair/sombre | ⚠️ partiel | La bascule fonctionne (profil/paramètres passent en clair) mais **ne rafraîchit pas le fond de la page courante sans navigation** |
+| Langue → English | ❌ | Le bouton « English » se sélectionne (même après reload) mais **l'UI reste en français** — traductions EN non appliquées (`.resx` incomplets ou chaînes codées en dur) |
+| Événements (création) | ✅ | « Tempête magique » créé (Actif / Narratif / Permanent), badges + actions |
+| **Notifications** (marquer lu / tout lu / supprimer) | ⚠️ à confirmer | Aucune des 3 actions n'a eu d'effet : la notif reste non lue et le badge reste à « 1 ». Le code (endpoints, service, mapping, `@onclick:stopPropagation`) est pourtant correct — **possiblement un artefact de mes clics synthétiques qui atteignent le backdrop du menu**. À vérifier **manuellement** (clic humain) ; si ça échoue aussi, c'est un vrai bug d'événement à corriger |
+
+### Bilan des « échecs silencieux »
+
+Un motif récurrent : plusieurs bascules (thème, langue) changent l'état du bouton sans appliquer pleinement l'effet, et les actions de notification ne donnent aucun retour. Comme pour le chat, ces `catch { }` / absences de feedback rendent les pannes invisibles. **Priorité UX : rendre chaque action observable** (toast succès/erreur, rafraîchissement d'état).
+
+## Proposition UI/UX & design
+
+**Constat.** Le design system est mûr : tokens sémantiques (`variables.css`), palette indigo/violet, typographies Cinzel/Inter, dark-first, composants partagés cohérents, empty-states soignés. C'est déjà « produit fini ».
+
+**Proposition (évolution, pas refonte) — thème « Grimoire » : arcane + or.** Garder la base violette et **promouvoir l'or/ambre** (déjà présent sur les badges de type de jeu et les icônes de section) comme **accent signature** : CTA, état de navigation actif, soulignés de titres, focus. Le violet passe en accent secondaire. Réchauffer très légèrement le fond (encre aubergine) et remonter le contraste du texte atténué (WCAG AA). Coût faible : quelques variables dans `variables.css`, aucun composant à réécrire.
+
+Aperçu avant/après ouvrable : `docs/proposition-design.html`. Libre à toi de l'adopter, l'adapter, ou garder l'actuel — la base est solide.
+
 ## Conclusion
 
 Le build local est sain et les parcours fondamentaux (auth + CRUD Mondes/Campagnes/Chapitres/Personnages) fonctionnent de bout en bout, sans erreur. Les correctifs de sécurité de la branche sont **compatibles avec l'exécution**. Avant merge, il reste à faire tourner `dotnet build /warnaserror` + `dotnet test` (filet de compilation), puis à couvrir le temps réel à deux comptes.

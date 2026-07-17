@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proposition design — Chronique des Mondes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  /* ===== Palette ACTUELLE ===== */
+  .cur {
+    --bg:#0f0f1a; --bg2:#1a1a2e; --card:#1f1f35; --elevated:#252540;
+    --text:#f1f5f9; --muted:#94a3b8; --border:rgba(99,102,241,.18);
+    --accent:#6366f1; --accent2:#8b5cf6; --accent-strong:#4f46e5;
+  }
+  /* ===== Palette PROPOSÉE — "Grimoire" (arcane + or) ===== */
+  .new {
+    --bg:#14111f; --bg2:#1c1830; --card:#211c33; --elevated:#2b2442;
+    --text:#f4f1ea; --muted:#b0a9bd; --border:rgba(212,160,60,.22);
+    --accent:#d4a03c; --accent2:#8b5cf6; --accent-strong:#e8b84b;
+  }
+
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',system-ui,sans-serif; background:#0b0b12; color:#e8e8f0; padding:32px 20px 64px; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  h1 { font-family:'Cinzel',serif; font-weight:700; font-size:2rem; letter-spacing:.5px; margin-bottom:6px; }
+  .sub { color:#9aa0b5; margin-bottom:28px; font-size:.95rem; }
+  h2 { font-family:'Cinzel',serif; font-weight:700; font-size:1.15rem; margin:34px 0 14px; color:#cdb26a; letter-spacing:.5px; }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:760px){ .cols { grid-template-columns:1fr; } }
+
+  .panel { border-radius:16px; padding:20px; border:1px solid var(--border); background:var(--bg); }
+  .panel .tag { display:inline-block; font-size:.72rem; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+
+  /* swatches */
+  .swatches { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .sw { width:52px; height:52px; border-radius:8px; border:1px solid rgba(255,255,255,.06); display:flex; align-items:flex-end; }
+  .sw span { font-size:.55rem; color:rgba(255,255,255,.75); padding:2px 3px; }
+
+  /* mock component: carte de monde */
+  .mcard { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px; }
+  .mcard .top { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .globe { width:38px; height:38px; border-radius:10px; background:color-mix(in srgb, var(--accent) 22%, transparent); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .mcard h3 { font-family:'Cinzel',serif; font-size:1.05rem; color:var(--text); }
+  .badge { font-size:.68rem; font-weight:600; padding:3px 9px; border-radius:999px; background:color-mix(in srgb, var(--accent) 20%, transparent); color:var(--accent-strong); border:1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+  .mcard p { color:var(--muted); font-size:.85rem; line-height:1.5; margin-bottom:14px; }
+  .row { display:flex; gap:10px; align-items:center; }
+  .btn { font-weight:600; font-size:.85rem; padding:9px 16px; border-radius:10px; border:none; cursor:pointer; background:var(--accent); color:#1a1206; }
+  .new .btn { color:#1a1206; }
+  .cur .btn { color:#fff; }
+  .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .nav { display:flex; gap:6px; margin-bottom:14px; }
+  .nav a { font-size:.8rem; padding:7px 12px; border-radius:8px; color:var(--muted); text-decoration:none; }
+  .nav a.active { background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent-strong); border-left:2px solid var(--accent); }
+
+  .note { background:#151520; border:1px solid rgba(212,160,60,.2); border-radius:12px; padding:16px 18px; margin-top:16px; font-size:.9rem; line-height:1.6; color:#c9ccda; }
+  .note b { color:#e8b84b; }
+  .legend { font-size:.8rem; color:#8b90a5; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Chronique des Mondes — proposition design</h1>
+  <div class="sub">Évolution ciblée, pas une refonte : on garde l'ADN « arcane » (violet/indigo) et on promeut l'<b style="color:#e8b84b">or patiné</b> — déjà présent sur tes badges de type de jeu — comme accent signature. Thème « grimoire » : encre arcanique + or.</div>
+
+  <div class="cols">
+    <!-- ACTUEL -->
+    <div class="panel cur">
+      <span class="tag">Actuel — indigo / violet</span>
+      <div class="swatches">
+        <div class="sw" style="background:#0f0f1a"><span>bg</span></div>
+        <div class="sw" style="background:#1f1f35"><span>card</span></div>
+        <div class="sw" style="background:#6366f1"><span>accent</span></div>
+        <div class="sw" style="background:#8b5cf6"><span>violet</span></div>
+        <div class="sw" style="background:#94a3b8"><span>muted</span></div>
+      </div>
+      <div class="nav">
+        <a class="active">Accueil</a><a>Mondes</a><a>Sessions</a>
+      </div>
+      <div class="mcard">
+        <div class="top">
+          <div class="globe">🌐</div>
+          <h3>Royaume de Test</h3>
+          <span class="badge">D&D 5e</span>
+        </div>
+        <p>Un univers cohérent, mais l'accent violet reste proche d'un « purple SaaS » générique.</p>
+        <div class="row"><button class="btn">Ouvrir</button><button class="btn ghost">Modifier</button></div>
+      </div>
+    </div>
+
+    <!-- PROPOSÉ -->
+    <div class="panel new">
+      <span class="tag">Proposé — arcane + or « grimoire »</span>
+      <div class="swatches">
+        <div class="sw" style="background:#14111f"><span>bg</span></div>
+        <div class="sw" style="background:#211c33"><span>card</span></div>
+        <div class="sw" style="background:#d4a03c"><span>or</span></div>
+        <div class="sw" style="background:#8b5cf6"><span>violet</span></div>
+        <div class="sw" style="background:#b0a9bd"><span>muted</span></div>
+      </div>
+      <div class="nav">
+        <a class="active">Accueil</a><a>Mondes</a><a>Sessions</a>
+      </div>
+      <div class="mcard">
+        <div class="top">
+          <div class="globe">🌐</div>
+          <h3>Royaume de Test</h3>
+          <span class="badge">D&D 5e</span>
+        </div>
+        <p>L'or devient l'accent des actions et états actifs ; le violet passe en secondaire. Fond très légèrement réchauffé (encre aubergine) : les cartes semblent moins froides.</p>
+        <div class="row"><button class="btn">Ouvrir</button><button class="btn ghost">Modifier</button></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Ce qui change concrètement</h2>
+  <div class="note">
+    <b>Accent principal → or/ambre</b> (#d4a03c, hover #e8b84b) : boutons primaires (CTA), état actif de navigation, soulignés de titres, anneaux de focus. Le violet (#8b5cf6) reste l'accent <b>secondaire</b> (liens, surbrillances).<br><br>
+    <b>Fond réchauffé</b> : #0f0f1a → #14111f (encre légèrement aubergine) ; cartes #1f1f35 → #211c33. Moins « bleu clinique », plus « chronique ».<br><br>
+    <b>Contraste texte</b> : le gris atténué #94a3b8 → #b0a9bd pour repasser au-dessus du seuil WCAG AA sur fond sombre.<br><br>
+    <b>Coût d'implémentation faible</b> : tout passe par <code>variables.css</code> (tokens sémantiques déjà en place). En pratique, on ne touche qu'une poignée de variables — aucun composant à réécrire.
+  </div>
+  <div class="legend">NB : maquette statique d'illustration ; les emojis remplacent les icônes Bootstrap de l'app. Libre à toi de garder l'actuel — la base est déjà solide.</div>
+</div>
+</body>
+</html>
