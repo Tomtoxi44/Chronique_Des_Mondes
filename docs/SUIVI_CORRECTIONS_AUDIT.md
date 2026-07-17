@@ -40,6 +40,8 @@ Légende : ✅ corrigé dans le code · ⚠️ mitigé (amélioration + suite re
 
 **#6 —** `CombatHub.JoinCombat` et `SessionHub.JoinSession` vérifient désormais que l'utilisateur appartient à la campagne concernée (GM via `Campaign.CreatedBy`, ou joueur via `SessionParticipant → WorldCharacter → Character.UserId`) avant `AddToGroupAsync`. Accès refusé = `HubException`.
 
+> **Correctif de suivi (commit `0060e72`, révélé au test multi) :** la 1re version validait le paramètre de `SessionHub.JoinSession` comme un `ChapterId`, alors que le client envoie un `SessionId` → le join était refusé et cassait le chat de session. L'autorisation résout maintenant la campagne via la table `Sessions`. Détails et bug préexistant associé dans `RAPPORT_TEST_FONCTIONNEL.md`.
+
 **#10 —** Les 15 configurations identiques de `HttpClient` dans `Cdm.Web/Program.cs` sont factorisées dans un délégué `Action<HttpClient> ConfigureApiClient`.
 
 **#11 —** Ajout de `Content-Security-Policy` et `Permissions-Policy` aux en-têtes de sécurité, côté API et côté Web.
