@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 /// <summary>
-/// SignalR hub for real-time chapter session communication.
+/// SignalR hub for real-time session communication.
 /// Handles chat, dice rolls, character status updates, and trade proposals.
 /// </summary>
 [Authorize]
@@ -35,34 +35,34 @@ public class SessionHub : Hub
     }
 
     /// <summary>
-    /// Joins a chapter session group.
+    /// Joins a session group.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task JoinSession(int chapterId)
+    public async Task JoinSession(int sessionId)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         // Authorization: only members of the related campaign may join the session group (audit fix #6).
-        // NB: the client passes the SessionId here (the parameter name is historical).
-        if (!await this.IsAuthorizedForSessionAsync(chapterId, userId))
+        
+        if (!await this.IsAuthorizedForSessionAsync(sessionId, userId))
         {
             this.logger.LogWarning(
                 "User {UserId} denied access to session {SessionId}",
                 userId,
-                chapterId);
+                sessionId);
             throw new HubException("You are not authorized to join this session.");
         }
 
         await this.Groups.AddToGroupAsync(this.Context.ConnectionId, groupName);
 
         this.logger.LogInformation(
-            "User {UserId} ({UserName}) joined session {ChapterId}",
+            "User {UserId} ({UserName}) joined session {SessionId}",
             userId,
             userName,
-            chapterId);
+            sessionId);
 
         // Notify others in the group
         await this.Clients.OthersInGroup(groupName).SendAsync(
@@ -71,23 +71,23 @@ public class SessionHub : Hub
     }
 
     /// <summary>
-    /// Leaves a chapter session group.
+    /// Leaves a session group.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task LeaveSession(int chapterId)
+    public async Task LeaveSession(int sessionId)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         await this.Groups.RemoveFromGroupAsync(this.Context.ConnectionId, groupName);
 
         this.logger.LogInformation(
-            "User {UserId} ({UserName}) left session {ChapterId}",
+            "User {UserId} ({UserName}) left session {SessionId}",
             userId,
             userName,
-            chapterId);
+            sessionId);
 
         // Notify others in the group
         await this.Clients.Group(groupName).SendAsync(
@@ -98,24 +98,24 @@ public class SessionHub : Hub
     /// <summary>
     /// Sends a chat message to all users in a session.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="message">The message content.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task SendMessage(int chapterId, string message)
+    public async Task SendMessage(int sessionId, string message)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         this.logger.LogInformation(
-            "User {UserId} sent message in session {ChapterId}",
+            "User {UserId} sent message in session {SessionId}",
             userId,
-            chapterId);
+            sessionId);
 
         // Persist message to database
         var sessionMessage = new SessionMessage
         {
-            ChapterId = chapterId,
+            SessionId = sessionId,
             UserId = userId,
             UserName = userName,
             Message = message,
@@ -138,32 +138,32 @@ public class SessionHub : Hub
     /// <summary>
     /// Broadcasts a dice roll result to the session.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="diceType">The type of dice (e.g., "d20", "d6").</param>
     /// <param name="count">Number of dice rolled.</param>
     /// <param name="results">Array of individual die results.</param>
     /// <param name="modifier">Modifier applied to the roll.</param>
     /// <param name="reason">Reason for the roll (e.g., "Attack roll", "Perception check").</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task RollDice(int chapterId, string diceType, int count, int[] results, int modifier, string? reason)
+    public async Task RollDice(int sessionId, string diceType, int count, int[] results, int modifier, string? reason)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
         var total = results.Sum() + modifier;
 
         this.logger.LogInformation(
-            "User {UserId} rolled {Count}{DiceType} in session {ChapterId}: {Total}",
+            "User {UserId} rolled {Count}{DiceType} in session {SessionId}: {Total}",
             userId,
             count,
             diceType,
-            chapterId,
+            sessionId,
             total);
 
         // Persist dice roll to database
         var diceRoll = new SessionDiceRoll
         {
-            ChapterId = chapterId,
+            SessionId = sessionId,
             UserId = userId,
             UserName = userName,
             DiceType = diceType,
@@ -196,22 +196,22 @@ public class SessionHub : Hub
     /// <summary>
     /// Proposes a theoretical trade between characters (theory-based RPG mechanic).
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="targetUserId">The user ID being offered the trade.</param>
     /// <param name="offerDescription">Description of what's being offered.</param>
     /// <param name="requestDescription">Description of what's being requested.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task ProposeTradeTheory(int chapterId, int targetUserId, string offerDescription, string requestDescription)
+    public async Task ProposeTradeTheory(int sessionId, int targetUserId, string offerDescription, string requestDescription)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         this.logger.LogInformation(
-            "User {UserId} proposed trade to {TargetUserId} in session {ChapterId}",
+            "User {UserId} proposed trade to {TargetUserId} in session {SessionId}",
             userId,
             targetUserId,
-            chapterId);
+            sessionId);
 
         await this.Clients.Group(groupName).SendAsync(
             "TradeProposed",
@@ -229,22 +229,22 @@ public class SessionHub : Hub
     /// <summary>
     /// Updates a character's status (e.g., health, condition).
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="characterId">The character identifier.</param>
     /// <param name="statusType">Type of status update (e.g., "health", "condition").</param>
     /// <param name="value">The new value or status description.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task UpdateCharacterStatus(int chapterId, int characterId, string statusType, string value)
+    public async Task UpdateCharacterStatus(int sessionId, int characterId, string statusType, string value)
     {
         var userId = this.GetUserId();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         this.logger.LogInformation(
-            "User {UserId} updated character {CharacterId} status ({StatusType}) in session {ChapterId}",
+            "User {UserId} updated character {CharacterId} status ({StatusType}) in session {SessionId}",
             userId,
             characterId,
             statusType,
-            chapterId);
+            sessionId);
 
         await this.Clients.Group(groupName).SendAsync(
             "CharacterStatusUpdated",

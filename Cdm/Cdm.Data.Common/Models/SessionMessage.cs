@@ -14,8 +14,8 @@ public class SessionMessage
     /// <summary>Gets or sets the message ID.</summary>
     public int Id { get; set; }
 
-    /// <summary>Gets or sets the chapter ID this message belongs to.</summary>
-    public int ChapterId { get; set; }
+    /// <summary>Gets or sets the session ID this message belongs to.</summary>
+    public int SessionId { get; set; }
 
     /// <summary>Gets or sets the user ID of the sender.</summary>
     public int UserId { get; set; }
@@ -32,6 +32,6 @@ public class SessionMessage
     /// <summary>Gets or sets the user navigation property.</summary>
     public virtual User User { get; set; } = null!;
 
-    /// <summary>Gets or sets the chapter navigation property.</summary>
-    public virtual Chapter Chapter { get; set; } = null!;
+    /// <summary>Gets or sets the session navigation property.</summary>
+    public virtual Session Session { get; set; } = null!;
 }

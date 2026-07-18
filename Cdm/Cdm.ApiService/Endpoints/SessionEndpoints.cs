@@ -175,7 +175,7 @@ public static class SessionEndpoints
             var ended = await sessionService.EndSessionAsync(id, userId.Value);
             if (!ended) return Results.BadRequest(new { Error = "Failed to end session. Check session ownership." });
 
-            await hubContext.Clients.Group($"chapter_{id}")
+            await hubContext.Clients.Group($"session_{id}")
                 .SendAsync("SessionEnded", new { SessionId = id, Timestamp = DateTime.UtcNow });
 
             return Results.NoContent();

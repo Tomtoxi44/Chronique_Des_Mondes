@@ -16,7 +16,7 @@ public class SessionDiceRoll
     public int Id { get; set; }
 
     /// <summary>Gets or sets the chapter ID where the roll occurred.</summary>
-    public int ChapterId { get; set; }
+    public int SessionId { get; set; }
 
     /// <summary>Gets or sets the user ID of the player who rolled.</summary>
     public int UserId { get; set; }
@@ -49,5 +49,5 @@ public class SessionDiceRoll
     public virtual User User { get; set; } = null!;
 
     /// <summary>Gets or sets the chapter navigation property.</summary>
-    public virtual Chapter Chapter { get; set; } = null!;
+    public virtual Session Session { get; set; } = null!;
 }
