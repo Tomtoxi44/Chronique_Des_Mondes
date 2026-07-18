@@ -15,6 +15,7 @@ public partial class Register
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
+    [Inject] private Cdm.Web.Services.ToastService Toast { get; set; } = default!;
 
     private RegisterRequest Model { get; set; } = new();
     private bool IsLoading = false;
@@ -43,6 +44,12 @@ public partial class Register
                     await provider.MarkUserAsAuthenticatedAsync(
                         response.UserId, response.Email, response.Nickname, response.Token,
                         response.RefreshToken, response.RefreshTokenExpiry);
+
+                    // Le ToastService est scopé au circuit : le toast reste affiché
+                    // après la navigation vers le tableau de bord.
+                    Toast.ShowSuccess(
+                        $"Bienvenue, {response.Nickname} ! Votre compte a bien été créé.",
+                        "Inscription réussie");
 
                     Nav.NavigateTo("/");
                     return;

@@ -3,3 +3,7 @@
 <div class="auth-shell">
     @Body
 </div>
+
+@* Sans ce conteneur, aucun toast déclenché depuis une page d'authentification
+   ne pouvait s'afficher (il n'existait que dans MainLayout). *@
+<AppToastContainer />
