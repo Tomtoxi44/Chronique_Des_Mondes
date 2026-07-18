@@ -120,6 +120,24 @@ Réalisé à deux comptes : `TesteurAudit` (MJ) et le compte du propriétaire (`
 
 Un motif récurrent : plusieurs bascules (thème, langue) changent l'état du bouton sans appliquer pleinement l'effet, et les actions de notification ne donnent aucun retour. Comme pour le chat, ces `catch { }` / absences de feedback rendent les pannes invisibles. **Priorité UX : rendre chaque action observable** (toast succès/erreur, rafraîchissement d'état).
 
+## Correctifs finaux (validés en local)
+
+Les deux correctifs précédents ont été **vérifiés en direct** sur l'instance locale :
+
+- **Menus déroulants** : le clic sur un item du menu avatar navigue désormais correctement (avant, il était absorbé par le backdrop). ✔
+- **Langue** : l'endpoint `/set-culture` bascule bien l'interface (Settings / Appearance / Home / Worlds…). Les `.resx` EN sont donc fonctionnels. ✔
+
+S'y ajoutent :
+
+| Correctif | Détail |
+|-----------|--------|
+| Cohérence de l'état « langue » | Le bouton sélectionné se basait sur `localStorage`, qui pouvait diverger de la langue réelle (UI anglaise mais bouton « Français » surligné). Il lit maintenant `CultureInfo.CurrentUICulture` — une seule source de vérité |
+| **Échecs temps réel visibles** | Les `catch { }` vides des appels SignalR (connexion, envoi de message, jet de dé) affichent désormais un **toast** explicite via le `ToastService` déjà en place, et journalisent l'erreur. En cas d'échec d'envoi, le **texte du message est rendu à l'utilisateur** au lieu d'être perdu ; un jet non partagé est signalé comme tel |
+| Auto-connexion après inscription | L'API renvoyant déjà un jeton (correctif #13), l'utilisateur est connecté directement au lieu d'être renvoyé vers l'écran de connexion (repli sur l'ancien comportement si le jeton est absent) |
+| Info-bulle sur le titre tronqué | L'en-tête de la barre latérale contextuelle (« Royaume de Te… ») a maintenant un `title`. Les items de navigation en avaient déjà un |
+
+*Note :* la fermeture des menus à la navigation était **déjà gérée** (`MainLayout` s'abonne à `LocationChanged`) — l'abaissement du backdrop n'introduit donc pas de régression.
+
 ## Proposition UI/UX & design
 
 **Constat.** Le design system est mûr : tokens sémantiques (`variables.css`), palette indigo/violet, typographies Cinzel/Inter, dark-first, composants partagés cohérents, empty-states soignés. C'est déjà « produit fini ».
