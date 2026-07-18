@@ -304,7 +304,15 @@ app.MapGet("/set-culture", (string culture, string? redirectUri, HttpContext con
             });
     }
 
-    return Results.LocalRedirect(string.IsNullOrWhiteSpace(redirectUri) ? "/settings" : redirectUri);
+    // On n'accepte qu'un chemin relatif simple. `LocalRedirect` lèverait une exception
+    // (donc une 500) sur une URL externe : on retombe silencieusement sur /settings.
+    var isSafeRedirect =
+        !string.IsNullOrWhiteSpace(redirectUri) &&
+        redirectUri.StartsWith('/') &&
+        !redirectUri.StartsWith("//", StringComparison.Ordinal) &&
+        !redirectUri.Contains(':', StringComparison.Ordinal);
+
+    return Results.LocalRedirect(isSafeRedirect ? redirectUri! : "/settings");
 });
 
 app.MapRazorComponents<App>()
