@@ -6,8 +6,10 @@
 
 namespace Cdm.ApiService.Hubs;
 
+using Cdm.Data.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 /// <summary>
@@ -18,14 +20,17 @@ using System.Security.Claims;
 public class CombatHub : Hub
 {
     private readonly ILogger<CombatHub> logger;
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CombatHub"/> class.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public CombatHub(ILogger<CombatHub> logger)
+    /// <param name="db">Database context.</param>
+    public CombatHub(ILogger<CombatHub> logger, AppDbContext db)
     {
         this.logger = logger;
+        this.db = db;
     }
 
     /// <summary>
@@ -38,6 +43,17 @@ public class CombatHub : Hub
         var userId = this.GetUserId();
         var userName = this.Context.User?.Identity?.Name ?? "Unknown";
         var groupName = $"combat_{combatId}";
+
+        // Authorization: only members of the related campaign may join the combat group (audit fix #6)
+        if (!int.TryParse(combatId, out var combatIdInt) ||
+            !await this.IsAuthorizedForCombatAsync(combatIdInt, userId))
+        {
+            this.logger.LogWarning(
+                "User {UserId} denied access to combat {CombatId}",
+                userId,
+                combatId);
+            throw new HubException("You are not authorized to join this combat.");
+        }
 
         await this.Groups.AddToGroupAsync(this.Context.ConnectionId, groupName);
 
@@ -270,6 +286,49 @@ public class CombatHub : Hub
                 EndedBy = userId,
                 Timestamp = DateTime.UtcNow
             });
+    }
+
+    /// <summary>
+    /// Checks whether a user belongs to the campaign owning the given combat,
+    /// either as the Game Master or as a player participant.
+    /// </summary>
+    /// <param name="combatId">The combat identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns><c>true</c> if the user is authorized.</returns>
+    private async Task<bool> IsAuthorizedForCombatAsync(int combatId, int userId)
+    {
+        if (userId <= 0)
+        {
+            return false;
+        }
+
+        var combat = await this.db.Combats
+            .AsNoTracking()
+            .Include(c => c.Session)
+            .FirstOrDefaultAsync(c => c.Id == combatId);
+
+        if (combat?.Session is null)
+        {
+            return false;
+        }
+
+        var campaignId = combat.Session.CampaignId;
+
+        // Game Master of the campaign
+        var isGameMaster = await this.db.Campaigns
+            .AsNoTracking()
+            .AnyAsync(c => c.Id == campaignId && c.CreatedBy == userId);
+
+        if (isGameMaster)
+        {
+            return true;
+        }
+
+        // Player participating in the session through a character they own
+        return await this.db.SessionParticipants
+            .AsNoTracking()
+            .AnyAsync(sp => sp.SessionId == combat.SessionId
+                && sp.WorldCharacter.Character.UserId == userId);
     }
 
     /// <summary>

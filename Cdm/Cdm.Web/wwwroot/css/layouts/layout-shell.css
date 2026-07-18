@@ -767,10 +767,17 @@
 /* ============================================
    DROPDOWN BACKDROP (click-outside to close)
    ============================================ */
+/*
+ * Le backdrop capte les clics "en dehors" pour fermer les menus.
+ * Il DOIT rester sous la topbar (--z-topbar: 1020) : la topbar est `position: sticky`
+ * avec un z-index, elle crée donc un contexte d'empilement qui "enferme" les dropdowns
+ * qu'elle contient. Un backdrop au-dessus recouvrirait ces menus et rendrait leurs
+ * boutons (marquer comme lu, supprimer, déconnexion…) inertes.
+ */
 .dropdown-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1055;
+  z-index: 1010;
   background: transparent;
 }
 

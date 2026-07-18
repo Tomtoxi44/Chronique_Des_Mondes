@@ -84,8 +84,11 @@
   /* ============================================
      Z-INDEX
      ============================================ */
-  --z-sidebar:   1030;
   --z-topbar:    1020;
+  --z-sidebar:   1030;
+  /* Menus déroulants (notifications, avatar) : au-dessus du contenu de la topbar.
+     Le backdrop de fermeture reste volontairement sous la topbar (voir layout-shell.css). */
+  --z-dropdown:  1040;
   --z-modal:     1050;
   --z-toast:     1070;
   --z-tooltip:   1080;

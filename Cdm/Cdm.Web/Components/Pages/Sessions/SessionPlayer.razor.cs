@@ -26,6 +26,8 @@ public partial class SessionPlayer : IAsyncDisposable
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
     [Inject] private ILocalStorageService LocalStorage { get; set; } = default!;
+    [Inject] private ToastService Toast { get; set; } = default!;
+    [Inject] private ILogger<SessionPlayer> Logger { get; set; } = default!;
 
     private SessionDto? Session;
     private WorldCharacterDto? MyCharacter;
@@ -145,7 +147,14 @@ public partial class SessionPlayer : IAsyncDisposable
             await _hub.StartAsync();
             await _hub.InvokeAsync("JoinSession", SessionId);
         }
-        catch { /* hub optionnel : la session fonctionne sans */ }
+        catch (Exception ex)
+        {
+            // Ne jamais échouer en silence : sans le hub, le chat et les dés partagés sont muets.
+            Logger.LogWarning(ex, "Connexion au hub de session impossible (session {SessionId})", SessionId);
+            Toast.ShowError(
+                "Temps réel indisponible : le chat et les dés partagés ne fonctionneront pas. Rechargez la page pour réessayer.",
+                "Connexion perdue");
+        }
     }
 
     private async Task SendMessage()
@@ -153,8 +162,16 @@ public partial class SessionPlayer : IAsyncDisposable
         if (_hub == null || !IsHubConnected || string.IsNullOrWhiteSpace(ChatInput)) return;
         var msg = ChatInput.Trim();
         ChatInput = "";
-        try { await _hub.InvokeAsync("SendMessage", SessionId, msg); }
-        catch { }
+        try
+        {
+            await _hub.InvokeAsync("SendMessage", SessionId, msg);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Envoi du message impossible (session {SessionId})", SessionId);
+            ChatInput = msg; // on rend son texte à l'utilisateur plutôt que de le perdre
+            Toast.ShowError("Message non envoyé. Vérifiez votre connexion.", "Chat");
+        }
     }
 
     private async Task RollDice(int faces)
@@ -164,10 +181,16 @@ public partial class SessionPlayer : IAsyncDisposable
         StateHasChanged();
         await Task.Delay(400);
         var result = Random.Shared.Next(1, faces + 1);
-        try { await _hub.InvokeAsync("RollDice", SessionId, $"D{faces}", 1, new[] { result }, 0, (string?)null); }
-        catch
+        try
         {
+            await _hub.InvokeAsync("RollDice", SessionId, $"D{faces}", 1, new[] { result }, 0, (string?)null);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Partage du jet de dé impossible (session {SessionId})", SessionId);
+            // Repli local : le joueur voit son jet, mais il faut dire qu'il n'a pas été partagé.
             ChatEntries.Add(new ChatEntry("dice", CurrentUserName ?? "Joueur", null, $"D{faces}", new[] { result }, DateTime.UtcNow));
+            Toast.ShowWarning("Jet effectué localement : il n'a pas été partagé à la table.", "Dés");
         }
         RollingDie = null;
         StateHasChanged();

@@ -10,6 +10,7 @@ using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 /// <summary>
@@ -43,6 +44,17 @@ public class SessionHub : Hub
         var userId = this.GetUserId();
         var userName = this.GetUserName();
         var groupName = $"chapter_{chapterId}";
+
+        // Authorization: only members of the related campaign may join the session group (audit fix #6).
+        // NB: the client passes the SessionId here (the parameter name is historical).
+        if (!await this.IsAuthorizedForSessionAsync(chapterId, userId))
+        {
+            this.logger.LogWarning(
+                "User {UserId} denied access to session {SessionId}",
+                userId,
+                chapterId);
+            throw new HubException("You are not authorized to join this session.");
+        }
 
         await this.Groups.AddToGroupAsync(this.Context.ConnectionId, groupName);
 
@@ -268,6 +280,46 @@ public class SessionHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    /// <summary>
+    /// Checks whether a user belongs to the campaign owning the given session,
+    /// either as the Game Master or as a player participant.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns><c>true</c> if the user is authorized.</returns>
+    private async Task<bool> IsAuthorizedForSessionAsync(int sessionId, int userId)
+    {
+        if (userId <= 0)
+        {
+            return false;
+        }
+
+        var session = await this.db.Sessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session is null)
+        {
+            return false;
+        }
+
+        // Game Master of the campaign
+        var isGameMaster = await this.db.Campaigns
+            .AsNoTracking()
+            .AnyAsync(c => c.Id == session.CampaignId && c.CreatedBy == userId);
+
+        if (isGameMaster)
+        {
+            return true;
+        }
+
+        // Player participating in this session through a character they own
+        return await this.db.SessionParticipants
+            .AsNoTracking()
+            .AnyAsync(sp => sp.SessionId == sessionId
+                && sp.WorldCharacter.Character.UserId == userId);
     }
 
     /// <summary>
