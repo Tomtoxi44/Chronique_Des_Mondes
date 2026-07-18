@@ -96,9 +96,25 @@ Réalisé à deux comptes : `TesteurAudit` (MJ) et le compte du propriétaire (`
 | Profil (`/profile`) | ✅ | Avatar, infos, champ pseudo + Enregistrer |
 | Paramètres (`/settings`) | ✅ | Sections Apparence / Langue / À propos |
 | Thème clair/sombre | ⚠️ partiel | La bascule fonctionne (profil/paramètres passent en clair) mais **ne rafraîchit pas le fond de la page courante sans navigation** |
-| Langue → English | ❌ | Le bouton « English » se sélectionne (même après reload) mais **l'UI reste en français** — traductions EN non appliquées (`.resx` incomplets ou chaînes codées en dur) |
+| Langue → English | ❌ → ✅ **corrigé** | Le bouton se sélectionnait mais l'UI restait en français — voir correctif ci-dessous |
 | Événements (création) | ✅ | « Tempête magique » créé (Actif / Narratif / Permanent), badges + actions |
-| **Notifications** (marquer lu / tout lu / supprimer) | ⚠️ à confirmer | Aucune des 3 actions n'a eu d'effet : la notif reste non lue et le badge reste à « 1 ». Le code (endpoints, service, mapping, `@onclick:stopPropagation`) est pourtant correct — **possiblement un artefact de mes clics synthétiques qui atteignent le backdrop du menu**. À vérifier **manuellement** (clic humain) ; si ça échoue aussi, c'est un vrai bug d'événement à corriger |
+| **Notifications** (marquer lu / tout lu / supprimer) | ❌ → ✅ **corrigé** | Aucune des 3 actions n'avait d'effet — **vrai bug de z-index**, voir correctif ci-dessous |
+
+### 🐞 Bug bloquant : les menus déroulants étaient inertes (z-index)
+
+**Symptôme :** dans le menu de notifications, « Marquer comme lu », « Tout marquer lu » et « Supprimer » n'avaient aucun effet — le menu se fermait, le badge restait à « 1 ».
+
+**Cause racine :** `.app-topbar` est en `position: sticky` avec `z-index: 1020`, ce qui **crée un contexte d'empilement**. Le menu de notifications, qui vit à l'intérieur, était donc plafonné à ce niveau malgré son `z-index: 1060`. Le `.dropdown-backdrop` (transparent, plein écran, `z-index: 1055`) passait **au-dessus du menu** : tous les clics atterrissaient sur le backdrop, qui se contentait de fermer le menu. Le code C# (endpoints, service, mapping, `@onclick:stopPropagation`) était correct depuis le début — c'était purement du CSS. Le **menu avatar** (déconnexion) était touché par le même problème.
+
+**Correctif :** le backdrop passe sous la topbar (`z-index: 1010`) ; il capte toujours les clics « en dehors » dans la zone de contenu, mais ne recouvre plus les menus. Ajout de `--z-dropdown: 1040` dans `variables.css` (la variable était référencée sans jamais être définie) et d'un commentaire expliquant la contrainte, pour éviter une régression.
+*Effet de bord assumé :* cliquer dans la barre latérale ne ferme plus le menu ouvert (la navigation, elle, fonctionne).
+
+### 🐞 Bascule de langue sans effet
+
+**Cause racine :** la page Paramètres écrivait en JS un cookie `Culture=en`. Or ASP.NET Core lit le cookie **`.AspNetCore.Culture`** au format **`c=en|uic=en`** (`CookieRequestCultureProvider`). Le cookie posé n'était donc jamais interprété : seule la surbrillance du bouton changeait (stockée dans `localStorage`), d'où l'illusion que le choix était pris en compte. Les fichiers `AppStrings.en.resx` / `.fr.resx` existent pourtant bien (225 entrées chacun).
+
+**Correctif :** ajout d'un endpoint serveur `GET /set-culture` (dans `Cdm.Web/Program.cs`) qui pose le cookie standard via `CookieRequestCultureProvider.MakeCookieValue(...)`, valide la culture contre la liste supportée et redirige (`LocalRedirect`, protégé contre l'open redirect). `Settings.SetLanguage` y redirige désormais avec `forceLoad: true`.
+*À noter :* seules les chaînes passant par `IStringLocalizer<AppStrings>` seront traduites ; les libellés codés en dur dans les `.razor` resteront en français tant qu'ils ne sont pas externalisés.
 
 ### Bilan des « échecs silencieux »
 

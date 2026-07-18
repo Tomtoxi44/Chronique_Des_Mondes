@@ -284,6 +284,29 @@ app.UseOutputCache();
 
 app.MapStaticAssets();
 
+// Bascule de langue : pose le cookie de culture standard d'ASP.NET Core.
+// (L'ancienne implémentation écrivait un cookie "Culture=fr" côté JS, que
+// CookieRequestCultureProvider ne lit pas — la langue ne changeait donc jamais.)
+app.MapGet("/set-culture", (string culture, string? redirectUri, HttpContext context) =>
+{
+    if (!string.IsNullOrWhiteSpace(culture) &&
+        supportedCultures.Any(c => c.Name.Equals(culture, StringComparison.OrdinalIgnoreCase)))
+    {
+        context.Response.Cookies.Append(
+            Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.DefaultCookieName,
+            Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.MakeCookieValue(
+                new Microsoft.AspNetCore.Localization.RequestCulture(culture)),
+            new CookieOptions
+            {
+                Path = "/",
+                MaxAge = TimeSpan.FromDays(365),
+                IsEssential = true,
+            });
+    }
+
+    return Results.LocalRedirect(string.IsNullOrWhiteSpace(redirectUri) ? "/settings" : redirectUri);
+});
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

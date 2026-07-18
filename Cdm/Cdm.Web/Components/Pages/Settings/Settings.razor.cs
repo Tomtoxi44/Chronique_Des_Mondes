@@ -48,13 +48,19 @@ public partial class Settings
     private async Task SetLanguage(string culture)
     {
         CurrentCulture = culture;
+
+        // Mémorise le choix pour l'état visuel du bouton.
         try
         {
             await JS.InvokeVoidAsync("localStorage.setItem", "cdm-culture", culture);
-            // Reload for culture cookie to take effect
-            await JS.InvokeVoidAsync("eval",
-                $"document.cookie='Culture={culture};path=/;max-age=31536000'; location.reload();");
         }
-        catch { /* ignore */ }
+        catch { /* non bloquant */ }
+
+        // Délègue au endpoint serveur qui pose le cookie de culture standard
+        // (.AspNetCore.Culture) puis redirige : c'est lui qui fait réellement
+        // basculer la langue de l'interface.
+        this.Nav.NavigateTo(
+            $"/set-culture?culture={Uri.EscapeDataString(culture)}&redirectUri={Uri.EscapeDataString("/settings")}",
+            forceLoad: true);
     }
 }
