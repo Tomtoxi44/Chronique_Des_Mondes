@@ -43,7 +43,7 @@ public partial class Register
                 {
                     await provider.MarkUserAsAuthenticatedAsync(
                         response.UserId, response.Email, response.Nickname, response.Token,
-                        response.RefreshToken, response.RefreshTokenExpiry);
+                        response.RefreshToken, response.RefreshTokenExpiry, response.EmailConfirmed);
 
                     // Le ToastService est scopé au circuit : le toast reste affiché
                     // après la navigation vers le tableau de bord.

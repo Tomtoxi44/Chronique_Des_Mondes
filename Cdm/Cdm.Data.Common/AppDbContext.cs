@@ -96,6 +96,16 @@ public class AppDbContext : DbContext
     /// <summary>
     /// Gets or sets the session chat messages.
     /// </summary>
+    /// <summary>
+    /// Gets or sets the password reset tokens.
+    /// </summary>
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the email confirmation tokens.
+    /// </summary>
+    public DbSet<EmailConfirmationToken> EmailConfirmationTokens { get; set; } = null!;
+
     public DbSet<SessionMessage> SessionMessages { get; set; } = null!;
 
     /// <summary>

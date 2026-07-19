@@ -74,6 +74,19 @@ public class User
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// Whether the user's email address has been confirmed.
+    /// Les comptes existants avant l'introduction de cette fonctionnalité sont à false
+    /// et devront valider leur adresse à la prochaine connexion.
+    /// </summary>
+    [Required]
+    public bool EmailConfirmed { get; set; } = false;
+
+    /// <summary>
+    /// When the email address was confirmed (UTC, null if not confirmed).
+    /// </summary>
+    public DateTime? EmailConfirmedAt { get; set; }
+
+    /// <summary>
     /// Last update timestamp (UTC)
     /// </summary>
     [Required]

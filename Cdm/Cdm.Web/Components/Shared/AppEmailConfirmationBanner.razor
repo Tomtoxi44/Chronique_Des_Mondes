@@ -1,0 +1,124 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Cdm.Web.Services.ApiClients
+@implements IDisposable
+@inject IAuthApiClient AuthClient
+@inject AuthenticationStateProvider AuthProvider
+
+@if (_visible)
+{
+    <div class="email-confirm-banner" role="alert">
+        <i class="bi bi-envelope-exclamation"></i>
+        <span class="email-confirm-text">
+            Votre adresse email n'est pas encore confirmée. Vérifiez votre boîte de réception
+            pour activer toutes les fonctionnalités.
+        </span>
+
+        @if (!string.IsNullOrEmpty(_feedback))
+        {
+            <span class="email-confirm-feedback">@_feedback</span>
+        }
+
+        <button class="btn btn-sm email-confirm-btn"
+                @onclick="ResendAsync"
+                disabled="@(_busy || _cooldown > 0)">
+            @if (_busy)
+            {
+                <span>Envoi…</span>
+            }
+            else if (_cooldown > 0)
+            {
+                <span>Renvoyer (@_cooldown s)</span>
+            }
+            else
+            {
+                <span><i class="bi bi-arrow-repeat"></i> Renvoyer l'email</span>
+            }
+        </button>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private bool _busy;
+    private int _cooldown;
+    private string? _feedback;
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthProvider.AuthenticationStateChanged += OnAuthStateChanged;
+        await RefreshVisibilityAsync(await AuthProvider.GetAuthenticationStateAsync());
+    }
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> task)
+    {
+        try
+        {
+            await RefreshVisibilityAsync(await task);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch { /* non bloquant */ }
+    }
+
+    private Task RefreshVisibilityAsync(AuthenticationState state)
+    {
+        var user = state.User;
+        var isAuth = user.Identity?.IsAuthenticated == true;
+        var confirmed = user.FindFirst("email_confirmed")?.Value != "false";
+        _visible = isAuth && !confirmed;
+        return Task.CompletedTask;
+    }
+
+    private async Task ResendAsync()
+    {
+        _busy = true;
+        _feedback = null;
+        StateHasChanged();
+
+        var wait = await AuthClient.ResendConfirmationAsync();
+
+        _busy = false;
+
+        if (wait == 0)
+        {
+            _feedback = "Email envoyé — pensez à vérifier vos spams.";
+            StartCooldown(120);
+        }
+        else if (wait > 0)
+        {
+            _feedback = "Un email a déjà été envoyé récemment.";
+            StartCooldown(wait);
+        }
+        else
+        {
+            _feedback = "Envoi impossible pour le moment.";
+        }
+
+        StateHasChanged();
+    }
+
+    private void StartCooldown(int seconds)
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+        _cooldown = seconds;
+
+        _ = Task.Run(async () =>
+        {
+            while (_cooldown > 0 && !token.IsCancellationRequested)
+            {
+                await Task.Delay(1000, token);
+                _cooldown--;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, token);
+    }
+
+    public void Dispose()
+    {
+        AuthProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

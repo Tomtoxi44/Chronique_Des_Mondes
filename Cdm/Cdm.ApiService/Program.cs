@@ -14,6 +14,39 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Azure Key Vault : source de secrets centralisée.
+// Si "KeyVault:Uri" est renseigné, tous les secrets du coffre sont ajoutés à la
+// configuration (un secret nommé "AzureEmail--ConnectionString" alimente la clé
+// "AzureEmail:ConnectionString", etc.). L'authentification passe par
+// DefaultAzureCredential : identité managée en production, `az login` du
+// développeur en local — aucun secret dans le code ni dans appsettings.
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+{
+    // On écarte les credentials qui posent problème sur les postes multi-tenants
+    // (Visual Studio / PowerShell / azd connectés à d'autres comptes) et on garde
+    // l'identité managée (production) + l'Azure CLI (développement local).
+    var credentialOptions = new Azure.Identity.DefaultAzureCredentialOptions
+    {
+        ExcludeVisualStudioCredential = true,
+        ExcludeAzurePowerShellCredential = true,
+        ExcludeAzureDeveloperCliCredential = true,
+        ExcludeInteractiveBrowserCredential = true,
+    };
+
+    // Force le tenant du coffre : indispensable quand la machine a plusieurs
+    // comptes Azure, sinon le mauvais tenant est choisi.
+    var keyVaultTenantId = builder.Configuration["KeyVault:TenantId"];
+    if (!string.IsNullOrWhiteSpace(keyVaultTenantId))
+    {
+        credentialOptions.TenantId = keyVaultTenantId;
+    }
+
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUri),
+        new Azure.Identity.DefaultAzureCredential(credentialOptions));
+}
+
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
 
@@ -140,8 +173,17 @@ builder.Services.AddScoped<ICombatService, CombatService>();
 builder.Services.AddScoped<IDndReferenceService, DndReferenceService>();
 builder.Services.AddScoped<IDndNpcService, DndNpcService>();
 builder.Services.AddScoped<IDndCharacterService, DndCharacterService>();
-// Email service is optional for MVP
-// builder.Services.AddScoped<IEmailService, AzureEmailService>();
+// Service d'email : Azure Communication Services si configuré, sinon repli qui
+// journalise (le parcours « mot de passe oublié » reste testable en local, le lien
+// de réinitialisation apparaît alors dans les logs de l'API).
+if (!string.IsNullOrWhiteSpace(builder.Configuration["AzureEmail:ConnectionString"]))
+{
+    builder.Services.AddScoped<IEmailService, AzureEmailService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailService, LoggingEmailService>();
+}
 
 // Configure SignalR
 builder.Services.AddSignalR(options =>

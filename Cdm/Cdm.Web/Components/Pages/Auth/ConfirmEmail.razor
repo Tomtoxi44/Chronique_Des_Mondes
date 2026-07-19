@@ -1,0 +1,41 @@
+@page "/confirm-email"
+@layout Layout.BlankLayout
+
+<PageTitle>Confirmation d'adresse — Chronique des Mondes</PageTitle>
+
+<div class="auth-card">
+    <div class="auth-branding">
+        <img src="/images/LogoCdm.svg" alt="Logo Chronique des Mondes" class="auth-logo" />
+        <div class="auth-app-name">@L["AppName"]</div>
+        <div class="auth-tagline">@L["AppTagline"]</div>
+    </div>
+
+    <h2 class="auth-title">Confirmation d'adresse</h2>
+
+    @if (IsLoading)
+    {
+        <div class="auth-help-text" style="text-align:center">
+            <AppLoadingSpinner Inline="true" Size="sm" /> Vérification du lien…
+        </div>
+    }
+    else if (IsSuccess)
+    {
+        <div class="alert alert-success" role="status">
+            <i class="bi bi-check-circle-fill"></i>
+            Votre adresse email est confirmée. Merci !
+        </div>
+        <div class="auth-footer-link">
+            <a href="/">Accéder à mon tableau de bord</a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-error" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            @ErrorMessage
+        </div>
+        <div class="auth-footer-link">
+            <a href="/login">Retour à la connexion</a>
+        </div>
+    }
+</div>
