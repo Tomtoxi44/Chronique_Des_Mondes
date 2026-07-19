@@ -169,6 +169,33 @@ public partial class CombatGm : IAsyncDisposable
         IsRollingInitiative = false;
     }
 
+    // Server-side attack resolution form state.
+    private int AtkAttackerId;
+    private int AtkTargetId;
+    private int AtkBonus;
+    private string AtkDamageDice = "1d8";
+    private int AtkDamageBonus;
+    private string? AtkDamageType;
+    private string? AtkLabel;
+    private bool IsResolvingAttack;
+
+    private async Task ResolveAttack()
+    {
+        if (IsResolvingAttack || AtkAttackerId <= 0 || AtkTargetId <= 0 || AtkAttackerId == AtkTargetId) return;
+        IsResolvingAttack = true;
+        var updated = await CombatClient.ResolveAttackAsync(CombatId, AtkAttackerId, new ResolveAttackDto
+        {
+            TargetParticipantId = AtkTargetId,
+            AttackBonus = AtkBonus,
+            DamageDice = string.IsNullOrWhiteSpace(AtkDamageDice) ? "1d4" : AtkDamageDice.Trim(),
+            DamageBonus = AtkDamageBonus,
+            DamageType = string.IsNullOrWhiteSpace(AtkDamageType) ? null : AtkDamageType.Trim(),
+            Label = string.IsNullOrWhiteSpace(AtkLabel) ? null : AtkLabel.Trim()
+        });
+        if (updated != null) { Combat = updated; await LoadActiveCharacterAsync(); }
+        IsResolvingAttack = false;
+    }
+
     private async Task StartCombat()
     {
         var updated = await CombatClient.StartCombatAsync(CombatId);
