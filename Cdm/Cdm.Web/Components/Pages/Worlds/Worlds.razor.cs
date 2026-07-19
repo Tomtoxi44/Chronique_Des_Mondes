@@ -14,6 +14,7 @@ public partial class Worlds
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
 
     private List<WorldDto> WorldsList { get; set; } = new();
+    private List<WorldDto> JoinedWorlds { get; set; } = new();
     private bool IsLoading = true;
     private string ErrorMessage = string.Empty;
     private WorldDto? WorldToDelete;
@@ -30,7 +31,14 @@ public partial class Worlds
         ErrorMessage = string.Empty;
         try
         {
-            WorldsList = await WorldClient.GetMyWorldsAsync();
+            var ownedTask = WorldClient.GetMyWorldsAsync();
+            var allTask = WorldClient.GetAllMyWorldsAsync();
+            await Task.WhenAll(ownedTask, allTask);
+
+            WorldsList = ownedTask.Result;
+            // Joined worlds = worlds the user takes part in as a player, i.e. not owned.
+            var ownedIds = WorldsList.Select(w => w.Id).ToHashSet();
+            JoinedWorlds = allTask.Result.Where(w => !ownedIds.Contains(w.Id)).ToList();
         }
         catch
         {
