@@ -57,6 +57,11 @@ public static class CombatEndpoints
             .WithName("ResolveAttack")
             .WithOpenApi();
 
+        // PUT /api/combat/{id}/participants/{participantId}/defense — Override defensive stats
+        group.MapPut("/{id:int}/participants/{participantId:int}/defense", UpdateParticipantDefenseAsync)
+            .WithName("UpdateParticipantDefense")
+            .WithOpenApi();
+
         // PUT /api/combat/{id}/initiative/{participantId} — Set a participant's initiative
         group.MapPut("/{id:int}/initiative/{participantId:int}", SetInitiativeAsync)
             .WithName("SetInitiative")
@@ -206,6 +211,24 @@ public static class CombatEndpoints
         var result = await combatService.ResolveAttackAsync(id, attackerId, request, userId.Value);
         if (result == null)
             return Results.BadRequest(new { Error = "Failed to resolve attack. Check IDs and authorization." });
+
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> UpdateParticipantDefenseAsync(
+        int id,
+        int participantId,
+        [FromBody] UpdateParticipantDefenseDto request,
+        [FromServices] ICombatService combatService,
+        ILogger<CombatEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        var userId = GetUserId(httpContext);
+        if (userId == null) return Results.Unauthorized();
+
+        var result = await combatService.UpdateParticipantDefenseAsync(id, participantId, request, userId.Value);
+        if (result == null)
+            return Results.BadRequest(new { Error = "Failed to update participant defense. Check IDs and authorization." });
 
         return Results.Ok(result);
     }

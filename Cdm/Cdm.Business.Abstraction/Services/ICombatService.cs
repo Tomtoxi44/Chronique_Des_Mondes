@@ -49,6 +49,18 @@ public interface ICombatService
     /// <returns>The updated combat, or null if not found/unauthorized.</returns>
     Task<CombatDto?> ResolveAttackAsync(int combatId, int attackerParticipantId, ResolveAttackDto request, int userId);
 
+    /// <summary>
+    /// Overrides a participant's defensive stats (armor class, Dexterity modifier, resistances,
+    /// vulnerabilities), so the GM can correct the values auto-resolved at combat creation.
+    /// Only the GM of the session may do this.
+    /// </summary>
+    /// <param name="combatId">The combat identifier.</param>
+    /// <param name="participantId">The participant identifier.</param>
+    /// <param name="request">The new defensive stats.</param>
+    /// <param name="userId">The requesting user (must be GM).</param>
+    /// <returns>The updated combat, or null if not found/unauthorized.</returns>
+    Task<CombatDto?> UpdateParticipantDefenseAsync(int combatId, int participantId, UpdateParticipantDefenseDto request, int userId);
+
     /// <summary>Sorts participants by initiative and transitions the combat to Active (Status = 2).</summary>
     Task<CombatDto?> StartCombatAsync(int combatId, StartCombatDto? request, int userId);
 

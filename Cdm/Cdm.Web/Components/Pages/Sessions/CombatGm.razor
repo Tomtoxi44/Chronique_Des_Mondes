@@ -72,6 +72,15 @@ else if (Combat != null)
                                 @(p.IsPlayerCharacter ? "Joueur" : "PNJ")
                             </span>
 
+                            <span class="initiative-defense-edit" style="display:inline-flex; align-items:center; gap:4px; font-size:var(--font-size-xs);" title="Corrige manuellement la CA et le modificateur de Dextérité">
+                                <label style="color:var(--color-text-muted);">CA</label>
+                                <input type="number" class="form-control" style="width:52px;" value="@p.ArmorClass"
+                                       @onchange="e => OnAcChanged(participant, e)" />
+                                <label style="color:var(--color-text-muted);">DEX</label>
+                                <input type="number" class="form-control" style="width:52px;" value="@p.DexterityModifier"
+                                       @onchange="e => OnDexChanged(participant, e)" />
+                            </span>
+
                             @if (p.Initiative.HasValue)
                             {
                                 <span class="initiative-value-display">@p.Initiative</span>

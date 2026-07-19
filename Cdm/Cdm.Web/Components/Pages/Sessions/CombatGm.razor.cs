@@ -227,6 +227,28 @@ public partial class CombatGm : IAsyncDisposable
         await SetParticipantInitiative(participant, roll.ToString());
     }
 
+    private async Task UpdateDefense(CombatParticipantDto p, int? armorClass, int? dexModifier)
+    {
+        var updated = await CombatClient.UpdateParticipantDefenseAsync(CombatId, p.Id, new UpdateParticipantDefenseDto
+        {
+            ArmorClass = armorClass ?? p.ArmorClass,
+            DexterityModifier = dexModifier ?? p.DexterityModifier,
+            Resistances = p.Resistances,
+            Vulnerabilities = p.Vulnerabilities
+        });
+        if (updated != null) Combat = updated;
+    }
+
+    private async Task OnAcChanged(CombatParticipantDto p, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var v)) await UpdateDefense(p, v, null);
+    }
+
+    private async Task OnDexChanged(CombatParticipantDto p, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var v)) await UpdateDefense(p, null, v);
+    }
+
     private async Task RecordActionFromDice(CreateCombatActionDto action)
     {
         await CombatClient.RecordActionAsync(CombatId, action);
