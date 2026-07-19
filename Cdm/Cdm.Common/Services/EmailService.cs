@@ -8,6 +8,17 @@ using Microsoft.Extensions.Logging;
 public interface IEmailService
 {
     Task<bool> SendInvitationEmailAsync(string toEmail, string campaignName, string inviterName, string invitationLink, string? message = null);
+
+    /// <summary>
+    /// Envoie une invitation à rejoindre un monde (lien de jonction inclus).
+    /// </summary>
+    /// <param name="toEmail">Adresse du destinataire.</param>
+    /// <param name="worldName">Nom du monde.</param>
+    /// <param name="inviterName">Pseudo du MJ qui invite.</param>
+    /// <param name="invitationLink">Lien de jonction complet (jeton inclus).</param>
+    /// <param name="message">Message personnel optionnel.</param>
+    Task<bool> SendWorldInvitationEmailAsync(string toEmail, string worldName, string inviterName, string invitationLink, string? message = null);
+
     Task<bool> SendInvitationAcceptedEmailAsync(string toEmail, string campaignName, string playerName);
     Task<bool> SendInvitationRejectedEmailAsync(string toEmail, string campaignName, string playerName);
 
@@ -50,6 +61,14 @@ public class LoggingEmailService : IEmailService
         this.logger.LogInformation(
             "[Email non configuré] Invitation à '{Campaign}' pour {ToEmail} — lien : {Link}",
             campaignName, toEmail, invitationLink);
+        return Task.FromResult(true);
+    }
+
+    public Task<bool> SendWorldInvitationEmailAsync(string toEmail, string worldName, string inviterName, string invitationLink, string? message = null)
+    {
+        this.logger.LogInformation(
+            "[Email non configuré] Invitation au monde '{World}' pour {ToEmail} — lien : {Link}",
+            worldName, toEmail, invitationLink);
         return Task.FromResult(true);
     }
 
@@ -121,6 +140,26 @@ public class AzureEmailService : IEmailService
                     <p><a href='{invitationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;'>Accepter/Refuser l'invitation</a></p>
                     {(string.IsNullOrEmpty(message) ? "" : $"<p><em>Message personnel :</em><br>{message}</p>")}
                     <p>Cette invitation expirera dans 7 jours.</p>
+                    <hr>
+                    <p><small>Chronique des Mondes - Système de gestion de campagnes</small></p>
+                </body>
+            </html>";
+
+        return await this.SendEmailAsync(toEmail, subject, htmlBody);
+    }
+
+    public async Task<bool> SendWorldInvitationEmailAsync(string toEmail, string worldName, string inviterName, string invitationLink, string? message = null)
+    {
+        var subject = $"Invitation à rejoindre le monde {worldName}";
+        var htmlBody = $@"
+            <html>
+                <body>
+                    <h2>Invitation à un monde</h2>
+                    <p>Bonjour,</p>
+                    <p><strong>{inviterName}</strong> vous invite à rejoindre le monde <strong>{worldName}</strong>.</p>
+                    <p><a href='{invitationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;'>Rejoindre le monde</a></p>
+                    {(string.IsNullOrEmpty(message) ? "" : $"<p><em>Message personnel :</em><br>{message}</p>")}
+                    <p>Ce lien d'invitation expirera dans 30 jours.</p>
                     <hr>
                     <p><small>Chronique des Mondes - Système de gestion de campagnes</small></p>
                 </body>

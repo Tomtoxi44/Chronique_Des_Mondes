@@ -1338,6 +1338,32 @@ else
                         @(IsGeneratingWorldToken ? "Génération..." : "Générer un lien d'invitation")
                     </button>
                 }
+
+                <div style="margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px solid var(--color-border);">
+                    <h4 style="font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
+                        <i class="bi bi-envelope-paper"></i> Inviter un joueur par email
+                    </h4>
+                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-xs); margin: 0 0 var(--spacing-sm);">
+                        Le lien d'invitation lui sera envoyé directement par email.
+                    </p>
+                    <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap; align-items: flex-start;">
+                        <input type="email" class="form-control" style="min-width: 220px; flex: 1;" placeholder="adresse@email.com"
+                               @bind="InviteEmail" disabled="@IsSendingEmailInvite" />
+                        <input type="text" class="form-control" style="min-width: 220px; flex: 1;" placeholder="Message (optionnel)"
+                               @bind="InviteMessage" disabled="@IsSendingEmailInvite" />
+                        <button class="btn btn-primary btn-sm" @onclick="SendEmailInvite"
+                                disabled="@(IsSendingEmailInvite || string.IsNullOrWhiteSpace(InviteEmail))">
+                            <i class="bi bi-send"></i>
+                            @(IsSendingEmailInvite ? "Envoi..." : "Envoyer")
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(EmailInviteFeedback))
+                    {
+                        <p style="font-size: var(--font-size-xs); margin-top: var(--spacing-xs); color: @(EmailInviteSuccess ? "var(--color-success)" : "var(--color-error)");">
+                            @EmailInviteFeedback
+                        </p>
+                    }
+                </div>
             </div>
 
             @* Joueurs actuels *@
