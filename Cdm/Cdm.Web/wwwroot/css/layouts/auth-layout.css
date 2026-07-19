@@ -86,6 +86,14 @@
   text-align: center;
 }
 
+/* Texte d'accompagnement au-dessus d'un formulaire (mot de passe oublié, réinitialisation) */
+.auth-help-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin-bottom: var(--spacing-lg);
+}
+
 .auth-footer-link {
   text-align: center;
   font-size: var(--font-size-sm);

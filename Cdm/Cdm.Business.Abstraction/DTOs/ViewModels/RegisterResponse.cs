@@ -36,6 +36,12 @@ public class RegisterResponse
     public DateTime RefreshTokenExpiry { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the user's email is confirmed
+    /// (toujours false juste après l'inscription).
+    /// </summary>
+    public bool EmailConfirmed { get; set; }
+
+    /// <summary>
     /// Gets or sets the success message.
     /// </summary>
     public string Message { get; set; } = "Account created successfully";
