@@ -163,15 +163,7 @@ public class DndNpcService(AppDbContext dbContext, ILogger<DndNpcService> logger
         return JsonSerializer.Serialize(stats, JsonOpts);
     }
 
-    private static int CalculateProficiencyBonus(int level) => level switch
-    {
-        >= 1 and <= 4 => 2,
-        >= 5 and <= 8 => 3,
-        >= 9 and <= 12 => 4,
-        >= 13 and <= 16 => 5,
-        >= 17 and <= 20 => 6,
-        _ => 2
-    };
+    private static int CalculateProficiencyBonus(int level) => Cdm.Common.DndRules.ProficiencyBonus(level);
 
     private static DndNpcDto MapToDto(NonPlayerCharacter npc)
     {
