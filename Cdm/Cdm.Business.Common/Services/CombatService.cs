@@ -20,8 +20,11 @@ using Microsoft.Extensions.Logging;
 /// <param name="logger">Logger instance.</param>
 public class CombatService(
     AppDbContext dbContext,
+    IAchievementEvaluationService achievementEvaluation,
     ILogger<CombatService> logger) : ICombatService
 {
+    private readonly IAchievementEvaluationService achievementEvaluation = achievementEvaluation;
+
     private readonly AppDbContext dbContext = dbContext;
     private readonly ILogger<CombatService> logger = logger;
 
@@ -494,6 +497,9 @@ public class CombatService(
                 "Combat {CombatId} ended. Victory: {VictorySide}",
                 combatId,
                 request.VictorySide ?? "none");
+
+            // Award any automatic achievement based on combat outcome (won / survived).
+            await this.achievementEvaluation.OnCombatEndedAsync(combatId);
 
             return await this.LoadCombatDtoAsync(combatId);
         }

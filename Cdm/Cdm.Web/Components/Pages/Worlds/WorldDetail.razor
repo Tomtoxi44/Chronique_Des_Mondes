@@ -1190,6 +1190,44 @@ else
                         <label class="form-label">Récompense (optionnel)</label>
                         <input type="text" class="form-control" @bind="NewAchievement.RewardDescription" placeholder="Description de la récompense..." />
                     </div>
+                    <div class="form-row" style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Attribution</label>
+                            <select class="form-control" @bind="NewAchievement.IsAutomatic">
+                                <option value="false">Manuelle (le MJ décerne)</option>
+                                <option value="true">Automatique (condition)</option>
+                            </select>
+                        </div>
+                        @if (NewAchievement.IsAutomatic)
+                        {
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label">Condition automatique</label>
+                                <select class="form-control" @bind="NewAchievement.AutomaticCondition">
+                                    <option value="">— Choisir une condition —</option>
+                                    <optgroup label="Dés">
+                                        <option value="DiceCritical">Réussite critique (20 naturel)</option>
+                                        <option value="DiceFumble">Échec critique (1 naturel)</option>
+                                        <option value="DiceRolls:50">Lancer 50 dés au total</option>
+                                        <option value="DiceRolls:200">Lancer 200 dés au total</option>
+                                    </optgroup>
+                                    <optgroup label="Sessions">
+                                        <option value="SessionsAttended:1">Participer à sa 1re session</option>
+                                        <option value="SessionsAttended:5">Participer à 5 sessions</option>
+                                        <option value="SessionsAttended:10">Participer à 10 sessions</option>
+                                    </optgroup>
+                                    <optgroup label="Combat">
+                                        <option value="CombatWon:1">Remporter un 1er combat</option>
+                                        <option value="CombatWon:5">Remporter 5 combats</option>
+                                        <option value="CombatSurvived:5">Survivre à 5 combats</option>
+                                    </optgroup>
+                                    <optgroup label="Échanges">
+                                        <option value="TradesCompleted:1">Réaliser un 1er échange</option>
+                                        <option value="TradesCompleted:10">Réaliser 10 échanges</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        }
+                    </div>
                     <div style="display: flex; gap: var(--spacing-sm);">
                         <button class="btn btn-primary btn-sm" @onclick="CreateAchievement" disabled="@IsSaving">
                             <i class="bi bi-check"></i> Créer

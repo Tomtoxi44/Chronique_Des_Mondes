@@ -1,7 +1,9 @@
+using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.DTOs.Models;
 using Cdm.Business.Abstraction.DTOs.ViewModels;
 using Cdm.Web.Resources;
 using Cdm.Web.Services;
+using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Localization;
@@ -11,11 +13,13 @@ namespace Cdm.Web.Components.Pages.Profile;
 public partial class Profile
 {
     [Inject] private ProfileApiClient ProfileClient { get; set; } = default!;
+    [Inject] private AchievementApiClient AchievementClient { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
 
     private ProfileResponse? UserProfile;
     private UpdateProfileRequest UpdateModel { get; set; } = new();
+    private List<UserAchievementDto> MyAchievements { get; set; } = new();
     private bool IsLoading = true;
     private bool IsSaving = false;
     private string ErrorMessage = string.Empty;
@@ -39,6 +43,8 @@ public partial class Profile
             {
                 UpdateModel = new UpdateProfileRequest { Username = UserProfile.Username };
             }
+
+            MyAchievements = await AchievementClient.GetMyAchievementsAsync();
         }
         catch { /* ignore */ }
         finally
@@ -74,6 +80,22 @@ public partial class Profile
             IsSaving = false;
         }
     }
+
+    private static string RarityLabel(Cdm.Common.Enums.AchievementRarity rarity) => rarity switch
+    {
+        Cdm.Common.Enums.AchievementRarity.Rare => "Rare",
+        Cdm.Common.Enums.AchievementRarity.Epic => "Épique",
+        Cdm.Common.Enums.AchievementRarity.Legendary => "Légendaire",
+        _ => "Commun"
+    };
+
+    private static string RarityColor(Cdm.Common.Enums.AchievementRarity rarity) => rarity switch
+    {
+        Cdm.Common.Enums.AchievementRarity.Rare => "#3b82f6",
+        Cdm.Common.Enums.AchievementRarity.Epic => "#a855f7",
+        Cdm.Common.Enums.AchievementRarity.Legendary => "#f59e0b",
+        _ => "#9ca3af"
+    };
 
     private static string BuildInitials(string name)
     {

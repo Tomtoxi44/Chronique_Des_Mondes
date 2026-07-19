@@ -74,5 +74,50 @@ else
                 </div>
             </EditForm>
         </div>
+
+        <!-- Succès -->
+        <div class="cdm-card">
+            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">
+                <i class="bi bi-trophy"></i> Mes succès
+                @if (MyAchievements.Count > 0)
+                {
+                    <span class="status-badge" style="margin-left: var(--spacing-sm);">@MyAchievements.Count</span>
+                }
+            </h3>
+
+            @if (MyAchievements.Count == 0)
+            {
+                <p style="color: var(--color-text-muted); font-style: italic;">
+                    Aucun succès débloqué pour l'instant. Participez à des sessions pour en gagner !
+                </p>
+            }
+            else
+            {
+                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                    @foreach (var ua in MyAchievements.OrderByDescending(a => a.UnlockedAt))
+                    {
+                        <div class="cdm-card" style="border-left: 3px solid @RarityColor(ua.Rarity); padding: var(--spacing-sm);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                <i class="bi bi-trophy-fill" style="color: @RarityColor(ua.Rarity); font-size: 1.4rem;"></i>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
+                                        <strong>@ua.AchievementName</strong>
+                                        <span class="status-badge">@RarityLabel(ua.Rarity)</span>
+                                        @if (!ua.IsManuallyAwarded)
+                                        {
+                                            <span class="status-badge" title="Débloqué automatiquement"><i class="bi bi-magic"></i></span>
+                                        }
+                                    </div>
+                                    <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">@ua.AchievementDescription</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        Débloqué le @ua.UnlockedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
     </div>
 }
