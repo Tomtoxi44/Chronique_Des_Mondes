@@ -166,6 +166,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<ITradeService, TradeService>();
 builder.Services.AddScoped<INpcService, NpcService>();
 builder.Services.AddScoped<ICombatService, CombatService>();
 

@@ -113,6 +113,11 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<SessionDiceRoll> SessionDiceRolls { get; set; } = null!;
 
+    /// <summary>
+    /// Gets or sets the theory-based object trades proposed during sessions.
+    /// </summary>
+    public DbSet<SessionTrade> SessionTrades { get; set; } = null!;
+
     // ---- D&D 5e reference data ----
 
     /// <summary>D&amp;D 5e playable races.</summary>
