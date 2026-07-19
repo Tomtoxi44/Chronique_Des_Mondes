@@ -99,10 +99,7 @@ public partial class WorldDetail : IDisposable
     private bool IsLoadingWorldCharacters = false;
 
     // Events
-    private List<EventDto> WorldEvents = new();
-    private bool IsLoadingEvents = false;
-    private bool ShowNewEventForm = false;
-    private CreateEventDto NewEvent = new() { Level = EventLevel.World, EffectType = EventEffectType.Narrative, IsPermanent = true };
+    // (Événements du monde : gérés par WorldEventsPanel)
 
     // (Succès du monde : gérés par WorldAchievementsPanel)
 
@@ -269,9 +266,6 @@ public partial class WorldDetail : IDisposable
                 ChapterNumber = existingChapters.Count > 0 ? existingChapters.Max(c => c.ChapterNumber) + 1 : 1
             };
         }
-
-        if (Section == "events" && !IsLoadingEvents && WorldEvents.Count == 0)
-            await LoadEventsAsync();
 
         if (Section == "invitations" && !IsLoadingWorldCharacters && WorldCharacters.Count == 0)
             await LoadWorldCharactersAsync();
@@ -646,55 +640,6 @@ public partial class WorldDetail : IDisposable
         }
         IsSaving = false;
     }
-
-    private async Task LoadEventsAsync()
-    {
-        IsLoadingEvents = true;
-        WorldEvents = await EventClient.GetEventsByWorldAsync(WorldId);
-        IsLoadingEvents = false;
-    }
-
-    private async Task CreateEvent()
-    {
-        if (World == null) return;
-        IsSaving = true;
-        NewEvent.WorldId = WorldId;
-        NewEvent.Level = EventLevel.World;
-        var result = await EventClient.CreateEventAsync(NewEvent);
-        if (result != null)
-        {
-            WorldEvents.Insert(0, result);
-            ShowNewEventForm = false;
-            NewEvent = new() { Level = EventLevel.World, EffectType = EventEffectType.Narrative, IsPermanent = true };
-        }
-        IsSaving = false;
-    }
-
-    private async Task DeleteEvent(int eventId)
-    {
-        var ok = await EventClient.DeleteEventAsync(eventId);
-        if (ok)
-            WorldEvents.RemoveAll(e => e.Id == eventId);
-    }
-
-    private async Task ToggleEventActive(EventDto ev)
-    {
-        var result = await EventClient.SetEventActiveAsync(ev.Id, !ev.IsActive);
-        if (result != null)
-        {
-            var idx = WorldEvents.FindIndex(e => e.Id == result.Id);
-            if (idx >= 0) WorldEvents[idx] = result;
-        }
-    }
-
-    private static string GetEffectLabel(EventEffectType type) => type switch
-    {
-        EventEffectType.StatModifier => "Modificateur de stat",
-        EventEffectType.HealthModifier => "Modificateur de PV",
-        EventEffectType.DiceModifier => "Modificateur de dé",
-        EventEffectType.Narrative => "Narratif",
-        _ => type.ToString()
-    };
 
     private async Task LoadWorldCharactersAsync()
     {
