@@ -781,6 +781,32 @@ public partial class WorldDetail : IDisposable
         IsGeneratingWorldToken = false;
     }
 
+    // Email invitation
+    private string InviteEmail = string.Empty;
+    private string? InviteMessage;
+    private bool IsSendingEmailInvite;
+    private string? EmailInviteFeedback;
+    private bool EmailInviteSuccess;
+
+    private async Task SendEmailInvite()
+    {
+        if (IsSendingEmailInvite || string.IsNullOrWhiteSpace(InviteEmail)) return;
+
+        IsSendingEmailInvite = true;
+        EmailInviteFeedback = null;
+        var sent = await WorldClient.InvitePlayerByEmailAsync(WorldId, InviteEmail.Trim(), string.IsNullOrWhiteSpace(InviteMessage) ? null : InviteMessage!.Trim());
+        EmailInviteSuccess = sent;
+        EmailInviteFeedback = sent
+            ? $"Invitation envoyée à {InviteEmail.Trim()}."
+            : "Échec de l'envoi. Vérifiez l'adresse et réessayez.";
+        if (sent)
+        {
+            InviteEmail = string.Empty;
+            InviteMessage = null;
+        }
+        IsSendingEmailInvite = false;
+    }
+
     private async Task RemoveWorldCharacter(int characterId)
     {
         var ok = await WorldClient.RemoveCharacterFromWorldAsync(WorldId, characterId);

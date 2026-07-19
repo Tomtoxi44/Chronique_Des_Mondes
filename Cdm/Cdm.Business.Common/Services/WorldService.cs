@@ -23,11 +23,13 @@ using Microsoft.Extensions.Logging;
 public class WorldService(
     AppDbContext dbContext,
     ILogger<WorldService> logger,
-    INotificationService notificationService) : IWorldService
+    INotificationService notificationService,
+    Cdm.Common.Services.IEmailService emailService) : IWorldService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly ILogger<WorldService> logger = logger;
     private readonly INotificationService notificationService = notificationService;
+    private readonly Cdm.Common.Services.IEmailService emailService = emailService;
 
     /// <inheritdoc/>
     public async Task<WorldDto?> CreateWorldAsync(CreateWorldDto dto, int userId)
@@ -463,6 +465,58 @@ public class WorldService(
                 ex,
                 "Error removing character {CharacterId} from world {WorldId}",
                 characterId, worldId);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> InvitePlayerByEmailAsync(int worldId, string email, string? message, string webBaseUrl, int userId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return false;
+            }
+
+            var world = await this.dbContext.Worlds.FindAsync(worldId);
+            if (world == null || !world.IsActive)
+            {
+                this.logger.LogWarning("World {WorldId} not found for email invitation", worldId);
+                return false;
+            }
+
+            if (world.UserId != userId)
+            {
+                this.logger.LogWarning("User {UserId} not authorized to invite to world {WorldId}", userId, worldId);
+                return false;
+            }
+
+            // Ensure an active invite token (reuse the existing one if still valid).
+            if (string.IsNullOrEmpty(world.InviteToken) || world.InviteTokenExpiry == null || world.InviteTokenExpiry <= DateTime.UtcNow)
+            {
+                world.InviteToken = Guid.NewGuid().ToString("N");
+                world.InviteTokenExpiry = DateTime.UtcNow.AddDays(30);
+                world.UpdatedAt = DateTime.UtcNow;
+                await this.dbContext.SaveChangesAsync();
+            }
+
+            var link = $"{webBaseUrl.TrimEnd('/')}/worlds/join/{world.InviteToken}";
+
+            var inviter = await this.dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            var inviterName = inviter?.Nickname ?? inviter?.Email ?? "Le MJ";
+
+            var sent = await this.emailService.SendWorldInvitationEmailAsync(email.Trim(), world.Name, inviterName, link, message);
+
+            this.logger.LogInformation(
+                "World {WorldId} email invitation to {Email} {Result}",
+                worldId, email, sent ? "sent" : "failed");
+
+            return sent;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error inviting player by email to world {WorldId}", worldId);
             return false;
         }
     }
