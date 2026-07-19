@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
+    <!-- xUnit1051 (pass TestContext.Current.CancellationToken) is a style suggestion irrelevant
+         to these fast tests; suppress so the solution's /warnaserror build stays green. -->
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

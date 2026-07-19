@@ -342,20 +342,18 @@ public class RoleServiceTests
         var result = await service.AssignRoleAsync(user.Id, adminRole.Id);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(user.Id, result.UserId);
-        Assert.Equal(adminRole.Id, result.RoleId);
+        Assert.True(result);
 
         var hasRole = await context.UserRoles.AnyAsync(ur => ur.UserId == user.Id && ur.RoleId == adminRole.Id);
         Assert.True(hasRole);
     }
 
     /// <summary>
-    /// Tests that AssignRoleAsync returns null when user already has the role.
+    /// Tests that AssignRoleAsync returns false when user already has the role.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
-    public async Task AssignRoleAsync_WhenUserAlreadyHasRole_ReturnsNull()
+    public async Task AssignRoleAsync_WhenUserAlreadyHasRole_ReturnsFalse()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -396,6 +394,6 @@ public class RoleServiceTests
         var result = await service.AssignRoleAsync(user.Id, adminRole.Id);
 
         // Assert
-        Assert.Null(result);
+        Assert.False(result);
     }
 }

@@ -7,6 +7,7 @@
 namespace Cdm.Business.Common.Tests.Services;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.Services;
 using Cdm.Business.Common.Services;
 using Cdm.Common.Enums;
 using Cdm.Data.Common;
@@ -22,10 +23,12 @@ using Xunit;
 public class AchievementServiceTests
 {
     private readonly Mock<ILogger<AchievementService>> loggerMock;
+    private readonly Mock<INotificationService> notificationServiceMock;
 
     public AchievementServiceTests()
     {
         this.loggerMock = new Mock<ILogger<AchievementService>>();
+        this.notificationServiceMock = new Mock<INotificationService>();
     }
 
     [Fact]
@@ -45,7 +48,7 @@ public class AchievementServiceTests
         context.Worlds.Add(world);
         await context.SaveChangesAsync();
 
-        var service = new AchievementService(context, this.loggerMock.Object);
+        var service = new AchievementService(context, this.notificationServiceMock.Object, this.loggerMock.Object);
 
         var createDto = new CreateAchievementDto
         {
@@ -99,7 +102,7 @@ public class AchievementServiceTests
         context.Achievements.Add(achievement);
         await context.SaveChangesAsync();
 
-        var service = new AchievementService(context, this.loggerMock.Object);
+        var service = new AchievementService(context, this.notificationServiceMock.Object, this.loggerMock.Object);
 
         // Act
         var result = await service.AwardAchievementAsync(1, 2, 1, "Well done!");
@@ -108,7 +111,7 @@ public class AchievementServiceTests
         Assert.NotNull(result);
         Assert.Equal(1, result!.AchievementId);
         Assert.Equal(2, result.UserId);
-        Assert.Equal("Well done!", result.Message);
+        Assert.Equal("Well done!", result.AwardMessage);
     }
 
     [Fact]
@@ -159,7 +162,7 @@ public class AchievementServiceTests
         );
         await context.SaveChangesAsync();
 
-        var service = new AchievementService(context, this.loggerMock.Object);
+        var service = new AchievementService(context, this.notificationServiceMock.Object, this.loggerMock.Object);
 
         // Act
         var result = await service.GetUserAchievementsAsync(1);
@@ -210,7 +213,7 @@ public class AchievementServiceTests
         context.UserAchievements.Add(userAchievement);
         await context.SaveChangesAsync();
 
-        var service = new AchievementService(context, this.loggerMock.Object);
+        var service = new AchievementService(context, this.notificationServiceMock.Object, this.loggerMock.Object);
 
         // Act
         var result = await service.RevokeAchievementAsync(1, 1);
@@ -245,7 +248,7 @@ public class AchievementServiceTests
         );
         await context.SaveChangesAsync();
 
-        var service = new AchievementService(context, this.loggerMock.Object);
+        var service = new AchievementService(context, this.notificationServiceMock.Object, this.loggerMock.Object);
 
         // Act
         var result = await service.GetAchievementsByWorldAsync(1, 1);

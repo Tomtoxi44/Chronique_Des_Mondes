@@ -26,6 +26,10 @@
   <Folder Name="/Front/">
     <Project Path="Cdm.Web/Cdm.Web.csproj" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Cdm.Business.Common.Tests/Cdm.Business.Common.Tests.csproj" />
+    <Project Path="Cdm.Common.Tests/Cdm.Common.Tests.csproj" />
+  </Folder>
   <Project Path="Cdm.Business.Abstraction/Cdm.Business.Abstraction.csproj" />
   <Project Path="Cdm.Business.DnD5e/Cdm.Business.DnD5e.csproj" />
 </Solution>
