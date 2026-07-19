@@ -30,7 +30,7 @@ public class AchievementEvaluationServiceTests
     private const int SessionId = 10;
 
     private static DbContextOptions<AppDbContext> NewOptions(string name) =>
-        new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(name).Options;
+        new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase($"{name}-{System.Guid.NewGuid()}").Options;
 
     private AchievementEvaluationService CreateService(AppDbContext context) =>
         new(context, this.notificationServiceMock.Object, this.loggerMock.Object);

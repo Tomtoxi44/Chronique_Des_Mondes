@@ -26,7 +26,7 @@ public class SessionServiceHistoryTests
 
     private static DbContextOptions<AppDbContext> NewOptions(string name) =>
         new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: name)
+            .UseInMemoryDatabase(databaseName: $"{name}-{System.Guid.NewGuid()}")
             .Options;
 
     private SessionService CreateService(AppDbContext context) =>

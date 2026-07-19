@@ -31,7 +31,7 @@ public class CombatServiceTests
     private const int SessionId = 10;
 
     private static DbContextOptions<AppDbContext> NewOptions(string name) =>
-        new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(name).Options;
+        new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase($"{name}-{System.Guid.NewGuid()}").Options;
 
     private CombatService CreateService(AppDbContext context) =>
         new(context, this.achievementEvaluationMock.Object, this.loggerMock.Object);

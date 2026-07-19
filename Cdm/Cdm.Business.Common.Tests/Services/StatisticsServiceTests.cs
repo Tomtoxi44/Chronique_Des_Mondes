@@ -22,7 +22,7 @@ public class StatisticsServiceTests
     private readonly Mock<ILogger<StatisticsService>> loggerMock = new();
 
     private static DbContextOptions<AppDbContext> NewOptions(string name) =>
-        new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(name).Options;
+        new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase($"{name}-{System.Guid.NewGuid()}").Options;
 
     private StatisticsService CreateService(AppDbContext context) => new(context, this.loggerMock.Object);
 

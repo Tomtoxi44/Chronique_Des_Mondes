@@ -30,7 +30,7 @@ public class TradeServiceTests
 
     private static DbContextOptions<AppDbContext> NewOptions(string name) =>
         new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: name)
+            .UseInMemoryDatabase(databaseName: $"{name}-{System.Guid.NewGuid()}")
             .Options;
 
     private TradeService CreateService(AppDbContext context) =>
