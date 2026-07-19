@@ -292,10 +292,15 @@ else if (Session != null)
                                 }
                                 else if (entry.Type == "dice" && entry.Results != null)
                                 {
+                                    @if (!string.IsNullOrWhiteSpace(entry.Reason))
+                                    {
+                                        <span class="chat-entry-text" style="font-weight: 600;">@entry.Reason</span>
+                                    }
                                     <div class="chat-entry-dice">
-                                        <span class="chat-dice-type">@entry.DiceType</span>
+                                        <span class="chat-dice-type">@(entry.Modifier != 0 ? $"{entry.Results.Length}{entry.DiceType}{(entry.Modifier > 0 ? $"+{entry.Modifier}" : entry.Modifier.ToString())}" : entry.DiceType)</span>
                                         <span>→</span>
                                         <span class="chat-dice-result">@string.Join(", ", entry.Results)</span>
+                                        <span style="color: var(--color-text-muted); font-size: var(--font-size-xs);">(Total: @(entry.Results.Sum() + entry.Modifier))</span>
                                     </div>
                                 }
                             </div>

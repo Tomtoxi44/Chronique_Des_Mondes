@@ -1,4 +1,6 @@
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.DTOs.DnD5e;
+using Cdm.Common;
 using Cdm.Common.Enums;
 using Cdm.Web.Resources;
 using Cdm.Web.Services.ApiClients;
@@ -21,6 +23,7 @@ public partial class SessionPlayer : IAsyncDisposable
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private CombatApiClient CombatClient { get; set; } = default!;
+    [Inject] private DndApiClient DndClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -50,6 +53,19 @@ public partial class SessionPlayer : IAsyncDisposable
     private List<ChatEntry> ChatEntries { get; set; } = new();
     private string ChatInput = "";
     private int? RollingDie;
+
+    // D&D 5e "roll from sheet" support
+    private DndCharacterStatsDto? DndStats;
+    private List<DndInventoryItemDto> Weapons { get; set; } = new();
+    private List<DndCharacterSpellDto> DamageSpells { get; set; } = new();
+    private bool IsDndCharacter => MyCharacter?.GameType == Cdm.Common.Enums.GameType.DnD5e;
+
+    // Editable custom roll (pre-filled when a weapon/spell is selected)
+    private int CustomCount = 1;
+    private int CustomFaces = 20;
+    private int CustomModifier;
+    private string? CustomReason;
+    private bool IsRollingCustom;
 
     // Trades (object exchanges)
     private List<SessionTradeDto> PendingTrades { get; set; } = new();
@@ -114,6 +130,7 @@ public partial class SessionPlayer : IAsyncDisposable
         // so live events only ever append to an already-complete history (no duplicates).
         await LoadHistoryAsync();
         await LoadTradesAsync();
+        await LoadDndSheetAsync();
 
         await ConnectToHubAsync();
     }
@@ -121,6 +138,26 @@ public partial class SessionPlayer : IAsyncDisposable
     private async Task LoadTradesAsync()
     {
         PendingTrades = await SessionClient.GetPendingTradesAsync(SessionId);
+    }
+
+    /// <summary>
+    /// Loads the D&D weapons and damage spells of the player's character so rolls can be
+    /// pre-filled from the sheet. No-op for non-D&D characters.
+    /// </summary>
+    private async Task LoadDndSheetAsync()
+    {
+        if (!IsDndCharacter || MyCharacter == null)
+        {
+            return;
+        }
+
+        DndStats = await DndClient.GetCharacterStatsAsync(MyCharacter.Id);
+
+        var inventory = await DndClient.GetInventoryAsync(MyCharacter.Id);
+        Weapons = inventory.Where(i => !string.IsNullOrWhiteSpace(i.DamageDice)).ToList();
+
+        var spells = await DndClient.GetCharacterSpellsAsync(MyCharacter.Id);
+        DamageSpells = spells.Where(s => !string.IsNullOrWhiteSpace(s.DamageDice)).ToList();
     }
 
     private async Task LoadHistoryAsync()
@@ -132,7 +169,7 @@ public partial class SessionPlayer : IAsyncDisposable
         foreach (var m in history.Messages)
             entries.Add(new ChatEntry("text", m.UserName, m.Message, null, null, m.SentAt));
         foreach (var d in history.DiceRolls)
-            entries.Add(new ChatEntry("dice", d.UserName, null, d.DiceType, d.Results, d.RolledAt));
+            entries.Add(new ChatEntry("dice", d.UserName, null, d.DiceType, d.Results, d.RolledAt, d.Reason, d.Modifier));
 
         ChatEntries = entries.OrderBy(e => e.Timestamp).ToList();
     }
@@ -160,7 +197,7 @@ public partial class SessionPlayer : IAsyncDisposable
 
         _hub.On<HubDiceDto>("DiceRolled", dto =>
         {
-            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp));
+            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp, dto.Reason, dto.Modifier));
             InvokeAsync(StateHasChanged);
         });
 
@@ -238,6 +275,89 @@ public partial class SessionPlayer : IAsyncDisposable
             Toast.ShowWarning("Jet effectué localement : il n'a pas été partagé à la table.", "Dés");
         }
         RollingDie = null;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Pre-fills the custom roll from a weapon's damage dice + Strength modifier (melee default).
+    /// </summary>
+    private void OnWeaponSelected(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var id) || id <= 0)
+        {
+            return;
+        }
+
+        var weapon = Weapons.FirstOrDefault(w => w.Id == id);
+        if (weapon == null || !DiceNotation.TryParse(weapon.DamageDice, out var expr))
+        {
+            return;
+        }
+
+        CustomCount = expr.Count;
+        CustomFaces = expr.Faces;
+        // Damage bonus = flat bonus in the notation + the character's Strength modifier.
+        CustomModifier = expr.FlatBonus + (DndStats?.StrengthModifier ?? 0);
+        CustomReason = $"{weapon.Name} (dégâts)";
+    }
+
+    /// <summary>
+    /// Pre-fills the custom roll from a spell's damage dice.
+    /// </summary>
+    private void OnSpellSelected(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var id) || id <= 0)
+        {
+            return;
+        }
+
+        var spell = DamageSpells.FirstOrDefault(s => s.Id == id);
+        if (spell == null || !DiceNotation.TryParse(spell.DamageDice, out var expr))
+        {
+            return;
+        }
+
+        CustomCount = expr.Count;
+        CustomFaces = expr.Faces;
+        CustomModifier = expr.FlatBonus;
+        CustomReason = $"{spell.Name} (dégâts)";
+    }
+
+    /// <summary>
+    /// Rolls the editable custom expression (count dice of the chosen faces + modifier)
+    /// and shares it with its reason.
+    /// </summary>
+    private async Task RollCustom()
+    {
+        if (_hub == null || !IsHubConnected || IsRollingCustom)
+        {
+            return;
+        }
+
+        var count = Math.Clamp(CustomCount, 1, 20);
+        var faces = Math.Clamp(CustomFaces, 2, 100);
+
+        IsRollingCustom = true;
+        StateHasChanged();
+
+        var results = new int[count];
+        for (var i = 0; i < count; i++)
+        {
+            results[i] = Random.Shared.Next(1, faces + 1);
+        }
+
+        try
+        {
+            await _hub.InvokeAsync("RollDice", SessionId, $"D{faces}", count, results, CustomModifier, CustomReason);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Partage du jet personnalisé impossible (session {SessionId})", SessionId);
+            ChatEntries.Add(new ChatEntry("dice", CurrentUserName ?? "Joueur", null, $"D{faces}", results, DateTime.UtcNow, CustomReason, CustomModifier));
+            Toast.ShowWarning("Jet effectué localement : il n'a pas été partagé à la table.", "Dés");
+        }
+
+        IsRollingCustom = false;
         StateHasChanged();
     }
 
@@ -399,7 +519,7 @@ public partial class SessionPlayer : IAsyncDisposable
         public int Qty { get; set; } = 1;
     }
 
-    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp);
+    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp, string? Reason = null, int Modifier = 0);
     private record HubMessageDto(int UserId, string? UserName, string? Message, DateTime Timestamp);
     private record HubDiceDto(int UserId, string? UserName, string? DiceType, int Count, int[]? Results, int Modifier, int Total, string? Reason, DateTime Timestamp);
 }
