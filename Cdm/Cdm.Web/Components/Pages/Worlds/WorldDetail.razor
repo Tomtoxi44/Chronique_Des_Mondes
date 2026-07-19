@@ -1307,52 +1307,10 @@ else
                                OnRemove="RemoveWorldCharacter" />
 
             @* Invitations par campagne *@
-            <div class="cdm-card">
-                <h3 class="card-title" style="margin-bottom: var(--spacing-sm);">Liens d'invitation par campagne</h3>
-                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
-                    Générez un lien par campagne pour rejoindre directement cette campagne.
-                </p>
-                @if (Campaigns.Count == 0)
-                {
-                    <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); font-style: italic;">Aucune campagne dans ce monde.</p>
-                }
-                else
-                {
-                    @foreach (var campaign in Campaigns)
-                    {
-                        var token = campaign.InviteToken;
-                        var inviteUrl = token != null ? $"{Nav.BaseUri}join?token={token}" : null;
-                        <div class="invite-row">
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 600; font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
-                                    <i class="bi bi-map" style="color: var(--color-text-muted); margin-right: var(--spacing-xs);"></i>
-                                    @campaign.Name
-                                </div>
-                                @if (inviteUrl != null)
-                                {
-                                    <div class="invite-token-box">@inviteUrl</div>
-                                }
-                                else
-                                {
-                                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic;">Aucun lien généré</span>
-                                }
-                            </div>
-                            <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
-                                <button class="btn btn-ghost btn-sm" @onclick="() => GenerateInviteToken(campaign.Id)" disabled="@IsGeneratingToken">
-                                    <i class="bi bi-arrow-repeat"></i>
-                                    @(token == null ? "Générer" : "Régénérer")
-                                </button>
-                                @if (inviteUrl != null)
-                                {
-                                    <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(inviteUrl)" title="Copier le lien">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    }
-                }
-            </div>
+            @* Invitations par campagne (composant extrait) *@
+            <WorldCampaignInvitesPanel Campaigns="Campaigns"
+                                       IsGenerating="IsGeneratingToken"
+                                       OnGenerate="GenerateInviteToken" />
         }
 
     </AppThemeWrapper>

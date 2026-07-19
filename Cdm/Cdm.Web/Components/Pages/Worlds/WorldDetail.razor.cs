@@ -791,15 +791,6 @@ public partial class WorldDetail : IDisposable
         IsGeneratingToken = false;
     }
 
-    private async Task CopyToClipboard(string text)
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
-        }
-        catch { /* silently ignore if clipboard API not available */ }
-    }
-
     private void ConfirmDeleteWorld() => DeleteWorldDialog.Show();
 
     private async Task DeleteWorldAsync()
