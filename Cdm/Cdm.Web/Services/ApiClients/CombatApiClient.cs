@@ -119,6 +119,26 @@ public class CombatApiClient
         }
     }
 
+    /// <summary>Auto-rolls initiative (1d20 + DEX) for all participants, server-side.</summary>
+    public async Task<CombatDto?> RollInitiativeAsync(int combatId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await this.httpClient.PostAsync($"api/combat/{combatId}/initiative/roll", null);
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<CombatDto>();
+
+            this.logger.LogWarning("Failed to roll initiative for combat {CombatId}. Status: {StatusCode}", combatId, response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error rolling initiative for combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
     /// <summary>Sets the initiative value for a participant.</summary>
     public async Task<CombatDto?> SetInitiativeAsync(int combatId, int participantId, SetInitiativeDto dto)
     {

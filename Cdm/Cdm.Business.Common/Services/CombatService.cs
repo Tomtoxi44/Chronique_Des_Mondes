@@ -7,11 +7,13 @@
 namespace Cdm.Business.Common.Services;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.DTOs.DnD5e;
 using Cdm.Business.Abstraction.Services;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 /// <summary>
 /// Service for managing generic combat encounters within game sessions.
@@ -88,6 +90,8 @@ public class CombatService(
                         UserId = participantDto.UserId,
                         MaxHp = participantDto.MaxHp,
                         CurrentHp = participantDto.MaxHp,
+                        DexterityModifier = participantDto.DexterityModifier
+                            ?? await this.ResolveDexModifierAsync(participantDto.CharacterId),
                         IsActive = true,
                         TurnOrder = 0,
                     };
@@ -261,6 +265,82 @@ public class CombatService(
         {
             this.logger.LogError(ex, "Error setting initiative for participant {ParticipantId}", participantId);
             return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<CombatDto?> RollInitiativeAsync(int combatId, int userId)
+    {
+        try
+        {
+            var combat = await this.dbContext.Combats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == combatId);
+
+            if (combat == null) return null;
+
+            if (!await this.IsGmOfSessionAsync(combat.SessionId, userId))
+            {
+                this.logger.LogWarning(
+                    "User {UserId} is not authorized to roll initiative for combat {CombatId}",
+                    userId,
+                    combatId);
+                return null;
+            }
+
+            var rng = new Random();
+            foreach (var participant in combat.Participants.Where(p => p.IsActive))
+            {
+                // D&D 5e initiative: 1d20 + Dexterity modifier, resolved server-side.
+                participant.Initiative = rng.Next(1, 21) + participant.DexterityModifier;
+            }
+
+            combat.Status = 1; // Initiative
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation("Auto-rolled initiative (1d20 + DEX) for combat {CombatId}", combatId);
+
+            return await this.LoadCombatDtoAsync(combatId);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error rolling initiative for combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Resolves a player character's Dexterity modifier from their D&D sheet
+    /// (stored as JSON in <c>WorldCharacter.GameSpecificData</c>). Returns 0 when unavailable.
+    /// </summary>
+    private async Task<int> ResolveDexModifierAsync(int? characterId)
+    {
+        if (characterId is null)
+        {
+            return 0;
+        }
+
+        try
+        {
+            var worldCharacter = await this.dbContext.WorldCharacters
+                .AsNoTracking()
+                .FirstOrDefaultAsync(wc => wc.CharacterId == characterId.Value);
+
+            if (worldCharacter is null || string.IsNullOrWhiteSpace(worldCharacter.GameSpecificData))
+            {
+                return 0;
+            }
+
+            var stats = JsonSerializer.Deserialize<DndCharacterStatsDto>(
+                worldCharacter.GameSpecificData,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+            return stats?.DexterityModifier ?? 0;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogWarning(ex, "Could not resolve Dexterity modifier for character {CharacterId}", characterId);
+            return 0;
         }
     }
 
@@ -667,6 +747,7 @@ public class CombatService(
             CurrentHp = p.CurrentHp,
             MaxHp = p.MaxHp,
             Initiative = p.Initiative,
+            DexterityModifier = p.DexterityModifier,
             TurnOrder = p.TurnOrder,
             IsActive = p.IsActive,
         };

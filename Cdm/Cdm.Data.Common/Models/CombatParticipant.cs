@@ -41,6 +41,9 @@ public class CombatParticipant
     /// <summary>Gets or sets the initiative value (null until rolled/declared).</summary>
     public int? Initiative { get; set; }
 
+    /// <summary>Gets or sets the Dexterity modifier used for automatic initiative (1d20 + DEX).</summary>
+    public int DexterityModifier { get; set; }
+
     /// <summary>Gets or sets the turn order position (assigned after initiative is sorted).</summary>
     public int TurnOrder { get; set; }
 

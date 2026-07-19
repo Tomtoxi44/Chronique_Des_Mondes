@@ -36,6 +36,10 @@ else if (Combat != null)
             <div style="display:flex;gap:var(--spacing-sm);">
                 @if (Combat.Status == 1)
                 {
+                    <button class="btn btn-secondary btn-sm" @onclick="RollAllInitiative" disabled="@IsRollingInitiative"
+                            title="Lance l'initiative (1d20 + modificateur de Dextérité) pour tous les participants">
+                        <i class="bi bi-dice-5"></i> Initiative auto
+                    </button>
                     <button class="btn btn-primary btn-sm" @onclick="StartCombat" disabled="@(!AllReadyForCombat)"
                             title="@(!AllReadyForCombat ? "En attente des initiatives de tous les participants" : "Lancer le combat")">
                         <i class="bi bi-swords"></i> Démarrer le combat

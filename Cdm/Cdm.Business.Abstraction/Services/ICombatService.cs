@@ -28,6 +28,15 @@ public interface ICombatService
     /// <summary>Sets the initiative value for a single participant.</summary>
     Task<CombatDto?> SetInitiativeAsync(int combatId, int participantId, SetInitiativeDto request, int userId);
 
+    /// <summary>
+    /// Auto-rolls initiative for every active participant (1d20 + Dexterity modifier), server-side.
+    /// Only the GM of the session may trigger it.
+    /// </summary>
+    /// <param name="combatId">The combat identifier.</param>
+    /// <param name="userId">The requesting user (must be GM).</param>
+    /// <returns>The updated combat, or null if not found/unauthorized.</returns>
+    Task<CombatDto?> RollInitiativeAsync(int combatId, int userId);
+
     /// <summary>Sorts participants by initiative and transitions the combat to Active (Status = 2).</summary>
     Task<CombatDto?> StartCombatAsync(int combatId, StartCombatDto? request, int userId);
 
