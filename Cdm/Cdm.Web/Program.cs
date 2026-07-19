@@ -43,7 +43,14 @@ builder.Services.AddAuthentication();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BlazorAuthorizationMiddlewareResultHandler>();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
+// Auth tokens stored in localStorage are encrypted at rest with Data Protection so a XSS payload
+// cannot steal a usable token. ILocalStorageService is decorated transparently for callers.
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<LocalStorageService>();
+builder.Services.AddScoped<ILocalStorageService>(sp => new ProtectedLocalStorageService(
+    sp.GetRequiredService<LocalStorageService>(),
+    sp.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(),
+    sp.GetRequiredService<ILogger<ProtectedLocalStorageService>>()));
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => 
     sp.GetRequiredService<CustomAuthStateProvider>());
