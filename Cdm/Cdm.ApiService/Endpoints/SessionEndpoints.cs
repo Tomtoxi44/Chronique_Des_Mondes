@@ -68,6 +68,11 @@ public static class SessionEndpoints
         group.MapPut("/{id:int}/leave", LeaveSessionAsync)
             .WithName("LeaveSession")
             .WithOpenApi();
+
+        // GET /api/sessions/{id}/history - Get persisted chat & dice history
+        group.MapGet("/{id:int}/history", GetSessionHistoryAsync)
+            .WithName("GetSessionHistory")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> StartSessionAsync(
@@ -254,6 +259,29 @@ public static class SessionEndpoints
         catch (Exception ex)
         {
             logger.LogError(ex, "Error leaving session {SessionId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> GetSessionHistoryAsync(
+        int id,
+        [FromServices] ISessionService sessionService,
+        ILogger<SessionEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var history = await sessionService.GetSessionHistoryAsync(id, userId.Value);
+            if (history == null) return Results.NotFound();
+
+            return Results.Ok(history);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving history for session {SessionId}", id);
             return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
         }
     }

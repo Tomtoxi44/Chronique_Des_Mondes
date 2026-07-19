@@ -79,4 +79,13 @@ public interface ISessionService
     /// <param name="userId">The player user identifier.</param>
     /// <returns>True if successful, false otherwise.</returns>
     Task<bool> LeaveSessionAsync(int sessionId, int userId);
+
+    /// <summary>
+    /// Gets the persisted chat and dice history of a session so a reopened
+    /// session can rebuild its timeline. Only the GM or a participant can access it.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <param name="userId">The requesting user identifier.</param>
+    /// <returns>The session history, or null if not found/unauthorized.</returns>
+    Task<SessionHistoryDto?> GetSessionHistoryAsync(int sessionId, int userId);
 }

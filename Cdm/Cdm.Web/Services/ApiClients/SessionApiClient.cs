@@ -162,6 +162,23 @@ public class SessionApiClient
         }
     }
 
+    /// <summary>Get the persisted chat &amp; dice history of a session.</summary>
+    public async Task<SessionHistoryDto?> GetSessionHistoryAsync(int sessionId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync($"api/sessions/{sessionId}/history");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<SessionHistoryDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching history for session {SessionId}", sessionId);
+            return null;
+        }
+    }
+
     /// <summary>Returns the API base URL for constructing hub URLs.</summary>
     public string GetApiBaseUrl() => _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? string.Empty;
 }
