@@ -32,10 +32,13 @@ public class JwtServiceTests
         this.mockConfiguration = new Mock<IConfiguration>();
         this.mockLogger = new Mock<ILogger<JwtService>>();
 
-        // Configure mock to return a valid JWT secret key
-        var mockJwtSection = new Mock<IConfigurationSection>();
-        mockJwtSection.Setup(x => x.Value).Returns("ThisIsAVerySecureSecretKeyForJwtTokenGeneration123456");
-        this.mockConfiguration.Setup(x => x.GetSection("Jwt:SecretKey")).Returns(mockJwtSection.Object);
+        // JwtService reads the key via the IConfiguration indexer (configuration["Jwt:SecretKey"]).
+        this.mockConfiguration.Setup(x => x["Jwt:SecretKey"]).Returns("ThisIsAVerySecureSecretKeyForJwtTokenGeneration123456");
+
+        // By default JwtSecurityTokenHandler maps .NET ClaimTypes URIs to short JWT names on write
+        // (NameIdentifier -> "nameid", etc.), so a raw ReadJwtToken would not see ClaimTypes.NameIdentifier.
+        // Clearing the outbound map keeps the semantic claim types in the token for these assertions.
+        JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
 
         this.jwtService = new JwtService(this.mockConfiguration.Object, this.mockLogger.Object);
     }
@@ -139,9 +142,11 @@ public class JwtServiceTests
         var token = this.jwtService.GenerateToken(userId, email, roles);
 
         // Act
-        var (extractedUserId, extractedEmail, extractedRoles) = this.jwtService.GetUserInfoFromToken(token);
+        var info = this.jwtService.GetUserInfoFromToken(token);
 
         // Assert
+        Assert.NotNull(info);
+        var (extractedUserId, extractedEmail, extractedRoles) = info!.Value;
         Assert.Equal(userId, extractedUserId);
         Assert.Equal(email, extractedEmail);
         Assert.NotNull(extractedRoles);
@@ -165,9 +170,11 @@ public class JwtServiceTests
         var token = this.jwtService.GenerateToken(userId, email, roles);
 
         // Act
-        var (extractedUserId, extractedEmail, extractedRoles) = this.jwtService.GetUserInfoFromToken(token);
+        var info = this.jwtService.GetUserInfoFromToken(token);
 
         // Assert
+        Assert.NotNull(info);
+        var (extractedUserId, extractedEmail, extractedRoles) = info!.Value;
         Assert.Equal(userId, extractedUserId);
         Assert.Equal(email, extractedEmail);
         Assert.NotNull(extractedRoles);

@@ -7,9 +7,9 @@
 namespace Cdm.Business.Common.Tests.Services;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.Services;
 using Cdm.Business.Common.Services;
 using Cdm.Common.Enums;
-using Cdm.Common.Services;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
@@ -22,17 +22,20 @@ using Xunit;
 /// </summary>
 public class WorldServiceTests
 {
-    private readonly Mock<IImageStorageService> imageStorageServiceMock;
     private readonly Mock<ILogger<WorldService>> loggerMock;
+    private readonly Mock<INotificationService> notificationServiceMock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WorldServiceTests"/> class.
     /// </summary>
     public WorldServiceTests()
     {
-        this.imageStorageServiceMock = new Mock<IImageStorageService>();
         this.loggerMock = new Mock<ILogger<WorldService>>();
+        this.notificationServiceMock = new Mock<INotificationService>();
     }
+
+    private WorldService CreateService(AppDbContext context) =>
+        new(context, this.loggerMock.Object, this.notificationServiceMock.Object);
 
     /// <summary>
     /// Tests that CreateWorldAsync successfully creates a world with valid data.
@@ -59,15 +62,13 @@ public class WorldServiceTests
         context.Users.Add(testUser);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var createDto = new CreateWorldDto
         {
             Name = "Fantasy Realm",
             Description = "A magical world",
             GameType = GameType.DnD5e,
-            Visibility = Visibility.Public,
-            MaxCampaigns = 3,
         };
 
         // Act
@@ -106,7 +107,7 @@ public class WorldServiceTests
         );
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act
         var result = await service.GetMyWorldsAsync(1);
@@ -131,7 +132,7 @@ public class WorldServiceTests
             .Options;
 
         using var context = new AppDbContext(options);
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act
         var result = await service.GetWorldByIdAsync(999, 1);
@@ -163,22 +164,19 @@ public class WorldServiceTests
             Name = "Old Name",
             Description = "Old Description",
             GameType = GameType.Generic,
-            Visibility = Visibility.Private,
             UserId = 1,
             CreatedAt = DateTime.UtcNow
         };
         context.Worlds.Add(world);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var updateDto = new CreateWorldDto
         {
             Name = "New Name",
             Description = "New Description",
             GameType = GameType.DnD5e,
-            Visibility = Visibility.Public,
-            MaxCampaigns = 5
         };
 
         // Act
@@ -192,7 +190,7 @@ public class WorldServiceTests
     }
 
     /// <summary>
-    /// Tests that DeleteWorldAsync soft deletes the world.
+    /// Tests that DeleteWorldAsync soft deletes the world (IsActive = false).
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     [Fact]
@@ -213,14 +211,13 @@ public class WorldServiceTests
             Id = 1,
             Name = "Test World",
             GameType = GameType.Generic,
-            Visibility = Visibility.Private,
             UserId = 1,
             CreatedAt = DateTime.UtcNow
         };
         context.Worlds.Add(world);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act
         var result = await service.DeleteWorldAsync(1, 1);
@@ -229,7 +226,7 @@ public class WorldServiceTests
         Assert.True(result);
         var deletedWorld = await context.Worlds.FindAsync(1);
         Assert.NotNull(deletedWorld);
-        Assert.True(deletedWorld!.IsDeleted);
+        Assert.False(deletedWorld!.IsActive);
     }
 
     /// <summary>
@@ -255,14 +252,13 @@ public class WorldServiceTests
             Id = 1,
             Name = "User1's World",
             GameType = GameType.Generic,
-            Visibility = Visibility.Private,
             UserId = 1,
             CreatedAt = DateTime.UtcNow
         };
         context.Worlds.Add(world);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var updateDto = new CreateWorldDto { Name = "Hacked Name", GameType = GameType.Custom };
 

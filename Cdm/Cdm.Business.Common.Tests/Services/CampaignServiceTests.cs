@@ -7,6 +7,7 @@
 namespace Cdm.Business.Common.Tests.Services;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.Services;
 using Cdm.Business.Common.Services;
 using Cdm.Common.Enums;
 using Cdm.Common.Services;
@@ -23,6 +24,7 @@ using Xunit;
 public class CampaignServiceTests
 {
     private readonly Mock<IImageStorageService> imageStorageServiceMock;
+    private readonly Mock<INotificationService> notificationServiceMock;
     private readonly Mock<ILogger<CampaignService>> loggerMock;
 
     /// <summary>
@@ -31,7 +33,18 @@ public class CampaignServiceTests
     public CampaignServiceTests()
     {
         this.imageStorageServiceMock = new Mock<IImageStorageService>();
+        this.notificationServiceMock = new Mock<INotificationService>();
         this.loggerMock = new Mock<ILogger<CampaignService>>();
+    }
+
+    private CampaignService CreateService(AppDbContext context) =>
+        new(context, this.imageStorageServiceMock.Object, this.notificationServiceMock.Object, this.loggerMock.Object);
+
+    private static World SeedWorld(AppDbContext context, int id = 1, int ownerId = 1, GameType gameType = GameType.DnD5e)
+    {
+        var world = new World { Id = id, Name = $"World {id}", GameType = gameType, UserId = ownerId, CreatedAt = DateTime.UtcNow };
+        context.Worlds.Add(world);
+        return world;
     }
 
     /// <summary>
@@ -48,7 +61,6 @@ public class CampaignServiceTests
 
         using var context = new AppDbContext(options);
 
-        // Add a test user
         var testUser = new User
         {
             Id = 1,
@@ -58,15 +70,16 @@ public class CampaignServiceTests
             CreatedAt = DateTime.UtcNow,
         };
         context.Users.Add(testUser);
+        SeedWorld(context);
         await context.SaveChangesAsync();
 
-        var service = new CampaignService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var createDto = new CreateCampaignDto
         {
             Name = "Test Campaign",
             Description = "A test campaign description",
-            GameType = GameType.DnD5e,
+            WorldId = 1,
             Visibility = Visibility.Private,
             MaxPlayers = 5,
         };
@@ -78,7 +91,6 @@ public class CampaignServiceTests
         Assert.NotNull(result);
         Assert.Equal("Test Campaign", result!.Name);
         Assert.Equal("A test campaign description", result.Description);
-        Assert.Equal(GameType.DnD5e, result.GameType);
         Assert.Equal(Visibility.Private, result.Visibility);
         Assert.Equal(5, result.MaxPlayers);
         Assert.Equal(1, result.CreatedBy);
@@ -112,6 +124,7 @@ public class CampaignServiceTests
             CreatedAt = DateTime.UtcNow,
         };
         context.Users.Add(testUser);
+        SeedWorld(context);
         await context.SaveChangesAsync();
 
         // Setup mock to return a valid image URL
@@ -119,12 +132,12 @@ public class CampaignServiceTests
             .Setup(x => x.UploadCampaignCoverAsync(It.IsAny<string>(), It.IsAny<int>()))
             .ReturnsAsync("/uploads/campaigns/test-image.jpg");
 
-        var service = new CampaignService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var createDto = new CreateCampaignDto
         {
             Name = "Campaign With Image",
-            GameType = GameType.Generic,
+            WorldId = 1,
             CoverImageBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", // 1x1 transparent PNG
         };
 
@@ -159,12 +172,13 @@ public class CampaignServiceTests
         var user1 = new User { Id = 1, Email = "user1@test.com", Nickname = "User1", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
         var user2 = new User { Id = 2, Email = "user2@test.com", Nickname = "User2", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
         context.Users.AddRange(user1, user2);
+        SeedWorld(context);
 
         // Add campaigns for different users
         var campaign1 = new Campaign
         {
             Name = "User1 Campaign 1",
-            GameType = GameType.Generic,
+            WorldId = 1,
             Visibility = Visibility.Private,
             MaxPlayers = 6,
             CreatedBy = 1,
@@ -176,7 +190,7 @@ public class CampaignServiceTests
         var campaign2 = new Campaign
         {
             Name = "User1 Campaign 2",
-            GameType = GameType.DnD5e,
+            WorldId = 1,
             Visibility = Visibility.Public,
             MaxPlayers = 4,
             CreatedBy = 1,
@@ -188,7 +202,7 @@ public class CampaignServiceTests
         var campaign3 = new Campaign
         {
             Name = "User2 Campaign",
-            GameType = GameType.Pathfinder,
+            WorldId = 1,
             Visibility = Visibility.Private,
             MaxPlayers = 8,
             CreatedBy = 2,
@@ -200,7 +214,7 @@ public class CampaignServiceTests
         context.Campaigns.AddRange(campaign1, campaign2, campaign3);
         await context.SaveChangesAsync();
 
-        var service = new CampaignService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act
         var result = await service.GetMyCampaignsAsync(1);
@@ -209,6 +223,7 @@ public class CampaignServiceTests
         var campaigns = result.ToList();
         Assert.Equal(2, campaigns.Count);
         Assert.All(campaigns, c => Assert.Equal(1, c.CreatedBy));
+        Assert.All(campaigns, c => Assert.Equal(GameType.DnD5e, c.GameType));
         Assert.Contains(campaigns, c => c.Name == "User1 Campaign 1");
         Assert.Contains(campaigns, c => c.Name == "User1 Campaign 2");
     }
@@ -230,12 +245,13 @@ public class CampaignServiceTests
         var user1 = new User { Id = 1, Email = "user1@test.com", Nickname = "User1", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
         var user2 = new User { Id = 2, Email = "user2@test.com", Nickname = "User2", PasswordHash = "hash", CreatedAt = DateTime.UtcNow };
         context.Users.AddRange(user1, user2);
+        SeedWorld(context);
 
         var campaign = new Campaign
         {
             Id = 1,
             Name = "Private Campaign",
-            GameType = GameType.Generic,
+            WorldId = 1,
             Visibility = Visibility.Private,
             MaxPlayers = 6,
             CreatedBy = 1,
@@ -247,7 +263,7 @@ public class CampaignServiceTests
         context.Campaigns.Add(campaign);
         await context.SaveChangesAsync();
 
-        var service = new CampaignService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act - authorized user (campaign creator)
         var authorizedResult = await service.GetCampaignByIdAsync(1, 1);

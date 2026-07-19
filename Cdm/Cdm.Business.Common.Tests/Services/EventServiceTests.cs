@@ -223,6 +223,7 @@ public class EventServiceTests
         // Assert
         Assert.True(result);
         var deletedEvent = await context.Events.FindAsync(1);
-        Assert.Null(deletedEvent); // Hard delete in EventService
+        Assert.NotNull(deletedEvent); // Soft delete in EventService
+        Assert.False(deletedEvent!.IsActive);
     }
 }
