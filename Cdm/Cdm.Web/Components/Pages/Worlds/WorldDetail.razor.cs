@@ -91,10 +91,8 @@ public partial class WorldDetail : IDisposable
     private string ChapterContentDraft = string.Empty;
     private bool ChapterContentDirty = false;
 
-    // Invite tokens
+    // Invite tokens (campaign-level; world-level invite lives in WorldInvitePanel)
     private bool IsGeneratingToken = false;
-    private bool IsGeneratingWorldToken = false;
-    private string? WorldInviteToken;
 
     // World characters (players)
     private List<WorldCharacterDto> WorldCharacters = new();
@@ -772,40 +770,6 @@ public partial class WorldDetail : IDisposable
         IsLoadingWorldCharacters = false;
     }
 
-    private async Task GenerateWorldInviteToken()
-    {
-        IsGeneratingWorldToken = true;
-        var token = await WorldClient.GenerateWorldInviteTokenAsync(WorldId);
-        if (token != null)
-            WorldInviteToken = token;
-        IsGeneratingWorldToken = false;
-    }
-
-    // Email invitation
-    private string InviteEmail = string.Empty;
-    private string? InviteMessage;
-    private bool IsSendingEmailInvite;
-    private string? EmailInviteFeedback;
-    private bool EmailInviteSuccess;
-
-    private async Task SendEmailInvite()
-    {
-        if (IsSendingEmailInvite || string.IsNullOrWhiteSpace(InviteEmail)) return;
-
-        IsSendingEmailInvite = true;
-        EmailInviteFeedback = null;
-        var sent = await WorldClient.InvitePlayerByEmailAsync(WorldId, InviteEmail.Trim(), string.IsNullOrWhiteSpace(InviteMessage) ? null : InviteMessage!.Trim());
-        EmailInviteSuccess = sent;
-        EmailInviteFeedback = sent
-            ? $"Invitation envoyée à {InviteEmail.Trim()}."
-            : "Échec de l'envoi. Vérifiez l'adresse et réessayez.";
-        if (sent)
-        {
-            InviteEmail = string.Empty;
-            InviteMessage = null;
-        }
-        IsSendingEmailInvite = false;
-    }
 
     private async Task RemoveWorldCharacter(int characterId)
     {
