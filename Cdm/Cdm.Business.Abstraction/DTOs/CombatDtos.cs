@@ -31,6 +31,9 @@ public class CreateParticipantDto
     public int? NpcId { get; set; }
     public int? UserId { get; set; }
     public int MaxHp { get; set; }
+
+    /// <summary>Optional Dexterity modifier for automatic initiative; resolved from the sheet when null.</summary>
+    public int? DexterityModifier { get; set; }
 }
 
 /// <summary>Request DTO to start the initiative phase.</summary>
@@ -129,6 +132,7 @@ public class CombatParticipantDto
     public int CurrentHp { get; set; }
     public int MaxHp { get; set; }
     public int? Initiative { get; set; }
+    public int DexterityModifier { get; set; }
     public int TurnOrder { get; set; }
     public bool IsActive { get; set; }
 }

@@ -158,6 +158,17 @@ public partial class CombatGm : IAsyncDisposable
 
     // --- Actions ---
 
+    private bool IsRollingInitiative;
+
+    private async Task RollAllInitiative()
+    {
+        if (IsRollingInitiative) return;
+        IsRollingInitiative = true;
+        var updated = await CombatClient.RollInitiativeAsync(CombatId);
+        if (updated != null) Combat = updated;
+        IsRollingInitiative = false;
+    }
+
     private async Task StartCombat()
     {
         var updated = await CombatClient.StartCombatAsync(CombatId);
