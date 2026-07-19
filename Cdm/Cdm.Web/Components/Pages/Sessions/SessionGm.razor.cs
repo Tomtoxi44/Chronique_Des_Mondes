@@ -128,7 +128,7 @@ public partial class SessionGm : IAsyncDisposable
         foreach (var m in history.Messages)
             entries.Add(new ChatEntry("text", m.UserName, m.Message, null, null, m.SentAt));
         foreach (var d in history.DiceRolls)
-            entries.Add(new ChatEntry("dice", d.UserName, null, d.DiceType, d.Results, d.RolledAt));
+            entries.Add(new ChatEntry("dice", d.UserName, null, d.DiceType, d.Results, d.RolledAt, d.Reason, d.Modifier));
 
         ChatEntries = entries.OrderBy(e => e.Timestamp).ToList();
     }
@@ -156,7 +156,7 @@ public partial class SessionGm : IAsyncDisposable
 
         _hub.On<HubDiceDto>("DiceRolled", dto =>
         {
-            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp));
+            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp, dto.Reason, dto.Modifier));
             InvokeAsync(StateHasChanged);
         });
 
@@ -450,7 +450,7 @@ public partial class SessionGm : IAsyncDisposable
             await _hub.DisposeAsync();
     }
 
-    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp);
+    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp, string? Reason = null, int Modifier = 0);
     private record HubMessageDto(int UserId, string? UserName, string? Message, DateTime Timestamp);
     private record HubDiceDto(int UserId, string? UserName, string? DiceType, int Count, int[]? Results, int Modifier, int Total, string? Reason, DateTime Timestamp);
 }
