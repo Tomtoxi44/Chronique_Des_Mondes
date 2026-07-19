@@ -170,6 +170,18 @@ builder.Services.AddScoped<AchievementApiClient>(sp =>
 
 builder.Services.AddHttpClient("AchievementApiClient", ConfigureApiClient);
 
+// Register StatisticsApiClient with scoped lifetime
+builder.Services.AddScoped<StatisticsApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("StatisticsApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<StatisticsApiClient>>();
+    return new StatisticsApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("StatisticsApiClient", ConfigureApiClient);
+
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {
