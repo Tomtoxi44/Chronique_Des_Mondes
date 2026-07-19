@@ -55,6 +55,13 @@ public partial class SessionGm : IAsyncDisposable
     private string ChatInput = "";
     private int? RollingDie;
 
+    // Trades (object exchanges)
+    private List<SessionTradeDto> PendingTrades { get; set; } = new();
+    private int TradeTargetUserId;
+    private string TradeOffer = "";
+    private string TradeRequest = "";
+    private bool IsProposingTrade;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -102,8 +109,14 @@ public partial class SessionGm : IAsyncDisposable
         // Rebuild the timeline from persisted history BEFORE connecting to the hub,
         // so live events only ever append to an already-complete history (no duplicates).
         await LoadHistoryAsync();
+        await LoadTradesAsync();
 
         await ConnectToHubAsync();
+    }
+
+    private async Task LoadTradesAsync()
+    {
+        PendingTrades = await SessionClient.GetPendingTradesAsync(SessionId);
     }
 
     private async Task LoadHistoryAsync()
@@ -144,6 +157,19 @@ public partial class SessionGm : IAsyncDisposable
         _hub.On<HubDiceDto>("DiceRolled", dto =>
         {
             ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp));
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<SessionTradeDto>("TradeProposed", trade =>
+        {
+            PendingTrades.RemoveAll(t => t.Id == trade.Id);
+            PendingTrades.Add(trade);
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<SessionTradeDto>("TradeResolved", trade =>
+        {
+            PendingTrades.RemoveAll(t => t.Id == trade.Id);
             InvokeAsync(StateHasChanged);
         });
 
@@ -199,6 +225,75 @@ public partial class SessionGm : IAsyncDisposable
         }
         RollingDie = null;
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Selectable trade targets: every joined participant (the GM is the current user here).
+    /// </summary>
+    private List<(int UserId, string Name)> TradeTargets()
+    {
+        var targets = new List<(int, string)>();
+        if (Session == null) return targets;
+
+        foreach (var p in Session.Participants)
+        {
+            if (p.UserId != CurrentUserId && p.UserId > 0)
+                targets.Add((p.UserId, p.UserName));
+        }
+        return targets;
+    }
+
+    private async Task ProposeTrade()
+    {
+        if (_hub == null || !IsHubConnected || IsProposingTrade) return;
+        if (TradeTargetUserId <= 0 || string.IsNullOrWhiteSpace(TradeOffer) || string.IsNullOrWhiteSpace(TradeRequest))
+        {
+            Toast.ShowWarning("Choisissez un destinataire et décrivez l'offre et la demande.", "Échange");
+            return;
+        }
+
+        IsProposingTrade = true;
+        try
+        {
+            await _hub.InvokeAsync("ProposeTrade", SessionId, TradeTargetUserId, TradeOffer.Trim(), TradeRequest.Trim());
+            TradeOffer = "";
+            TradeRequest = "";
+            TradeTargetUserId = 0;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Proposition d'échange impossible (session {SessionId})", SessionId);
+            Toast.ShowError("Proposition d'échange non envoyée.", "Échange");
+        }
+        IsProposingTrade = false;
+    }
+
+    private async Task RespondToTrade(int tradeId, bool accept)
+    {
+        if (_hub == null || !IsHubConnected) return;
+        try
+        {
+            await _hub.InvokeAsync("RespondToTrade", SessionId, tradeId, accept);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Réponse à l'échange impossible (session {SessionId})", SessionId);
+            Toast.ShowError("Réponse non envoyée.", "Échange");
+        }
+    }
+
+    private async Task CancelTrade(int tradeId)
+    {
+        if (_hub == null || !IsHubConnected) return;
+        try
+        {
+            await _hub.InvokeAsync("CancelTrade", SessionId, tradeId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Annulation de l'échange impossible (session {SessionId})", SessionId);
+            Toast.ShowError("Annulation non envoyée.", "Échange");
+        }
     }
 
     private async Task SelectChapter(ChapterDto chapter)

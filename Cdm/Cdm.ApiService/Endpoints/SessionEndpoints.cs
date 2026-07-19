@@ -73,6 +73,11 @@ public static class SessionEndpoints
         group.MapGet("/{id:int}/history", GetSessionHistoryAsync)
             .WithName("GetSessionHistory")
             .WithOpenApi();
+
+        // GET /api/sessions/{id}/trades/pending - Get pending object trades
+        group.MapGet("/{id:int}/trades/pending", GetPendingTradesAsync)
+            .WithName("GetPendingTrades")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> StartSessionAsync(
@@ -282,6 +287,29 @@ public static class SessionEndpoints
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving history for session {SessionId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> GetPendingTradesAsync(
+        int id,
+        [FromServices] ITradeService tradeService,
+        ILogger<SessionEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var trades = await tradeService.GetPendingTradesAsync(id, userId.Value);
+            if (trades == null) return Results.NotFound();
+
+            return Results.Ok(trades);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving pending trades for session {SessionId}", id);
             return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
         }
     }

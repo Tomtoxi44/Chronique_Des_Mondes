@@ -6,6 +6,7 @@
 
 namespace Cdm.ApiService.Hubs;
 
+using Cdm.Business.Abstraction.Services;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,16 +23,19 @@ public class SessionHub : Hub
 {
     private readonly ILogger<SessionHub> logger;
     private readonly AppDbContext db;
+    private readonly ITradeService tradeService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionHub"/> class.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
     /// <param name="db">Database context.</param>
-    public SessionHub(ILogger<SessionHub> logger, AppDbContext db)
+    /// <param name="tradeService">Trade service for object-exchange proposals.</param>
+    public SessionHub(ILogger<SessionHub> logger, AppDbContext db, ITradeService tradeService)
     {
         this.logger = logger;
         this.db = db;
+        this.tradeService = tradeService;
     }
 
     /// <summary>
@@ -194,36 +198,71 @@ public class SessionHub : Hub
     }
 
     /// <summary>
-    /// Proposes a theoretical trade between characters (theory-based RPG mechanic).
+    /// Proposes a theory-based object trade to another session member (GM→player or player→player).
+    /// The proposal is persisted and the recipient is notified; the pending list survives reconnection.
     /// </summary>
     /// <param name="sessionId">The session identifier.</param>
     /// <param name="targetUserId">The user ID being offered the trade.</param>
     /// <param name="offerDescription">Description of what's being offered.</param>
     /// <param name="requestDescription">Description of what's being requested.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task ProposeTradeTheory(int sessionId, int targetUserId, string offerDescription, string requestDescription)
+    public async Task ProposeTrade(int sessionId, int targetUserId, string offerDescription, string requestDescription)
     {
         var userId = this.GetUserId();
-        var userName = this.GetUserName();
         var groupName = $"session_{sessionId}";
 
-        this.logger.LogInformation(
-            "User {UserId} proposed trade to {TargetUserId} in session {SessionId}",
-            userId,
-            targetUserId,
-            sessionId);
+        var trade = await this.tradeService.ProposeTradeAsync(sessionId, userId, targetUserId, offerDescription, requestDescription);
+        if (trade == null)
+        {
+            throw new HubException("Impossible de proposer cet échange.");
+        }
 
-        await this.Clients.Group(groupName).SendAsync(
-            "TradeProposed",
-            new
-            {
-                FromUserId = userId,
-                FromUserName = userName,
-                ToUserId = targetUserId,
-                Offer = offerDescription,
-                Request = requestDescription,
-                Timestamp = DateTime.UtcNow
-            });
+        this.logger.LogInformation(
+            "User {UserId} proposed trade {TradeId} to {TargetUserId} in session {SessionId}",
+            userId, trade.Id, targetUserId, sessionId);
+
+        await this.Clients.Group(groupName).SendAsync("TradeProposed", trade);
+    }
+
+    /// <summary>
+    /// Responds to a pending trade (accept or decline). Only the recipient may respond.
+    /// </summary>
+    /// <param name="sessionId">The session identifier (for group broadcast).</param>
+    /// <param name="tradeId">The trade identifier.</param>
+    /// <param name="accept"><c>true</c> to accept, <c>false</c> to decline.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task RespondToTrade(int sessionId, int tradeId, bool accept)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var trade = await this.tradeService.RespondToTradeAsync(tradeId, userId, accept);
+        if (trade == null)
+        {
+            throw new HubException("Impossible de répondre à cet échange.");
+        }
+
+        await this.Clients.Group(groupName).SendAsync("TradeResolved", trade);
+    }
+
+    /// <summary>
+    /// Cancels a pending trade. Only the proposer may cancel it.
+    /// </summary>
+    /// <param name="sessionId">The session identifier (for group broadcast).</param>
+    /// <param name="tradeId">The trade identifier.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task CancelTrade(int sessionId, int tradeId)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var trade = await this.tradeService.CancelTradeAsync(tradeId, userId);
+        if (trade == null)
+        {
+            throw new HubException("Impossible d'annuler cet échange.");
+        }
+
+        await this.Clients.Group(groupName).SendAsync("TradeResolved", trade);
     }
 
     /// <summary>

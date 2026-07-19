@@ -179,6 +179,23 @@ public class SessionApiClient
         }
     }
 
+    /// <summary>Get the pending object trades of a session.</summary>
+    public async Task<List<SessionTradeDto>> GetPendingTradesAsync(int sessionId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync($"api/sessions/{sessionId}/trades/pending");
+            if (!response.IsSuccessStatusCode) return new List<SessionTradeDto>();
+            return await response.Content.ReadFromJsonAsync<List<SessionTradeDto>>() ?? new List<SessionTradeDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching pending trades for session {SessionId}", sessionId);
+            return new List<SessionTradeDto>();
+        }
+    }
+
     /// <summary>Returns the API base URL for constructing hub URLs.</summary>
     public string GetApiBaseUrl() => _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? string.Empty;
 }

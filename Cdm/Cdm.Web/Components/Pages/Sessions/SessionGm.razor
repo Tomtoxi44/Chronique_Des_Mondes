@@ -326,6 +326,68 @@ else if (Session != null)
                         </button>
                     </div>
                 </div>
+
+                <!-- Échanges d'objets -->
+                <div class="gm-chat-section">
+                    <div class="gm-chat-header">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Échanges</span>
+                    </div>
+                    <div style="padding: var(--spacing-sm); display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        @if (PendingTrades.Count == 0)
+                        {
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); font-style: italic; text-align: center;">
+                                Aucune proposition en attente.
+                            </p>
+                        }
+                        @foreach (var trade in PendingTrades)
+                        {
+                            <div class="chat-entry" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--spacing-xs);">
+                                <div class="chat-entry-meta">
+                                    <span class="chat-entry-author">@trade.FromUserName → @trade.ToUserName</span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs);">
+                                    <div><strong>Offre :</strong> @trade.OfferDescription</div>
+                                    <div><strong>Demande :</strong> @trade.RequestDescription</div>
+                                </div>
+                                @if (trade.ToUserId == CurrentUserId)
+                                {
+                                    <div style="display: flex; gap: var(--spacing-xs); margin-top: var(--spacing-xs);">
+                                        <button class="btn btn-primary btn-sm" @onclick="() => RespondToTrade(trade.Id, true)" disabled="@(!IsHubConnected)">
+                                            <i class="bi bi-check-lg"></i> Accepter
+                                        </button>
+                                        <button class="btn btn-outline btn-sm" @onclick="() => RespondToTrade(trade.Id, false)" disabled="@(!IsHubConnected)">
+                                            <i class="bi bi-x-lg"></i> Refuser
+                                        </button>
+                                    </div>
+                                }
+                                else if (trade.FromUserId == CurrentUserId)
+                                {
+                                    <div style="margin-top: var(--spacing-xs);">
+                                        <button class="btn btn-outline btn-sm" @onclick="() => CancelTrade(trade.Id)" disabled="@(!IsHubConnected)">
+                                            <i class="bi bi-trash"></i> Annuler
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div style="padding: var(--spacing-sm); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        <select class="form-control" style="font-size: var(--font-size-xs);" @bind="TradeTargetUserId" disabled="@(!IsHubConnected)">
+                            <option value="0">— Destinataire —</option>
+                            @foreach (var target in TradeTargets())
+                            {
+                                <option value="@target.UserId">@target.Name</option>
+                            }
+                        </select>
+                        <input class="form-control" style="font-size: var(--font-size-xs);" placeholder="Ce que je propose…" @bind="TradeOffer" disabled="@(!IsHubConnected)" />
+                        <input class="form-control" style="font-size: var(--font-size-xs);" placeholder="Ce que je demande en retour…" @bind="TradeRequest" disabled="@(!IsHubConnected)" />
+                        <button class="btn btn-primary btn-sm" @onclick="ProposeTrade"
+                                disabled="@(!IsHubConnected || IsProposingTrade || TradeTargetUserId <= 0 || string.IsNullOrWhiteSpace(TradeOffer) || string.IsNullOrWhiteSpace(TradeRequest))">
+                            <i class="bi bi-send"></i> Proposer l'échange
+                        </button>
+                    </div>
+                </div>
             </aside>
         </div>
     </div>
