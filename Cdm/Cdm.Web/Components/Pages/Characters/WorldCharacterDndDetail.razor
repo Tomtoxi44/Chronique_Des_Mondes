@@ -50,7 +50,7 @@ else
                         @if (!string.IsNullOrEmpty(Stats.CharacterClass))
                         {
                             <span class="card-meta-badge" style="background: var(--color-primary); color: white;">
-                                <i class="bi bi-shield-fill"></i> @Stats.CharacterClass@(Stats.Subclass != null ? $" ({Stats.Subclass})" : "")
+                                <i class="bi bi-shield-fill"></i> @Stats.CharacterClass@(!string.IsNullOrEmpty(Stats.Subclass) ? $" ({Stats.Subclass})" : "")
                             </span>
                         }
                         @if (Stats.Level.HasValue)
@@ -235,7 +235,28 @@ else
                                    @onchange="@(e => Stats.Level = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.Level)"
                                    style="width:48px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
                             <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">Niveau</div>
+                            <button type="button" class="btn btn-ghost btn-sm" style="margin-top:2px; font-size:10px; padding:1px 6px;"
+                                    title="Monter d'un niveau (bonus de maîtrise + PV recalculés)"
+                                    disabled="@((Stats.Level ?? 1) >= 20)"
+                                    @onclick="LevelUp">
+                                <i class="bi bi-arrow-up-circle"></i> Niveau +1
+                            </button>
                         </div>
+                        @if (CurrentClassSubclasses.Count > 0)
+                        {
+                            <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
+                                <i class="bi bi-diagram-3-fill" style="color: var(--color-primary); margin-bottom: var(--spacing-xs);"></i>
+                                <select @bind="Stats.Subclass"
+                                        style="max-width:130px; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;">
+                                    <option value="">— Aucune —</option>
+                                    @foreach (var sub in CurrentClassSubclasses)
+                                    {
+                                        <option value="@sub">@sub</option>
+                                    }
+                                </select>
+                                <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">Sous-classe</div>
+                            </div>
+                        }
                         <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
                             <i class="bi bi-book" style="color: var(--color-violet-500, var(--color-primary)); margin-bottom: var(--spacing-xs);"></i>
                             <input type="number" value="@Stats.ExperiencePoints"

@@ -129,11 +129,18 @@ public partial class WorldCharacterDndDetail
         Stats.ArmorClass = Cdm.Common.DndRules.UnarmoredArmorClass(Stats.DexterityModifier ?? 0);
     }
 
+    /// <summary>The hit die of the character's current class (0 if unknown).</summary>
+    private int CurrentClassHitDie => AvailableClasses
+        .FirstOrDefault(c => string.Equals(c.Name, Stats.CharacterClass, StringComparison.OrdinalIgnoreCase))?.HitDie ?? 0;
+
+    /// <summary>The available subclasses of the character's current class.</summary>
+    private List<string> CurrentClassSubclasses => AvailableClasses
+        .FirstOrDefault(c => string.Equals(c.Name, Stats.CharacterClass, StringComparison.OrdinalIgnoreCase))?.Subclasses ?? new();
+
     /// <summary>Sets the maximum hit points from the class hit die, Constitution and level.</summary>
     private void AutoComputeHitPoints()
     {
-        var hitDie = AvailableClasses
-            .FirstOrDefault(c => string.Equals(c.Name, Stats.CharacterClass, StringComparison.OrdinalIgnoreCase))?.HitDie ?? 0;
+        var hitDie = CurrentClassHitDie;
         if (hitDie <= 0)
         {
             return;
@@ -145,6 +152,31 @@ public partial class WorldCharacterDndDetail
         {
             Stats.CurrentHitPoints = max;
         }
+    }
+
+    /// <summary>
+    /// Advances the character by one level (max 20): the proficiency bonus follows automatically,
+    /// and the max HP gains an average hit-die roll (+ Constitution), also added to current HP.
+    /// </summary>
+    private void LevelUp()
+    {
+        var newLevel = Math.Min(20, (Stats.Level ?? 1) + 1);
+        if (newLevel == Stats.Level)
+        {
+            return;
+        }
+
+        var hitDie = CurrentClassHitDie;
+        if (hitDie > 0)
+        {
+            var oldMax = Stats.MaxHitPoints ?? 0;
+            var newMax = Cdm.Common.DndRules.AverageHitPoints(hitDie, Stats.ConstitutionModifier ?? 0, newLevel);
+            var gain = Math.Max(0, newMax - oldMax);
+            Stats.MaxHitPoints = newMax;
+            Stats.CurrentHitPoints = (Stats.CurrentHitPoints ?? 0) + gain;
+        }
+
+        Stats.Level = newLevel;
     }
 
     private static int CalcProfBonus(int level) =>
