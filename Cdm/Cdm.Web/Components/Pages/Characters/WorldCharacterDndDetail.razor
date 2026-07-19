@@ -204,6 +204,11 @@ else
                                        style="width:44px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
                             </div>
                             <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">PV</div>
+                            <button type="button" class="btn btn-ghost btn-sm" style="margin-top:2px; font-size:10px; padding:1px 6px;"
+                                    title="Calculer les PV max (dé de vie de la classe + Constitution)"
+                                    @onclick="AutoComputeHitPoints">
+                                <i class="bi bi-magic"></i> Auto
+                            </button>
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
                             <i class="bi bi-shield-fill" style="color: var(--color-info); margin-bottom: var(--spacing-xs);"></i>
@@ -211,6 +216,11 @@ else
                                    @onchange="@(e => Stats.ArmorClass = int.TryParse(e.Value?.ToString(), out var v) ? v : Stats.ArmorClass)"
                                    style="width:48px; text-align:center; font-size:var(--font-size-sm); background:var(--color-bg-primary); border:1px solid var(--color-primary); border-radius:var(--radius-sm); color:var(--color-text-primary); padding:2px;" />
                             <div style="font-size:10px; color:var(--color-text-muted); margin-top:2px;">CA</div>
+                            <button type="button" class="btn btn-ghost btn-sm" style="margin-top:2px; font-size:10px; padding:1px 6px;"
+                                    title="Calculer la CA sans armure (10 + mod. Dextérité)"
+                                    @onclick="AutoComputeArmorClass">
+                                <i class="bi bi-magic"></i> Auto
+                            </button>
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--spacing-sm);">
                             <i class="bi bi-lightning-fill" style="color: var(--color-warning); margin-bottom: var(--spacing-xs);"></i>
