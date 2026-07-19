@@ -1,0 +1,48 @@
+# Normalisation des fins de ligne.
+# Sans ce fichier, un contributeur Windows (working tree en CRLF) voit des dizaines
+# de fichiers « modifiés » alors que le dépôt est en LF : ce sont de faux changements
+# de fins de ligne. `text=auto` fait normaliser git en LF côté dépôt et convertir vers
+# la convention native au checkout.
+
+* text=auto
+
+# Scripts : fin de ligne imposée quel que soit l'OS
+*.sh   text eol=lf
+*.ps1  text eol=crlf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+# Code et config : traités comme texte
+*.cs        text
+*.razor     text
+*.cshtml    text
+*.csproj    text
+*.slnx      text
+*.sln       text -text
+*.json      text
+*.js        text
+*.ts        text
+*.css       text
+*.html      text
+*.md        text
+*.yml       text
+*.yaml      text
+*.xml       text
+*.resx      text
+
+# Fichiers binaires : jamais de conversion de fins de ligne
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.svg   text
+*.pdf   binary
+*.docx  binary
+*.xlsx  binary
+*.pptx  binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
