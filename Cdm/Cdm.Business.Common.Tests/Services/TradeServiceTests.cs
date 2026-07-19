@@ -22,6 +22,7 @@ using Xunit;
 public class TradeServiceTests
 {
     private readonly Mock<INotificationService> notificationServiceMock = new();
+    private readonly Mock<IAchievementEvaluationService> achievementEvaluationMock = new();
     private readonly Mock<ILogger<TradeService>> loggerMock = new();
 
     private const int GmUserId = 1;
@@ -33,7 +34,7 @@ public class TradeServiceTests
             .Options;
 
     private TradeService CreateService(AppDbContext context) =>
-        new(context, this.notificationServiceMock.Object, this.loggerMock.Object);
+        new(context, this.notificationServiceMock.Object, this.achievementEvaluationMock.Object, this.loggerMock.Object);
 
     /// <summary>
     /// Seeds a session (GM = user 1) with one joined participant (player = user 2).

@@ -24,6 +24,7 @@ public class SessionHub : Hub
     private readonly ILogger<SessionHub> logger;
     private readonly AppDbContext db;
     private readonly ITradeService tradeService;
+    private readonly IAchievementEvaluationService achievementEvaluation;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionHub"/> class.
@@ -31,11 +32,13 @@ public class SessionHub : Hub
     /// <param name="logger">Logger instance.</param>
     /// <param name="db">Database context.</param>
     /// <param name="tradeService">Trade service for object-exchange proposals.</param>
-    public SessionHub(ILogger<SessionHub> logger, AppDbContext db, ITradeService tradeService)
+    /// <param name="achievementEvaluation">Evaluator that awards automatic achievements.</param>
+    public SessionHub(ILogger<SessionHub> logger, AppDbContext db, ITradeService tradeService, IAchievementEvaluationService achievementEvaluation)
     {
         this.logger = logger;
         this.db = db;
         this.tradeService = tradeService;
+        this.achievementEvaluation = achievementEvaluation;
     }
 
     /// <summary>
@@ -180,6 +183,9 @@ public class SessionHub : Hub
         };
         this.db.SessionDiceRolls.Add(diceRoll);
         await this.db.SaveChangesAsync();
+
+        // Award any automatic achievement whose condition this roll satisfies (crit, fumble, dice count).
+        await this.achievementEvaluation.OnDiceRolledAsync(userId, sessionId, diceType, results);
 
         await this.Clients.Group(groupName).SendAsync(
             "DiceRolled",

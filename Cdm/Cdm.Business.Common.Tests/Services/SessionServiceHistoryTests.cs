@@ -22,6 +22,7 @@ public class SessionServiceHistoryTests
 {
     private readonly Mock<ILogger<SessionService>> loggerMock = new();
     private readonly Mock<INotificationService> notificationServiceMock = new();
+    private readonly Mock<IAchievementEvaluationService> achievementEvaluationMock = new();
 
     private static DbContextOptions<AppDbContext> NewOptions(string name) =>
         new DbContextOptionsBuilder<AppDbContext>()
@@ -29,7 +30,7 @@ public class SessionServiceHistoryTests
             .Options;
 
     private SessionService CreateService(AppDbContext context) =>
-        new(context, this.loggerMock.Object, this.notificationServiceMock.Object);
+        new(context, this.loggerMock.Object, this.notificationServiceMock.Object, this.achievementEvaluationMock.Object);
 
     /// <summary>
     /// The GM of a session gets its chat and dice history, merged and ordered chronologically,

@@ -20,10 +20,12 @@ using Microsoft.Extensions.Logging;
 public class TradeService(
     AppDbContext dbContext,
     INotificationService notificationService,
+    IAchievementEvaluationService achievementEvaluation,
     ILogger<TradeService> logger) : ITradeService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly INotificationService notificationService = notificationService;
+    private readonly IAchievementEvaluationService achievementEvaluation = achievementEvaluation;
     private readonly ILogger<TradeService> logger = logger;
 
     /// <inheritdoc/>
@@ -116,6 +118,13 @@ public class TradeService(
             trade.Status = accept ? TradeStatus.Accepted : TradeStatus.Declined;
             trade.RespondedAt = DateTime.UtcNow;
             await this.dbContext.SaveChangesAsync();
+
+            // An accepted trade may unlock trade-based automatic achievements for both parties.
+            if (accept)
+            {
+                await this.achievementEvaluation.OnTradeAcceptedAsync(trade.FromUserId, trade.SessionId);
+                await this.achievementEvaluation.OnTradeAcceptedAsync(trade.ToUserId, trade.SessionId);
+            }
 
             await this.notificationService.CreateNotificationAsync(new CreateNotificationDto
             {

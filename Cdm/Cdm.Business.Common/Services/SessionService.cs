@@ -17,11 +17,12 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// Service for managing game sessions.
 /// </summary>
-public class SessionService(AppDbContext dbContext, ILogger<SessionService> logger, INotificationService notificationService) : ISessionService
+public class SessionService(AppDbContext dbContext, ILogger<SessionService> logger, INotificationService notificationService, IAchievementEvaluationService achievementEvaluation) : ISessionService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly ILogger<SessionService> logger = logger;
     private readonly INotificationService notificationService = notificationService;
+    private readonly IAchievementEvaluationService achievementEvaluation = achievementEvaluation;
 
     /// <inheritdoc/>
     public async Task<SessionDto?> StartSessionAsync(StartSessionDto dto, int userId)
@@ -291,6 +292,9 @@ public class SessionService(AppDbContext dbContext, ILogger<SessionService> logg
 
             participant.Status = SessionParticipantStatus.Joined;
             await this.dbContext.SaveChangesAsync();
+
+            // Award any automatic achievement based on session attendance.
+            await this.achievementEvaluation.OnSessionAttendedAsync(userId, sessionId);
 
             return await this.BuildSessionDtoAsync(sessionId);
         }

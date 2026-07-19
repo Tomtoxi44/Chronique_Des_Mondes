@@ -164,6 +164,7 @@ builder.Services.AddScoped<IWorldService, WorldService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<IAchievementEvaluationService, AchievementEvaluationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<ITradeService, TradeService>();
