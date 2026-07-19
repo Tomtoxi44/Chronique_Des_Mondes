@@ -99,7 +99,25 @@ public partial class SessionGm : IAsyncDisposable
         NavContext.ClearContext();
         IsLoading = false;
 
+        // Rebuild the timeline from persisted history BEFORE connecting to the hub,
+        // so live events only ever append to an already-complete history (no duplicates).
+        await LoadHistoryAsync();
+
         await ConnectToHubAsync();
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        var history = await SessionClient.GetSessionHistoryAsync(SessionId);
+        if (history == null) return;
+
+        var entries = new List<ChatEntry>(history.Messages.Count + history.DiceRolls.Count);
+        foreach (var m in history.Messages)
+            entries.Add(new ChatEntry("text", m.UserName, m.Message, null, null, m.SentAt));
+        foreach (var d in history.DiceRolls)
+            entries.Add(new ChatEntry("dice", d.UserName, null, d.DiceType, d.Results, d.RolledAt));
+
+        ChatEntries = entries.OrderBy(e => e.Timestamp).ToList();
     }
 
     private async Task ConnectToHubAsync()
