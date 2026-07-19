@@ -14,12 +14,14 @@ public partial class Profile
 {
     [Inject] private ProfileApiClient ProfileClient { get; set; } = default!;
     [Inject] private AchievementApiClient AchievementClient { get; set; } = default!;
+    [Inject] private StatisticsApiClient StatisticsClient { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
 
     private ProfileResponse? UserProfile;
     private UpdateProfileRequest UpdateModel { get; set; } = new();
     private List<UserAchievementDto> MyAchievements { get; set; } = new();
+    private DiceStatsDto? DiceStats;
     private bool IsLoading = true;
     private bool IsSaving = false;
     private string ErrorMessage = string.Empty;
@@ -45,6 +47,7 @@ public partial class Profile
             }
 
             MyAchievements = await AchievementClient.GetMyAchievementsAsync();
+            DiceStats = await StatisticsClient.GetMyDiceStatsAsync();
         }
         catch { /* ignore */ }
         finally

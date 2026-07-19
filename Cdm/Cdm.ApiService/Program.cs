@@ -164,6 +164,7 @@ builder.Services.AddScoped<IWorldService, WorldService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<IAchievementEvaluationService, AchievementEvaluationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
@@ -242,6 +243,7 @@ app.MapSessionEndpoints();
 app.MapNpcEndpoints();
 app.MapCombatEndpoints();
 app.MapDndEndpoints();
+app.MapStatisticsEndpoints();
 
 // Map SignalR hubs
 app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");
