@@ -25,7 +25,7 @@ else if (!string.IsNullOrEmpty(ErrorMessage))
         @ErrorMessage
     </div>
 }
-else if (WorldsList.Count == 0)
+else if (WorldsList.Count == 0 && JoinedWorlds.Count == 0)
 {
     <AppEmptyState Icon="bi-globe2"
                    Title="@L["Worlds_Empty"]"
@@ -40,6 +40,12 @@ else if (WorldsList.Count == 0)
 }
 else
 {
+    @if (WorldsList.Count > 0)
+    {
+        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
+            <i class="bi bi-shield-fill"></i> Mes mondes (MJ)
+        </h3>
+    }
     <div class="cards-grid">
         @foreach (var world in WorldsList)
         {
@@ -76,6 +82,36 @@ else
             </AppThemeWrapper>
         }
     </div>
+
+    @if (JoinedWorlds.Count > 0)
+    {
+        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin: var(--spacing-xl) 0 var(--spacing-md);">
+            <i class="bi bi-people-fill"></i> Mondes rejoints
+        </h3>
+        <div class="cards-grid">
+            @foreach (var world in JoinedWorlds)
+            {
+                <AppThemeWrapper GameType="@world.GameType">
+                    <div class="cdm-card world-card" style="cursor: pointer;"
+                         @onclick="() => NavigateToWorld(world.Id)">
+                        <div class="card-header-row">
+                            <AppGameBadge GameType="@world.GameType" />
+                            <span class="status-badge" style="background: var(--color-info); color: white; opacity: 0.9;">Joueur</span>
+                        </div>
+                        <h3 class="card-title">@world.Name</h3>
+                        @if (!string.IsNullOrEmpty(world.Description))
+                        {
+                            <p class="card-description">@world.Description</p>
+                        }
+                        <div class="card-meta">
+                            <span><i class="bi bi-map"></i> @world.CampaignCount @L["Nav_Campaigns"].ToString().ToLower()</span>
+                            <span><i class="bi bi-people"></i> @world.CharacterCount @L["Nav_Characters"].ToString().ToLower()</span>
+                        </div>
+                    </div>
+                </AppThemeWrapper>
+            }
+        </div>
+    }
 }
 
 <AppConfirmDialog @ref="DeleteDialog"
