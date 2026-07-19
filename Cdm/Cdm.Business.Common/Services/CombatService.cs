@@ -430,6 +430,46 @@ public class CombatService(
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<CombatDto?> UpdateParticipantDefenseAsync(int combatId, int participantId, UpdateParticipantDefenseDto request, int userId)
+    {
+        try
+        {
+            var combat = await this.dbContext.Combats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == combatId);
+
+            if (combat == null) return null;
+
+            if (!await this.IsGmOfSessionAsync(combat.SessionId, userId))
+            {
+                this.logger.LogWarning("User {UserId} not authorized to edit participant defense in combat {CombatId}", userId, combatId);
+                return null;
+            }
+
+            var participant = combat.Participants.FirstOrDefault(p => p.Id == participantId);
+            if (participant == null) return null;
+
+            participant.ArmorClass = request.ArmorClass;
+            participant.DexterityModifier = request.DexterityModifier;
+            participant.Resistances = string.IsNullOrWhiteSpace(request.Resistances) ? null : request.Resistances.Trim();
+            participant.Vulnerabilities = string.IsNullOrWhiteSpace(request.Vulnerabilities) ? null : request.Vulnerabilities.Trim();
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation(
+                "Updated defense for participant {ParticipantId} in combat {CombatId} (CA {AC}, DEX {Dex})",
+                participantId, combatId, request.ArmorClass, request.DexterityModifier);
+
+            return await this.LoadCombatDtoAsync(combatId);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error updating participant defense in combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
     /// <summary>
     /// Rolls damage dice (doubling the dice on a critical hit, per D&D 5e) plus a flat bonus.
     /// </summary>

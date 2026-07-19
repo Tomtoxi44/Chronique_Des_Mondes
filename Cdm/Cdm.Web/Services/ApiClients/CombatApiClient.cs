@@ -159,6 +159,26 @@ public class CombatApiClient
         }
     }
 
+    /// <summary>Overrides a participant's defensive stats (armor class, DEX modifier, resistances).</summary>
+    public async Task<CombatDto?> UpdateParticipantDefenseAsync(int combatId, int participantId, UpdateParticipantDefenseDto dto)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await this.httpClient.PutAsJsonAsync($"api/combat/{combatId}/participants/{participantId}/defense", dto);
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<CombatDto>();
+
+            this.logger.LogWarning("Failed to update defense for participant {ParticipantId}. Status: {StatusCode}", participantId, response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error updating defense for participant {ParticipantId}", participantId);
+            return null;
+        }
+    }
+
     /// <summary>Sets the initiative value for a participant.</summary>
     public async Task<CombatDto?> SetInitiativeAsync(int combatId, int participantId, SetInitiativeDto dto)
     {

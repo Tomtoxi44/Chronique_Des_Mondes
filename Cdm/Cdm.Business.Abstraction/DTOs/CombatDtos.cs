@@ -184,3 +184,19 @@ public class ResolveAttackDto
     /// <summary>Optional label for the attack (e.g. weapon or spell name), for the log.</summary>
     public string? Label { get; set; }
 }
+
+/// <summary>Request to override a participant's defensive stats (armor class, DEX modifier, resistances).</summary>
+public class UpdateParticipantDefenseDto
+{
+    /// <summary>The armor class to set.</summary>
+    public int ArmorClass { get; set; }
+
+    /// <summary>The Dexterity modifier to set (used for initiative).</summary>
+    public int DexterityModifier { get; set; }
+
+    /// <summary>Resisted damage types (comma-separated), optional.</summary>
+    public string? Resistances { get; set; }
+
+    /// <summary>Vulnerable damage types (comma-separated), optional.</summary>
+    public string? Vulnerabilities { get; set; }
+}

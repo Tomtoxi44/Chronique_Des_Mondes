@@ -147,6 +147,51 @@ public class CombatServiceTests
     }
 
     /// <summary>
+    /// The GM can override a participant's armor class and Dexterity modifier after creation.
+    /// </summary>
+    [Fact]
+    public async Task UpdateParticipantDefenseAsync_AsGm_OverridesStats()
+    {
+        using var context = new AppDbContext(NewOptions(nameof(UpdateParticipantDefenseAsync_AsGm_OverridesStats)));
+        await SeedSessionAsync(context);
+        var combatId = await SeedCombatWithParticipantsAsync(context);
+        var service = this.CreateService(context);
+
+        var result = await service.UpdateParticipantDefenseAsync(combatId, 502, new UpdateParticipantDefenseDto
+        {
+            ArmorClass = 17,
+            DexterityModifier = 2,
+            Resistances = "feu",
+            Vulnerabilities = "froid"
+        }, GmUserId);
+
+        Assert.NotNull(result);
+        var goblin = await context.CombatParticipants.FindAsync(502);
+        Assert.Equal(17, goblin!.ArmorClass);
+        Assert.Equal(2, goblin.DexterityModifier);
+        Assert.Equal("feu", goblin.Resistances);
+        Assert.Equal("froid", goblin.Vulnerabilities);
+    }
+
+    /// <summary>
+    /// A non-GM cannot override participant defensive stats.
+    /// </summary>
+    [Fact]
+    public async Task UpdateParticipantDefenseAsync_NotGm_ReturnsNull()
+    {
+        using var context = new AppDbContext(NewOptions(nameof(UpdateParticipantDefenseAsync_NotGm_ReturnsNull)));
+        await SeedSessionAsync(context);
+        var combatId = await SeedCombatWithParticipantsAsync(context);
+        var service = this.CreateService(context);
+
+        var result = await service.UpdateParticipantDefenseAsync(combatId, 502, new UpdateParticipantDefenseDto { ArmorClass = 99, DexterityModifier = 9 }, 999);
+
+        Assert.Null(result);
+        var goblin = await context.CombatParticipants.FindAsync(502);
+        Assert.NotEqual(99, goblin!.ArmorClass);
+    }
+
+    /// <summary>
     /// A guaranteed hit (huge attack bonus vs low AC) reduces the target's HP and logs the attack.
     /// </summary>
     [Fact]
