@@ -104,11 +104,7 @@ public partial class WorldDetail : IDisposable
     private bool ShowNewEventForm = false;
     private CreateEventDto NewEvent = new() { Level = EventLevel.World, EffectType = EventEffectType.Narrative, IsPermanent = true };
 
-    // Achievements
-    private List<AchievementDto> WorldAchievements = new();
-    private bool IsLoadingAchievements = false;
-    private bool ShowNewAchievementForm = false;
-    private CreateAchievementDto NewAchievement = new() { Level = AchievementLevel.World, Rarity = AchievementRarity.Common };
+    // (Succès du monde : gérés par WorldAchievementsPanel)
 
     private static readonly List<(GameType Value, string Label, string Icon)> GameTypeOptions = new()
     {
@@ -276,9 +272,6 @@ public partial class WorldDetail : IDisposable
 
         if (Section == "events" && !IsLoadingEvents && WorldEvents.Count == 0)
             await LoadEventsAsync();
-
-        if (Section == "achievements" && !IsLoadingAchievements && WorldAchievements.Count == 0)
-            await LoadAchievementsAsync();
 
         if (Section == "invitations" && !IsLoadingWorldCharacters && WorldCharacters.Count == 0)
             await LoadWorldCharactersAsync();
@@ -693,66 +686,6 @@ public partial class WorldDetail : IDisposable
             if (idx >= 0) WorldEvents[idx] = result;
         }
     }
-
-    private async Task LoadAchievementsAsync()
-    {
-        IsLoadingAchievements = true;
-        WorldAchievements = await AchievementClient.GetAchievementsByWorldAsync(WorldId);
-        IsLoadingAchievements = false;
-    }
-
-    private async Task CreateAchievement()
-    {
-        if (World == null) return;
-        IsSaving = true;
-        NewAchievement.WorldId = WorldId;
-        NewAchievement.Level = AchievementLevel.World;
-        var result = await AchievementClient.CreateAchievementAsync(NewAchievement);
-        if (result != null)
-        {
-            WorldAchievements.Insert(0, result);
-            ShowNewAchievementForm = false;
-            NewAchievement = new() { Level = AchievementLevel.World, Rarity = AchievementRarity.Common };
-        }
-        IsSaving = false;
-    }
-
-    private async Task DeleteAchievement(int achievementId)
-    {
-        var ok = await AchievementClient.DeleteAchievementAsync(achievementId);
-        if (ok)
-            WorldAchievements.RemoveAll(a => a.Id == achievementId);
-    }
-
-    private static string GetRarityColor(AchievementRarity rarity) => rarity switch
-    {
-        AchievementRarity.Common => "var(--color-text-muted)",
-        AchievementRarity.Rare => "#3b82f6",
-        AchievementRarity.Epic => "#8b5cf6",
-        AchievementRarity.Legendary => "#f59e0b",
-        _ => "var(--color-border)"
-    };
-
-    private static string GetRarityBorderStyle(AchievementRarity rarity) =>
-        $"border-top: 3px solid {GetRarityColor(rarity)};";
-
-    private static string GetRarityClass(AchievementRarity rarity) => rarity switch
-    {
-        AchievementRarity.Common => "rarity-common",
-        AchievementRarity.Rare => "rarity-rare",
-        AchievementRarity.Epic => "rarity-epic",
-        AchievementRarity.Legendary => "rarity-legendary",
-        _ => ""
-    };
-
-    private static string GetRarityLabel(AchievementRarity rarity) => rarity switch
-    {
-        AchievementRarity.Common => "Commun",
-        AchievementRarity.Rare => "Rare",
-        AchievementRarity.Epic => "Épique",
-        AchievementRarity.Legendary => "Légendaire",
-        _ => rarity.ToString()
-    };
 
     private static string GetEffectLabel(EventEffectType type) => type switch
     {

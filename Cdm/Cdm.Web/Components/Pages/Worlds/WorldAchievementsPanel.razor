@@ -1,0 +1,220 @@
+@* Succès d'un monde : création (formulaire world-level, condition auto) + liste + suppression.
+   Composant auto-chargeant extrait de WorldDetail. *@
+@namespace Cdm.Web.Components.Pages.Worlds
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Resources
+@using Microsoft.Extensions.Localization
+@inject Cdm.Web.Services.ApiClients.AchievementApiClient AchievementClient
+@inject IStringLocalizer<AppStrings> L
+
+<p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
+    Les succès récompensent les accomplissements des joueurs dans ce monde.
+</p>
+
+<div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md);">
+    <button class="btn btn-primary btn-sm" @onclick="() => ShowNewAchievementForm = !ShowNewAchievementForm">
+        <i class="bi bi-plus"></i> Créer un succès
+    </button>
+</div>
+
+@if (ShowNewAchievementForm)
+{
+    <div class="cdm-card" style="margin-bottom: var(--spacing-lg); border: 1px solid var(--theme-card-border, var(--color-border));">
+        <h4 class="card-title" style="margin-bottom: var(--spacing-md);">Nouveau succès de monde</h4>
+        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+            <label class="form-label">Nom <span style="color:var(--color-error)">*</span></label>
+            <input type="text" class="form-control" @bind="NewAchievement.Name" placeholder="Nom du succès..." />
+        </div>
+        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+            <label class="form-label">Description <span style="color:var(--color-error)">*</span></label>
+            <textarea class="form-control" rows="3" @bind="NewAchievement.Description" placeholder="Décrivez ce succès et comment l'obtenir..."></textarea>
+        </div>
+        <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+            <div class="form-group">
+                <label class="form-label">Rareté</label>
+                <select class="form-control" @bind="NewAchievement.Rarity">
+                    <option value="@AchievementRarity.Common">Commun</option>
+                    <option value="@AchievementRarity.Rare">Rare</option>
+                    <option value="@AchievementRarity.Epic">Épique</option>
+                    <option value="@AchievementRarity.Legendary">Légendaire</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Visibilité</label>
+                <select class="form-control" @bind="NewAchievement.IsSecret">
+                    <option value="false">Visible</option>
+                    <option value="true">Secret</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+            <label class="form-label">Récompense (optionnel)</label>
+            <input type="text" class="form-control" @bind="NewAchievement.RewardDescription" placeholder="Description de la récompense..." />
+        </div>
+        <div class="form-row" style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm);">
+            <div class="form-group" style="flex: 1;">
+                <label class="form-label">Attribution</label>
+                <select class="form-control" @bind="NewAchievement.IsAutomatic">
+                    <option value="false">Manuelle (le MJ décerne)</option>
+                    <option value="true">Automatique (condition)</option>
+                </select>
+            </div>
+            @if (NewAchievement.IsAutomatic)
+            {
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label">Condition automatique</label>
+                    <select class="form-control" @bind="NewAchievement.AutomaticCondition">
+                        <option value="">— Choisir une condition —</option>
+                        <optgroup label="Dés">
+                            <option value="DiceCritical">Réussite critique (20 naturel)</option>
+                            <option value="DiceFumble">Échec critique (1 naturel)</option>
+                            <option value="DiceRolls:50">Lancer 50 dés au total</option>
+                            <option value="DiceRolls:200">Lancer 200 dés au total</option>
+                        </optgroup>
+                        <optgroup label="Sessions">
+                            <option value="SessionsAttended:1">Participer à sa 1re session</option>
+                            <option value="SessionsAttended:5">Participer à 5 sessions</option>
+                            <option value="SessionsAttended:10">Participer à 10 sessions</option>
+                        </optgroup>
+                        <optgroup label="Combat">
+                            <option value="CombatWon:1">Remporter un 1er combat</option>
+                            <option value="CombatWon:5">Remporter 5 combats</option>
+                            <option value="CombatSurvived:5">Survivre à 5 combats</option>
+                        </optgroup>
+                        <optgroup label="Échanges">
+                            <option value="TradesCompleted:1">Réaliser un 1er échange</option>
+                            <option value="TradesCompleted:10">Réaliser 10 échanges</option>
+                        </optgroup>
+                    </select>
+                </div>
+            }
+        </div>
+        <div style="display: flex; gap: var(--spacing-sm);">
+            <button class="btn btn-primary btn-sm" @onclick="CreateAchievement" disabled="@IsSaving">
+                <i class="bi bi-check"></i> Créer
+            </button>
+            <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewAchievementForm = false">@L["Common_Cancel"]</button>
+        </div>
+    </div>
+}
+
+@if (IsLoadingAchievements)
+{
+    <AppLoadingSpinner Label="Chargement des succès..." />
+}
+else if (WorldAchievements.Count == 0)
+{
+    <AppEmptyState Icon="bi-trophy"
+                   Title="Aucun succès"
+                   Message="Aucun succès défini pour ce monde." />
+}
+else
+{
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-md);">
+        @foreach (var ach in WorldAchievements.OrderBy(a => a.Rarity).ThenBy(a => a.Name))
+        {
+            <div class="cdm-card" style="@GetRarityBorderStyle(ach.Rarity)">
+                <div style="display: flex; align-items: flex-start; gap: var(--spacing-sm); justify-content: space-between;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing-xs); flex-wrap: wrap;">
+                            <i class="bi bi-trophy" style="color: @GetRarityColor(ach.Rarity);"></i>
+                            <span style="font-weight: 600; color: var(--color-text-primary); font-size: var(--font-size-sm);">@ach.Name</span>
+                            <span class="status-badge @GetRarityClass(ach.Rarity)">@GetRarityLabel(ach.Rarity)</span>
+                            @if (ach.IsSecret)
+                            {
+                                <span class="status-badge" style="background: var(--color-bg-secondary);"><i class="bi bi-eye-slash"></i> Secret</span>
+                            }
+                        </div>
+                        <p style="color: var(--color-text-secondary); font-size: var(--font-size-xs); margin: 0;">@ach.Description</p>
+                        @if (!string.IsNullOrWhiteSpace(ach.RewardDescription))
+                        {
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
+                                <i class="bi bi-gift"></i> @ach.RewardDescription
+                            </p>
+                        }
+                        @if (ach.UnlockCount > 0)
+                        {
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
+                                @ach.UnlockCount débloqué(s)
+                            </p>
+                        }
+                    </div>
+                    <button class="btn btn-ghost btn-sm" @onclick="() => DeleteAchievement(ach.Id)"
+                            style="color: var(--color-error); flex-shrink: 0;" title="Supprimer">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public int WorldId { get; set; }
+
+    private List<AchievementDto> WorldAchievements = new();
+    private bool IsLoadingAchievements;
+    private bool ShowNewAchievementForm;
+    private bool IsSaving;
+    private CreateAchievementDto NewAchievement = new() { Level = AchievementLevel.World, Rarity = AchievementRarity.Common };
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoadingAchievements = true;
+        WorldAchievements = await AchievementClient.GetAchievementsByWorldAsync(WorldId);
+        IsLoadingAchievements = false;
+    }
+
+    private async Task CreateAchievement()
+    {
+        IsSaving = true;
+        NewAchievement.WorldId = WorldId;
+        NewAchievement.Level = AchievementLevel.World;
+        var result = await AchievementClient.CreateAchievementAsync(NewAchievement);
+        if (result != null)
+        {
+            WorldAchievements.Insert(0, result);
+            ShowNewAchievementForm = false;
+            NewAchievement = new() { Level = AchievementLevel.World, Rarity = AchievementRarity.Common };
+        }
+        IsSaving = false;
+    }
+
+    private async Task DeleteAchievement(int achievementId)
+    {
+        var ok = await AchievementClient.DeleteAchievementAsync(achievementId);
+        if (ok)
+            WorldAchievements.RemoveAll(a => a.Id == achievementId);
+    }
+
+    private static string GetRarityColor(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "var(--color-text-muted)",
+        AchievementRarity.Rare => "#3b82f6",
+        AchievementRarity.Epic => "#8b5cf6",
+        AchievementRarity.Legendary => "#f59e0b",
+        _ => "var(--color-border)"
+    };
+
+    private static string GetRarityBorderStyle(AchievementRarity rarity) =>
+        $"border-top: 3px solid {GetRarityColor(rarity)};";
+
+    private static string GetRarityClass(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "rarity-common",
+        AchievementRarity.Rare => "rarity-rare",
+        AchievementRarity.Epic => "rarity-epic",
+        AchievementRarity.Legendary => "rarity-legendary",
+        _ => ""
+    };
+
+    private static string GetRarityLabel(AchievementRarity rarity) => rarity switch
+    {
+        AchievementRarity.Common => "Commun",
+        AchievementRarity.Rare => "Rare",
+        AchievementRarity.Epic => "Épique",
+        AchievementRarity.Legendary => "Légendaire",
+        _ => rarity.ToString()
+    };
+}
