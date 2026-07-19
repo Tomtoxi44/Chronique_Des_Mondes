@@ -139,6 +139,26 @@ public class CombatApiClient
         }
     }
 
+    /// <summary>Resolves an attack from one participant against another, server-side.</summary>
+    public async Task<CombatDto?> ResolveAttackAsync(int combatId, int attackerId, ResolveAttackDto dto)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await this.httpClient.PostAsJsonAsync($"api/combat/{combatId}/attack/{attackerId}", dto);
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<CombatDto>();
+
+            this.logger.LogWarning("Failed to resolve attack in combat {CombatId}. Status: {StatusCode}", combatId, response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error resolving attack in combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
     /// <summary>Sets the initiative value for a participant.</summary>
     public async Task<CombatDto?> SetInitiativeAsync(int combatId, int participantId, SetInitiativeDto dto)
     {

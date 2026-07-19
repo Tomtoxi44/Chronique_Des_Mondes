@@ -37,6 +37,18 @@ public interface ICombatService
     /// <returns>The updated combat, or null if not found/unauthorized.</returns>
     Task<CombatDto?> RollInitiativeAsync(int combatId, int userId);
 
+    /// <summary>
+    /// Resolves an attack from one participant against another, server-side: rolls 1d20 + attack
+    /// bonus against the target's armor class and, on a hit, rolls damage (with critical dice and
+    /// resistance/vulnerability) and applies it. The GM or the attacker's owner may trigger it.
+    /// </summary>
+    /// <param name="combatId">The combat identifier.</param>
+    /// <param name="attackerParticipantId">The attacking participant's identifier.</param>
+    /// <param name="request">The attack parameters (target, bonus, damage dice/type).</param>
+    /// <param name="userId">The requesting user.</param>
+    /// <returns>The updated combat, or null if not found/unauthorized.</returns>
+    Task<CombatDto?> ResolveAttackAsync(int combatId, int attackerParticipantId, ResolveAttackDto request, int userId);
+
     /// <summary>Sorts participants by initiative and transitions the combat to Active (Status = 2).</summary>
     Task<CombatDto?> StartCombatAsync(int combatId, StartCombatDto? request, int userId);
 
