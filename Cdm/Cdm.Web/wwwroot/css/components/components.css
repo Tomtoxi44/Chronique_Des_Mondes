@@ -1073,6 +1073,39 @@ textarea.form-control {
   line-height: 1.25;
 }
 
+/* Section header « codex » : petit label capitales espacées + icône accent + filet.
+   Signature reprise de la maquette de refonte (.panel > h2). */
+.section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--spacing-md);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  line-height: 1;
+}
+
+.section-eyebrow > .bi {
+  color: var(--theme-primary, var(--color-primary));
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.section-eyebrow > .eyebrow-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 /* Non-heading section labels (inside cards, avoid Cinzel uppercase look) */
 .section-label {
   font-family: var(--font-body);

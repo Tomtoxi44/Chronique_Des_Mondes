@@ -44,10 +44,9 @@ else
 
             <!-- Infos générales -->
             <div class="cdm-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                    <h3 class="card-title">Informations générales</h3>
-                    <AppGameBadge GameType="@World!.GameType" />
-                </div>
+                <AppSectionTitle Title="Informations générales" Icon="bi-info-circle">
+                    <Actions><AppGameBadge GameType="@World!.GameType" /></Actions>
+                </AppSectionTitle>
                 <div class="info-grid">
                     <div>
                         <span class="info-label">Personnage</span>
@@ -66,7 +65,7 @@ else
 
         <!-- Profil de jeu -->
             <div class="cdm-card">
-                <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Profil de jeu</h3>
+                <AppSectionTitle Title="Profil de jeu" Icon="bi-person-vcard" />
                 @if (IsEditing)
                 {
                     <div class="form-group">
