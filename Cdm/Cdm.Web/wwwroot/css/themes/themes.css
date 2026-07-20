@@ -278,6 +278,42 @@
   background: linear-gradient(180deg, rgba(177, 68, 47, 0.10), var(--color-bg-card) 75%);
 }
 
+/* Texture de fond subtile par univers (reprise des motifs de la maquette).
+   Overlay non interactif, très discret, sous le contenu du hero. */
+.cdm-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.theme-generic .cdm-hero::before {
+  background: radial-gradient(circle, rgba(214, 159, 82, 0.10) 1px, transparent 1.6px);
+  background-size: 20px 20px;
+  opacity: 0.5;
+}
+.theme-dnd5e .cdm-hero::before {
+  background: repeating-linear-gradient(45deg, rgba(201, 154, 62, 0.06) 0 1px, transparent 1px 15px);
+  opacity: 0.7;
+}
+.theme-skyrim .cdm-hero::before {
+  background: repeating-linear-gradient(90deg, rgba(106, 160, 189, 0.06) 0 1px, transparent 1px 7px);
+  opacity: 0.6;
+}
+.theme-cyberpunk .cdm-hero::before {
+  background: repeating-linear-gradient(0deg, rgba(43, 196, 201, 0.05) 0 1px, transparent 1px 3px);
+  opacity: 0.5;
+}
+.theme-callofcthulhu .cdm-hero::before {
+  background: linear-gradient(rgba(95, 158, 119, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 158, 119, 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+  opacity: 0.7;
+}
+.theme-warhammer .cdm-hero::before {
+  background: repeating-linear-gradient(-45deg, rgba(177, 68, 47, 0.06) 0 2px, transparent 2px 11px);
+  opacity: 0.6;
+}
+
 /* ============================================
    APPLICATIF — Zones themed
    ============================================ */
