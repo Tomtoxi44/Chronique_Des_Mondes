@@ -1110,7 +1110,7 @@ textarea.form-control {
 }
 
 .section-eyebrow > .bi {
-  color: var(--theme-primary, var(--color-primary));
+  color: var(--theme-ink, var(--theme-primary, var(--color-primary)));
   font-size: 0.95rem;
   line-height: 1;
 }
@@ -1177,7 +1177,7 @@ textarea.form-control {
 }
 
 .card-meta span { display: flex; align-items: center; gap: 5px; }
-.card-meta i { color: var(--theme-primary, var(--color-primary)); opacity: 0.85; }
+.card-meta i { color: var(--theme-ink, var(--theme-primary, var(--color-primary))); opacity: 0.85; }
 
 .card-meta-badge {
   display: inline-flex;
@@ -2087,7 +2087,7 @@ textarea.form-control {
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-variant-numeric: tabular-nums;
-  color: var(--theme-primary, var(--color-primary));
+  color: var(--theme-ink, var(--theme-primary, var(--color-primary)));
 }
 
 .char-stat-value {

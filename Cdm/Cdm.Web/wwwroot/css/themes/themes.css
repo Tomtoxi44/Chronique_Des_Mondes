@@ -16,6 +16,9 @@
   --theme-secondary:    #9a5a2b;
   --theme-accent:       #c67b3a;
   --theme-on-primary:   #17110a;
+  /* Accent réservé au TEXTE / ICÔNES / bordures fines (≠ fond de bouton).
+     Par défaut = --theme-primary ; assombri par thème en mode clair. */
+  --theme-ink:          var(--theme-primary);
   --theme-heading-font: var(--font-heading);
   --theme-card-border:  rgba(214, 159, 82, 0.28);
   --theme-badge-bg:     rgba(214, 159, 82, 0.14);
@@ -189,6 +192,22 @@
   --theme-secondary: #85481f;
   --theme-accent: #9a5a2b;
 }
+
+/* Thèmes de jeu : accent TEXTE/ICÔNE (--theme-ink) assombri en mode clair,
+   sans toucher --theme-primary (= fond de bouton, laissé vif). Seuls les
+   accents qui échouent le 3:1 sur fond clair sont foncés. */
+[data-theme="light"].theme-pathfinder,
+[data-theme="light"] .theme-pathfinder { --theme-ink: #8a5220; }
+[data-theme="light"].theme-callofcthulhu,
+[data-theme="light"] .theme-callofcthulhu { --theme-ink: #3f7355; }
+[data-theme="light"].theme-cyberpunk,
+[data-theme="light"] .theme-cyberpunk { --theme-ink: #147d81; }
+[data-theme="light"].theme-skyrim,
+[data-theme="light"] .theme-skyrim { --theme-ink: #3f6a82; }
+[data-theme="light"].theme-custom,
+[data-theme="light"] .theme-custom { --theme-ink: #834f78; }
+[data-theme="light"].theme-empty,
+[data-theme="light"] .theme-empty { --theme-ink: #5f6472; }
 
 /* ============================================
    APPLICATIF — Zones themed
