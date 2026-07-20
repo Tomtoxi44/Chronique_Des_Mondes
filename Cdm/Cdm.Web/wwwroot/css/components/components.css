@@ -298,68 +298,6 @@
   border-color: var(--theme-card-border, var(--color-border-hover));
 }
 
-/* ============================================
-   HERO IMMERSIF — contenu (le cadre est dans themes.css : .cdm-hero)
-   ============================================ */
-.cdm-hero-badge {
-  display: inline-block;
-  padding: 5px 12px;
-  margin-bottom: 16px;
-  border-radius: 3px;
-  background: var(--theme-badge-bg, var(--color-bg-input));
-  color: var(--theme-ink, var(--theme-badge-text, var(--color-text-secondary)));
-  border: 1px solid var(--theme-card-border, var(--color-border));
-  font-family: var(--theme-display-font, var(--font-heading));
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.cdm-hero-title {
-  margin: 0 0 10px;
-  font-family: var(--theme-display-font, var(--font-heading));
-  font-weight: 700;
-  font-size: clamp(28px, 3.4vw, 42px);
-  line-height: 1.06;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  background: var(--theme-gradient, var(--gradient-primary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-.cdm-hero-tagline {
-  font-size: 14px;
-  font-style: italic;
-  color: var(--color-text-secondary);
-  margin: 0 0 18px;
-}
-
-.cdm-hero-meta {
-  display: flex;
-  gap: 22px;
-  flex-wrap: wrap;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
-}
-.cdm-hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
-.cdm-hero-meta i { color: var(--theme-ink, var(--theme-primary, var(--color-primary))); }
-
-/* Ornements d'angle du hero (rendus par CdmHero selon le thème). */
-.cdm-hero-deco { position: absolute; pointer-events: none; z-index: 1; }
-.cdm-hero-deco--bracket { width: 20px; height: 20px; opacity: 0.6; }
-.cdm-hero-deco--rivet { width: 7px; height: 7px; border-radius: 50%; background: var(--theme-primary); box-shadow: 0 0 6px var(--theme-primary); }
-.cdm-hero-deco--ornate { font-size: 15px; line-height: 1; color: var(--theme-primary); opacity: 0.7; }
-.cdm-hero-deco--sigil { top: 8px; left: 50%; transform: translateX(-50%); font-size: 17px; color: var(--theme-primary); opacity: 0.55; }
-.cdm-hero > * { position: relative; z-index: 2; }
-.cdm-hero > .cdm-hero-deco { z-index: 1; }
-
 /* Cartes cliquables (listes) : légère élévation + bord accentué au survol. */
 .world-card,
 .character-card {
