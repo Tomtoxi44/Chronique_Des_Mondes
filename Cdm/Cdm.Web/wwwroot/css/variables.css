@@ -163,6 +163,12 @@
 
   --color-border:         rgba(30, 26, 18, 0.14);
   --color-border-hover:   rgba(30, 26, 18, 0.24);
+  --color-border-focus:   #a86f28;
+
+  /* Accent générique assombri pour rester lisible sur le fond clair. */
+  --color-primary:        #a86f28;
+  --color-primary-hover:  #935f22;
+  --color-primary-light:  #b5813a;
 
   --shadow-sm:  0 1px 3px rgba(40,32,20,0.08);
   --shadow-md:  0 6px 18px -8px rgba(40,32,20,0.18);

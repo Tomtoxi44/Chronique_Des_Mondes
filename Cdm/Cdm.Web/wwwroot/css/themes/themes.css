@@ -169,6 +169,28 @@
 }
 
 /* ============================================
+   MODE CLAIR — accent générique assombri
+   Sur le fond « parchemin » clair, l'ambre vif #d69f52 tombe à ~2.2:1
+   (icônes/bordures) : on le fonce pour le thème générique par défaut, où
+   le texte du bouton (--theme-on-primary sombre) reste lisible sur l'ambre
+   moyen. Les thèmes de jeu ne sont pas touchés ici : plusieurs associent un
+   --theme-on-primary sombre à leur accent en fond de bouton, et les foncer
+   casserait le contraste du bouton (à retravailler avec un token dédié).
+   ============================================ */
+[data-theme="light"] {
+  --theme-primary: #a86f28;
+  --theme-secondary: #85481f;
+  --theme-accent: #9a5a2b;
+  --theme-glow: 0 0 14px rgba(168, 111, 40, 0.10);
+}
+[data-theme="light"].theme-generic,
+[data-theme="light"] .theme-generic {
+  --theme-primary: #a86f28;
+  --theme-secondary: #85481f;
+  --theme-accent: #9a5a2b;
+}
+
+/* ============================================
    APPLICATIF — Zones themed
    ============================================ */
 .theme-border {
