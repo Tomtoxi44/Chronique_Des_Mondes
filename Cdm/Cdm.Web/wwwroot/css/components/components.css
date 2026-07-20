@@ -1156,12 +1156,12 @@ textarea.form-control {
   margin: 0 0 var(--spacing-md);
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
-  font-family: var(--font-body);
-  font-size: 0.72rem;
+  font-family: var(--theme-display-font, var(--font-body));
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
+  color: var(--theme-ink, var(--theme-primary, var(--color-text-secondary)));
   line-height: 1;
 }
 
