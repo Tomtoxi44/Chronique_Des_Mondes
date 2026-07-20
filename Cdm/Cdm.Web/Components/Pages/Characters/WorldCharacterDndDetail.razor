@@ -36,20 +36,20 @@ else
             <div style="display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap;">
                 @if (!string.IsNullOrEmpty(WorldCharacter?.AvatarUrl))
                 {
-                    <img src="@WorldCharacter.AvatarUrl" alt="Avatar" style="width:72px; height:72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--color-primary);" />
+                    <img src="@WorldCharacter.AvatarUrl" alt="Avatar" style="width:72px; height:72px; border-radius: var(--radius-lg); object-fit: cover; border: 1px solid var(--theme-primary, var(--color-primary));" />
                 }
                 else
                 {
-                    <div style="width:72px; height:72px; border-radius: 50%; background: var(--color-bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid var(--color-primary);">
-                        <i class="bi bi-person-fill" style="color: var(--color-primary);"></i>
+                    <div style="width:72px; height:72px; border-radius: var(--radius-lg); background: var(--color-bg-input); display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 1px solid var(--color-border);">
+                        <i class="bi bi-person-fill" style="color: var(--theme-primary, var(--color-primary));"></i>
                     </div>
                 }
                 <div style="flex: 1; min-width: 180px;">
-                    <h1 style="font-size: var(--font-size-xl); margin: 0 0 var(--spacing-xs);">@WorldCharacter?.CharacterName</h1>
+                    <h1 style="font-family: var(--theme-heading-font, var(--font-heading)); font-size: var(--font-size-xl); margin: 0 0 var(--spacing-xs);">@WorldCharacter?.CharacterName</h1>
                     <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
                         @if (!string.IsNullOrEmpty(Stats.CharacterClass))
                         {
-                            <span class="card-meta-badge" style="background: var(--color-primary); color: white;">
+                            <span class="card-meta-badge" style="background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a);">
                                 <i class="bi bi-shield-fill"></i> @Stats.CharacterClass@(!string.IsNullOrEmpty(Stats.Subclass) ? $" ({Stats.Subclass})" : "")
                             </span>
                         }
@@ -154,7 +154,7 @@ else
                             {
                                 <div style="font-size: var(--font-size-2xl); font-weight: 700; line-height: 1; color: var(--color-text-primary);">@(score?.ToString() ?? "—")</div>
                             }
-                            <div style="margin-top: var(--spacing-xs); width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-sm); font-weight: 600;">
+                            <div style="margin-top: var(--spacing-xs); width: 36px; height: 36px; border-radius: 50%; background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a); display: flex; align-items: center; justify-content: center; font-size: var(--font-size-sm); font-weight: 600;">
                                 @Fmt(mod)
                             </div>
                             <div style="font-size: 10px; color: var(--color-text-muted); margin-top: var(--spacing-xs);">@label</div>

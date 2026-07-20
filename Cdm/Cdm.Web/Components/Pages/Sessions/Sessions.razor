@@ -42,7 +42,7 @@ else
                         <span class="status-badge @GetSessionStatusClass(session.Status)">@GetSessionStatusLabel(session.Status)</span>
                         @if (IsGm(session))
                         {
-                            <span class="status-badge" style="background: var(--color-primary); color: white; opacity: 0.9;">MJ</span>
+                            <span class="status-badge" style="background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a);">MJ</span>
                         }
                     </div>
                     <h3 class="card-title">@session.CampaignName</h3>

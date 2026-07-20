@@ -226,7 +226,7 @@ else
                                     <strong>Compétences accordées :</strong>
                                     @foreach (var skill in SelectedBackground.SkillProficiencies)
                                     {
-                                        <span style="margin-left: 4px; padding: 1px 6px; background: var(--color-primary); color: white; border-radius: 9999px; font-size: 11px;">@skill</span>
+                                        <span style="margin-left: 4px; padding: 1px 6px; background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a); border-radius: 9999px; font-size: 11px;">@skill</span>
                                     }
                                 </div>
                             }
@@ -553,7 +553,7 @@ else
                         @foreach (var spell in CharacterSpells.OrderBy(s => s.Level).ThenBy(s => s.Name))
                         {
                             <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-xs); background: var(--color-bg-secondary);">
-                                <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); font-weight: 700; flex-shrink: 0;">
+                                <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a); display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); font-weight: 700; flex-shrink: 0;">
                                     @(spell.Level == 0 ? "T" : spell.Level.ToString())
                                 </span>
                                 <div style="flex: 1;">
