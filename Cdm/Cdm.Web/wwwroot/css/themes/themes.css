@@ -210,6 +210,75 @@
 [data-theme="light"] .theme-empty { --theme-ink: #5f6472; }
 
 /* ============================================
+   TOKENS IMMERSIFS (maquette validée)
+   --theme-tint         = teinte de fond très légère du hero/frame
+   --theme-display-font = police des grands titres (hero) par thème
+   ============================================ */
+:root                { --theme-tint: rgba(214, 159, 82, 0.07); --theme-display-font: var(--font-body); }
+.theme-generic       { --theme-tint: rgba(214, 159, 82, 0.07); --theme-display-font: var(--font-body); }
+.theme-empty         { --theme-tint: rgba(138, 143, 156, 0.06); --theme-display-font: var(--font-body); }
+.theme-dnd5e         { --theme-tint: rgba(167, 43, 39, 0.10);  --theme-display-font: var(--font-heading); }
+.theme-pathfinder    { --theme-tint: rgba(205, 127, 50, 0.09); --theme-display-font: var(--font-heading); }
+.theme-callofcthulhu { --theme-tint: rgba(95, 158, 119, 0.10); --theme-display-font: var(--font-heading); }
+.theme-warhammer     { --theme-tint: rgba(177, 68, 47, 0.10);  --theme-display-font: var(--font-heading); }
+.theme-cyberpunk     { --theme-tint: rgba(43, 196, 201, 0.09); --theme-display-font: 'Orbitron', var(--font-body); }
+.theme-skyrim        { --theme-tint: rgba(106, 160, 189, 0.08);--theme-display-font: var(--font-heading); }
+.theme-custom        { --theme-tint: rgba(156, 95, 143, 0.09); --theme-display-font: var(--font-heading); }
+
+/* ============================================
+   HERO / CADRE IMMERSIF — traitement distinct par type de jeu.
+   Repris de la maquette : chaque univers a sa « signature » de cadre.
+   ============================================ */
+.cdm-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(22px, 3vw, 32px) clamp(22px, 3.4vw, 36px);
+  border: 1px solid var(--theme-card-border, var(--color-border));
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--theme-tint, transparent), var(--color-bg-card) 72%);
+}
+
+/* D&D — double filet ciselé (encadrement héraldique). */
+.theme-dnd5e .cdm-hero {
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.28), inset 0 0 0 5px var(--theme-card-border);
+  background: linear-gradient(135deg, rgba(167, 43, 39, 0.12), var(--color-bg-card) 70%);
+}
+[data-theme="light"] .theme-dnd5e .cdm-hero {
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.05), inset 0 0 0 5px var(--theme-card-border);
+}
+
+/* Skyrim — coins biseautés (pierre taillée). */
+.theme-skyrim .cdm-hero {
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  box-shadow: inset 0 0 0 1px var(--theme-card-border);
+  background: linear-gradient(135deg, rgba(106, 160, 189, 0.12), var(--color-bg-card) 70%);
+}
+
+/* Cyberpunk — barre d'accent à gauche (néon sobre). */
+.theme-cyberpunk .cdm-hero {
+  border-left: 3px solid var(--theme-primary);
+}
+
+/* L'Appel de Cthulhu — ombre interne oppressante. */
+.theme-callofcthulhu .cdm-hero {
+  box-shadow: inset 0 0 55px rgba(0, 0, 0, 0.55);
+  background: radial-gradient(120% 100% at 80% -10%, rgba(95, 158, 119, 0.12), var(--color-bg-card) 65%);
+}
+[data-theme="light"] .theme-callofcthulhu .cdm-hero {
+  box-shadow: inset 0 0 55px rgba(36, 52, 71, 0.10);
+}
+
+/* Warhammer — filet supérieur épais (bannière martiale). */
+.theme-warhammer .cdm-hero {
+  border-top: 4px solid var(--theme-primary);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(177, 68, 47, 0.10), var(--color-bg-card) 75%);
+}
+
+/* ============================================
    APPLICATIF — Zones themed
    ============================================ */
 .theme-border {
