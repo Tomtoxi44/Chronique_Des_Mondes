@@ -26,34 +26,19 @@ else
 {
     <AppThemeWrapper GameType="@World!.GameType">
 
-        <nav style="margin-bottom: var(--spacing-md);">
-            <a href="/worlds/@WorldId" class="btn btn-ghost btn-sm">
-                <i class="bi bi-arrow-left"></i> @World.Name
-            </a>
-        </nav>
-
-        <CdmHero GameType="@World!.GameType">
-            <div class="cdm-hero-badge">PERSONNAGE &middot; @World.Name</div>
-            <h1 class="cdm-hero-title">@WorldCharacter.CharacterName</h1>
-            <div class="cdm-hero-meta">
-                <span><i class="bi bi-award"></i> Niv. @(WorldCharacter.Level?.ToString() ?? "—")</span>
-                @if (WorldCharacter.CurrentHealth.HasValue && WorldCharacter.MaxHealth.HasValue)
+        <AppPageHeader Title="@WorldCharacter.CharacterName"
+                       Icon="bi-person-badge"
+                       Breadcrumbs="@Breadcrumbs">
+            <Actions>
+                @if (!IsEditing)
                 {
-                    <span><i class="bi bi-heart-pulse"></i> @WorldCharacter.CurrentHealth / @WorldCharacter.MaxHealth PV</span>
-                }
-                <span><i class="bi bi-calendar3"></i> @WorldCharacter.JoinedAt.ToLocalTime().ToString("d MMM yyyy")</span>
-            </div>
-            @if (!IsEditing)
-            {
-                <div style="margin-top: 22px;">
                     <button class="btn btn-ghost btn-sm" @onclick="BeginEdit">
-                        <i class="bi bi-pencil"></i> Modifier
+                        <i class="bi bi-pencil"></i>
+                        Modifier
                     </button>
-                </div>
-            }
-        </CdmHero>
-
-        <div style="margin-bottom: var(--spacing-lg);"></div>
+                }
+            </Actions>
+        </AppPageHeader>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-lg);">
 

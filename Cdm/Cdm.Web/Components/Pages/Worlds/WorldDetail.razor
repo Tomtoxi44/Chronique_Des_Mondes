@@ -32,34 +32,24 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (Section == null && !SelectedCampaignId.HasValue)
         {
-            <nav style="margin-bottom: var(--spacing-md);">
-                <a href="/worlds" class="btn btn-ghost btn-sm">
-                    <i class="bi bi-arrow-left"></i> @L["Nav_Worlds"]
-                </a>
-            </nav>
-
-            <CdmHero GameType="@World.GameType">
-                <div class="cdm-hero-badge">MONDE &middot; @(GameTypeOptions.FirstOrDefault(o => o.Value == World.GameType).Label)</div>
-                <h1 class="cdm-hero-title">@World.Name</h1>
-                <div class="cdm-hero-meta">
-                    <span><i class="bi bi-map"></i> @Campaigns.Count @L["Worlds_Campaigns"]</span>
-                    <span><i class="bi bi-people"></i> @World.CharacterCount @L["Worlds_Characters"]</span>
-                    <span><i class="bi bi-calendar3"></i> @World.CreatedAt.ToString("d MMM yyyy")</span>
-                </div>
-                @if (IsOwner)
-                {
-                    <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm); margin-top: 22px;">
-                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
-                            <i class="bi bi-plus"></i> @L["Campaigns_Create"]
-                        </a>
+            <AppPageHeader Title="@World.Name"
+                           Icon="bi-globe2"
+                           Breadcrumbs="@Breadcrumbs">
+                <Actions>
+                    @if (IsOwner)
+                    {
                         <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
-                            <i class="bi bi-trash3"></i> @L["Common_Delete"]
+                            <i class="bi bi-trash3"></i>
+                            @L["Common_Delete"]
                         </button>
-                    </div>
-                }
-            </CdmHero>
+                    }
+                </Actions>
+            </AppPageHeader>
 
-            <div style="margin-bottom: var(--spacing-xl);"></div>
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
+                <AppStatCard Value="@Campaigns.Count.ToString()" Label="@L["Worlds_Campaigns"]" Icon="bi-map" />
+                <AppStatCard Value="@World.CharacterCount.ToString()" Label="@L["Worlds_Characters"]" Icon="bi-people" />
+            </div>
 
             <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
                 @if (IsOwner && IsWorldEditing)
@@ -670,7 +660,7 @@ else
                         <i class="bi bi-people"></i> PNJ
                         @if (ChapterNpcs.Count > 0)
                         {
-                            <span style="background: var(--color-bg-secondary); color: var(--color-text-muted); font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 600;">@ChapterNpcs.Count</span>
+                            <span style="background: var(--color-bg-secondary); color: var(--color-text-muted); font-size: 10px; padding: 1px 6px; border-radius: var(--radius-sm); font-weight: 600;">@ChapterNpcs.Count</span>
                         }
                     </button>
                 </div>
