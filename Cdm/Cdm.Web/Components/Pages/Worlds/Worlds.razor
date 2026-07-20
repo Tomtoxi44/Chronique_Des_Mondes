@@ -94,7 +94,7 @@ else
                          @onclick="() => NavigateToWorld(world.Id)">
                         <div class="card-header-row">
                             <AppGameBadge GameType="@world.GameType" />
-                            <span class="status-badge" style="background: var(--color-info); color: white; opacity: 0.9;">Joueur</span>
+                            <span class="status-badge" style="background: var(--color-info); color: white; opacity: 0.9;">@L["Common_Player"]</span>
                         </div>
                         <h3 class="card-title">@world.Name</h3>
                         @if (!string.IsNullOrEmpty(world.Description))

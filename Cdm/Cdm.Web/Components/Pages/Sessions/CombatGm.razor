@@ -1,5 +1,8 @@
 @page "/sessions/{SessionId:int}/combat/{CombatId:int}/gm"
 @attribute [Authorize]
+@using Cdm.Web.Resources
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<AppStrings> L
 
 <PageTitle>Combat en cours — MJ</PageTitle>
 
@@ -23,14 +26,14 @@ else if (Combat != null)
                 <strong>Combat en cours</strong>
                 @if (Combat.Status == 1)
                 {
-                    <span class="status-badge status-pending">Phase d'initiative</span>
+                    <span class="status-badge status-pending">@L["Combat_InitiativePhase"]</span>
                     <span class="initiative-counter @(AllReadyForCombat ? "all-ready" : "")">
                         @SubmittedCount / @TotalActiveCount prêts
                     </span>
                 }
                 else if (Combat.Status == 2)
                 {
-                    <span class="status-badge status-active">Combat actif</span>
+                    <span class="status-badge status-active">@L["Combat_ActiveBadge"]</span>
                 }
             </div>
             <div style="display:flex;gap:var(--spacing-sm);">

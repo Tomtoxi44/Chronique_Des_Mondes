@@ -123,7 +123,7 @@ else
                             <span class="status-badge @GetRarityClass(ach.Rarity)">@GetRarityLabel(ach.Rarity)</span>
                             @if (ach.IsSecret)
                             {
-                                <span class="status-badge" style="background: var(--color-bg-secondary);"><i class="bi bi-eye-slash"></i> Secret</span>
+                                <span class="status-badge" style="background: var(--color-bg-secondary);"><i class="bi bi-eye-slash"></i> @L["Common_Secret"]</span>
                             }
                         </div>
                         <p style="color: var(--color-text-secondary); font-size: var(--font-size-xs); margin: 0;">@ach.Description</p>

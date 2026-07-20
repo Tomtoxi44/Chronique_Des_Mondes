@@ -114,11 +114,11 @@ else if (Session != null)
                         <div style="display: flex; gap: var(--spacing-sm);">
                             @if (SelectedChapter.IsCompleted)
                             {
-                                <span class="status-badge status-completed">Terminé</span>
+                                <span class="status-badge status-completed">@L["Common_Completed"]</span>
                             }
                             else if (SelectedChapter.IsActive)
                             {
-                                <span class="status-badge status-active">En cours</span>
+                                <span class="status-badge status-active">@L["Common_InProgress"]</span>
                             }
                         </div>
                     </div>

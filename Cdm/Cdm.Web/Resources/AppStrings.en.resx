@@ -303,4 +303,13 @@
   <data name="Characters_BadgeBase" xml:space="preserve"><value>Base character</value></data>
   <data name="Characters_BadgeWorldCopy" xml:space="preserve"><value>World copy</value></data>
   <data name="Common_YearsOld" xml:space="preserve"><value>{0} yrs</value></data>
+  <data name="Common_Completed" xml:space="preserve"><value>Completed</value></data>
+  <data name="Common_InProgress" xml:space="preserve"><value>In progress</value></data>
+  <data name="Common_Active" xml:space="preserve"><value>Active</value></data>
+  <data name="Common_Inactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="Common_Secret" xml:space="preserve"><value>Secret</value></data>
+  <data name="Common_Player" xml:space="preserve"><value>Player</value></data>
+  <data name="Combat_InitiativePhase" xml:space="preserve"><value>Initiative phase</value></data>
+  <data name="Combat_ActiveBadge" xml:space="preserve"><value>Combat active</value></data>
+  <data name="Sessions_ActiveBadge" xml:space="preserve"><value>Active session</value></data>
 </root>
