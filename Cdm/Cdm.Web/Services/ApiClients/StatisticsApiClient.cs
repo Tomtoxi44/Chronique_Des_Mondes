@@ -44,4 +44,21 @@ public class StatisticsApiClient
             return null;
         }
     }
+
+    /// <summary>Get the current user's participation statistics.</summary>
+    public async Task<ParticipationStatsDto?> GetMyParticipationStatsAsync()
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync("api/statistics/participation");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<ParticipationStatsDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching participation statistics");
+            return null;
+        }
+    }
 }

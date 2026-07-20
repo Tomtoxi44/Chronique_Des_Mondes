@@ -30,6 +30,34 @@ public static class StatisticsEndpoints
         group.MapGet("/dice", GetMyDiceStatsAsync)
             .WithName("GetMyDiceStats")
             .WithOpenApi();
+
+        // GET /api/statistics/participation - participation statistics for the current user
+        group.MapGet("/participation", GetMyParticipationStatsAsync)
+            .WithName("GetMyParticipationStats")
+            .WithOpenApi();
+    }
+
+    private static async Task<IResult> GetMyParticipationStatsAsync(
+        [FromServices] IStatisticsService statisticsService,
+        ILogger<StatisticsEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var claim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (claim == null || !int.TryParse(claim.Value, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var stats = await statisticsService.GetParticipationStatsForUserAsync(userId);
+            return Results.Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving participation statistics");
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     private static async Task<IResult> GetMyDiceStatsAsync(
