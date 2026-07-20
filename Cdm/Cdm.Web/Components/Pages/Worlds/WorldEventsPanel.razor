@@ -91,11 +91,11 @@ else
                         <span style="font-weight: 600; color: var(--color-text-primary);">@ev.Name</span>
                         @if (ev.IsActive)
                         {
-                            <span class="status-badge status-active">Actif</span>
+                            <span class="status-badge status-active">@L["Common_Active"]</span>
                         }
                         else
                         {
-                            <span class="status-badge status-paused">Inactif</span>
+                            <span class="status-badge status-paused">@L["Common_Inactive"]</span>
                         }
                         <span class="status-badge" style="background: var(--color-bg-secondary);">@GetEffectLabel(ev.EffectType)</span>
                         <span class="status-badge" style="background: var(--color-bg-secondary);">@(ev.IsPermanent ? "Permanent" : "Temporaire")</span>

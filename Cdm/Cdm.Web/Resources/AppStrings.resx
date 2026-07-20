@@ -254,4 +254,16 @@
   <!-- Visibility -->
   <data name="Visibility_Private" xml:space="preserve"><value>Privé</value></data>
   <data name="Visibility_Public" xml:space="preserve"><value>Public</value></data>
+  <data name="Characters_BadgeBase" xml:space="preserve"><value>Personnage de base</value></data>
+  <data name="Characters_BadgeWorldCopy" xml:space="preserve"><value>Copie de monde</value></data>
+  <data name="Common_YearsOld" xml:space="preserve"><value>{0} ans</value></data>
+  <data name="Common_Completed" xml:space="preserve"><value>Terminé</value></data>
+  <data name="Common_InProgress" xml:space="preserve"><value>En cours</value></data>
+  <data name="Common_Active" xml:space="preserve"><value>Actif</value></data>
+  <data name="Common_Inactive" xml:space="preserve"><value>Inactif</value></data>
+  <data name="Common_Secret" xml:space="preserve"><value>Secret</value></data>
+  <data name="Common_Player" xml:space="preserve"><value>Joueur</value></data>
+  <data name="Combat_InitiativePhase" xml:space="preserve"><value>Phase d'initiative</value></data>
+  <data name="Combat_ActiveBadge" xml:space="preserve"><value>Combat actif</value></data>
+  <data name="Sessions_ActiveBadge" xml:space="preserve"><value>Session active</value></data>
 </root>
