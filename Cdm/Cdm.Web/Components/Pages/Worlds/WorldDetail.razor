@@ -74,7 +74,7 @@ else
                             {
                                 <button type="button"
                                         class="game-type-card @(WorldEditGameType == gt.Value ? "selected" : "")"
-                                        style="padding: var(--spacing-sm); @(WorldEditGameType == gt.Value ? "border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(99,102,241,0.1));" : "")"
+                                        style="padding: var(--spacing-sm); @(WorldEditGameType == gt.Value ? "border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(214,159,82,0.12));" : "")"
                                         @onclick="() => WorldEditGameType = gt.Value">
                                     <i class="bi @gt.Icon game-type-icon" style="font-size: 1.2rem; @(WorldEditGameType == gt.Value ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
                                     <span class="game-type-label" style="font-size: var(--font-size-xs);">@gt.Label</span>

@@ -48,7 +48,7 @@
                     {
                         <button type="button"
                                 class="game-type-card @(Model.GameType == gt.Value ? "selected" : "")"
-                                style="@(Model.GameType == gt.Value ? $"border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(99,102,241,0.1));" : "")"
+                                style="@(Model.GameType == gt.Value ? $"border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(214,159,82,0.12));" : "")"
                                 @onclick="() => Model.GameType = gt.Value">
                             <i class="bi @gt.Icon game-type-icon" style="@(Model.GameType == gt.Value ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
                             <span class="game-type-label">@gt.Label</span>
