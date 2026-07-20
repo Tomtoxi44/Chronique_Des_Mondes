@@ -1,0 +1,38 @@
+@* Panneau encadré « codex » : cadre signature selon le type de jeu (défini dans
+   themes.css via .theme-X .cdm-hero) + ornements d'angle. À placer DANS un
+   AppThemeWrapper. Contenu via .cdm-hero-badge / .cdm-hero-title /
+   .cdm-hero-tagline / .cdm-hero-meta / .cdm-hero-actions. *@
+@using Cdm.Common.Enums
+
+<div class="cdm-hero @Class">
+    @switch (GameType)
+    {
+        case GameType.DnD5e:
+            <span class="cdm-hero-deco cdm-hero-deco--ornate" style="top:7px;left:13px;">&#10087;</span>
+            <span class="cdm-hero-deco cdm-hero-deco--ornate" style="top:7px;right:13px;transform:scaleX(-1);">&#10087;</span>
+            <span class="cdm-hero-deco cdm-hero-deco--ornate" style="bottom:7px;left:13px;transform:scaleY(-1);">&#10087;</span>
+            <span class="cdm-hero-deco cdm-hero-deco--ornate" style="bottom:7px;right:13px;transform:scale(-1,-1);">&#10087;</span>
+            break;
+        case GameType.Cyberpunk:
+            <span class="cdm-hero-deco cdm-hero-deco--bracket" style="top:12px;left:14px;border-top:2px solid var(--theme-primary);border-left:2px solid var(--theme-primary);"></span>
+            <span class="cdm-hero-deco cdm-hero-deco--bracket" style="top:12px;right:14px;border-top:2px solid var(--theme-primary);border-right:2px solid var(--theme-primary);"></span>
+            <span class="cdm-hero-deco cdm-hero-deco--bracket" style="bottom:12px;left:14px;border-bottom:2px solid var(--theme-primary);border-left:2px solid var(--theme-primary);"></span>
+            <span class="cdm-hero-deco cdm-hero-deco--bracket" style="bottom:12px;right:14px;border-bottom:2px solid var(--theme-primary);border-right:2px solid var(--theme-primary);"></span>
+            break;
+        case GameType.Warhammer:
+            <span class="cdm-hero-deco cdm-hero-deco--rivet" style="bottom:11px;left:13px;"></span>
+            <span class="cdm-hero-deco cdm-hero-deco--rivet" style="bottom:11px;right:13px;"></span>
+            <span class="cdm-hero-deco cdm-hero-deco--aquila">&#10013;</span>
+            break;
+        case GameType.CallOfCthulhu:
+            <span class="cdm-hero-deco cdm-hero-deco--sigil">&#10039;</span>
+            break;
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public GameType GameType { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
