@@ -1106,6 +1106,23 @@ textarea.form-control {
   text-transform: none;
 }
 
+/* Barre de vitalité fine (PV…), reprise de .bar de la maquette. */
+.hp-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--color-border);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.hp-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--theme-primary, var(--color-primary));
+  transition: width var(--duration-normal);
+}
+
 /* Non-heading section labels (inside cards, avoid Cinzel uppercase look) */
 .section-label {
   font-family: var(--font-body);

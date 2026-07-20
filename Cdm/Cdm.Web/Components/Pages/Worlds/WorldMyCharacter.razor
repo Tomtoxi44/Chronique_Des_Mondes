@@ -152,16 +152,18 @@ else
                         </div>
                         <div>
                             <span class="info-label">Points de vie</span>
-                            <span class="info-value">
-                                @if (WorldCharacter.CurrentHealth.HasValue && WorldCharacter.MaxHealth.HasValue)
-                                {
-                                    <span>@WorldCharacter.CurrentHealth / @WorldCharacter.MaxHealth</span>
-                                }
-                                else
-                                {
-                                    <span style="color: var(--color-text-muted);">Non définis</span>
-                                }
-                            </span>
+                            @if (WorldCharacter.CurrentHealth.HasValue && WorldCharacter.MaxHealth.HasValue)
+                            {
+                                <span class="info-value" style="font-family: var(--font-mono); font-variant-numeric: tabular-nums;">@WorldCharacter.CurrentHealth / @WorldCharacter.MaxHealth</span>
+                                var pct = WorldCharacter.MaxHealth.Value > 0
+                                    ? Math.Clamp((int)Math.Round(100.0 * WorldCharacter.CurrentHealth.Value / WorldCharacter.MaxHealth.Value), 0, 100)
+                                    : 0;
+                                <div class="hp-bar"><i style="width: @(pct)%;"></i></div>
+                            }
+                            else
+                            {
+                                <span class="info-value" style="color: var(--color-text-muted);">Non définis</span>
+                            }
                         </div>
                     </div>
 
