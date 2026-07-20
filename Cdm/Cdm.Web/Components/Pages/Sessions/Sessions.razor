@@ -33,10 +33,7 @@ else
 
     @if (activeSessions.Count > 0)
     {
-        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
-            <i class="bi bi-circle-fill" style="color: var(--color-success); font-size: 0.6rem; vertical-align: middle;"></i>
-            Sessions actives
-        </h3>
+        <AppSectionTitle Title="Sessions actives" Icon="bi-broadcast" />
         <div class="cards-grid" style="margin-bottom: var(--spacing-xl);">
             @foreach (var session in activeSessions)
             {
@@ -76,19 +73,15 @@ else
 
     @if (pastSessions.Count > 0)
     {
-        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
-            <i class="bi bi-clock-history"></i>
-            Historique par campagne
-        </h3>
+        <AppSectionTitle Title="Historique par campagne" Icon="bi-clock-history" />
         @foreach (var campaignGroup in pastSessions
             .GroupBy(s => s.CampaignName)
             .OrderBy(g => g.Key))
         {
             <div style="margin-bottom: var(--spacing-lg);">
-                <h4 style="font-size: var(--font-size-sm); color: var(--color-text-muted); margin-bottom: var(--spacing-sm);">
-                    <i class="bi bi-map"></i> @campaignGroup.Key
-                    <span style="color: var(--color-text-muted);">— @campaignGroup.Count() session(s)</span>
-                </h4>
+                <AppSectionTitle Title="@campaignGroup.Key" Icon="bi-map" Rule="false">
+                    <Actions><span style="color: var(--color-text-muted); font-size: var(--font-size-xs);">@campaignGroup.Count() session(s)</span></Actions>
+                </AppSectionTitle>
                 <div class="cards-grid">
                     @foreach (var session in campaignGroup.OrderByDescending(s => s.StartedAt))
                     {

@@ -125,7 +125,7 @@ else
 
             @* Ability scores *@
             <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
-                <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-md);">Caractéristiques</h3>
+                <AppSectionTitle Title="Caractéristiques" Icon="bi-bar-chart-steps" />
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--spacing-md);">
                     @{
                         var abilities = new[]
@@ -165,7 +165,7 @@ else
 
             @* Secondary stats *@
             <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
-                <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-md);">Statistiques secondaires</h3>
+                <AppSectionTitle Title="Statistiques secondaires" Icon="bi-shield-shaded" />
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: var(--spacing-md);">
                     @{
                         var secondaries = new (string Icon, string Label, string Value)[]
@@ -278,14 +278,15 @@ else
 
                 @* Skills panel *@
                 <div class="cdm-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                        <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin: 0;">Compétences</h3>
-                        <button class="btn btn-primary" style="font-size: var(--font-size-xs); padding: var(--spacing-xs) var(--spacing-sm);"
-                                @onclick="SaveSkillProficiencies" disabled="@IsSavingSkills">
-                            @if (IsSavingSkills) { <i class="bi bi-hourglass-split"></i> } else { <i class="bi bi-floppy"></i> }
-                            Sauvegarder
-                        </button>
-                    </div>
+                    <AppSectionTitle Title="Compétences" Icon="bi-list-check">
+                        <Actions>
+                            <button class="btn btn-primary" style="font-size: var(--font-size-xs); padding: var(--spacing-xs) var(--spacing-sm);"
+                                    @onclick="SaveSkillProficiencies" disabled="@IsSavingSkills">
+                                @if (IsSavingSkills) { <i class="bi bi-hourglass-split"></i> } else { <i class="bi bi-floppy"></i> }
+                                Sauvegarder
+                            </button>
+                        </Actions>
+                    </AppSectionTitle>
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         @foreach (var (skillName, abilityCode) in AllSkills)
                         {
@@ -305,7 +306,7 @@ else
 
                 @* Saving throws panel *@
                 <div class="cdm-card" style="align-self: start;">
-                    <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-md);">Jets de sauvegarde</h3>
+                    <AppSectionTitle Title="Jets de sauvegarde" Icon="bi-shield-check" />
                     <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
                         @foreach (var (code, label) in SavingThrows)
                         {
@@ -354,9 +355,7 @@ else
                 @foreach (var cat in ItemCategories)
                 {
                     <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
-                        <h3 style="display: flex; align-items: center; gap: var(--spacing-sm); font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-sm);">
-                            <i class="bi @GetItemIcon(cat)"></i> @cat
-                        </h3>
+                        <AppSectionTitle Title="@cat" Icon="@GetItemIcon(cat)" />
                         <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
                             @foreach (var item in GetItemsByCategory(cat))
                             {
@@ -415,9 +414,7 @@ else
                 @foreach (var spellLevel in SpellLevelsPresent)
                 {
                     <div class="cdm-card" style="margin-bottom: var(--spacing-md);">
-                        <h3 style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--spacing-sm);">
-                            @GetSpellLevelLabel(spellLevel)
-                        </h3>
+                        <AppSectionTitle Title="@GetSpellLevelLabel(spellLevel)" Icon="bi-magic" />
                         <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
                             @foreach (var spell in CharacterSpells.Where(s => s.Level == spellLevel))
                             {
