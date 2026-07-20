@@ -358,15 +358,20 @@
 .cdm-hero-deco--sigil { top: 8px; left: 50%; transform: translateX(-50%); font-size: 17px; color: var(--theme-primary); opacity: 0.55; }
 .cdm-hero-deco--aquila { top: 20px; left: 50%; transform: translateX(-50%); font-size: 26px; line-height: 1; color: var(--theme-primary); opacity: 0.85; text-shadow: 0 0 12px rgba(202, 165, 62, 0.5); }
 
-/* Cartes cliquables (listes) : légère élévation + bord accentué au survol. */
+/* Cartes cliquables (listes) : identité de thème LÉGÈRE (bord accent + teinte
+   subtile selon le type de jeu) — pas les ornements du panneau détail, pour
+   rester lisible en grille. Légère élévation + bord accentué au survol. */
 .world-card,
 .character-card {
+  border-color: var(--theme-card-border, var(--color-border));
+  background: linear-gradient(135deg, var(--theme-tint, transparent), var(--color-bg-card) 82%);
   transition: border-color var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast);
 }
 
 .world-card:hover,
 .character-card:hover {
   border-color: var(--theme-primary, var(--color-primary));
+  box-shadow: 0 0 22px -12px var(--theme-primary, var(--color-primary));
   transform: translateY(-2px);
 }
 
