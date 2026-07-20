@@ -238,9 +238,7 @@ else
 
                 <div class="initiative-preview-grid">
                     <div>
-                        <h4 style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--spacing-sm);">
-                            Ordre de passage
-                        </h4>
+                        <AppSectionTitle Title="Ordre de passage" Icon="bi-sort-numeric-down" />
                         @for (int i = 0; i < _orderedParticipants.Count; i++)
                         {
                             var p = _orderedParticipants[i];
@@ -285,9 +283,7 @@ else
                     @if (pendingCount > 0)
                     {
                         <div class="initiative-pending-panel">
-                            <h4 style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--spacing-sm);">
-                                <i class="bi bi-hourglass-split"></i> En attente (@pendingCount)
-                            </h4>
+                            <AppSectionTitle Title="@($"En attente ({pendingCount})")" Icon="bi-hourglass-split" Rule="false" />
                             @foreach (var p in _orderedParticipants.Where(p => p.IsPlayerCharacter && !p.Initiative.HasValue))
                             {
                                 <div class="initiative-pending-item">
