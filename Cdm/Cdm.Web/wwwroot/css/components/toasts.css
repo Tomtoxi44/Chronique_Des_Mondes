@@ -23,9 +23,9 @@
     align-items: flex-start;
     gap: var(--spacing-sm, 0.5rem);
     padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 0.75rem);
-    border-radius: 10px;
+    border-radius: var(--radius-lg, 6px);
     border-left: 4px solid transparent;
-    background: var(--color-surface, #1e1b2e);
+    background: var(--color-surface, #12151d);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     pointer-events: auto;
     position: relative;

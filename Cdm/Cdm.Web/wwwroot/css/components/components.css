@@ -3314,7 +3314,7 @@ textarea.form-control {
   font-size: 0.65rem;
   background: color-mix(in srgb, var(--color-warning) 15%, transparent);
   color: var(--color-warning);
-  border-radius: 99px;
+  border-radius: var(--radius-sm);
   padding: 1px 6px;
   font-weight: 600;
 }
