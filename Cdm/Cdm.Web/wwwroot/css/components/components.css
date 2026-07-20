@@ -300,6 +300,18 @@
   box-shadow: var(--theme-glow, var(--shadow-md));
 }
 
+/* Cartes cliquables (listes) : légère élévation + bord accentué au survol. */
+.world-card,
+.character-card {
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast);
+}
+
+.world-card:hover,
+.character-card:hover {
+  border-color: var(--theme-primary, var(--color-primary));
+  transform: translateY(-2px);
+}
+
 .cdm-card-header {
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
@@ -1157,11 +1169,15 @@ textarea.form-control {
   gap: var(--spacing-md);
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
-  margin-top: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
   flex-wrap: wrap;
 }
 
-.card-meta span { display: flex; align-items: center; gap: 4px; }
+.card-meta span { display: flex; align-items: center; gap: 5px; }
+.card-meta i { color: var(--theme-primary, var(--color-primary)); opacity: 0.85; }
 
 .card-meta-badge {
   display: inline-flex;
