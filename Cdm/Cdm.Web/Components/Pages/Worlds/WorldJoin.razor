@@ -48,21 +48,27 @@ else
         <div style="max-width: 600px; margin: var(--spacing-xl) auto; padding: 0 var(--spacing-md);">
 
             @* En-tête monde *@
-            <CdmHero GameType="@World.GameType">
-                <div class="cdm-hero-badge">REJOINDRE UN MONDE</div>
-                <h1 class="cdm-hero-title">@World.Name</h1>
-                <div style="margin-bottom: 14px;"><AppGameBadge GameType="@World.GameType" /></div>
+            <div class="cdm-card" style="margin-bottom: var(--spacing-lg); text-align: center;">
+                <div style="font-size: 2.5rem; margin-bottom: var(--spacing-md);">
+                    <i class="bi bi-globe2" style="color: var(--theme-primary, var(--color-primary));"></i>
+                </div>
+                <h2 style="margin-bottom: var(--spacing-xs);">@World.Name</h2>
+                <AppGameBadge GameType="@World.GameType" />
                 @if (!string.IsNullOrEmpty(World.Description))
                 {
-                    <p class="cdm-hero-tagline">@World.Description</p>
+                    <p style="color: var(--color-text-secondary); margin-top: var(--spacing-md); font-size: var(--font-size-sm);">
+                        @World.Description
+                    </p>
                 }
-                <div class="cdm-hero-meta">
-                    <span><i class="bi bi-map"></i> @World.CampaignCount campagne(s)</span>
-                    <span><i class="bi bi-people"></i> @World.CharacterCount joueur(s)</span>
+                <div style="display: flex; justify-content: center; gap: var(--spacing-lg); margin-top: var(--spacing-md);">
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                        <i class="bi bi-map"></i> @World.CampaignCount campagne(s)
+                    </span>
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                        <i class="bi bi-people"></i> @World.CharacterCount joueur(s)
+                    </span>
                 </div>
-            </CdmHero>
-
-            <div style="margin-bottom: var(--spacing-lg);"></div>
+            </div>
 
             @* Sélection de personnage *@
             <div class="cdm-card">
