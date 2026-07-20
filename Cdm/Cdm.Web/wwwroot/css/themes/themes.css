@@ -111,16 +111,16 @@
    THEME: WARHAMMER — Rouge brûlé & or grimdark
    ============================================ */
 .theme-warhammer {
-  --theme-primary:      #b1442f;
-  --theme-secondary:    #d9a441;
-  --theme-accent:       #e0b455;
-  --theme-on-primary:   #f9ece6;
-  --theme-heading-font: 'Cinzel', Georgia, serif;
-  --theme-card-border:  rgba(177, 68, 47, 0.32);
-  --theme-badge-bg:     rgba(177, 68, 47, 0.16);
-  --theme-badge-text:   #e0b455;
-  --theme-gradient:     linear-gradient(135deg, #b1442f 0%, #d9a441 100%);
-  --theme-glow:         0 0 16px rgba(177, 68, 47, 0.18);
+  --theme-primary:      #caa53e;
+  --theme-secondary:    #8a1e15;
+  --theme-accent:       #e6c454;
+  --theme-on-primary:   #140a06;
+  --theme-heading-font: 'Cinzel Decorative', 'Cinzel', serif;
+  --theme-card-border:  rgba(202, 165, 62, 0.40);
+  --theme-badge-bg:     rgba(202, 165, 62, 0.16);
+  --theme-badge-text:   #e6c454;
+  --theme-gradient:     linear-gradient(135deg, #8a1e15 0%, #caa53e 100%);
+  --theme-glow:         0 0 16px rgba(202, 165, 62, 0.18);
 }
 
 /* ============================================
@@ -208,6 +208,10 @@
 [data-theme="light"] .theme-custom { --theme-ink: #834f78; }
 [data-theme="light"].theme-empty,
 [data-theme="light"] .theme-empty { --theme-ink: #5f6472; }
+[data-theme="light"].theme-warhammer,
+[data-theme="light"] .theme-warhammer { --theme-ink: #8a1e15; }
+[data-theme="light"].theme-dnd5e,
+[data-theme="light"] .theme-dnd5e { --theme-ink: #c0342f; }
 
 /* ============================================
    TOKENS IMMERSIFS (maquette validée)
@@ -217,13 +221,106 @@
 :root                { --theme-tint: rgba(214, 159, 82, 0.07); --theme-display-font: var(--font-body); }
 .theme-generic       { --theme-tint: rgba(214, 159, 82, 0.07); --theme-display-font: var(--font-body); }
 .theme-empty         { --theme-tint: rgba(138, 143, 156, 0.06); --theme-display-font: var(--font-body); }
-.theme-dnd5e         { --theme-tint: rgba(167, 43, 39, 0.10);  --theme-display-font: var(--font-heading); }
-.theme-pathfinder    { --theme-tint: rgba(205, 127, 50, 0.09); --theme-display-font: var(--font-heading); }
-.theme-callofcthulhu { --theme-tint: rgba(95, 158, 119, 0.10); --theme-display-font: var(--font-heading); }
-.theme-warhammer     { --theme-tint: rgba(177, 68, 47, 0.10);  --theme-display-font: var(--font-heading); }
+.theme-dnd5e         { --theme-tint: rgba(167, 43, 39, 0.10);  --theme-display-font: 'Cinzel', Georgia, serif; }
+.theme-pathfinder    { --theme-tint: rgba(205, 127, 50, 0.09); --theme-display-font: 'Cinzel', Georgia, serif; }
+.theme-callofcthulhu { --theme-tint: rgba(95, 158, 119, 0.10); --theme-display-font: 'IM Fell English', Georgia, serif; }
+.theme-warhammer     { --theme-tint: rgba(202, 165, 62, 0.09); --theme-display-font: 'Cinzel Decorative', 'Cinzel', serif; }
 .theme-cyberpunk     { --theme-tint: rgba(43, 196, 201, 0.09); --theme-display-font: 'Orbitron', var(--font-body); }
-.theme-skyrim        { --theme-tint: rgba(106, 160, 189, 0.08);--theme-display-font: var(--font-heading); }
-.theme-custom        { --theme-tint: rgba(156, 95, 143, 0.09); --theme-display-font: var(--font-heading); }
+.theme-skyrim        { --theme-tint: rgba(106, 160, 189, 0.08);--theme-display-font: 'Metamorphous', Georgia, serif; }
+.theme-custom        { --theme-tint: rgba(156, 95, 143, 0.09); --theme-display-font: 'Cinzel', Georgia, serif; }
+
+/* ============================================
+   PANNEAU ENCADRÉ « CODEX » (.cdm-hero) — signature par univers.
+   Reproduction fidèle de la maquette validée. À placer dans un AppThemeWrapper.
+   ============================================ */
+.cdm-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(24px, 3vw, 34px);
+  border: 1px solid var(--theme-card-border, var(--color-border));
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--theme-tint, transparent), var(--color-bg-card) 72%);
+}
+
+/* Générique — sobre (rien de plus). */
+
+/* D&D — double filet ciselé. */
+.theme-dnd5e .cdm-hero {
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.28), inset 0 0 0 5px var(--theme-card-border);
+  background: linear-gradient(135deg, rgba(167, 43, 39, 0.12), var(--color-bg-card) 70%);
+}
+[data-theme="light"] .theme-dnd5e .cdm-hero {
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.05), inset 0 0 0 5px var(--theme-card-border);
+}
+
+/* Skyrim — coins biseautés (pierre taillée). */
+.theme-skyrim .cdm-hero {
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  box-shadow: inset 0 0 0 1px var(--theme-card-border);
+  background: linear-gradient(135deg, rgba(106, 160, 189, 0.12), var(--color-bg-card) 70%);
+}
+
+/* Cyberpunk — barre d'accent à gauche. */
+.theme-cyberpunk .cdm-hero {
+  border-left: 3px solid var(--theme-primary);
+}
+
+/* L'Appel de Cthulhu — ombre interne oppressante. */
+.theme-callofcthulhu .cdm-hero {
+  box-shadow: inset 0 0 55px rgba(0, 0, 0, 0.55);
+  background: radial-gradient(120% 100% at 80% -10%, rgba(95, 158, 119, 0.12), var(--color-bg-card) 65%);
+}
+[data-theme="light"] .theme-callofcthulhu .cdm-hero {
+  box-shadow: inset 0 0 55px rgba(36, 52, 71, 0.10);
+}
+
+/* Warhammer — liseré doré/noir en damier + fond sombre. */
+.theme-warhammer .cdm-hero {
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(45deg, #caa53e 0 11px, #140a06 11px 22px) top / 100% 12px no-repeat,
+    linear-gradient(180deg, rgba(138, 30, 21, 0.14), var(--color-bg-card) 80%);
+}
+
+/* Textures de fond subtiles par univers (motifs de la maquette). */
+.cdm-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.theme-generic .cdm-hero::before {
+  background: radial-gradient(circle, rgba(214, 159, 82, 0.09) 1px, transparent 1.6px);
+  background-size: 22px 22px;
+  opacity: 0.6;
+}
+.theme-dnd5e .cdm-hero::before {
+  background: radial-gradient(circle at 50% 50%, rgba(201, 154, 62, 0.11) 0 2px, transparent 2px), radial-gradient(circle at 50% 50%, transparent 13px, rgba(167, 43, 39, 0.05) 13px 14px, transparent 14px);
+  background-size: 46px 46px, 46px 46px;
+  opacity: 0.55;
+}
+.theme-skyrim .cdm-hero::before {
+  background: radial-gradient(rgba(106, 160, 189, 0.05) 0.5px, transparent 1px);
+  background-size: 4px 4px;
+  opacity: 0.7;
+}
+.theme-cyberpunk .cdm-hero::before {
+  background: repeating-linear-gradient(0deg, rgba(43, 196, 201, 0.06) 0 1px, transparent 1px 3px);
+  opacity: 0.6;
+}
+.theme-callofcthulhu .cdm-hero::before {
+  background: linear-gradient(rgba(95, 158, 119, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(95, 158, 119, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.7;
+}
+.theme-warhammer .cdm-hero::before {
+  background: repeating-linear-gradient(45deg, rgba(202, 165, 62, 0.05) 0 1px, transparent 1px 10px);
+  opacity: 0.5;
+}
 
 /* ============================================
    APPLICATIF — Zones themed

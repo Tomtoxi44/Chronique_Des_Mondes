@@ -32,24 +32,34 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (Section == null && !SelectedCampaignId.HasValue)
         {
-            <AppPageHeader Title="@World.Name"
-                           Icon="bi-globe2"
-                           Breadcrumbs="@Breadcrumbs">
-                <Actions>
-                    @if (IsOwner)
-                    {
-                        <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
-                            <i class="bi bi-trash3"></i>
-                            @L["Common_Delete"]
-                        </button>
-                    }
-                </Actions>
-            </AppPageHeader>
+            <nav style="margin-bottom: var(--spacing-md);">
+                <a href="/worlds" class="btn btn-ghost btn-sm">
+                    <i class="bi bi-arrow-left"></i> @L["Nav_Worlds"]
+                </a>
+            </nav>
 
-            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
-                <AppStatCard Value="@Campaigns.Count.ToString()" Label="@L["Worlds_Campaigns"]" Icon="bi-map" />
-                <AppStatCard Value="@World.CharacterCount.ToString()" Label="@L["Worlds_Characters"]" Icon="bi-people" />
-            </div>
+            <CdmHero GameType="@World.GameType">
+                <div class="cdm-hero-badge">MONDE &middot; @(GameTypeOptions.FirstOrDefault(o => o.Value == World.GameType).Label)</div>
+                <h1 class="cdm-hero-title">@World.Name</h1>
+                <div class="cdm-hero-meta">
+                    <span><i class="bi bi-map"></i> @Campaigns.Count @L["Worlds_Campaigns"]</span>
+                    <span><i class="bi bi-people"></i> @World.CharacterCount @L["Worlds_Characters"]</span>
+                    <span><i class="bi bi-calendar3"></i> @World.CreatedAt.ToString("d MMM yyyy")</span>
+                </div>
+                @if (IsOwner)
+                {
+                    <div class="cdm-hero-actions">
+                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
+                            <i class="bi bi-plus"></i> @L["Campaigns_Create"]
+                        </a>
+                        <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
+                            <i class="bi bi-trash3"></i> @L["Common_Delete"]
+                        </button>
+                    </div>
+                }
+            </CdmHero>
+
+            <div style="margin-bottom: var(--spacing-xl);"></div>
 
             <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
                 @if (IsOwner && IsWorldEditing)
@@ -417,11 +427,11 @@ else
                                                 <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
                                                 @if (ch.IsCompleted)
                                                 {
-                                                    <span class="status-badge status-completed">Terminé</span>
+                                                    <span class="status-badge status-completed">@L["Common_Completed"]</span>
                                                 }
                                                 else if (ch.IsActive)
                                                 {
-                                                    <span class="status-badge status-active">En cours</span>
+                                                    <span class="status-badge status-active">@L["Common_InProgress"]</span>
                                                 }
                                             </a>
                                         </div>
@@ -473,7 +483,7 @@ else
                             else if (ActiveSession != null)
                             {
                                 <div style="background: rgba(var(--color-success-rgb, 16,185,129),0.1); border: 1px solid var(--color-success); border-radius: 6px; padding: var(--spacing-sm) var(--spacing-md);">
-                                    <span class="status-badge status-active" style="margin-right: var(--spacing-sm);">Session active</span>
+                                    <span class="status-badge status-active" style="margin-right: var(--spacing-sm);">@L["Sessions_ActiveBadge"]</span>
                                     <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Démarrée le @ActiveSession.StartedAt.ToLocalTime().ToString("dd/MM à HH:mm")</span>
                                 </div>
                             }
@@ -614,11 +624,11 @@ else
                         <div style="display: flex; gap: var(--spacing-xs); margin-top: 4px; flex-wrap: wrap;">
                             @if (SelectedChapter.IsCompleted)
                             {
-                                <span class="status-badge status-completed">Terminé</span>
+                                <span class="status-badge status-completed">@L["Common_Completed"]</span>
                             }
                             else if (SelectedChapter.IsActive)
                             {
-                                <span class="status-badge status-active">En cours</span>
+                                <span class="status-badge status-active">@L["Common_InProgress"]</span>
                             }
                         </div>
                     </div>
