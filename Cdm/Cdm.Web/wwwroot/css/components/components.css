@@ -4249,3 +4249,21 @@ textarea.form-control {
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* ============================================
+   REFONTE RECTANGULAIRE — avatars en carrés-arrondis
+   Aligne les avatars sur la maquette (carrés arrondis, plus de cercles).
+   Les points de statut / spinners / radios restent circulaires.
+   ============================================ */
+.character-avatar,
+.character-avatar-mini,
+.character-avatar-circle,
+.character-mini-avatar,
+.character-mini-avatar-placeholder,
+.profile-avatar-large,
+.participant-avatar,
+.combat-order-avatar,
+.combat-participant-avatar-sm,
+.topbar-avatar {
+  border-radius: var(--radius-md);
+}
