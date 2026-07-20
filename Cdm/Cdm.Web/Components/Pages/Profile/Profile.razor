@@ -53,7 +53,7 @@ else
 
         <!-- Formulaire -->
         <div class="cdm-card">
-            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">Informations du profil</h3>
+            <AppSectionTitle Title="Informations du profil" Icon="bi-person-vcard" />
             <EditForm Model="UpdateModel" OnValidSubmit="HandleSave" FormName="profile-edit">
                 <DataAnnotationsValidator />
 
@@ -77,13 +77,14 @@ else
 
         <!-- Succès -->
         <div class="cdm-card">
-            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">
-                <i class="bi bi-trophy"></i> Mes succès
-                @if (MyAchievements.Count > 0)
-                {
-                    <span class="status-badge" style="margin-left: var(--spacing-sm);">@MyAchievements.Count</span>
-                }
-            </h3>
+            <AppSectionTitle Title="Mes succès" Icon="bi-trophy">
+                <Actions>
+                    @if (MyAchievements.Count > 0)
+                    {
+                        <span class="status-badge">@MyAchievements.Count</span>
+                    }
+                </Actions>
+            </AppSectionTitle>
 
             @if (MyAchievements.Count == 0)
             {
@@ -122,9 +123,7 @@ else
 
         <!-- Statistiques de dés -->
         <div class="cdm-card">
-            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">
-                <i class="bi bi-dice-5"></i> Statistiques de dés
-            </h3>
+            <AppSectionTitle Title="Statistiques de dés" Icon="bi-dice-5" />
 
             @if (DiceStats == null || DiceStats.TotalRolls == 0)
             {

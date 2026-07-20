@@ -42,9 +42,7 @@ else
 {
     @if (WorldsList.Count > 0)
     {
-        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
-            <i class="bi bi-shield-fill"></i> Mes mondes (MJ)
-        </h3>
+        <AppSectionTitle Title="Mes mondes (MJ)" Icon="bi-shield-fill" />
     }
     <div class="cards-grid">
         @foreach (var world in WorldsList)
@@ -85,9 +83,9 @@ else
 
     @if (JoinedWorlds.Count > 0)
     {
-        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin: var(--spacing-xl) 0 var(--spacing-md);">
-            <i class="bi bi-people-fill"></i> Mondes rejoints
-        </h3>
+        <div style="margin-top: var(--spacing-xl);">
+            <AppSectionTitle Title="Mondes rejoints" Icon="bi-people-fill" />
+        </div>
         <div class="cards-grid">
             @foreach (var world in JoinedWorlds)
             {

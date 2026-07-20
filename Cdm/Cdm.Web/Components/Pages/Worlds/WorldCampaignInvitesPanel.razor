@@ -1,0 +1,68 @@
+@* Liens d'invitation par campagne (composant présentiel).
+   L'état (campagnes, génération) reste dans WorldDetail ; ce composant affiche et délègue. *@
+@namespace Cdm.Web.Components.Pages.Worlds
+@using Cdm.Business.Abstraction.DTOs
+@inject Microsoft.JSInterop.IJSRuntime JS
+@inject Microsoft.AspNetCore.Components.NavigationManager Nav
+
+<div class="cdm-card">
+    <AppSectionTitle Title="Liens d'invitation par campagne" Icon="bi-link-45deg" Rule="false" />
+    <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
+        Générez un lien par campagne pour rejoindre directement cette campagne.
+    </p>
+    @if (Campaigns.Count == 0)
+    {
+        <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); font-style: italic;">Aucune campagne dans ce monde.</p>
+    }
+    else
+    {
+        @foreach (var campaign in Campaigns)
+        {
+            var token = campaign.InviteToken;
+            var inviteUrl = token != null ? $"{Nav.BaseUri}join?token={token}" : null;
+            <div class="invite-row">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600; font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
+                        <i class="bi bi-map" style="color: var(--color-text-muted); margin-right: var(--spacing-xs);"></i>
+                        @campaign.Name
+                    </div>
+                    @if (inviteUrl != null)
+                    {
+                        <div class="invite-token-box">@inviteUrl</div>
+                    }
+                    else
+                    {
+                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic;">Aucun lien généré</span>
+                    }
+                </div>
+                <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
+                    <button class="btn btn-ghost btn-sm" @onclick="() => OnGenerate.InvokeAsync(campaign.Id)" disabled="@IsGenerating">
+                        <i class="bi bi-arrow-repeat"></i>
+                        @(token == null ? "Générer" : "Régénérer")
+                    </button>
+                    @if (inviteUrl != null)
+                    {
+                        <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(inviteUrl)" title="Copier le lien">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<CampaignDto> Campaigns { get; set; } = System.Array.Empty<CampaignDto>();
+    [Parameter] public bool IsGenerating { get; set; }
+    [Parameter] public EventCallback<int> OnGenerate { get; set; }
+
+    private async Task CopyToClipboard(string text)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        catch { /* silently ignore if clipboard API not available */ }
+    }
+}

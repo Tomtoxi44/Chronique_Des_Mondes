@@ -105,10 +105,7 @@ else
         @if (CurrentStep == 0)
         {
             <div class="cdm-card">
-                <h3 style="margin-bottom: var(--spacing-sm);">
-                    <i class="bi bi-person-circle" style="color: var(--color-primary);"></i>
-                    Informations de base
-                </h3>
+                <AppSectionTitle Title="Informations de base" Icon="bi-person-circle" Rule="false" />
                 <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
                     Personnalisez l'identité de votre personnage pour ce monde. Ces informations peuvent différer de votre personnage de base.
                 </p>
@@ -146,10 +143,7 @@ else
         @if (CurrentStep == 1)
         {
             <div class="cdm-card">
-                <h3 style="margin-bottom: var(--spacing-sm);">
-                    <i class="bi bi-bar-chart" style="color: var(--color-primary);"></i>
-                    Classe, Race &amp; Caractéristiques
-                </h3>
+                <AppSectionTitle Title="Classe, Race & Caractéristiques" Icon="bi-bar-chart" Rule="false" />
                 <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
                     Les bonus de race seront automatiquement appliqués à vos caractéristiques lors de la sauvegarde.
                 </p>
@@ -232,7 +226,7 @@ else
                                     <strong>Compétences accordées :</strong>
                                     @foreach (var skill in SelectedBackground.SkillProficiencies)
                                     {
-                                        <span style="margin-left: 4px; padding: 1px 6px; background: var(--color-primary); color: white; border-radius: 9999px; font-size: 11px;">@skill</span>
+                                        <span style="margin-left: 4px; padding: 1px 6px; background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a); border-radius: 9999px; font-size: 11px;">@skill</span>
                                     }
                                 </div>
                             }
@@ -403,10 +397,7 @@ else
         @if (CurrentStep == 2)
         {
             <div class="cdm-card">
-                <h3 style="margin-bottom: var(--spacing-sm);">
-                    <i class="bi bi-bag" style="color: var(--color-primary);"></i>
-                    Inventaire
-                </h3>
+                <AppSectionTitle Title="Inventaire" Icon="bi-bag" Rule="false" />
                 <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg);">
                     Ajoutez les objets que porte votre personnage. Vous pouvez choisir depuis le référentiel ou saisir un objet personnalisé.
                 </p>
@@ -543,10 +534,7 @@ else
         @if (CurrentStep == 3)
         {
             <div class="cdm-card">
-                <h3 style="margin-bottom: var(--spacing-sm);">
-                    <i class="bi bi-magic" style="color: var(--color-primary);"></i>
-                    Sorts &amp; Magie
-                </h3>
+                <AppSectionTitle Title="Sorts & Magie" Icon="bi-magic" Rule="false" />
                 @if (SelectedClass != null && !SelectedClass.IsSpellcaster)
                 {
                     <div class="alert" style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); padding: var(--spacing-md);">
@@ -565,7 +553,7 @@ else
                         @foreach (var spell in CharacterSpells.OrderBy(s => s.Level).ThenBy(s => s.Name))
                         {
                             <div style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-xs); background: var(--color-bg-secondary);">
-                                <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); font-weight: 700; flex-shrink: 0;">
+                                <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a); display: flex; align-items: center; justify-content: center; font-size: var(--font-size-xs); font-weight: 700; flex-shrink: 0;">
                                     @(spell.Level == 0 ? "T" : spell.Level.ToString())
                                 </span>
                                 <div style="flex: 1;">

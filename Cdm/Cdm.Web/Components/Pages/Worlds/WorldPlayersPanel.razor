@@ -1,0 +1,48 @@
+@* Liste des joueurs présents dans un monde (composant présentiel).
+   L'état (chargement, liste) reste dans WorldDetail car partagé (support @mention). *@
+@namespace Cdm.Web.Components.Pages.Worlds
+@using Cdm.Business.Abstraction.DTOs
+
+<div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+    <AppSectionTitle Title="Joueurs dans le monde" Icon="bi-people" />
+    @if (IsLoading)
+    {
+        <AppLoadingSpinner Label="Chargement..." />
+    }
+    else if (Players.Count == 0)
+    {
+        <AppEmptyState Icon="bi-people"
+                       Title="Aucun joueur"
+                       Message="Aucun joueur n'a encore rejoint ce monde. Partagez le lien ci-dessus." />
+    }
+    else
+    {
+        <div class="character-list">
+            @foreach (var wc in Players)
+            {
+                <div class="invite-row">
+                    <div class="character-avatar-mini">
+                        @wc.CharacterName.Substring(0, 1).ToUpperInvariant()
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: var(--font-size-sm);">@wc.CharacterName</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                            Rejoint le @wc.JoinedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" style="color: var(--color-danger);"
+                            @onclick="() => OnRemove.InvokeAsync(wc.CharacterId)"
+                            title="Retirer du monde">
+                        <i class="bi bi-person-x"></i>
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public IReadOnlyList<WorldCharacterDto> Players { get; set; } = System.Array.Empty<WorldCharacterDto>();
+    [Parameter] public EventCallback<int> OnRemove { get; set; }
+}

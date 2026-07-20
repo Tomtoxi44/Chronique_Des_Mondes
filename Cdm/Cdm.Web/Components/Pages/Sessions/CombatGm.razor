@@ -262,7 +262,7 @@ else if (Combat != null)
 
                     <!-- Liste de tous les participants avec toggle actif/inactif -->
                     <div class="cdm-card" style="margin-top:var(--spacing-md);">
-                        <h4 style="margin-bottom:var(--spacing-sm);">Participants</h4>
+                        <AppSectionTitle Title="Participants" Icon="bi-people" />
                         <div class="combat-participants-list">
                             @foreach (var p in SortedParticipants)
                             {
@@ -289,7 +289,7 @@ else if (Combat != null)
                     <CombatLog Actions="@VisibleActionsForGm" Title="Journal de combat" />
 
                     <div class="cdm-card" style="margin-top: var(--spacing-sm); padding: var(--spacing-sm);">
-                        <h4 style="margin-bottom: var(--spacing-xs);"><i class="bi bi-crosshair"></i> Résoudre une attaque</h4>
+                        <AppSectionTitle Title="Résoudre une attaque" Icon="bi-crosshair" />
                         <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
                             <select class="form-control" style="font-size: var(--font-size-sm);" @bind="AtkAttackerId">
                                 <option value="0">Attaquant…</option>

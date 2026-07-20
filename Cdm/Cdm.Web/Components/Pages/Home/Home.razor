@@ -28,7 +28,7 @@ else
 
         <!-- Actions rapides -->
         <div class="cdm-card">
-            <h3 class="card-title">@L["Home_QuickActions"]</h3>
+            <AppSectionTitle Title='@L["Home_QuickActions"]' Icon="bi-lightning-charge" />
             <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                 <a href="/worlds/create" class="btn btn-outline">
                     <i class="bi bi-plus-circle"></i>
@@ -47,7 +47,7 @@ else
 
         <!-- Dernier monde -->
         <div class="cdm-card">
-            <h3 class="card-title">@L["Home_LastWorld"]</h3>
+            <AppSectionTitle Title='@L["Home_LastWorld"]' Icon="bi-globe2" />
             @if (LastWorld != null)
             {
                 <AppThemeWrapper GameType="@LastWorld.GameType" AdditionalClass="world-preview">

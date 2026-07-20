@@ -1,158 +1,213 @@
 /*
  * themes.css — Chronique des Mondes
+ * Refonte « codex premium » : accents par type de jeu, à-plats et filets ciselés.
  * Chaque classe .theme-{name} surcharge les tokens --theme-*.
  * Appliqué sur n'importe quel wrapper via <AppThemeWrapper GameType="..." />.
+ * --theme-on-primary = couleur de texte lisible sur un bouton plein de la couleur d'accent.
+ * Les halos (--theme-glow) sont volontairement discrets (fini le néon).
  */
 
 /* ============================================
-   THEME PAR DÉFAUT (générique)
+   THÈME PAR DÉFAUT = GÉNÉRIQUE (ambre chaleureux)
+   Accueillant pour un nouvel utilisateur sans jeu choisi.
    ============================================ */
 :root {
-  --theme-primary:      var(--color-indigo-500);
-  --theme-secondary:    var(--color-violet-500);
-  --theme-accent:       var(--color-rose-500);
+  --theme-primary:      #d69f52;
+  --theme-secondary:    #9a5a2b;
+  --theme-accent:       #c67b3a;
+  --theme-on-primary:   #17110a;
+  /* Accent réservé au TEXTE / ICÔNES / bordures fines (≠ fond de bouton).
+     Par défaut = --theme-primary ; assombri par thème en mode clair. */
+  --theme-ink:          var(--theme-primary);
   --theme-heading-font: var(--font-heading);
-  --theme-card-border:  var(--color-border);
-  --theme-badge-bg:     rgba(99, 102, 241, 0.15);
-  --theme-badge-text:   var(--color-indigo-300);
-  --theme-gradient:     linear-gradient(135deg, var(--color-indigo-600) 0%, var(--color-violet-600) 100%);
-  --theme-glow:         0 0 20px rgba(99, 102, 241, 0.2);
+  --theme-card-border:  rgba(214, 159, 82, 0.28);
+  --theme-badge-bg:     rgba(214, 159, 82, 0.14);
+  --theme-badge-text:   #e0b878;
+  --theme-gradient:     linear-gradient(135deg, #d69f52 0%, #9a5a2b 100%);
+  --theme-glow:         0 0 16px rgba(214, 159, 82, 0.14);
 }
 
 /* ============================================
-   THEME: EMPTY — Gris neutre
+   THEME: EMPTY — Lobby d'invitation, neutre
    ============================================ */
 .theme-empty {
-  --theme-primary:      #6b7280;
-  --theme-secondary:    #9ca3af;
-  --theme-accent:       #d1d5db;
+  --theme-primary:      #8a8f9c;
+  --theme-secondary:    #6b7080;
+  --theme-accent:       #aeb4c0;
+  --theme-on-primary:   #14161b;
   --theme-heading-font: var(--font-body);
-  --theme-card-border:  rgba(107, 114, 128, 0.2);
-  --theme-badge-bg:     rgba(107, 114, 128, 0.12);
-  --theme-badge-text:   #9ca3af;
-  --theme-gradient:     linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+  --theme-card-border:  rgba(138, 143, 156, 0.24);
+  --theme-badge-bg:     rgba(138, 143, 156, 0.12);
+  --theme-badge-text:   #aeb4c0;
+  --theme-gradient:     linear-gradient(135deg, #8a8f9c 0%, #6b7080 100%);
   --theme-glow:         none;
 }
 
 /* ============================================
-   THEME: GENERIC — Indigo / Violet (défaut)
+   THEME: GENERIC — Ambre (identique au défaut)
    ============================================ */
 .theme-generic {
-  --theme-primary:      #6366f1;
-  --theme-secondary:    #8b5cf6;
-  --theme-accent:       #f43f5e;
+  --theme-primary:      #d69f52;
+  --theme-secondary:    #9a5a2b;
+  --theme-accent:       #c67b3a;
+  --theme-on-primary:   #17110a;
   --theme-heading-font: var(--font-heading);
-  --theme-card-border:  rgba(99, 102, 241, 0.25);
-  --theme-badge-bg:     rgba(99, 102, 241, 0.15);
-  --theme-badge-text:   #a5b4fc;
-  --theme-gradient:     linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --theme-glow:         0 0 20px rgba(99, 102, 241, 0.2);
+  --theme-card-border:  rgba(214, 159, 82, 0.28);
+  --theme-badge-bg:     rgba(214, 159, 82, 0.14);
+  --theme-badge-text:   #e0b878;
+  --theme-gradient:     linear-gradient(135deg, #d69f52 0%, #9a5a2b 100%);
+  --theme-glow:         0 0 16px rgba(214, 159, 82, 0.14);
 }
 
 /* ============================================
-   THEME: D&D 5e — Fantasy noble
+   THEME: D&D 5e — Rouge héraldique + or
    ============================================ */
 .theme-dnd5e {
-  --theme-primary:      #b8860b;
-  --theme-secondary:    #8b0000;
-  --theme-accent:       #daa520;
+  --theme-primary:      #a72b27;
+  --theme-secondary:    #c99a3e;
+  --theme-accent:       #d4a23c;
+  --theme-on-primary:   #f7ece1;
   --theme-heading-font: 'Cinzel', Georgia, serif;
-  --theme-card-border:  rgba(184, 134, 11, 0.3);
-  --theme-badge-bg:     rgba(184, 134, 11, 0.15);
-  --theme-badge-text:   #daa520;
-  --theme-gradient:     linear-gradient(135deg, #b8860b 0%, #8b0000 100%);
-  --theme-glow:         0 0 20px rgba(184, 134, 11, 0.25);
+  --theme-card-border:  rgba(167, 43, 39, 0.3);
+  --theme-badge-bg:     rgba(167, 43, 39, 0.15);
+  --theme-badge-text:   #dda552;
+  --theme-gradient:     linear-gradient(135deg, #a72b27 0%, #c99a3e 100%);
+  --theme-glow:         0 0 16px rgba(167, 43, 39, 0.18);
 }
 
 /* ============================================
-   THEME: PATHFINDER — Aventure bronze
+   THEME: PATHFINDER — Bronze & forêt
    ============================================ */
 .theme-pathfinder {
   --theme-primary:      #cd7f32;
   --theme-secondary:    #2d5a27;
-  --theme-accent:       #8b6914;
+  --theme-accent:       #b98a3a;
+  --theme-on-primary:   #17110a;
   --theme-heading-font: 'Cinzel', Georgia, serif;
   --theme-card-border:  rgba(205, 127, 50, 0.3);
   --theme-badge-bg:     rgba(205, 127, 50, 0.15);
-  --theme-badge-text:   #cd7f32;
+  --theme-badge-text:   #d69a55;
   --theme-gradient:     linear-gradient(135deg, #cd7f32 0%, #2d5a27 100%);
-  --theme-glow:         0 0 20px rgba(205, 127, 50, 0.2);
+  --theme-glow:         0 0 16px rgba(205, 127, 50, 0.14);
 }
 
 /* ============================================
-   THEME: CALL OF CTHULHU — Horreur lovecraftienne
+   THEME: CALL OF CTHULHU — Vert d'outre-tombe
    ============================================ */
 .theme-callofcthulhu {
-  --theme-primary:      #2d5a3d;
-  --theme-secondary:    #1a1a2e;
-  --theme-accent:       #4a7c59;
+  --theme-primary:      #5f9e77;
+  --theme-secondary:    #243447;
+  --theme-accent:       #7fbf95;
+  --theme-on-primary:   #07130d;
   --theme-heading-font: 'Cinzel', Georgia, serif;
-  --theme-card-border:  rgba(45, 90, 61, 0.35);
-  --theme-badge-bg:     rgba(45, 90, 61, 0.2);
-  --theme-badge-text:   #4a7c59;
-  --theme-gradient:     linear-gradient(135deg, #2d5a3d 0%, #1a1a2e 100%);
-  --theme-glow:         0 0 20px rgba(45, 90, 61, 0.3);
+  --theme-card-border:  rgba(95, 158, 119, 0.32);
+  --theme-badge-bg:     rgba(95, 158, 119, 0.16);
+  --theme-badge-text:   #82c199;
+  --theme-gradient:     linear-gradient(135deg, #5f9e77 0%, #243447 100%);
+  --theme-glow:         0 0 18px rgba(95, 158, 119, 0.18);
 }
 
 /* ============================================
-   THEME: WARHAMMER — Grimdark brutal
+   THEME: WARHAMMER — Rouge brûlé & or grimdark
    ============================================ */
 .theme-warhammer {
-  --theme-primary:      #8b0000;
-  --theme-secondary:    #2d2d2d;
-  --theme-accent:       #ffd700;
+  --theme-primary:      #b1442f;
+  --theme-secondary:    #d9a441;
+  --theme-accent:       #e0b455;
+  --theme-on-primary:   #f9ece6;
   --theme-heading-font: 'Cinzel', Georgia, serif;
-  --theme-card-border:  rgba(139, 0, 0, 0.35);
-  --theme-badge-bg:     rgba(139, 0, 0, 0.18);
-  --theme-badge-text:   #ffd700;
-  --theme-gradient:     linear-gradient(135deg, #8b0000 0%, #2d2d2d 100%);
-  --theme-glow:         0 0 20px rgba(139, 0, 0, 0.3);
+  --theme-card-border:  rgba(177, 68, 47, 0.32);
+  --theme-badge-bg:     rgba(177, 68, 47, 0.16);
+  --theme-badge-text:   #e0b455;
+  --theme-gradient:     linear-gradient(135deg, #b1442f 0%, #d9a441 100%);
+  --theme-glow:         0 0 16px rgba(177, 68, 47, 0.18);
 }
 
 /* ============================================
-   THEME: CYBERPUNK — Néon et technologie
+   THEME: CYBERPUNK — Néon maîtrisé (cyan / magenta)
    ============================================ */
 .theme-cyberpunk {
-  --theme-primary:      #00e5ff;
-  --theme-secondary:    #e040fb;
-  --theme-accent:       #ffea00;
+  --theme-primary:      #2bc4c9;
+  --theme-secondary:    #e357c8;
+  --theme-accent:       #f2e14a;
+  --theme-on-primary:   #052024;
   --theme-heading-font: 'Orbitron', 'Inter', sans-serif;
-  --theme-card-border:  rgba(0, 229, 255, 0.3);
-  --theme-badge-bg:     rgba(0, 229, 255, 0.12);
-  --theme-badge-text:   #00e5ff;
-  --theme-gradient:     linear-gradient(135deg, #00e5ff 0%, #e040fb 100%);
-  --theme-glow:         0 0 24px rgba(0, 229, 255, 0.35);
+  --theme-card-border:  rgba(43, 196, 201, 0.3);
+  --theme-badge-bg:     rgba(43, 196, 201, 0.13);
+  --theme-badge-text:   #4fd6da;
+  --theme-gradient:     linear-gradient(135deg, #2bc4c9 0%, #e357c8 100%);
+  --theme-glow:         0 0 22px rgba(43, 196, 201, 0.24);
 }
 
 /* ============================================
-   THEME: SKYRIM — Nordique sobre
+   THEME: SKYRIM — Acier nordique
    ============================================ */
 .theme-skyrim {
-  --theme-primary:      #5b8fa8;
-  --theme-secondary:    #8b8680;
-  --theme-accent:       #c0c0c0;
+  --theme-primary:      #6aa0bd;
+  --theme-secondary:    #7d8a93;
+  --theme-accent:       #a9c4d3;
+  --theme-on-primary:   #08131a;
   --theme-heading-font: 'Cinzel', Georgia, serif;
-  --theme-card-border:  rgba(91, 143, 168, 0.3);
-  --theme-badge-bg:     rgba(91, 143, 168, 0.15);
-  --theme-badge-text:   #5b8fa8;
-  --theme-gradient:     linear-gradient(135deg, #5b8fa8 0%, #8b8680 100%);
-  --theme-glow:         0 0 20px rgba(91, 143, 168, 0.2);
+  --theme-card-border:  rgba(106, 160, 189, 0.3);
+  --theme-badge-bg:     rgba(106, 160, 189, 0.15);
+  --theme-badge-text:   #8fbcd2;
+  --theme-gradient:     linear-gradient(135deg, #6aa0bd 0%, #7d8a93 100%);
+  --theme-glow:         0 0 16px rgba(106, 160, 189, 0.16);
 }
 
 /* ============================================
-   THEME: CUSTOM — Personnalisé
+   THEME: CUSTOM — Prune feutrée
    ============================================ */
 .theme-custom {
-  --theme-primary:      #8b5cf6;
-  --theme-secondary:    #4f46e5;
-  --theme-accent:       #ec4899;
+  --theme-primary:      #9c5f8f;
+  --theme-secondary:    #5b4570;
+  --theme-accent:       #c08bb5;
+  --theme-on-primary:   #f6edf3;
   --theme-heading-font: var(--font-heading);
-  --theme-card-border:  rgba(139, 92, 246, 0.3);
-  --theme-badge-bg:     rgba(139, 92, 246, 0.15);
-  --theme-badge-text:   #c4b5fd;
-  --theme-gradient:     linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%);
-  --theme-glow:         0 0 20px rgba(139, 92, 246, 0.25);
+  --theme-card-border:  rgba(156, 95, 143, 0.3);
+  --theme-badge-bg:     rgba(156, 95, 143, 0.15);
+  --theme-badge-text:   #c491ba;
+  --theme-gradient:     linear-gradient(135deg, #9c5f8f 0%, #5b4570 100%);
+  --theme-glow:         0 0 16px rgba(156, 95, 143, 0.18);
 }
+
+/* ============================================
+   MODE CLAIR — accent générique assombri
+   Sur le fond « parchemin » clair, l'ambre vif #d69f52 tombe à ~2.2:1
+   (icônes/bordures) : on le fonce pour le thème générique par défaut, où
+   le texte du bouton (--theme-on-primary sombre) reste lisible sur l'ambre
+   moyen. Les thèmes de jeu ne sont pas touchés ici : plusieurs associent un
+   --theme-on-primary sombre à leur accent en fond de bouton, et les foncer
+   casserait le contraste du bouton (à retravailler avec un token dédié).
+   ============================================ */
+[data-theme="light"] {
+  --theme-primary: #a86f28;
+  --theme-secondary: #85481f;
+  --theme-accent: #9a5a2b;
+  --theme-glow: 0 0 14px rgba(168, 111, 40, 0.10);
+}
+[data-theme="light"].theme-generic,
+[data-theme="light"] .theme-generic {
+  --theme-primary: #a86f28;
+  --theme-secondary: #85481f;
+  --theme-accent: #9a5a2b;
+}
+
+/* Thèmes de jeu : accent TEXTE/ICÔNE (--theme-ink) assombri en mode clair,
+   sans toucher --theme-primary (= fond de bouton, laissé vif). Seuls les
+   accents qui échouent le 3:1 sur fond clair sont foncés. */
+[data-theme="light"].theme-pathfinder,
+[data-theme="light"] .theme-pathfinder { --theme-ink: #8a5220; }
+[data-theme="light"].theme-callofcthulhu,
+[data-theme="light"] .theme-callofcthulhu { --theme-ink: #3f7355; }
+[data-theme="light"].theme-cyberpunk,
+[data-theme="light"] .theme-cyberpunk { --theme-ink: #147d81; }
+[data-theme="light"].theme-skyrim,
+[data-theme="light"] .theme-skyrim { --theme-ink: #3f6a82; }
+[data-theme="light"].theme-custom,
+[data-theme="light"] .theme-custom { --theme-ink: #834f78; }
+[data-theme="light"].theme-empty,
+[data-theme="light"] .theme-empty { --theme-ink: #5f6472; }
 
 /* ============================================
    APPLICATIF — Zones themed
