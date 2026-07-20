@@ -158,6 +158,44 @@ public partial class CombatGm : IAsyncDisposable
 
     // --- Actions ---
 
+    private bool IsRollingInitiative;
+
+    private async Task RollAllInitiative()
+    {
+        if (IsRollingInitiative) return;
+        IsRollingInitiative = true;
+        var updated = await CombatClient.RollInitiativeAsync(CombatId);
+        if (updated != null) Combat = updated;
+        IsRollingInitiative = false;
+    }
+
+    // Server-side attack resolution form state.
+    private int AtkAttackerId;
+    private int AtkTargetId;
+    private int AtkBonus;
+    private string AtkDamageDice = "1d8";
+    private int AtkDamageBonus;
+    private string? AtkDamageType;
+    private string? AtkLabel;
+    private bool IsResolvingAttack;
+
+    private async Task ResolveAttack()
+    {
+        if (IsResolvingAttack || AtkAttackerId <= 0 || AtkTargetId <= 0 || AtkAttackerId == AtkTargetId) return;
+        IsResolvingAttack = true;
+        var updated = await CombatClient.ResolveAttackAsync(CombatId, AtkAttackerId, new ResolveAttackDto
+        {
+            TargetParticipantId = AtkTargetId,
+            AttackBonus = AtkBonus,
+            DamageDice = string.IsNullOrWhiteSpace(AtkDamageDice) ? "1d4" : AtkDamageDice.Trim(),
+            DamageBonus = AtkDamageBonus,
+            DamageType = string.IsNullOrWhiteSpace(AtkDamageType) ? null : AtkDamageType.Trim(),
+            Label = string.IsNullOrWhiteSpace(AtkLabel) ? null : AtkLabel.Trim()
+        });
+        if (updated != null) { Combat = updated; await LoadActiveCharacterAsync(); }
+        IsResolvingAttack = false;
+    }
+
     private async Task StartCombat()
     {
         var updated = await CombatClient.StartCombatAsync(CombatId);
@@ -187,6 +225,28 @@ public partial class CombatGm : IAsyncDisposable
     {
         var roll = _random.Next(1, 21);
         await SetParticipantInitiative(participant, roll.ToString());
+    }
+
+    private async Task UpdateDefense(CombatParticipantDto p, int? armorClass, int? dexModifier)
+    {
+        var updated = await CombatClient.UpdateParticipantDefenseAsync(CombatId, p.Id, new UpdateParticipantDefenseDto
+        {
+            ArmorClass = armorClass ?? p.ArmorClass,
+            DexterityModifier = dexModifier ?? p.DexterityModifier,
+            Resistances = p.Resistances,
+            Vulnerabilities = p.Vulnerabilities
+        });
+        if (updated != null) Combat = updated;
+    }
+
+    private async Task OnAcChanged(CombatParticipantDto p, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var v)) await UpdateDefense(p, v, null);
+    }
+
+    private async Task OnDexChanged(CombatParticipantDto p, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var v)) await UpdateDefense(p, null, v);
     }
 
     private async Task RecordActionFromDice(CreateCombatActionDto action)

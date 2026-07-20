@@ -1,0 +1,123 @@
+@* Panneau d'invitation d'un monde : lien + QR + invitation par email.
+   Extrait de WorldDetail.razor (refonte — découpage en composants). *@
+@namespace Cdm.Web.Components.Pages.Worlds
+@inject Cdm.Web.Services.ApiClients.WorldApiClient WorldClient
+@inject Microsoft.JSInterop.IJSRuntime JS
+@inject Microsoft.AspNetCore.Components.NavigationManager Nav
+
+<div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+    <div class="world-section-header">
+        <div>
+            <AppSectionTitle Title="Lien d'invitation au monde" Icon="bi-link-45deg" Rule="false" />
+            <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--spacing-xs) 0 0;">
+                Partagez ce lien pour inviter des joueurs à rejoindre le monde avec leur personnage. Valable 30 jours.
+            </p>
+        </div>
+    </div>
+    @if (!string.IsNullOrEmpty(WorldInviteToken))
+    {
+        var worldInviteUrl = $"{Nav.BaseUri}worlds/join/{WorldInviteToken}";
+        var qrUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(worldInviteUrl)}&bgcolor=1a1a2e&color=d4af37";
+        <div class="invite-token-box" style="margin: var(--spacing-md) 0;">@worldInviteUrl</div>
+        <div style="display: flex; gap: var(--spacing-md); align-items: flex-start; flex-wrap: wrap;">
+            <div style="display: flex; gap: var(--spacing-sm);">
+                <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(worldInviteUrl)" title="Copier le lien">
+                    <i class="bi bi-clipboard"></i>
+                    Copier
+                </button>
+                <button class="btn btn-ghost btn-sm" @onclick="GenerateWorldInviteToken" disabled="@IsGeneratingWorldToken">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Régénérer
+                </button>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: var(--spacing-xs);">
+                <img src="@qrUrl" alt="QR Code d'invitation" width="120" height="120"
+                     style="border-radius: var(--radius-md); border: 2px solid var(--color-border);" />
+                <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Scanner pour rejoindre</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <button class="btn btn-primary btn-sm" style="margin-top: var(--spacing-md);" @onclick="GenerateWorldInviteToken" disabled="@IsGeneratingWorldToken">
+            <i class="bi bi-link-45deg"></i>
+            @(IsGeneratingWorldToken ? "Génération..." : "Générer un lien d'invitation")
+        </button>
+    }
+
+    <div style="margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px solid var(--color-border);">
+        <h4 style="font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
+            <i class="bi bi-envelope-paper"></i> Inviter un joueur par email
+        </h4>
+        <p style="color: var(--color-text-secondary); font-size: var(--font-size-xs); margin: 0 0 var(--spacing-sm);">
+            Le lien d'invitation lui sera envoyé directement par email.
+        </p>
+        <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap; align-items: flex-start;">
+            <input type="email" class="form-control" style="min-width: 220px; flex: 1;" placeholder="adresse@email.com"
+                   @bind="InviteEmail" disabled="@IsSendingEmailInvite" />
+            <input type="text" class="form-control" style="min-width: 220px; flex: 1;" placeholder="Message (optionnel)"
+                   @bind="InviteMessage" disabled="@IsSendingEmailInvite" />
+            <button class="btn btn-primary btn-sm" @onclick="SendEmailInvite"
+                    disabled="@(IsSendingEmailInvite || string.IsNullOrWhiteSpace(InviteEmail))">
+                <i class="bi bi-send"></i>
+                @(IsSendingEmailInvite ? "Envoi..." : "Envoyer")
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(EmailInviteFeedback))
+        {
+            <p style="font-size: var(--font-size-xs); margin-top: var(--spacing-xs); color: @(EmailInviteSuccess ? "var(--color-success)" : "var(--color-error)");">
+                @EmailInviteFeedback
+            </p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int WorldId { get; set; }
+
+    private bool IsGeneratingWorldToken;
+    private string? WorldInviteToken;
+
+    private string InviteEmail = string.Empty;
+    private string? InviteMessage;
+    private bool IsSendingEmailInvite;
+    private string? EmailInviteFeedback;
+    private bool EmailInviteSuccess;
+
+    private async Task GenerateWorldInviteToken()
+    {
+        IsGeneratingWorldToken = true;
+        var token = await WorldClient.GenerateWorldInviteTokenAsync(WorldId);
+        if (token != null)
+            WorldInviteToken = token;
+        IsGeneratingWorldToken = false;
+    }
+
+    private async Task SendEmailInvite()
+    {
+        if (IsSendingEmailInvite || string.IsNullOrWhiteSpace(InviteEmail)) return;
+
+        IsSendingEmailInvite = true;
+        EmailInviteFeedback = null;
+        var sent = await WorldClient.InvitePlayerByEmailAsync(WorldId, InviteEmail.Trim(), string.IsNullOrWhiteSpace(InviteMessage) ? null : InviteMessage!.Trim());
+        EmailInviteSuccess = sent;
+        EmailInviteFeedback = sent
+            ? $"Invitation envoyée à {InviteEmail.Trim()}."
+            : "Échec de l'envoi. Vérifiez l'adresse et réessayez.";
+        if (sent)
+        {
+            InviteEmail = string.Empty;
+            InviteMessage = null;
+        }
+        IsSendingEmailInvite = false;
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        catch { /* silently ignore if clipboard API not available */ }
+    }
+}

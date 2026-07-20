@@ -223,6 +223,22 @@ public class WorldApiClient
         }
     }
 
+    /// <summary>Invite a player to the world by email (GM only).</summary>
+    public async Task<bool> InvitePlayerByEmailAsync(int worldId, string email, string? message)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.PostAsJsonAsync($"api/worlds/{worldId}/invite-email", new { Email = email, Message = message });
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inviting player by email to world {WorldId}", worldId);
+            return false;
+        }
+    }
+
     /// <summary>
     /// Get world info by invite token (public, no auth required).
     /// </summary>

@@ -6,11 +6,46 @@ using Cdm.Business.DnD5e.Services;
 using Cdm.Common.Services;
 using Cdm.Data.Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Azure Key Vault : source de secrets centralisée.
+// Si "KeyVault:Uri" est renseigné, tous les secrets du coffre sont ajoutés à la
+// configuration (un secret nommé "AzureEmail--ConnectionString" alimente la clé
+// "AzureEmail:ConnectionString", etc.). L'authentification passe par
+// DefaultAzureCredential : identité managée en production, `az login` du
+// développeur en local — aucun secret dans le code ni dans appsettings.
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+{
+    // On écarte les credentials qui posent problème sur les postes multi-tenants
+    // (Visual Studio / PowerShell / azd connectés à d'autres comptes) et on garde
+    // l'identité managée (production) + l'Azure CLI (développement local).
+    var credentialOptions = new Azure.Identity.DefaultAzureCredentialOptions
+    {
+        ExcludeVisualStudioCredential = true,
+        ExcludeAzurePowerShellCredential = true,
+        ExcludeAzureDeveloperCliCredential = true,
+        ExcludeInteractiveBrowserCredential = true,
+    };
+
+    // Force le tenant du coffre : indispensable quand la machine a plusieurs
+    // comptes Azure, sinon le mauvais tenant est choisi.
+    var keyVaultTenantId = builder.Configuration["KeyVault:TenantId"];
+    if (!string.IsNullOrWhiteSpace(keyVaultTenantId))
+    {
+        credentialOptions.TenantId = keyVaultTenantId;
+    }
+
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUri),
+        new Azure.Identity.DefaultAzureCredential(credentialOptions));
+}
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
@@ -28,7 +63,18 @@ builder.AddSqlServerDbContext<AppDbContext>("DefaultConnection");
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"];
 if (string.IsNullOrWhiteSpace(jwtSecretKey))
 {
-    throw new InvalidOperationException("JWT secret key configuration ('Jwt:SecretKey') is missing. Please set a secure value in your configuration.");
+    throw new InvalidOperationException("JWT secret key configuration ('Jwt:SecretKey') is missing. Please set a secure value via environment variable, User Secrets or Key Vault.");
+}
+
+// Fail-fast against an insecure / default key (audit fix #2, #8)
+if (jwtSecretKey.StartsWith("CHANGE-THIS", StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException("JWT secret key is still the default placeholder. Set a real secret ('Jwt:SecretKey') before starting the API.");
+}
+
+if (jwtSecretKey.Length < 32)
+{
+    throw new InvalidOperationException("JWT secret key must be at least 32 characters long to be secure.");
 }
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ChroniqueDesMondes";
@@ -46,7 +92,7 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecretKey)),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
         ValidateIssuer = true,
         ValidIssuer = jwtIssuer,
         ValidateAudience = true,
@@ -79,6 +125,31 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+// Rate limiting (audit fix #3) — protects auth endpoints against brute-force / enumeration
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Strict fixed window for authentication endpoints
+    options.AddFixedWindowLimiter("auth", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    // Global safety-net limiter, partitioned by client IP
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+});
+
 // Register services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
@@ -93,8 +164,11 @@ builder.Services.AddScoped<IWorldService, WorldService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+builder.Services.AddScoped<IAchievementEvaluationService, AchievementEvaluationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<ITradeService, TradeService>();
 builder.Services.AddScoped<INpcService, NpcService>();
 builder.Services.AddScoped<ICombatService, CombatService>();
 
@@ -102,8 +176,17 @@ builder.Services.AddScoped<ICombatService, CombatService>();
 builder.Services.AddScoped<IDndReferenceService, DndReferenceService>();
 builder.Services.AddScoped<IDndNpcService, DndNpcService>();
 builder.Services.AddScoped<IDndCharacterService, DndCharacterService>();
-// Email service is optional for MVP
-// builder.Services.AddScoped<IEmailService, AzureEmailService>();
+// Service d'email : Azure Communication Services si configuré, sinon repli qui
+// journalise (le parcours « mot de passe oublié » reste testable en local, le lien
+// de réinitialisation apparaît alors dans les logs de l'API).
+if (!string.IsNullOrWhiteSpace(builder.Configuration["AzureEmail:ConnectionString"]))
+{
+    builder.Services.AddScoped<IEmailService, AzureEmailService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailService, LoggingEmailService>();
+}
 
 // Configure SignalR
 builder.Services.AddSignalR(options =>
@@ -117,163 +200,6 @@ builder.Services.AddSignalR(options =>
 
 var app = builder.Build();
 
-// Apply schema safety net on startup (Production)
-// Ensures Sessions/SessionParticipants tables exist with the correct schema.
-// Also repairs if a previous bad deployment created them with wrong column names.
-if (app.Environment.IsProduction())
-{
-    using var scope = app.Services.CreateScope();
-    var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    try
-    {
-        logger.LogInformation("Ensuring correct database schema...");
-        await appDbContext.Database.ExecuteSqlRawAsync(@"
--- Repair: if Sessions was created with wrong schema (GmUserId column from bad hotfix), drop and recreate
-IF COL_LENGTH('[dbo].[Sessions]', 'GmUserId') IS NOT NULL
-BEGIN
-    IF OBJECT_ID(N'[dbo].[SessionParticipants]', N'U') IS NOT NULL
-        DROP TABLE [dbo].[SessionParticipants];
-    DROP TABLE [dbo].[Sessions];
-END
-
--- Ensure IsLocked column on Characters
-IF COL_LENGTH('[dbo].[Characters]', 'IsLocked') IS NULL
-BEGIN
-    ALTER TABLE [dbo].[Characters] ADD [IsLocked] bit NOT NULL DEFAULT 0;
-    CREATE INDEX [IX_Characters_IsLocked] ON [dbo].[Characters] ([IsLocked]);
-END
-
--- Ensure Sessions table with correct schema (StartedById, not GmUserId)
-IF OBJECT_ID(N'[dbo].[Sessions]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[Sessions] (
-        [Id] int NOT NULL IDENTITY,
-        [CampaignId] int NOT NULL,
-        [StartedById] int NOT NULL,
-        [StartedAt] datetime2 NOT NULL,
-        [EndedAt] datetime2 NULL,
-        [Status] int NOT NULL DEFAULT 1,
-        [CurrentChapterId] int NULL,
-        [WelcomeMessage] nvarchar(max) NULL,
-        CONSTRAINT [PK_Sessions] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_Sessions_Campaigns_CampaignId]
-            FOREIGN KEY ([CampaignId]) REFERENCES [dbo].[Campaigns] ([Id]) ON DELETE CASCADE,
-        CONSTRAINT [FK_Sessions_Users_StartedById]
-            FOREIGN KEY ([StartedById]) REFERENCES [dbo].[Users] ([Id]) ON DELETE NO ACTION,
-        CONSTRAINT [FK_Sessions_Chapters_CurrentChapterId]
-            FOREIGN KEY ([CurrentChapterId]) REFERENCES [dbo].[Chapters] ([Id]) ON DELETE SET NULL
-    );
-    CREATE INDEX [IX_Sessions_CampaignId] ON [dbo].[Sessions] ([CampaignId]);
-    CREATE INDEX [IX_Sessions_StartedById] ON [dbo].[Sessions] ([StartedById]);
-    CREATE INDEX [IX_Sessions_Status] ON [dbo].[Sessions] ([Status]);
-    CREATE INDEX [IX_Sessions_CurrentChapterId] ON [dbo].[Sessions] ([CurrentChapterId]);
-END
-
--- Ensure SessionParticipants table with correct schema (WorldCharacterId, not UserId/CharacterId)
-IF OBJECT_ID(N'[dbo].[SessionParticipants]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[SessionParticipants] (
-        [Id] int NOT NULL IDENTITY,
-        [SessionId] int NOT NULL,
-        [WorldCharacterId] int NOT NULL,
-        [JoinedAt] datetime2 NOT NULL,
-        [Status] int NOT NULL DEFAULT 0,
-        CONSTRAINT [PK_SessionParticipants] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_SessionParticipants_Sessions_SessionId]
-            FOREIGN KEY ([SessionId]) REFERENCES [dbo].[Sessions] ([Id]) ON DELETE CASCADE,
-        CONSTRAINT [FK_SessionParticipants_WorldCharacters_WorldCharacterId]
-            FOREIGN KEY ([WorldCharacterId]) REFERENCES [dbo].[WorldCharacters] ([Id]) ON DELETE CASCADE
-    );
-    CREATE INDEX [IX_SessionParticipants_SessionId] ON [dbo].[SessionParticipants] ([SessionId]);
-    CREATE INDEX [IX_SessionParticipants_WorldCharacterId] ON [dbo].[SessionParticipants] ([WorldCharacterId]);
-END
-");
-        logger.LogInformation("Database schema verified successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while ensuring database schema.");
-        // Do not throw — allow app to start even if safety net fails
-    }
-
-    // Safety net for new tables added in migration 20260421100000
-    try
-    {
-        await appDbContext.Database.ExecuteSqlRawAsync(@"
-IF OBJECT_ID(N'[dbo].[RefreshTokens]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[RefreshTokens] (
-        [Id] int NOT NULL IDENTITY,
-        [Token] nvarchar(500) NOT NULL,
-        [UserId] int NOT NULL,
-        [ExpiresAt] datetime2 NOT NULL,
-        [CreatedAt] datetime2 NOT NULL DEFAULT (GETUTCDATE()),
-        [RevokedAt] datetime2 NULL,
-        CONSTRAINT [PK_RefreshTokens] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_RefreshTokens_Users_UserId] FOREIGN KEY ([UserId])
-            REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE
-    );
-    CREATE UNIQUE INDEX [IX_RefreshTokens_Token] ON [dbo].[RefreshTokens] ([Token]);
-    CREATE INDEX [IX_RefreshTokens_UserId] ON [dbo].[RefreshTokens] ([UserId]);
-    CREATE INDEX [IX_RefreshTokens_ExpiresAt] ON [dbo].[RefreshTokens] ([ExpiresAt]);
-END
-
-IF OBJECT_ID(N'[dbo].[SessionMessages]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[SessionMessages] (
-        [Id] int NOT NULL IDENTITY,
-        [ChapterId] int NOT NULL,
-        [UserId] int NOT NULL,
-        [UserName] nvarchar(200) NOT NULL,
-        [Message] nvarchar(max) NOT NULL,
-        [SentAt] datetime2 NOT NULL DEFAULT (GETUTCDATE()),
-        CONSTRAINT [PK_SessionMessages] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_SessionMessages_Chapters_ChapterId] FOREIGN KEY ([ChapterId])
-            REFERENCES [dbo].[Chapters] ([Id]) ON DELETE CASCADE,
-        CONSTRAINT [FK_SessionMessages_Users_UserId] FOREIGN KEY ([UserId])
-            REFERENCES [dbo].[Users] ([Id]) ON DELETE NO ACTION
-    );
-    CREATE INDEX [IX_SessionMessages_ChapterId] ON [dbo].[SessionMessages] ([ChapterId]);
-    CREATE INDEX [IX_SessionMessages_UserId] ON [dbo].[SessionMessages] ([UserId]);
-    CREATE INDEX [IX_SessionMessages_SentAt] ON [dbo].[SessionMessages] ([SentAt]);
-END
-
-IF OBJECT_ID(N'[dbo].[SessionDiceRolls]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[SessionDiceRolls] (
-        [Id] int NOT NULL IDENTITY,
-        [ChapterId] int NOT NULL,
-        [UserId] int NOT NULL,
-        [UserName] nvarchar(200) NOT NULL,
-        [DiceType] nvarchar(20) NOT NULL,
-        [Count] int NOT NULL,
-        [Results] nvarchar(500) NOT NULL,
-        [Modifier] int NOT NULL DEFAULT 0,
-        [Total] int NOT NULL,
-        [Reason] nvarchar(500) NULL,
-        [RolledAt] datetime2 NOT NULL DEFAULT (GETUTCDATE()),
-        CONSTRAINT [PK_SessionDiceRolls] PRIMARY KEY ([Id]),
-        CONSTRAINT [FK_SessionDiceRolls_Chapters_ChapterId] FOREIGN KEY ([ChapterId])
-            REFERENCES [dbo].[Chapters] ([Id]) ON DELETE CASCADE,
-        CONSTRAINT [FK_SessionDiceRolls_Users_UserId] FOREIGN KEY ([UserId])
-            REFERENCES [dbo].[Users] ([Id]) ON DELETE NO ACTION
-    );
-    CREATE INDEX [IX_SessionDiceRolls_ChapterId] ON [dbo].[SessionDiceRolls] ([ChapterId]);
-    CREATE INDEX [IX_SessionDiceRolls_UserId] ON [dbo].[SessionDiceRolls] ([UserId]);
-    CREATE INDEX [IX_SessionDiceRolls_DiceType] ON [dbo].[SessionDiceRolls] ([DiceType]);
-    CREATE INDEX [IX_SessionDiceRolls_RolledAt] ON [dbo].[SessionDiceRolls] ([RolledAt]);
-END
-");
-        logger.LogInformation("RefreshTokens, SessionMessages, SessionDiceRolls tables ensured.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while ensuring new tables schema.");
-    }
-}
-
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
@@ -282,17 +208,23 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Rate limiting (audit fix #3)
+app.UseRateLimiter();
+
 // Enable authentication and authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Security headers (OWASP Best Practices)
+// Security headers (OWASP Best Practices) — audit fix #11
 app.Use(async (context, next) =>
 {
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'";
+    context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
     await next();
 });
 
@@ -311,6 +243,7 @@ app.MapSessionEndpoints();
 app.MapNpcEndpoints();
 app.MapCombatEndpoints();
 app.MapDndEndpoints();
+app.MapStatisticsEndpoints();
 
 // Map SignalR hubs
 app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");

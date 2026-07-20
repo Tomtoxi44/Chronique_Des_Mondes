@@ -30,6 +30,8 @@ public partial class SessionGm : IAsyncDisposable
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private ILocalStorageService LocalStorage { get; set; } = default!;
+    [Inject] private ToastService Toast { get; set; } = default!;
+    [Inject] private ILogger<SessionGm> Logger { get; set; } = default!;
 
     private SessionDto? Session;
     private List<ChapterDto> Chapters = new();
@@ -52,6 +54,13 @@ public partial class SessionGm : IAsyncDisposable
     private List<ChatEntry> ChatEntries { get; set; } = new();
     private string ChatInput = "";
     private int? RollingDie;
+
+    // Trades (object exchanges)
+    private List<SessionTradeDto> PendingTrades { get; set; } = new();
+    private int TradeTargetUserId;
+    private string TradeOffer = "";
+    private string TradeRequest = "";
+    private bool IsProposingTrade;
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,7 +106,31 @@ public partial class SessionGm : IAsyncDisposable
         NavContext.ClearContext();
         IsLoading = false;
 
+        // Rebuild the timeline from persisted history BEFORE connecting to the hub,
+        // so live events only ever append to an already-complete history (no duplicates).
+        await LoadHistoryAsync();
+        await LoadTradesAsync();
+
         await ConnectToHubAsync();
+    }
+
+    private async Task LoadTradesAsync()
+    {
+        PendingTrades = await SessionClient.GetPendingTradesAsync(SessionId);
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        var history = await SessionClient.GetSessionHistoryAsync(SessionId);
+        if (history == null) return;
+
+        var entries = new List<ChatEntry>(history.Messages.Count + history.DiceRolls.Count);
+        foreach (var m in history.Messages)
+            entries.Add(new ChatEntry("text", m.UserName, m.Message, null, null, m.SentAt));
+        foreach (var d in history.DiceRolls)
+            entries.Add(new ChatEntry("dice", d.UserName, null, d.DiceType, d.Results, d.RolledAt, d.Reason, d.Modifier));
+
+        ChatEntries = entries.OrderBy(e => e.Timestamp).ToList();
     }
 
     private async Task ConnectToHubAsync()
@@ -123,7 +156,20 @@ public partial class SessionGm : IAsyncDisposable
 
         _hub.On<HubDiceDto>("DiceRolled", dto =>
         {
-            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp));
+            ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp, dto.Reason, dto.Modifier));
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<SessionTradeDto>("TradeProposed", trade =>
+        {
+            PendingTrades.RemoveAll(t => t.Id == trade.Id);
+            PendingTrades.Add(trade);
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<SessionTradeDto>("TradeResolved", trade =>
+        {
+            PendingTrades.RemoveAll(t => t.Id == trade.Id);
             InvokeAsync(StateHasChanged);
         });
 
@@ -132,7 +178,14 @@ public partial class SessionGm : IAsyncDisposable
             await _hub.StartAsync();
             await _hub.InvokeAsync("JoinSession", SessionId);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Ne jamais échouer en silence : sans le hub, le chat et les dés sont muets.
+            Logger.LogWarning(ex, "Connexion au hub de session impossible (session {SessionId})", SessionId);
+            Toast.ShowError(
+                "Temps réel indisponible : le chat et les dés partagés ne fonctionneront pas. Rechargez la page pour réessayer.",
+                "Connexion perdue");
+        }
     }
 
     private async Task SendMessage()
@@ -140,8 +193,16 @@ public partial class SessionGm : IAsyncDisposable
         if (_hub == null || !IsHubConnected || string.IsNullOrWhiteSpace(ChatInput)) return;
         var msg = ChatInput.Trim();
         ChatInput = "";
-        try { await _hub.InvokeAsync("SendMessage", SessionId, msg); }
-        catch { }
+        try
+        {
+            await _hub.InvokeAsync("SendMessage", SessionId, msg);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Envoi du message impossible (session {SessionId})", SessionId);
+            ChatInput = msg; // on rend son texte à l'utilisateur plutôt que de le perdre
+            Toast.ShowError("Message non envoyé. Vérifiez votre connexion.", "Chat");
+        }
     }
 
     private async Task RollDice(int faces)
@@ -151,13 +212,88 @@ public partial class SessionGm : IAsyncDisposable
         StateHasChanged();
         await Task.Delay(400);
         var result = Random.Shared.Next(1, faces + 1);
-        try { await _hub.InvokeAsync("RollDice", SessionId, $"D{faces}", 1, new[] { result }, 0, (string?)null); }
-        catch
+        try
         {
+            await _hub.InvokeAsync("RollDice", SessionId, $"D{faces}", 1, new[] { result }, 0, (string?)null);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Partage du jet de dé impossible (session {SessionId})", SessionId);
+            // Repli local : le MJ voit son jet, mais il faut dire qu'il n'a pas été partagé.
             ChatEntries.Add(new ChatEntry("dice", CurrentUserName ?? "MJ", null, $"D{faces}", new[] { result }, DateTime.UtcNow));
+            Toast.ShowWarning("Jet effectué localement : il n'a pas été partagé aux joueurs.", "Dés");
         }
         RollingDie = null;
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Selectable trade targets: every joined participant (the GM is the current user here).
+    /// </summary>
+    private List<(int UserId, string Name)> TradeTargets()
+    {
+        var targets = new List<(int, string)>();
+        if (Session == null) return targets;
+
+        foreach (var p in Session.Participants)
+        {
+            if (p.UserId != CurrentUserId && p.UserId > 0)
+                targets.Add((p.UserId, p.UserName));
+        }
+        return targets;
+    }
+
+    private async Task ProposeTrade()
+    {
+        if (_hub == null || !IsHubConnected || IsProposingTrade) return;
+        if (TradeTargetUserId <= 0 || string.IsNullOrWhiteSpace(TradeOffer) || string.IsNullOrWhiteSpace(TradeRequest))
+        {
+            Toast.ShowWarning("Choisissez un destinataire et décrivez l'offre et la demande.", "Échange");
+            return;
+        }
+
+        IsProposingTrade = true;
+        try
+        {
+            await _hub.InvokeAsync("ProposeTrade", SessionId, TradeTargetUserId, TradeOffer.Trim(), TradeRequest.Trim());
+            TradeOffer = "";
+            TradeRequest = "";
+            TradeTargetUserId = 0;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Proposition d'échange impossible (session {SessionId})", SessionId);
+            Toast.ShowError("Proposition d'échange non envoyée.", "Échange");
+        }
+        IsProposingTrade = false;
+    }
+
+    private async Task RespondToTrade(int tradeId, bool accept)
+    {
+        if (_hub == null || !IsHubConnected) return;
+        try
+        {
+            await _hub.InvokeAsync("RespondToTrade", SessionId, tradeId, accept);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Réponse à l'échange impossible (session {SessionId})", SessionId);
+            Toast.ShowError("Réponse non envoyée.", "Échange");
+        }
+    }
+
+    private async Task CancelTrade(int tradeId)
+    {
+        if (_hub == null || !IsHubConnected) return;
+        try
+        {
+            await _hub.InvokeAsync("CancelTrade", SessionId, tradeId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Annulation de l'échange impossible (session {SessionId})", SessionId);
+            Toast.ShowError("Annulation non envoyée.", "Échange");
+        }
     }
 
     private async Task SelectChapter(ChapterDto chapter)
@@ -314,7 +450,7 @@ public partial class SessionGm : IAsyncDisposable
             await _hub.DisposeAsync();
     }
 
-    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp);
+    private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp, string? Reason = null, int Modifier = 0);
     private record HubMessageDto(int UserId, string? UserName, string? Message, DateTime Timestamp);
     private record HubDiceDto(int UserId, string? UserName, string? DiceType, int Count, int[]? Results, int Modifier, int Total, string? Reason, DateTime Timestamp);
 }

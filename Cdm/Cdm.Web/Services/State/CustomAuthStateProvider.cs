@@ -19,6 +19,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     private const string AuthUserNicknameKey = "auth_user_nickname";
     private const string AuthRefreshTokenKey = "auth_refresh_token";
     private const string AuthRefreshTokenExpiryKey = "auth_refresh_token_expiry";
+    private const string AuthEmailConfirmedKey = "auth_email_confirmed";
     
     public CustomAuthStateProvider(
         ILocalStorageService localStorage,
@@ -63,19 +64,21 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
             var userId = await this.localStorage.GetItemAsync(AuthUserIdKey);
             var userEmail = await this.localStorage.GetItemAsync(AuthUserEmailKey);
             var userNickname = await this.localStorage.GetItemAsync(AuthUserNicknameKey);
-            
+            var emailConfirmed = await this.localStorage.GetItemAsync(AuthEmailConfirmedKey);
+
             if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(userEmail))
             {
                 this.logger.LogWarning("Token found but user info incomplete");
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
-            
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId),
                 new Claim(ClaimTypes.Email, userEmail),
                 new Claim(ClaimTypes.Name, userNickname ?? userEmail),
-                new Claim("nickname", userNickname ?? userEmail)
+                new Claim("nickname", userNickname ?? userEmail),
+                new Claim("email_confirmed", emailConfirmed ?? "true")
             };
             
             var identity = new ClaimsIdentity(claims, "jwt");
@@ -94,34 +97,47 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     
     public async Task MarkUserAsAuthenticatedAsync(
         int userId, string email, string nickname, string token,
-        string? refreshToken = null, DateTime? refreshTokenExpiry = null)
+        string? refreshToken = null, DateTime? refreshTokenExpiry = null,
+        bool emailConfirmed = true)
     {
         await this.localStorage.SetItemAsync(AuthTokenKey, token);
         await this.localStorage.SetItemAsync(AuthUserIdKey, userId.ToString());
         await this.localStorage.SetItemAsync(AuthUserEmailKey, email);
         await this.localStorage.SetItemAsync(AuthUserNicknameKey, nickname);
+        await this.localStorage.SetItemAsync(AuthEmailConfirmedKey, emailConfirmed ? "true" : "false");
 
         if (!string.IsNullOrEmpty(refreshToken))
         {
             await this.localStorage.SetItemAsync(AuthRefreshTokenKey, refreshToken);
-            await this.localStorage.SetItemAsync(AuthRefreshTokenExpiryKey, 
+            await this.localStorage.SetItemAsync(AuthRefreshTokenExpiryKey,
                 (refreshTokenExpiry ?? DateTime.UtcNow.AddDays(7)).ToString("O"));
         }
-        
+
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Name, nickname ?? email),
-            new Claim("nickname", nickname ?? email)
+            new Claim("nickname", nickname ?? email),
+            new Claim("email_confirmed", emailConfirmed ? "true" : "false")
         };
-        
+
         var identity = new ClaimsIdentity(claims, "jwt");
         var user = new ClaimsPrincipal(identity);
-        
+
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
-        
+
         this.logger.LogInformation("User marked as authenticated: {Email}", email);
+    }
+
+    /// <summary>
+    /// Met à jour l'état « email confirmé » sans reconnexion (après validation réussie),
+    /// pour faire disparaître le bandeau immédiatement.
+    /// </summary>
+    public async Task MarkEmailConfirmedAsync()
+    {
+        await this.localStorage.SetItemAsync(AuthEmailConfirmedKey, "true");
+        NotifyAuthenticationStateChanged(this.GetAuthenticationStateAsync());
     }
     
     public async Task MarkUserAsLoggedOutAsync()
@@ -146,7 +162,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
 
             await this.MarkUserAsAuthenticatedAsync(
                 response.UserId, response.Email, response.Nickname, response.Token,
-                response.RefreshToken, response.RefreshTokenExpiry);
+                response.RefreshToken, response.RefreshTokenExpiry, response.EmailConfirmed);
 
             this.logger.LogInformation("Token refreshed successfully for user {UserId}", response.UserId);
             return true;
@@ -166,6 +182,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         await this.localStorage.RemoveItemAsync(AuthUserNicknameKey);
         await this.localStorage.RemoveItemAsync(AuthRefreshTokenKey);
         await this.localStorage.RemoveItemAsync(AuthRefreshTokenExpiryKey);
+        await this.localStorage.RemoveItemAsync(AuthEmailConfirmedKey);
     }
 
     private static bool IsJwtExpired(string token)

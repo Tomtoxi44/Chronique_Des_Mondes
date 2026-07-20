@@ -17,11 +17,12 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// Service for managing game sessions.
 /// </summary>
-public class SessionService(AppDbContext dbContext, ILogger<SessionService> logger, INotificationService notificationService) : ISessionService
+public class SessionService(AppDbContext dbContext, ILogger<SessionService> logger, INotificationService notificationService, IAchievementEvaluationService achievementEvaluation) : ISessionService
 {
     private readonly AppDbContext dbContext = dbContext;
     private readonly ILogger<SessionService> logger = logger;
     private readonly INotificationService notificationService = notificationService;
+    private readonly IAchievementEvaluationService achievementEvaluation = achievementEvaluation;
 
     /// <inheritdoc/>
     public async Task<SessionDto?> StartSessionAsync(StartSessionDto dto, int userId)
@@ -292,6 +293,9 @@ public class SessionService(AppDbContext dbContext, ILogger<SessionService> logg
             participant.Status = SessionParticipantStatus.Joined;
             await this.dbContext.SaveChangesAsync();
 
+            // Award any automatic achievement based on session attendance.
+            await this.achievementEvaluation.OnSessionAttendedAsync(userId, sessionId);
+
             return await this.BuildSessionDtoAsync(sessionId);
         }
         catch (Exception ex)
@@ -350,6 +354,100 @@ public class SessionService(AppDbContext dbContext, ILogger<SessionService> logg
             this.logger.LogError(ex, "Error leaving session {SessionId} for user {UserId}", sessionId, userId);
             return false;
         }
+    }
+
+    /// <inheritdoc/>
+    public async Task<SessionHistoryDto?> GetSessionHistoryAsync(int sessionId, int userId)
+    {
+        try
+        {
+            // Authorize: GM of the session or a participant who owns a character in it.
+            var session = await this.dbContext.Sessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+            if (session == null)
+            {
+                return null;
+            }
+
+            var isGm = session.StartedById == userId;
+            var isParticipant = await this.dbContext.SessionParticipants
+                .AsNoTracking()
+                .AnyAsync(p => p.SessionId == sessionId && p.WorldCharacter.Character.UserId == userId);
+
+            if (!isGm && !isParticipant)
+            {
+                return null;
+            }
+
+            // Cap the payload: keep the most recent entries, then present them chronologically.
+            const int MaxEntries = 500;
+
+            var messages = await this.dbContext.SessionMessages
+                .AsNoTracking()
+                .Where(m => m.SessionId == sessionId)
+                .OrderByDescending(m => m.SentAt)
+                .Take(MaxEntries)
+                .ToListAsync();
+
+            var diceRolls = await this.dbContext.SessionDiceRolls
+                .AsNoTracking()
+                .Where(d => d.SessionId == sessionId)
+                .OrderByDescending(d => d.RolledAt)
+                .Take(MaxEntries)
+                .ToListAsync();
+
+            return new SessionHistoryDto
+            {
+                Messages = messages
+                    .OrderBy(m => m.SentAt)
+                    .Select(m => new SessionMessageDto
+                    {
+                        UserId = m.UserId,
+                        UserName = m.UserName,
+                        Message = m.Message,
+                        SentAt = m.SentAt
+                    })
+                    .ToList(),
+                DiceRolls = diceRolls
+                    .OrderBy(d => d.RolledAt)
+                    .Select(d => new SessionDiceRollDto
+                    {
+                        UserId = d.UserId,
+                        UserName = d.UserName,
+                        DiceType = d.DiceType,
+                        Count = d.Count,
+                        Results = ParseResults(d.Results),
+                        Modifier = d.Modifier,
+                        Total = d.Total,
+                        Reason = d.Reason,
+                        RolledAt = d.RolledAt
+                    })
+                    .ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error retrieving history for session {SessionId}", sessionId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parses the comma-separated die results into an integer array, tolerating malformed entries.
+    /// </summary>
+    private static int[] ParseResults(string? results)
+    {
+        if (string.IsNullOrWhiteSpace(results))
+        {
+            return [];
+        }
+
+        return results
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(part => int.TryParse(part, out var value) ? value : 0)
+            .ToArray();
     }
 
     private async Task<SessionDto?> BuildSessionDtoAsync(int sessionId)

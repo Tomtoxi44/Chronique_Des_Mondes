@@ -292,10 +292,15 @@ else if (Session != null)
                                 }
                                 else if (entry.Type == "dice" && entry.Results != null)
                                 {
+                                    @if (!string.IsNullOrWhiteSpace(entry.Reason))
+                                    {
+                                        <span class="chat-entry-text" style="font-weight: 600;">@entry.Reason</span>
+                                    }
                                     <div class="chat-entry-dice">
-                                        <span class="chat-dice-type">@entry.DiceType</span>
+                                        <span class="chat-dice-type">@(entry.Modifier != 0 ? $"{entry.Results.Length}{entry.DiceType}{(entry.Modifier > 0 ? $"+{entry.Modifier}" : entry.Modifier.ToString())}" : entry.DiceType)</span>
                                         <span>→</span>
                                         <span class="chat-dice-result">@string.Join(", ", entry.Results)</span>
+                                        <span style="color: var(--color-text-muted); font-size: var(--font-size-xs);">(Total: @(entry.Results.Sum() + entry.Modifier))</span>
                                     </div>
                                 }
                             </div>
@@ -323,6 +328,68 @@ else if (Session != null)
                         <button class="btn btn-primary btn-sm" @onclick="SendMessage"
                                 disabled="@(!IsHubConnected || string.IsNullOrWhiteSpace(ChatInput))">
                             <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Échanges d'objets -->
+                <div class="gm-chat-section">
+                    <div class="gm-chat-header">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Échanges</span>
+                    </div>
+                    <div style="padding: var(--spacing-sm); display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        @if (PendingTrades.Count == 0)
+                        {
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); font-style: italic; text-align: center;">
+                                Aucune proposition en attente.
+                            </p>
+                        }
+                        @foreach (var trade in PendingTrades)
+                        {
+                            <div class="chat-entry" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--spacing-xs);">
+                                <div class="chat-entry-meta">
+                                    <span class="chat-entry-author">@trade.FromUserName → @trade.ToUserName</span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs);">
+                                    <div><strong>Offre :</strong> @trade.OfferDescription</div>
+                                    <div><strong>Demande :</strong> @trade.RequestDescription</div>
+                                </div>
+                                @if (trade.ToUserId == CurrentUserId)
+                                {
+                                    <div style="display: flex; gap: var(--spacing-xs); margin-top: var(--spacing-xs);">
+                                        <button class="btn btn-primary btn-sm" @onclick="() => RespondToTrade(trade.Id, true)" disabled="@(!IsHubConnected)">
+                                            <i class="bi bi-check-lg"></i> Accepter
+                                        </button>
+                                        <button class="btn btn-outline btn-sm" @onclick="() => RespondToTrade(trade.Id, false)" disabled="@(!IsHubConnected)">
+                                            <i class="bi bi-x-lg"></i> Refuser
+                                        </button>
+                                    </div>
+                                }
+                                else if (trade.FromUserId == CurrentUserId)
+                                {
+                                    <div style="margin-top: var(--spacing-xs);">
+                                        <button class="btn btn-outline btn-sm" @onclick="() => CancelTrade(trade.Id)" disabled="@(!IsHubConnected)">
+                                            <i class="bi bi-trash"></i> Annuler
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div style="padding: var(--spacing-sm); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        <select class="form-control" style="font-size: var(--font-size-xs);" @bind="TradeTargetUserId" disabled="@(!IsHubConnected)">
+                            <option value="0">— Destinataire —</option>
+                            @foreach (var target in TradeTargets())
+                            {
+                                <option value="@target.UserId">@target.Name</option>
+                            }
+                        </select>
+                        <input class="form-control" style="font-size: var(--font-size-xs);" placeholder="Ce que je propose…" @bind="TradeOffer" disabled="@(!IsHubConnected)" />
+                        <input class="form-control" style="font-size: var(--font-size-xs);" placeholder="Ce que je demande en retour…" @bind="TradeRequest" disabled="@(!IsHubConnected)" />
+                        <button class="btn btn-primary btn-sm" @onclick="ProposeTrade"
+                                disabled="@(!IsHubConnected || IsProposingTrade || TradeTargetUserId <= 0 || string.IsNullOrWhiteSpace(TradeOffer) || string.IsNullOrWhiteSpace(TradeRequest))">
+                            <i class="bi bi-send"></i> Proposer l'échange
                         </button>
                     </div>
                 </div>

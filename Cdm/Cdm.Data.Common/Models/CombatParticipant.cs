@@ -41,6 +41,18 @@ public class CombatParticipant
     /// <summary>Gets or sets the initiative value (null until rolled/declared).</summary>
     public int? Initiative { get; set; }
 
+    /// <summary>Gets or sets the Dexterity modifier used for automatic initiative (1d20 + DEX).</summary>
+    public int DexterityModifier { get; set; }
+
+    /// <summary>Gets or sets the armor class used to resolve incoming attacks server-side.</summary>
+    public int ArmorClass { get; set; } = 10;
+
+    /// <summary>Gets or sets the damage types this participant resists (comma-separated, lowercase).</summary>
+    public string? Resistances { get; set; }
+
+    /// <summary>Gets or sets the damage types this participant is vulnerable to (comma-separated, lowercase).</summary>
+    public string? Vulnerabilities { get; set; }
+
     /// <summary>Gets or sets the turn order position (assigned after initiative is sorted).</summary>
     public int TurnOrder { get; set; }
 

@@ -68,6 +68,16 @@ public static class SessionEndpoints
         group.MapPut("/{id:int}/leave", LeaveSessionAsync)
             .WithName("LeaveSession")
             .WithOpenApi();
+
+        // GET /api/sessions/{id}/history - Get persisted chat & dice history
+        group.MapGet("/{id:int}/history", GetSessionHistoryAsync)
+            .WithName("GetSessionHistory")
+            .WithOpenApi();
+
+        // GET /api/sessions/{id}/trades/pending - Get pending object trades
+        group.MapGet("/{id:int}/trades/pending", GetPendingTradesAsync)
+            .WithName("GetPendingTrades")
+            .WithOpenApi();
     }
 
     private static async Task<IResult> StartSessionAsync(
@@ -175,7 +185,7 @@ public static class SessionEndpoints
             var ended = await sessionService.EndSessionAsync(id, userId.Value);
             if (!ended) return Results.BadRequest(new { Error = "Failed to end session. Check session ownership." });
 
-            await hubContext.Clients.Group($"chapter_{id}")
+            await hubContext.Clients.Group($"session_{id}")
                 .SendAsync("SessionEnded", new { SessionId = id, Timestamp = DateTime.UtcNow });
 
             return Results.NoContent();
@@ -254,6 +264,52 @@ public static class SessionEndpoints
         catch (Exception ex)
         {
             logger.LogError(ex, "Error leaving session {SessionId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> GetSessionHistoryAsync(
+        int id,
+        [FromServices] ISessionService sessionService,
+        ILogger<SessionEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var history = await sessionService.GetSessionHistoryAsync(id, userId.Value);
+            if (history == null) return Results.NotFound();
+
+            return Results.Ok(history);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving history for session {SessionId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static async Task<IResult> GetPendingTradesAsync(
+        int id,
+        [FromServices] ITradeService tradeService,
+        ILogger<SessionEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null) return Results.Unauthorized();
+
+            var trades = await tradeService.GetPendingTradesAsync(id, userId.Value);
+            if (trades == null) return Results.NotFound();
+
+            return Results.Ok(trades);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving pending trades for session {SessionId}", id);
             return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
         }
     }

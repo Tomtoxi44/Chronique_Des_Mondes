@@ -7,11 +7,14 @@
 namespace Cdm.Business.Common.Services;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.DTOs.DnD5e;
 using Cdm.Business.Abstraction.Services;
+using Cdm.Common;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 /// <summary>
 /// Service for managing generic combat encounters within game sessions.
@@ -20,8 +23,11 @@ using Microsoft.Extensions.Logging;
 /// <param name="logger">Logger instance.</param>
 public class CombatService(
     AppDbContext dbContext,
+    IAchievementEvaluationService achievementEvaluation,
     ILogger<CombatService> logger) : ICombatService
 {
+    private readonly IAchievementEvaluationService achievementEvaluation = achievementEvaluation;
+
     private readonly AppDbContext dbContext = dbContext;
     private readonly ILogger<CombatService> logger = logger;
 
@@ -87,7 +93,14 @@ public class CombatService(
                         CurrentHp = participantDto.MaxHp,
                         IsActive = true,
                         TurnOrder = 0,
+                        Resistances = participantDto.Resistances,
+                        Vulnerabilities = participantDto.Vulnerabilities,
                     };
+
+                    // Resolve defensive stats from the D&D sheet unless explicitly provided.
+                    var sheet = await this.ResolveSheetDefenseAsync(participantDto.CharacterId);
+                    participant.DexterityModifier = participantDto.DexterityModifier ?? sheet.DexModifier;
+                    participant.ArmorClass = participantDto.ArmorClass ?? sheet.ArmorClass;
 
                     this.dbContext.CombatParticipants.Add(participant);
                 }
@@ -260,6 +273,253 @@ public class CombatService(
             return null;
         }
     }
+
+    /// <inheritdoc/>
+    public async Task<CombatDto?> RollInitiativeAsync(int combatId, int userId)
+    {
+        try
+        {
+            var combat = await this.dbContext.Combats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == combatId);
+
+            if (combat == null) return null;
+
+            if (!await this.IsGmOfSessionAsync(combat.SessionId, userId))
+            {
+                this.logger.LogWarning(
+                    "User {UserId} is not authorized to roll initiative for combat {CombatId}",
+                    userId,
+                    combatId);
+                return null;
+            }
+
+            var rng = new Random();
+            foreach (var participant in combat.Participants.Where(p => p.IsActive))
+            {
+                // D&D 5e initiative: 1d20 + Dexterity modifier, resolved server-side.
+                participant.Initiative = rng.Next(1, 21) + participant.DexterityModifier;
+            }
+
+            combat.Status = 1; // Initiative
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation("Auto-rolled initiative (1d20 + DEX) for combat {CombatId}", combatId);
+
+            return await this.LoadCombatDtoAsync(combatId);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error rolling initiative for combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Resolves a player character's defensive stats (Dexterity modifier, armor class) from their
+    /// D&D sheet (stored as JSON in <c>WorldCharacter.GameSpecificData</c>). Falls back to defaults.
+    /// </summary>
+    private async Task<(int DexModifier, int ArmorClass)> ResolveSheetDefenseAsync(int? characterId)
+    {
+        const int DefaultArmorClass = 10;
+        if (characterId is null)
+        {
+            return (0, DefaultArmorClass);
+        }
+
+        try
+        {
+            var worldCharacter = await this.dbContext.WorldCharacters
+                .AsNoTracking()
+                .FirstOrDefaultAsync(wc => wc.CharacterId == characterId.Value);
+
+            if (worldCharacter is null || string.IsNullOrWhiteSpace(worldCharacter.GameSpecificData))
+            {
+                return (0, DefaultArmorClass);
+            }
+
+            var stats = JsonSerializer.Deserialize<DndCharacterStatsDto>(
+                worldCharacter.GameSpecificData,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+            return (stats?.DexterityModifier ?? 0, stats?.ArmorClass ?? DefaultArmorClass);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogWarning(ex, "Could not resolve defensive stats for character {CharacterId}", characterId);
+            return (0, DefaultArmorClass);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<CombatDto?> ResolveAttackAsync(int combatId, int attackerParticipantId, ResolveAttackDto request, int userId)
+    {
+        try
+        {
+            var combat = await this.dbContext.Combats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == combatId);
+
+            if (combat == null) return null;
+
+            var attacker = combat.Participants.FirstOrDefault(p => p.Id == attackerParticipantId && p.IsActive);
+            var target = combat.Participants.FirstOrDefault(p => p.Id == request.TargetParticipantId && p.IsActive);
+            if (attacker == null || target == null)
+            {
+                return null;
+            }
+
+            // The GM, or the player who owns the attacking participant, may resolve the attack.
+            var isGm = await this.IsGmOfSessionAsync(combat.SessionId, userId);
+            if (!isGm && attacker.UserId != userId)
+            {
+                this.logger.LogWarning("User {UserId} not authorized to attack from participant {ParticipantId}", userId, attackerParticipantId);
+                return null;
+            }
+
+            var rng = new Random();
+            var d20 = rng.Next(1, 21);
+            var isCrit = d20 == 20;
+            var isAutoMiss = d20 == 1;
+            var attackTotal = d20 + request.AttackBonus;
+            var hit = isCrit || (!isAutoMiss && attackTotal >= target.ArmorClass);
+
+            var label = string.IsNullOrWhiteSpace(request.Label) ? "Attaque" : request.Label;
+            string description;
+            int damage = 0;
+
+            if (!hit)
+            {
+                description = $"{attacker.Name} → {target.Name} : {label}, jet {d20}+{request.AttackBonus}={attackTotal} vs CA {target.ArmorClass} → manqué"
+                    + (isAutoMiss ? " (échec critique)" : string.Empty);
+            }
+            else
+            {
+                damage = ComputeDamage(rng, request.DamageDice, request.DamageBonus, isCrit);
+                damage = ApplyResistanceVulnerability(damage, request.DamageType, target);
+                target.CurrentHp = Math.Max(0, target.CurrentHp - damage);
+
+                var typeSuffix = string.IsNullOrWhiteSpace(request.DamageType) ? string.Empty : $" {request.DamageType}";
+                description = $"{attacker.Name} → {target.Name} : {label}, jet {d20}+{request.AttackBonus}={attackTotal} vs CA {target.ArmorClass} → "
+                    + (isCrit ? "CRITIQUE" : "touché") + $", {damage} dégâts{typeSuffix} (PV {target.CurrentHp}/{target.MaxHp})";
+            }
+
+            this.dbContext.CombatActions.Add(new CombatAction
+            {
+                CombatId = combatId,
+                ParticipantName = attacker.Name,
+                ActionType = "attack",
+                Description = description,
+                DiceExpression = request.DamageDice,
+                DiceResult = hit ? damage : null,
+                IsPrivate = false,
+                PerformedByUserId = userId,
+                CreatedAt = DateTime.UtcNow,
+            });
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation("Attack resolved in combat {CombatId}: {Description}", combatId, description);
+
+            return await this.LoadCombatDtoAsync(combatId);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error resolving attack in combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<CombatDto?> UpdateParticipantDefenseAsync(int combatId, int participantId, UpdateParticipantDefenseDto request, int userId)
+    {
+        try
+        {
+            var combat = await this.dbContext.Combats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == combatId);
+
+            if (combat == null) return null;
+
+            if (!await this.IsGmOfSessionAsync(combat.SessionId, userId))
+            {
+                this.logger.LogWarning("User {UserId} not authorized to edit participant defense in combat {CombatId}", userId, combatId);
+                return null;
+            }
+
+            var participant = combat.Participants.FirstOrDefault(p => p.Id == participantId);
+            if (participant == null) return null;
+
+            participant.ArmorClass = request.ArmorClass;
+            participant.DexterityModifier = request.DexterityModifier;
+            participant.Resistances = string.IsNullOrWhiteSpace(request.Resistances) ? null : request.Resistances.Trim();
+            participant.Vulnerabilities = string.IsNullOrWhiteSpace(request.Vulnerabilities) ? null : request.Vulnerabilities.Trim();
+
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation(
+                "Updated defense for participant {ParticipantId} in combat {CombatId} (CA {AC}, DEX {Dex})",
+                participantId, combatId, request.ArmorClass, request.DexterityModifier);
+
+            return await this.LoadCombatDtoAsync(combatId);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error updating participant defense in combat {CombatId}", combatId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Rolls damage dice (doubling the dice on a critical hit, per D&D 5e) plus a flat bonus.
+    /// </summary>
+    private static int ComputeDamage(Random rng, string damageDice, int damageBonus, bool isCrit)
+    {
+        if (!DiceNotation.TryParse(damageDice, out var expr))
+        {
+            // Fall back to just the bonus (+ notation's flat part is unknown) if the notation is invalid.
+            return Math.Max(0, damageBonus);
+        }
+
+        var diceCount = isCrit ? expr.Count * 2 : expr.Count;
+        var rolled = 0;
+        for (var i = 0; i < diceCount; i++)
+        {
+            rolled += rng.Next(1, expr.Faces + 1);
+        }
+
+        return Math.Max(0, rolled + expr.FlatBonus + damageBonus);
+    }
+
+    /// <summary>
+    /// Applies the target's resistance (half) and vulnerability (double) for the given damage type.
+    /// </summary>
+    private static int ApplyResistanceVulnerability(int damage, string? damageType, CombatParticipant target)
+    {
+        if (string.IsNullOrWhiteSpace(damageType) || damage <= 0)
+        {
+            return damage;
+        }
+
+        var type = damageType.Trim().ToLowerInvariant();
+
+        if (ContainsType(target.Vulnerabilities, type))
+        {
+            damage *= 2;
+        }
+
+        if (ContainsType(target.Resistances, type))
+        {
+            damage /= 2;
+        }
+
+        return damage;
+    }
+
+    private static bool ContainsType(string? csv, string type) =>
+        !string.IsNullOrWhiteSpace(csv)
+        && csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+              .Any(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase));
 
     /// <inheritdoc/>
     public async Task<CombatDto?> StartCombatAsync(int combatId, StartCombatDto? request, int userId)
@@ -495,6 +755,9 @@ public class CombatService(
                 combatId,
                 request.VictorySide ?? "none");
 
+            // Award any automatic achievement based on combat outcome (won / survived).
+            await this.achievementEvaluation.OnCombatEndedAsync(combatId);
+
             return await this.LoadCombatDtoAsync(combatId);
         }
         catch (Exception ex)
@@ -661,6 +924,10 @@ public class CombatService(
             CurrentHp = p.CurrentHp,
             MaxHp = p.MaxHp,
             Initiative = p.Initiative,
+            DexterityModifier = p.DexterityModifier,
+            ArmorClass = p.ArmorClass,
+            Resistances = p.Resistances,
+            Vulnerabilities = p.Vulnerabilities,
             TurnOrder = p.TurnOrder,
             IsActive = p.IsActive,
         };

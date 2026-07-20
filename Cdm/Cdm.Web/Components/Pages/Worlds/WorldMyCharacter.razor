@@ -44,10 +44,9 @@ else
 
             <!-- Infos générales -->
             <div class="cdm-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                    <h3 class="card-title">Informations générales</h3>
-                    <AppGameBadge GameType="@World!.GameType" />
-                </div>
+                <AppSectionTitle Title="Informations générales" Icon="bi-info-circle">
+                    <Actions><AppGameBadge GameType="@World!.GameType" /></Actions>
+                </AppSectionTitle>
                 <div class="info-grid">
                     <div>
                         <span class="info-label">Personnage</span>
@@ -66,7 +65,7 @@ else
 
         <!-- Profil de jeu -->
             <div class="cdm-card">
-                <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Profil de jeu</h3>
+                <AppSectionTitle Title="Profil de jeu" Icon="bi-person-vcard" />
                 @if (IsEditing)
                 {
                     <div class="form-group">
@@ -153,16 +152,18 @@ else
                         </div>
                         <div>
                             <span class="info-label">Points de vie</span>
-                            <span class="info-value">
-                                @if (WorldCharacter.CurrentHealth.HasValue && WorldCharacter.MaxHealth.HasValue)
-                                {
-                                    <span>@WorldCharacter.CurrentHealth / @WorldCharacter.MaxHealth</span>
-                                }
-                                else
-                                {
-                                    <span style="color: var(--color-text-muted);">Non définis</span>
-                                }
-                            </span>
+                            @if (WorldCharacter.CurrentHealth.HasValue && WorldCharacter.MaxHealth.HasValue)
+                            {
+                                <span class="info-value" style="font-family: var(--font-mono); font-variant-numeric: tabular-nums;">@WorldCharacter.CurrentHealth / @WorldCharacter.MaxHealth</span>
+                                var pct = WorldCharacter.MaxHealth.Value > 0
+                                    ? Math.Clamp((int)Math.Round(100.0 * WorldCharacter.CurrentHealth.Value / WorldCharacter.MaxHealth.Value), 0, 100)
+                                    : 0;
+                                <div class="hp-bar"><i style="width: @(pct)%;"></i></div>
+                            }
+                            else
+                            {
+                                <span class="info-value" style="color: var(--color-text-muted);">Non définis</span>
+                            }
                         </div>
                     </div>
 
@@ -194,6 +195,11 @@ else
                                         <div class="char-stat-box">
                                             <span class="char-stat-label">@pair.Item2</span>
                                             <span class="char-stat-value" style="font-size: var(--font-size-md);">@val</span>
+                                            @if (int.TryParse(val, out var score))
+                                            {
+                                                var mod = (int)Math.Floor((score - 10) / 2.0);
+                                                <span class="char-stat-mod">@(mod >= 0 ? $"+{mod}" : mod.ToString())</span>
+                                            }
                                         </div>
                                     }
                                 }

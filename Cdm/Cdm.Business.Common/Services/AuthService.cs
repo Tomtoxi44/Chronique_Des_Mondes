@@ -35,7 +35,7 @@ public class AuthService : IAuthService
         this.emailService = emailService;
     }
 
-    public async Task<ServiceResult<RegisterResponse>> RegisterAsync(RegisterRequest request)
+    public async Task<ServiceResult<RegisterResponse>> RegisterAsync(RegisterRequest request, string? confirmUrlTemplate = null)
     {
         try
         {
@@ -103,19 +103,16 @@ public class AuthService : IAuthService
             // Generate and save refresh token
             var refreshToken = await this.CreateRefreshTokenAsync(user.Id);
 
-            // Send welcome email (optional)
-            if (this.emailService != null)
+            // Envoi de l'email de confirmation d'adresse (n'échoue pas l'inscription si l'envoi rate).
+            if (!string.IsNullOrWhiteSpace(confirmUrlTemplate))
             {
                 try
                 {
-                    // TODO: Implement welcome email
-                    // await this.emailService.SendWelcomeEmailAsync(user.Email);
-                    this.logger.LogInformation("Welcome email sent to {Email}", user.Email);
+                    await this.CreateAndSendConfirmationAsync(user, confirmUrlTemplate);
                 }
                 catch (Exception ex)
                 {
-                    this.logger.LogWarning(ex, "Failed to send welcome email to {Email}", user.Email);
-                    // Don't fail registration if email fails
+                    this.logger.LogWarning(ex, "Failed to send confirmation email to {Email}", user.Email);
                 }
             }
 
@@ -125,6 +122,9 @@ public class AuthService : IAuthService
                 Email = user.Email,
                 Nickname = user.Nickname,
                 Token = token,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiry = refreshToken.ExpiresAt,
+                EmailConfirmed = user.EmailConfirmed,
                 Message = "Account created successfully"
             };
 
@@ -198,6 +198,7 @@ public class AuthService : IAuthService
                 Token = token,
                 RefreshToken = refreshToken.Token,
                 RefreshTokenExpiry = refreshToken.ExpiresAt,
+                EmailConfirmed = user.EmailConfirmed,
                 Message = "Login successful"
             };
 
@@ -263,6 +264,269 @@ public class AuthService : IAuthService
         {
             this.logger.LogError(ex, "Error during token refresh");
             return ServiceResult<LoginResponse>.Failure("An error occurred during token refresh");
+        }
+    }
+
+    /// <summary>Durée de validité d'un lien de réinitialisation, en heures.</summary>
+    private const int PasswordResetValidityHours = 1;
+
+    public async Task<ServiceResult<bool>> RequestPasswordResetAsync(ForgotPasswordRequest request, string resetUrlTemplate)
+    {
+        try
+        {
+            var user = await this.context.Users
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            // Réponse volontairement identique que le compte existe ou non :
+            // révéler l'inverse permettrait d'énumérer les comptes.
+            if (user == null || !user.IsActive)
+            {
+                this.logger.LogInformation(
+                    "Demande de réinitialisation pour une adresse inconnue ou inactive : {Email}",
+                    request.Email);
+                return ServiceResult<bool>.Success(true);
+            }
+
+            // Un seul lien actif à la fois : on invalide les précédents.
+            var pending = await this.context.PasswordResetTokens
+                .Where(t => t.UserId == user.Id && t.UsedAt == null)
+                .ToListAsync();
+
+            foreach (var old in pending)
+            {
+                old.UsedAt = DateTime.UtcNow;
+            }
+
+            var tokenBytes = new byte[48];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(tokenBytes);
+            }
+
+            // Base64Url : le jeton transite dans une URL.
+            var tokenString = Convert.ToBase64String(tokenBytes)
+                .Replace('+', '-')
+                .Replace('/', '_')
+                .TrimEnd('=');
+
+            this.context.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                Token = tokenString,
+                UserId = user.Id,
+                ExpiresAt = DateTime.UtcNow.AddHours(PasswordResetValidityHours),
+                CreatedAt = DateTime.UtcNow,
+            });
+
+            await this.context.SaveChangesAsync();
+
+            var resetLink = resetUrlTemplate.Replace("{token}", Uri.EscapeDataString(tokenString));
+
+            if (this.emailService != null)
+            {
+                await this.emailService.SendPasswordResetEmailAsync(
+                    user.Email, user.Nickname, resetLink, PasswordResetValidityHours);
+            }
+            else
+            {
+                this.logger.LogWarning(
+                    "Aucun service d'email enregistré : le lien de réinitialisation n'a pas pu être envoyé à {Email}",
+                    user.Email);
+            }
+
+            this.logger.LogInformation("Lien de réinitialisation généré pour l'utilisateur {UserId}", user.Id);
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Erreur lors de la demande de réinitialisation pour {Email}", request.Email);
+            return ServiceResult<bool>.Failure("Une erreur est survenue lors de la demande de réinitialisation");
+        }
+    }
+
+    public async Task<ServiceResult<bool>> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        try
+        {
+            var token = await this.context.PasswordResetTokens
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Token == request.Token);
+
+            if (token == null || !token.IsValid)
+            {
+                this.logger.LogWarning("Jeton de réinitialisation invalide ou expiré");
+                return ServiceResult<bool>.Failure("Ce lien de réinitialisation est invalide ou a expiré");
+            }
+
+            var user = token.User;
+            if (!user.IsActive)
+            {
+                return ServiceResult<bool>.Failure("Ce compte est inactif");
+            }
+
+            user.PasswordHash = this.passwordService.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+
+            // Le jeton est à usage unique.
+            token.UsedAt = DateTime.UtcNow;
+
+            // Par sécurité, on révoque les sessions ouvertes : si le compte avait été
+            // compromis, l'attaquant perd ses jetons de rafraîchissement.
+            var activeRefreshTokens = await this.context.RefreshTokens
+                .Where(rt => rt.UserId == user.Id && rt.RevokedAt == null)
+                .ToListAsync();
+
+            foreach (var refreshToken in activeRefreshTokens)
+            {
+                refreshToken.RevokedAt = DateTime.UtcNow;
+            }
+
+            await this.context.SaveChangesAsync();
+
+            this.logger.LogInformation("Mot de passe réinitialisé pour l'utilisateur {UserId}", user.Id);
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Erreur lors de la réinitialisation du mot de passe");
+            return ServiceResult<bool>.Failure("Une erreur est survenue lors de la réinitialisation");
+        }
+    }
+
+    /// <summary>Durée de validité d'un lien de confirmation d'email, en heures.</summary>
+    private const int EmailConfirmationValidityHours = 24;
+
+    /// <summary>Délai minimal (secondes) entre deux envois d'email de confirmation.</summary>
+    private const int EmailConfirmationResendCooldownSeconds = 120;
+
+    public async Task<ServiceResult<bool>> ConfirmEmailAsync(string token)
+    {
+        try
+        {
+            var confirmation = await this.context.EmailConfirmationTokens
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Token == token);
+
+            if (confirmation == null || !confirmation.IsValid)
+            {
+                this.logger.LogWarning("Email confirmation token invalid or expired");
+                return ServiceResult<bool>.Failure("Ce lien de confirmation est invalide ou a expiré");
+            }
+
+            var user = confirmation.User;
+
+            if (!user.EmailConfirmed)
+            {
+                user.EmailConfirmed = true;
+                user.EmailConfirmedAt = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
+            }
+
+            confirmation.UsedAt = DateTime.UtcNow;
+
+            await this.context.SaveChangesAsync();
+
+            this.logger.LogInformation("Email confirmed for user {UserId}", user.Id);
+            return ServiceResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error during email confirmation");
+            return ServiceResult<bool>.Failure("Une erreur est survenue lors de la confirmation");
+        }
+    }
+
+    public async Task<ServiceResult<int>> ResendConfirmationEmailAsync(int userId, string confirmUrlTemplate)
+    {
+        try
+        {
+            var user = await this.context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null || !user.IsActive)
+            {
+                return ServiceResult<int>.Failure("Compte introuvable");
+            }
+
+            if (user.EmailConfirmed)
+            {
+                return ServiceResult<int>.Failure("Votre adresse est déjà confirmée");
+            }
+
+            // Cooldown : on regarde le dernier jeton émis pour cet utilisateur.
+            var lastToken = await this.context.EmailConfirmationTokens
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (lastToken != null)
+            {
+                var elapsed = DateTime.UtcNow - lastToken.CreatedAt;
+                var remaining = EmailConfirmationResendCooldownSeconds - (int)elapsed.TotalSeconds;
+                if (remaining > 0)
+                {
+                    this.logger.LogInformation(
+                        "Resend confirmation throttled for user {UserId}, {Remaining}s remaining",
+                        userId, remaining);
+                    return ServiceResult<int>.Success(remaining);
+                }
+            }
+
+            await this.CreateAndSendConfirmationAsync(user, confirmUrlTemplate);
+
+            return ServiceResult<int>.Success(0);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error resending confirmation email for user {UserId}", userId);
+            return ServiceResult<int>.Failure("Une erreur est survenue lors de l'envoi");
+        }
+    }
+
+    /// <summary>
+    /// Génère un jeton de confirmation, invalide les précédents, et envoie l'email.
+    /// </summary>
+    private async Task CreateAndSendConfirmationAsync(User user, string confirmUrlTemplate)
+    {
+        // Un seul lien actif à la fois.
+        var pending = await this.context.EmailConfirmationTokens
+            .Where(t => t.UserId == user.Id && t.UsedAt == null)
+            .ToListAsync();
+
+        foreach (var old in pending)
+        {
+            old.UsedAt = DateTime.UtcNow;
+        }
+
+        var tokenBytes = new byte[48];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(tokenBytes);
+        }
+
+        var tokenString = Convert.ToBase64String(tokenBytes)
+            .Replace('+', '-')
+            .Replace('/', '_')
+            .TrimEnd('=');
+
+        this.context.EmailConfirmationTokens.Add(new EmailConfirmationToken
+        {
+            Token = tokenString,
+            UserId = user.Id,
+            ExpiresAt = DateTime.UtcNow.AddHours(EmailConfirmationValidityHours),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        await this.context.SaveChangesAsync();
+
+        var confirmLink = confirmUrlTemplate.Replace("{token}", Uri.EscapeDataString(tokenString));
+
+        if (this.emailService != null)
+        {
+            await this.emailService.SendEmailConfirmationAsync(
+                user.Email, user.Nickname, confirmLink, EmailConfirmationValidityHours);
+        }
+        else
+        {
+            this.logger.LogWarning(
+                "Aucun service d'email : lien de confirmation non envoyé à {Email}", user.Email);
         }
     }
 

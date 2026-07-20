@@ -29,6 +29,7 @@ public partial class WorldCharacterDndDetail
     // Reference data
     private List<DndItemDto> AvailableItems = new();
     private List<DndSpellDto> AvailableSpells = new();
+    private List<DndClassDto> AvailableClasses = new();
 
     // ── Stats edit ────────────────────────────────────────────────────────
 
@@ -91,8 +92,9 @@ public partial class WorldCharacterDndDetail
             var spellsTask = DndClient.GetCharacterSpellsAsync(WorldCharacterId);
             var itemsTask = DndClient.GetItemsAsync();
             var spellsRefTask = DndClient.GetSpellsAsync();
+            var classesTask = DndClient.GetClassesAsync();
 
-            await Task.WhenAll(wcTask, statsTask, inventoryTask, spellsTask, itemsTask, spellsRefTask);
+            await Task.WhenAll(wcTask, statsTask, inventoryTask, spellsTask, itemsTask, spellsRefTask, classesTask);
 
             WorldCharacter = wcTask.Result;
             Stats = statsTask.Result ?? new DndCharacterStatsDto { WorldCharacterId = WorldCharacterId };
@@ -101,6 +103,7 @@ public partial class WorldCharacterDndDetail
             CharacterSpells = spellsTask.Result;
             AvailableItems = itemsTask.Result;
             AvailableSpells = spellsRefTask.Result;
+            AvailableClasses = classesTask.Result;
         }
         catch
         {
@@ -119,6 +122,62 @@ public partial class WorldCharacterDndDetail
     private static string Fmt(int mod) => mod >= 0 ? $"+{mod}" : $"{mod}";
 
     private int ProfBonus => CalcProfBonus(Stats.Level ?? 1);
+
+    /// <summary>Sets the armor class to its unarmored value (10 + Dexterity modifier).</summary>
+    private void AutoComputeArmorClass()
+    {
+        Stats.ArmorClass = Cdm.Common.DndRules.UnarmoredArmorClass(Stats.DexterityModifier ?? 0);
+    }
+
+    /// <summary>The hit die of the character's current class (0 if unknown).</summary>
+    private int CurrentClassHitDie => AvailableClasses
+        .FirstOrDefault(c => string.Equals(c.Name, Stats.CharacterClass, StringComparison.OrdinalIgnoreCase))?.HitDie ?? 0;
+
+    /// <summary>The available subclasses of the character's current class.</summary>
+    private List<string> CurrentClassSubclasses => AvailableClasses
+        .FirstOrDefault(c => string.Equals(c.Name, Stats.CharacterClass, StringComparison.OrdinalIgnoreCase))?.Subclasses ?? new();
+
+    /// <summary>Sets the maximum hit points from the class hit die, Constitution and level.</summary>
+    private void AutoComputeHitPoints()
+    {
+        var hitDie = CurrentClassHitDie;
+        if (hitDie <= 0)
+        {
+            return;
+        }
+
+        var max = Cdm.Common.DndRules.AverageHitPoints(hitDie, Stats.ConstitutionModifier ?? 0, Stats.Level ?? 1);
+        Stats.MaxHitPoints = max;
+        if (!Stats.CurrentHitPoints.HasValue || Stats.CurrentHitPoints > max)
+        {
+            Stats.CurrentHitPoints = max;
+        }
+    }
+
+    /// <summary>
+    /// Advances the character by one level (max 20): the proficiency bonus follows automatically,
+    /// and the max HP gains an average hit-die roll (+ Constitution), also added to current HP.
+    /// </summary>
+    private void LevelUp()
+    {
+        var newLevel = Math.Min(20, (Stats.Level ?? 1) + 1);
+        if (newLevel == Stats.Level)
+        {
+            return;
+        }
+
+        var hitDie = CurrentClassHitDie;
+        if (hitDie > 0)
+        {
+            var oldMax = Stats.MaxHitPoints ?? 0;
+            var newMax = Cdm.Common.DndRules.AverageHitPoints(hitDie, Stats.ConstitutionModifier ?? 0, newLevel);
+            var gain = Math.Max(0, newMax - oldMax);
+            Stats.MaxHitPoints = newMax;
+            Stats.CurrentHitPoints = (Stats.CurrentHitPoints ?? 0) + gain;
+        }
+
+        Stats.Level = newLevel;
+    }
 
     private static int CalcProfBonus(int level) =>
         level switch { <= 4 => 2, <= 8 => 3, <= 12 => 4, <= 16 => 5, _ => 6 };

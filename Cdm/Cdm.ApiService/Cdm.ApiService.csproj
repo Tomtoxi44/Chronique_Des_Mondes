@@ -7,6 +7,7 @@
     <!-- WithOpenApi() is deprecated in ASP.NET Core 10 (ASPDEPR002) but still functional.
          Migration to the new implicit OpenAPI generation is tracked separately. -->
     <NoWarn>ASPDEPR002</NoWarn>
+    <UserSecretsId>eb544881-0581-422f-aa44-17243a7f46b5</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.20.0" />
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
 	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">

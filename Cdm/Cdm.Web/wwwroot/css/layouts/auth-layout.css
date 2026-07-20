@@ -22,7 +22,7 @@
   right: -200px;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(148, 163, 184, 0.08) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -84,6 +84,14 @@
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-lg);
   text-align: center;
+}
+
+/* Texte d'accompagnement au-dessus d'un formulaire (mot de passe oublié, réinitialisation) */
+.auth-help-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin-bottom: var(--spacing-lg);
 }
 
 .auth-footer-link {

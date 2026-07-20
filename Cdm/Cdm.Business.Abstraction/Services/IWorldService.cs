@@ -46,6 +46,18 @@ public interface IWorldService
     Task<IEnumerable<WorldDto>> GetWorldsForUserAsync(int userId);
 
     /// <summary>
+    /// Invites a player to the world by email: ensures an active invite token exists,
+    /// builds the join link and sends the invitation. Only the world owner (GM) may do this.
+    /// </summary>
+    /// <param name="worldId">The world identifier.</param>
+    /// <param name="email">The recipient email address.</param>
+    /// <param name="message">An optional personal message.</param>
+    /// <param name="webBaseUrl">The web base URL used to build the join link.</param>
+    /// <param name="userId">The requesting user (must be the world owner).</param>
+    /// <returns>True if the invitation was sent, false otherwise.</returns>
+    Task<bool> InvitePlayerByEmailAsync(int worldId, string email, string? message, string webBaseUrl, int userId);
+
+    /// <summary>
     /// Updates a world.
     /// </summary>
     /// <param name="worldId">The world identifier.</param>

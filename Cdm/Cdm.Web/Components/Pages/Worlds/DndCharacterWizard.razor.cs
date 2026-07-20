@@ -307,8 +307,7 @@ public partial class DndCharacterWizard
         return (SelectedClass.HitDie + (Stats.Level.Value - 1) * (SelectedClass.HitDie / 2 + 1) + conMod * Stats.Level.Value).ToString();
     }
 
-    private static int GetProficiencyBonus(int level) =>
-        level switch { <= 4 => 2, <= 8 => 3, <= 12 => 4, <= 16 => 5, _ => 6 };
+    private static int GetProficiencyBonus(int level) => Cdm.Common.DndRules.ProficiencyBonus(level);
 
     // ── Step 3 — Inventory ───────────────────────────────────────────────
 

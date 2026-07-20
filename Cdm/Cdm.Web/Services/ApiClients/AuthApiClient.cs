@@ -10,6 +10,21 @@ public interface IAuthApiClient
     Task<RegisterResponse?> RegisterAsync(RegisterRequest request);
     Task<LoginResponse?> LoginAsync(LoginRequest request);
     Task<LoginResponse?> RefreshAsync(string refreshToken);
+
+    /// <summary>Demande l'envoi d'un lien de réinitialisation de mot de passe.</summary>
+    Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request);
+
+    /// <summary>Définit un nouveau mot de passe à partir d'un jeton reçu par email.</summary>
+    Task<bool> ResetPasswordAsync(ResetPasswordRequest request);
+
+    /// <summary>Confirme une adresse email à partir d'un jeton reçu par email.</summary>
+    Task<bool> ConfirmEmailAsync(string token);
+
+    /// <summary>
+    /// Renvoie l'email de confirmation. Retourne le nombre de secondes à attendre
+    /// avant un prochain envoi (0 = envoyé), ou -1 en cas d'erreur.
+    /// </summary>
+    Task<int> ResendConfirmationAsync();
 }
 
 public class AuthApiClient : BaseApiClient, IAuthApiClient
@@ -69,5 +84,76 @@ public class AuthApiClient : BaseApiClient, IAuthApiClient
 
         return response;
     }
+
+    public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        this.logger.LogInformation("Requesting password reset for {Email}", request.Email);
+
+        // L'API répond toujours 200 (anti-énumération de comptes) : une réponse
+        // non nulle suffit à considérer la demande comme prise en compte.
+        var response = await PostAsync<ForgotPasswordRequest, MessageResponse>(
+            "/api/auth/forgot-password",
+            request);
+
+        return response != null;
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        this.logger.LogInformation("Submitting new password from reset token");
+
+        var response = await PostAsync<ResetPasswordRequest, MessageResponse>(
+            "/api/auth/reset-password",
+            request);
+
+        return response != null;
+    }
+
+    public async Task<bool> ConfirmEmailAsync(string token)
+    {
+        this.logger.LogInformation("Confirming email from token");
+
+        try
+        {
+            var response = await PostAsync<object, MessageResponse>(
+                "/api/auth/confirm-email",
+                new { Token = token });
+            return response != null;
+        }
+        catch (ApiException)
+        {
+            return false;
+        }
+    }
+
+    public async Task<int> ResendConfirmationAsync()
+    {
+        this.logger.LogInformation("Requesting confirmation email resend");
+
+        try
+        {
+            var response = await PostAsync<object, ResendResponse>(
+                "/api/auth/resend-confirmation",
+                new { });
+            return response?.RetryAfterSeconds ?? 0;
+        }
+        catch (ApiException)
+        {
+            return -1;
+        }
+    }
+}
+
+/// <summary>Réponse générique ne portant qu'un message.</summary>
+public class MessageResponse
+{
+    public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>Réponse du renvoi d'email de confirmation.</summary>
+public class ResendResponse
+{
+    /// <summary>Secondes à attendre avant un nouvel envoi (0 = envoyé).</summary>
+    public int RetryAfterSeconds { get; set; }
 }
 

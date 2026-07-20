@@ -72,6 +72,10 @@ public static class WorldEndpoints
             .WithOpenApi();
 
         // POST /api/worlds/{id}/invite - Generate invite token (GM only)
+        group.MapPost("/{id:int}/invite-email", InvitePlayerByEmailAsync)
+            .WithName("InvitePlayerByEmail")
+            .WithOpenApi();
+
         group.MapPost("/{id:int}/invite", GenerateWorldInviteTokenAsync)
             .WithName("GenerateWorldInviteToken")
             .WithOpenApi();
@@ -378,6 +382,44 @@ public static class WorldEndpoints
         }
     }
 
+    private static async Task<IResult> InvitePlayerByEmailAsync(
+        int id,
+        [FromBody] WorldEmailInviteRequest request,
+        [FromServices] IWorldService worldService,
+        [FromServices] IConfiguration configuration,
+        ILogger<WorldEndpointsLogger> logger,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var userId = GetUserId(httpContext);
+            if (userId == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                return Results.BadRequest(new { Error = "Email is required" });
+            }
+
+            var webBaseUrl = configuration["App:WebBaseUrl"]?.TrimEnd('/') ?? "https://localhost:7165";
+
+            var sent = await worldService.InvitePlayerByEmailAsync(id, request.Email, request.Message, webBaseUrl, userId.Value);
+            if (!sent)
+            {
+                return Results.BadRequest(new { Error = "Failed to send invitation. Check the world, your ownership and the email address." });
+            }
+
+            return Results.Ok(new { Sent = true });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error inviting player by email to world {WorldId}", id);
+            return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
+        }
+    }
+
     private static async Task<IResult> GenerateWorldInviteTokenAsync(
         int id,
         [FromServices] IWorldService worldService,
@@ -544,3 +586,6 @@ public static class WorldEndpoints
         }
     }
 }
+
+/// <summary>Request body to invite a player to a world by email.</summary>
+internal record WorldEmailInviteRequest(string Email, string? Message);

@@ -7,9 +7,9 @@
 namespace Cdm.Business.Common.Tests.Services;
 
 using Cdm.Business.Abstraction.DTOs;
+using Cdm.Business.Abstraction.Services;
 using Cdm.Business.Common.Services;
 using Cdm.Common.Enums;
-using Cdm.Common.Services;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
@@ -22,17 +22,22 @@ using Xunit;
 /// </summary>
 public class WorldServiceTests
 {
-    private readonly Mock<IImageStorageService> imageStorageServiceMock;
     private readonly Mock<ILogger<WorldService>> loggerMock;
+    private readonly Mock<INotificationService> notificationServiceMock;
+    private readonly Mock<Cdm.Common.Services.IEmailService> emailServiceMock;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WorldServiceTests"/> class.
     /// </summary>
     public WorldServiceTests()
     {
-        this.imageStorageServiceMock = new Mock<IImageStorageService>();
         this.loggerMock = new Mock<ILogger<WorldService>>();
+        this.notificationServiceMock = new Mock<INotificationService>();
+        this.emailServiceMock = new Mock<Cdm.Common.Services.IEmailService>();
     }
+
+    private WorldService CreateService(AppDbContext context) =>
+        new(context, this.loggerMock.Object, this.notificationServiceMock.Object, this.emailServiceMock.Object);
 
     /// <summary>
     /// Tests that CreateWorldAsync successfully creates a world with valid data.
@@ -59,15 +64,13 @@ public class WorldServiceTests
         context.Users.Add(testUser);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var createDto = new CreateWorldDto
         {
             Name = "Fantasy Realm",
             Description = "A magical world",
             GameType = GameType.DnD5e,
-            Visibility = Visibility.Public,
-            MaxCampaigns = 3,
         };
 
         // Act
@@ -106,7 +109,7 @@ public class WorldServiceTests
         );
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act
         var result = await service.GetMyWorldsAsync(1);
@@ -131,7 +134,7 @@ public class WorldServiceTests
             .Options;
 
         using var context = new AppDbContext(options);
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act
         var result = await service.GetWorldByIdAsync(999, 1);
@@ -163,22 +166,19 @@ public class WorldServiceTests
             Name = "Old Name",
             Description = "Old Description",
             GameType = GameType.Generic,
-            Visibility = Visibility.Private,
             UserId = 1,
             CreatedAt = DateTime.UtcNow
         };
         context.Worlds.Add(world);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var updateDto = new CreateWorldDto
         {
             Name = "New Name",
             Description = "New Description",
             GameType = GameType.DnD5e,
-            Visibility = Visibility.Public,
-            MaxCampaigns = 5
         };
 
         // Act
@@ -192,7 +192,7 @@ public class WorldServiceTests
     }
 
     /// <summary>
-    /// Tests that DeleteWorldAsync soft deletes the world.
+    /// Tests that DeleteWorldAsync soft deletes the world (IsActive = false).
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     [Fact]
@@ -213,14 +213,13 @@ public class WorldServiceTests
             Id = 1,
             Name = "Test World",
             GameType = GameType.Generic,
-            Visibility = Visibility.Private,
             UserId = 1,
             CreatedAt = DateTime.UtcNow
         };
         context.Worlds.Add(world);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         // Act
         var result = await service.DeleteWorldAsync(1, 1);
@@ -229,7 +228,7 @@ public class WorldServiceTests
         Assert.True(result);
         var deletedWorld = await context.Worlds.FindAsync(1);
         Assert.NotNull(deletedWorld);
-        Assert.True(deletedWorld!.IsDeleted);
+        Assert.False(deletedWorld!.IsActive);
     }
 
     /// <summary>
@@ -255,14 +254,13 @@ public class WorldServiceTests
             Id = 1,
             Name = "User1's World",
             GameType = GameType.Generic,
-            Visibility = Visibility.Private,
             UserId = 1,
             CreatedAt = DateTime.UtcNow
         };
         context.Worlds.Add(world);
         await context.SaveChangesAsync();
 
-        var service = new WorldService(context, this.imageStorageServiceMock.Object, this.loggerMock.Object);
+        var service = this.CreateService(context);
 
         var updateDto = new CreateWorldDto { Name = "Hacked Name", GameType = GameType.Custom };
 
@@ -271,5 +269,67 @@ public class WorldServiceTests
 
         // Assert
         Assert.Null(result);
+    }
+
+    /// <summary>
+    /// The world owner can invite a player by email: an invite token is ensured and the email is sent.
+    /// </summary>
+    [Fact]
+    public async Task InvitePlayerByEmailAsync_AsOwner_SendsEmail()
+    {
+        // Arrange
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: "TestDb_InviteByEmail_Owner")
+            .Options;
+
+        using var context = new AppDbContext(options);
+        context.Users.Add(new User { Id = 1, Email = "gm@test.com", Nickname = "GM", PasswordHash = "h", CreatedAt = DateTime.UtcNow });
+        context.Worlds.Add(new World { Id = 1, Name = "Faerûn", GameType = GameType.DnD5e, UserId = 1, IsActive = true, CreatedAt = DateTime.UtcNow });
+        await context.SaveChangesAsync();
+
+        this.emailServiceMock
+            .Setup(e => e.SendWorldInvitationEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(true);
+
+        var service = this.CreateService(context);
+
+        // Act
+        var sent = await service.InvitePlayerByEmailAsync(1, "player@test.com", "Rejoins-nous !", "https://cdm.example", 1);
+
+        // Assert
+        Assert.True(sent);
+        var world = await context.Worlds.FindAsync(1);
+        Assert.False(string.IsNullOrEmpty(world!.InviteToken)); // a token was ensured
+        this.emailServiceMock.Verify(
+            e => e.SendWorldInvitationEmailAsync("player@test.com", "Faerûn", It.IsAny<string>(),
+                It.Is<string>(link => link.Contains("/worlds/join/")), "Rejoins-nous !"),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// A non-owner cannot invite players to the world.
+    /// </summary>
+    [Fact]
+    public async Task InvitePlayerByEmailAsync_NotOwner_ReturnsFalse()
+    {
+        // Arrange
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: "TestDb_InviteByEmail_NotOwner")
+            .Options;
+
+        using var context = new AppDbContext(options);
+        context.Worlds.Add(new World { Id = 1, Name = "Faerûn", GameType = GameType.DnD5e, UserId = 1, IsActive = true, CreatedAt = DateTime.UtcNow });
+        await context.SaveChangesAsync();
+
+        var service = this.CreateService(context);
+
+        // Act — user 2 is not the owner
+        var sent = await service.InvitePlayerByEmailAsync(1, "player@test.com", null, "https://cdm.example", 2);
+
+        // Assert
+        Assert.False(sent);
+        this.emailServiceMock.Verify(
+            e => e.SendWorldInvitationEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()),
+            Times.Never);
     }
 }

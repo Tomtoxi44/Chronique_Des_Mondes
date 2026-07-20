@@ -33,10 +33,7 @@ else
 
     @if (activeSessions.Count > 0)
     {
-        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
-            <i class="bi bi-circle-fill" style="color: var(--color-success); font-size: 0.6rem; vertical-align: middle;"></i>
-            Sessions actives
-        </h3>
+        <AppSectionTitle Title="Sessions actives" Icon="bi-broadcast" />
         <div class="cards-grid" style="margin-bottom: var(--spacing-xl);">
             @foreach (var session in activeSessions)
             {
@@ -45,7 +42,7 @@ else
                         <span class="status-badge @GetSessionStatusClass(session.Status)">@GetSessionStatusLabel(session.Status)</span>
                         @if (IsGm(session))
                         {
-                            <span class="status-badge" style="background: var(--color-primary); color: white; opacity: 0.9;">MJ</span>
+                            <span class="status-badge" style="background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a);">MJ</span>
                         }
                     </div>
                     <h3 class="card-title">@session.CampaignName</h3>
@@ -76,31 +73,39 @@ else
 
     @if (pastSessions.Count > 0)
     {
-        <h3 style="font-size: var(--font-size-md); color: var(--color-text-secondary); margin-bottom: var(--spacing-md);">
-            <i class="bi bi-clock-history"></i>
-            Historique
-        </h3>
-        <div class="cards-grid">
-            @foreach (var session in pastSessions.OrderByDescending(s => s.StartedAt))
-            {
-                <div class="cdm-card" style="opacity: 0.8;">
-                    <div class="card-header-row">
-                        <span class="status-badge @GetSessionStatusClass(session.Status)">@GetSessionStatusLabel(session.Status)</span>
-                        @if (IsGm(session))
-                        {
-                            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">MJ</span>
-                        }
-                    </div>
-                    <h3 class="card-title">@session.CampaignName</h3>
-                    <div class="card-meta">
-                        <span><i class="bi bi-calendar3"></i> @session.StartedAt.ToString("dd/MM/yyyy")</span>
-                        @if (session.EndedAt.HasValue)
-                        {
-                            <span><i class="bi bi-hourglass"></i> @((session.EndedAt.Value - session.StartedAt).TotalHours.ToString("F1"))h</span>
-                        }
-                    </div>
+        <AppSectionTitle Title="Historique par campagne" Icon="bi-clock-history" />
+        @foreach (var campaignGroup in pastSessions
+            .GroupBy(s => s.CampaignName)
+            .OrderBy(g => g.Key))
+        {
+            <div style="margin-bottom: var(--spacing-lg);">
+                <AppSectionTitle Title="@campaignGroup.Key" Icon="bi-map" Rule="false">
+                    <Actions><span style="color: var(--color-text-muted); font-size: var(--font-size-xs);">@campaignGroup.Count() session(s)</span></Actions>
+                </AppSectionTitle>
+                <div class="cards-grid">
+                    @foreach (var session in campaignGroup.OrderByDescending(s => s.StartedAt))
+                    {
+                        <div class="cdm-card" style="opacity: 0.8;">
+                            <div class="card-header-row">
+                                <span class="status-badge @GetSessionStatusClass(session.Status)">@GetSessionStatusLabel(session.Status)</span>
+                                @if (IsGm(session))
+                                {
+                                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">MJ</span>
+                                }
+                            </div>
+                            <h3 class="card-title">@session.CampaignName</h3>
+                            <div class="card-meta">
+                                <span><i class="bi bi-calendar3"></i> @session.StartedAt.ToString("dd/MM/yyyy")</span>
+                                @if (session.EndedAt.HasValue)
+                                {
+                                    <span><i class="bi bi-hourglass"></i> @((session.EndedAt.Value - session.StartedAt).TotalHours.ToString("F1"))h</span>
+                                }
+                                <span><i class="bi bi-people"></i> @session.Participants.Count() joueur(s)</span>
+                            </div>
+                        </div>
+                    }
                 </div>
-            }
-        </div>
+            </div>
+        }
     }
 }

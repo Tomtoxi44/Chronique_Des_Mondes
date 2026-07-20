@@ -53,7 +53,7 @@ else
 
         <!-- Formulaire -->
         <div class="cdm-card">
-            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">Informations du profil</h3>
+            <AppSectionTitle Title="Informations du profil" Icon="bi-person-vcard" />
             <EditForm Model="UpdateModel" OnValidSubmit="HandleSave" FormName="profile-edit">
                 <DataAnnotationsValidator />
 
@@ -73,6 +73,102 @@ else
                     </button>
                 </div>
             </EditForm>
+        </div>
+
+        <!-- Succès -->
+        <div class="cdm-card">
+            <AppSectionTitle Title="Mes succès" Icon="bi-trophy">
+                <Actions>
+                    @if (MyAchievements.Count > 0)
+                    {
+                        <span class="status-badge">@MyAchievements.Count</span>
+                    }
+                </Actions>
+            </AppSectionTitle>
+
+            @if (MyAchievements.Count == 0)
+            {
+                <p style="color: var(--color-text-muted); font-style: italic;">
+                    Aucun succès débloqué pour l'instant. Participez à des sessions pour en gagner !
+                </p>
+            }
+            else
+            {
+                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                    @foreach (var ua in MyAchievements.OrderByDescending(a => a.UnlockedAt))
+                    {
+                        <div class="cdm-card" style="border-left: 3px solid @RarityColor(ua.Rarity); padding: var(--spacing-sm);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                <i class="bi bi-trophy-fill" style="color: @RarityColor(ua.Rarity); font-size: 1.4rem;"></i>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
+                                        <strong>@ua.AchievementName</strong>
+                                        <span class="status-badge">@RarityLabel(ua.Rarity)</span>
+                                        @if (!ua.IsManuallyAwarded)
+                                        {
+                                            <span class="status-badge" title="Débloqué automatiquement"><i class="bi bi-magic"></i></span>
+                                        }
+                                    </div>
+                                    <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">@ua.AchievementDescription</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                                        Débloqué le @ua.UnlockedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Statistiques de dés -->
+        <div class="cdm-card">
+            <AppSectionTitle Title="Statistiques de dés" Icon="bi-dice-5" />
+
+            @if (DiceStats == null || DiceStats.TotalRolls == 0)
+            {
+                <p style="color: var(--color-text-muted); font-style: italic;">
+                    Aucun jet enregistré pour l'instant. Lancez des dés en session pour voir vos statistiques !
+                </p>
+            }
+            else
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@DiceStats.TotalDiceThrown</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">dés lancés</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@DiceStats.OverallAverage.ToString("0.0")</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">moyenne</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-success);">@DiceStats.Natural20Count</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">20 naturels (@DiceStats.CritRate.ToString("0.0")%)</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-error);">@DiceStats.Natural1Count</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">1 naturels (@DiceStats.FumbleRate.ToString("0.0")%)</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@DiceStats.SessionsWithRolls</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">sessions jouées</div>
+                    </div>
+                </div>
+
+                @if (DiceStats.PerDiceType.Count > 0)
+                {
+                    <h4 style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--spacing-sm);">Par type de dé</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+                        @foreach (var t in DiceStats.PerDiceType)
+                        {
+                            <span class="status-badge" style="background: var(--color-bg-tertiary);">
+                                @t.DiceType : @t.DiceThrown lancé(s), moy. @t.Average.ToString("0.0")
+                            </span>
+                        }
+                    </div>
+                }
+            }
         </div>
     </div>
 }

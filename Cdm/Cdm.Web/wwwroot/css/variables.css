@@ -84,8 +84,11 @@
   /* ============================================
      Z-INDEX
      ============================================ */
-  --z-sidebar:   1030;
   --z-topbar:    1020;
+  --z-sidebar:   1030;
+  /* Menus déroulants (notifications, avatar) : au-dessus du contenu de la topbar.
+     Le backdrop de fermeture reste volontairement sous la topbar (voir layout-shell.css). */
+  --z-dropdown:  1040;
   --z-modal:     1050;
   --z-toast:     1070;
   --z-tooltip:   1080;
@@ -100,64 +103,74 @@
 
   /* ============================================
      SEMANTIC — Mode sombre (défaut)
+     Refonte « codex premium » : fonds bleu-graphite profonds,
+     bordures neutres (plus d'indigo), accent par défaut = ambre.
      ============================================ */
-  --color-bg-primary:   #0f0f1a;
-  --color-bg-secondary: #1a1a2e;
-  --color-bg-elevated:  #252540;
-  --color-bg-card:      #1f1f35;
-  --color-bg-input:     #1a1a30;
+  --color-bg-primary:   #0b0d12;
+  --color-bg-secondary: #12151d;
+  --color-bg-elevated:  #1b2130;
+  --color-bg-card:      #161a23;
+  --color-bg-input:     #0e1117;
 
   /* Surface aliases (used by dropdowns, panels, notifications) */
   --color-surface-primary:   var(--color-bg-card);
   --color-surface-secondary: var(--color-bg-elevated);
   --color-surface-alt:       var(--color-bg-secondary);
 
-  --color-text-primary:   #f1f5f9;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted:     #94a3b8;
-  --color-text-disabled:  #64748b;
+  --color-text-primary:   #e9ebf1;
+  --color-text-secondary: #b7bccb;
+  --color-text-muted:     #9aa1b2;
+  --color-text-disabled:  #666d7e;
 
-  --color-border:         rgba(99, 102, 241, 0.18);
-  --color-border-hover:   rgba(99, 102, 241, 0.35);
-  --color-border-focus:   var(--color-indigo-500);
+  --color-border:         rgba(200, 210, 232, 0.11);
+  --color-border-hover:   rgba(200, 210, 232, 0.20);
+  --color-border-focus:   #d69f52;
 
-  --color-primary:        var(--color-indigo-600);
-  --color-primary-hover:  var(--color-indigo-500);
-  --color-primary-light:  var(--color-indigo-400);
-  --color-secondary:      var(--color-violet-600);
+  /* Accent par défaut (thème « générique ») : ambre chaleureux, jamais l'indigo « IA ». */
+  --color-primary:        #d69f52;
+  --color-primary-hover:  #e2ad63;
+  --color-primary-light:  #ecc386;
+  --color-secondary:      #9a5a2b;
 
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.25);
-  --shadow-md:  0 4px 12px rgba(0,0,0,0.35);
-  --shadow-lg:  0 8px 24px rgba(0,0,0,0.4);
-  --shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.45);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.28);
+  --shadow-md:  0 6px 18px -8px rgba(0,0,0,0.5);
+  --shadow-lg:  0 20px 48px -20px rgba(0,0,0,0.6);
+  --shadow-focus: 0 0 0 3px rgba(214, 159, 82, 0.4);
 
-  --gradient-primary: linear-gradient(135deg, var(--color-indigo-600) 0%, var(--color-violet-600) 100%);
+  --gradient-primary: linear-gradient(135deg, #d69f52 0%, #9a5a2b 100%);
 }
 
 /* ============================================
    MODE CLAIR
    ============================================ */
 [data-theme="light"] {
-  --color-bg-primary:   #f8fafc;
-  --color-bg-secondary: #f1f5f9;
-  --color-bg-elevated:  #ffffff;
-  --color-bg-card:      #ffffff;
-  --color-bg-input:     #ffffff;
+  /* Mode clair « parchemin chaud » — accueillant, jamais le blanc bleuté générique. */
+  --color-bg-primary:   #e9e5dd;
+  --color-bg-secondary: #f1ede4;
+  --color-bg-elevated:  #fffdf9;
+  --color-bg-card:      #fffdf9;
+  --color-bg-input:     #fffdf9;
 
   /* Surface aliases */
   --color-surface-primary:   var(--color-bg-card);
   --color-surface-secondary: var(--color-bg-elevated);
   --color-surface-alt:       var(--color-bg-secondary);
 
-  --color-text-primary:   #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted:     #64748b;
-  --color-text-disabled:  #94a3b8;
+  --color-text-primary:   #1b1c22;
+  --color-text-secondary: #545864;
+  --color-text-muted:     #878b98;
+  --color-text-disabled:  #a9adb8;
 
-  --color-border:         rgba(99, 102, 241, 0.12);
-  --color-border-hover:   rgba(99, 102, 241, 0.25);
+  --color-border:         rgba(30, 26, 18, 0.14);
+  --color-border-hover:   rgba(30, 26, 18, 0.24);
+  --color-border-focus:   #a86f28;
 
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md:  0 4px 12px rgba(0,0,0,0.1);
-  --shadow-lg:  0 8px 24px rgba(0,0,0,0.12);
+  /* Accent générique assombri pour rester lisible sur le fond clair. */
+  --color-primary:        #a86f28;
+  --color-primary-hover:  #935f22;
+  --color-primary-light:  #b5813a;
+
+  --shadow-sm:  0 1px 3px rgba(40,32,20,0.08);
+  --shadow-md:  0 6px 18px -8px rgba(40,32,20,0.18);
+  --shadow-lg:  0 20px 45px -22px rgba(40,32,20,0.28);
 }

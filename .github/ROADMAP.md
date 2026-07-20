@@ -1,7 +1,16 @@
 # Roadmap — Chronique des Mondes
 
-> **Mise à jour** : Roadmap révisée post-implémentation MVP  
-> Les items `[x]` sont implémentés et déployés. Les items `[ ]` sont planifiés.
+> **Dernière vérification : 18 juillet 2026**, par relecture du code source et tests
+> fonctionnels réels (dont une session multi-joueurs). La roadmap précédente sous-estimait
+> fortement l'avancement : PNJ, temps réel SignalR, lanceur de dés et combat générique
+> étaient marqués « à faire » alors qu'ils étaient livrés depuis avril 2026.
+>
+> **Convention :**
+> - `[x]` implémenté et vérifié
+> - `[~]` partiellement implémenté (le détail précise ce qui manque)
+> - `[ ]` non commencé
+>
+> État des lieux complet et priorités : `docs/ETAT_DU_PROJET.md`.
 
 ---
 
@@ -108,25 +117,26 @@
 
 ---
 
-## Phase 1 : Enrichissement MVP — EN COURS
+## Phase 1 : Enrichissement MVP — LARGEMENT COMPLÉTÉE
 
 ### PNJ (Personnages Non-Joueurs)
-- [ ] Création de PNJ générique dans un chapitre (nom, description, comportement, PV)
-- [ ] Association PNJ ↔ Chapitre
-- [ ] Affichage PNJ dans la session MJ
-- [ ] Monstres comme sous-type de PNJ
+- [x] Création de PNJ générique dans un chapitre (nom, description, comportement, PV)
+- [x] Association PNJ ↔ Chapitre
+- [x] Affichage PNJ dans la session MJ
+- [x] Monstres comme sous-type de PNJ (`DndMonsterTemplate`)
 
-**Critère de succès** : Le MJ peut créer et placer des PNJ dans ses chapitres et les consulter en session.
+**Statut** : Complété. Le MJ crée ses PNJ depuis l'onglet PNJ du chapitre et les retrouve en session.
 
 ---
 
 ### Temps Réel (SignalR)
-- [ ] Hub SignalR pour les sessions actives
-- [ ] Synchronisation en temps réel entre MJ et joueurs
-- [ ] Notifications push sans rechargement de page
-- [ ] Statut de connexion des participants
+- [x] Hub SignalR pour les sessions actives (`SessionHub`, `CombatHub`, `NotificationHub`)
+- [x] Synchronisation en temps réel entre MJ et joueurs
+- [x] Notifications push sans rechargement de page
+- [x] Statut de connexion des participants (badge « Connecté »)
 
-**Critère de succès** : Les actions du MJ (ex: changement de chapitre) sont reflétées instantanément chez les joueurs.
+**Statut** : Complété et validé par un test à deux comptes (18/07/2026).
+Autorisation d'appartenance à la campagne vérifiée avant de rejoindre un groupe.
 
 ---
 
@@ -140,8 +150,11 @@
 ---
 
 ### Historique
-- [ ] Historique des sessions par campagne (date, participants, chapitres)
+- [~] Historique des sessions par campagne — page `/sessions` existante, mais liste limitée
 - [ ] Historique des mondes rejoints par l'utilisateur
+- [ ] **Rechargement de l'historique du chat et des dés à l'ouverture d'une session**
+      (les messages et jets sont bien persistés en base, mais jamais relus : le chat
+      repart vide à chaque connexion)
 
 ---
 
@@ -177,21 +190,23 @@
 
 ---
 
-## Phase 3 : Combat et Dés — FUTUR
+## Phase 3 : Combat et Dés — LARGEMENT COMPLÉTÉE
 
-> Dépend de la Phase 2.
+> Livrée en avance (avril 2026), avant les Phases 2 et 4.
 
 ### Lanceur de Dés
-- [ ] Support d4, d6, d8, d10, d12, d20, d100
-- [ ] Nombre de dés variable (XdY + modificateur)
-- [ ] Affichage et transmission au MJ
-- [ ] Historique des lancers dans la session
+- [x] Support d4, d6, d8, d10, d12, d20, d100
+- [x] Nombre de dés variable (XdY + modificateur)
+- [x] Affichage et transmission au MJ (diffusion SignalR à toute la table)
+- [~] Historique des lancers — persisté en base, mais pas rechargé à l'ouverture
 
 ### Combat Générique
-- [ ] Déclenchement par le MJ, sélection combattants
-- [ ] Initiative manuelle, gestion des tours
-- [ ] Suivi PV en temps réel
-- [ ] Résumé de combat
+- [x] Déclenchement par le MJ, sélection des combattants (`CombatSetup`)
+- [x] Initiative manuelle, gestion des tours (vues MJ et joueur)
+- [x] Suivi PV en temps réel
+- [x] Résumé de combat (camp vainqueur + notes)
+
+**Statut** : Complété et validé en test à deux comptes.
 
 ### Combat D&D Automatisé
 - [ ] Initiative 1d20 + modificateur Dextérité
@@ -201,34 +216,37 @@
 
 ---
 
-## Phase 4 : Sorts et Équipements — FUTUR
+## Phase 4 : Sorts et Équipements — PARTIELLEMENT COMPLÉTÉE
 
 ### Sorts
-- [ ] Création de sorts génériques (titre, description)
-- [ ] Sorts D&D spécialisés (niveau, école, composantes, formule de dégâts)
-- [ ] Bibliothèque de sorts (officielle + personnelle)
-- [ ] Sorts appris par personnage
+- [~] Création de sorts génériques (titre, description)
+- [x] Sorts D&D spécialisés (`DndSpell` : niveau, école, composantes, dégâts)
+- [x] Bibliothèque de sorts officielle (seeder D&D 5e)
+- [x] Sorts appris par personnage (`DndCharacterSpell`, sélection dans le wizard)
 
 ### Équipements
-- [ ] Catalogue d'équipements (officiel + personnel)
-- [ ] Inventaire avancé (équipé/non-équipé, poids)
-- [ ] Équipements D&D (type, bonus toucher, formule dégâts, propriétés)
+- [x] Catalogue d'équipements officiel (`DndItem`, seeder)
+- [~] Inventaire (`DndInventoryItem` + gestion en session) — pas de notion de poids
+- [x] Équipements D&D (type, bonus, dégâts, propriétés)
 
-### Échanges d'Équipements
+### Échanges d'Équipements — **NON COMMENCÉ**
 - [ ] MJ → Joueur : proposition d'équipement, acceptation/refus
 - [ ] Joueur → Joueur : échange direct entre joueurs de la même campagne
 - [ ] Notifications de proposition
 - [ ] Liste des propositions en attente
 
+> ⚠️ Seule la méthode hub `ProposeTradeTheory` et le type de notification `TradeProposed`
+> existent : **il n'y a aucune interface utilisateur**. La base est posée, tout le reste est à faire.
+
 ---
 
 ## Phase 5 : Engagement et Progression — FUTUR
 
-### Système d'Achievements (Succès)
-- [ ] Succès à 3 niveaux : Monde, Campagne, Chapitre
-- [ ] Rareté : Commun, Rare, Épique, Légendaire
-- [ ] Attribution automatique (conditions) + manuelle (MJ)
-- [ ] Notifications de déblocage selon la rareté
+### Système d'Achievements (Succès) — PARTIELLEMENT COMPLÉTÉ
+- [~] Succès à 3 niveaux : Monde, Campagne, Chapitre — création au niveau Monde opérationnelle
+- [x] Rareté : Commun, Rare, Épique, Légendaire (`AchievementRarity`)
+- [~] Attribution manuelle (MJ) en place ; **attribution automatique par conditions à faire**
+- [~] Type de notification `AchievementUnlocked` défini — déclenchement à vérifier
 - [ ] Affichage dans le profil joueur
 
 ### Statistiques de Dés

@@ -31,6 +31,18 @@ public class CreateParticipantDto
     public int? NpcId { get; set; }
     public int? UserId { get; set; }
     public int MaxHp { get; set; }
+
+    /// <summary>Optional Dexterity modifier for automatic initiative; resolved from the sheet when null.</summary>
+    public int? DexterityModifier { get; set; }
+
+    /// <summary>Optional armor class; resolved from the sheet when null (defaults to 10).</summary>
+    public int? ArmorClass { get; set; }
+
+    /// <summary>Optional resisted damage types (comma-separated).</summary>
+    public string? Resistances { get; set; }
+
+    /// <summary>Optional vulnerable damage types (comma-separated).</summary>
+    public string? Vulnerabilities { get; set; }
 }
 
 /// <summary>Request DTO to start the initiative phase.</summary>
@@ -129,6 +141,10 @@ public class CombatParticipantDto
     public int CurrentHp { get; set; }
     public int MaxHp { get; set; }
     public int? Initiative { get; set; }
+    public int DexterityModifier { get; set; }
+    public int ArmorClass { get; set; }
+    public string? Resistances { get; set; }
+    public string? Vulnerabilities { get; set; }
     public int TurnOrder { get; set; }
     public bool IsActive { get; set; }
 }
@@ -145,4 +161,42 @@ public class CombatActionDto
     public int? DiceResult { get; set; }
     public bool IsPrivate { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>Request to resolve a weapon/spell attack from one participant against another, server-side.</summary>
+public class ResolveAttackDto
+{
+    /// <summary>The target participant's identifier.</summary>
+    public int TargetParticipantId { get; set; }
+
+    /// <summary>The attack roll bonus added to 1d20.</summary>
+    public int AttackBonus { get; set; }
+
+    /// <summary>The damage dice notation (e.g. "1d8").</summary>
+    public string DamageDice { get; set; } = string.Empty;
+
+    /// <summary>The flat damage bonus added to the rolled damage.</summary>
+    public int DamageBonus { get; set; }
+
+    /// <summary>The damage type (used for resistance/vulnerability), optional.</summary>
+    public string? DamageType { get; set; }
+
+    /// <summary>Optional label for the attack (e.g. weapon or spell name), for the log.</summary>
+    public string? Label { get; set; }
+}
+
+/// <summary>Request to override a participant's defensive stats (armor class, DEX modifier, resistances).</summary>
+public class UpdateParticipantDefenseDto
+{
+    /// <summary>The armor class to set.</summary>
+    public int ArmorClass { get; set; }
+
+    /// <summary>The Dexterity modifier to set (used for initiative).</summary>
+    public int DexterityModifier { get; set; }
+
+    /// <summary>Resisted damage types (comma-separated), optional.</summary>
+    public string? Resistances { get; set; }
+
+    /// <summary>Vulnerable damage types (comma-separated), optional.</summary>
+    public string? Vulnerabilities { get; set; }
 }

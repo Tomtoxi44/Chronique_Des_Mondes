@@ -6,14 +6,16 @@
 
 namespace Cdm.ApiService.Hubs;
 
+using Cdm.Business.Abstraction.Services;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 /// <summary>
-/// SignalR hub for real-time chapter session communication.
+/// SignalR hub for real-time session communication.
 /// Handles chat, dice rolls, character status updates, and trade proposals.
 /// </summary>
 [Authorize]
@@ -21,36 +23,53 @@ public class SessionHub : Hub
 {
     private readonly ILogger<SessionHub> logger;
     private readonly AppDbContext db;
+    private readonly ITradeService tradeService;
+    private readonly IAchievementEvaluationService achievementEvaluation;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionHub"/> class.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
     /// <param name="db">Database context.</param>
-    public SessionHub(ILogger<SessionHub> logger, AppDbContext db)
+    /// <param name="tradeService">Trade service for object-exchange proposals.</param>
+    /// <param name="achievementEvaluation">Evaluator that awards automatic achievements.</param>
+    public SessionHub(ILogger<SessionHub> logger, AppDbContext db, ITradeService tradeService, IAchievementEvaluationService achievementEvaluation)
     {
         this.logger = logger;
         this.db = db;
+        this.tradeService = tradeService;
+        this.achievementEvaluation = achievementEvaluation;
     }
 
     /// <summary>
-    /// Joins a chapter session group.
+    /// Joins a session group.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task JoinSession(int chapterId)
+    public async Task JoinSession(int sessionId)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
+
+        // Authorization: only members of the related campaign may join the session group (audit fix #6).
+        
+        if (!await this.IsAuthorizedForSessionAsync(sessionId, userId))
+        {
+            this.logger.LogWarning(
+                "User {UserId} denied access to session {SessionId}",
+                userId,
+                sessionId);
+            throw new HubException("You are not authorized to join this session.");
+        }
 
         await this.Groups.AddToGroupAsync(this.Context.ConnectionId, groupName);
 
         this.logger.LogInformation(
-            "User {UserId} ({UserName}) joined session {ChapterId}",
+            "User {UserId} ({UserName}) joined session {SessionId}",
             userId,
             userName,
-            chapterId);
+            sessionId);
 
         // Notify others in the group
         await this.Clients.OthersInGroup(groupName).SendAsync(
@@ -59,23 +78,23 @@ public class SessionHub : Hub
     }
 
     /// <summary>
-    /// Leaves a chapter session group.
+    /// Leaves a session group.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task LeaveSession(int chapterId)
+    public async Task LeaveSession(int sessionId)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         await this.Groups.RemoveFromGroupAsync(this.Context.ConnectionId, groupName);
 
         this.logger.LogInformation(
-            "User {UserId} ({UserName}) left session {ChapterId}",
+            "User {UserId} ({UserName}) left session {SessionId}",
             userId,
             userName,
-            chapterId);
+            sessionId);
 
         // Notify others in the group
         await this.Clients.Group(groupName).SendAsync(
@@ -86,24 +105,24 @@ public class SessionHub : Hub
     /// <summary>
     /// Sends a chat message to all users in a session.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="message">The message content.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task SendMessage(int chapterId, string message)
+    public async Task SendMessage(int sessionId, string message)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         this.logger.LogInformation(
-            "User {UserId} sent message in session {ChapterId}",
+            "User {UserId} sent message in session {SessionId}",
             userId,
-            chapterId);
+            sessionId);
 
         // Persist message to database
         var sessionMessage = new SessionMessage
         {
-            ChapterId = chapterId,
+            SessionId = sessionId,
             UserId = userId,
             UserName = userName,
             Message = message,
@@ -126,32 +145,32 @@ public class SessionHub : Hub
     /// <summary>
     /// Broadcasts a dice roll result to the session.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="diceType">The type of dice (e.g., "d20", "d6").</param>
     /// <param name="count">Number of dice rolled.</param>
     /// <param name="results">Array of individual die results.</param>
     /// <param name="modifier">Modifier applied to the roll.</param>
     /// <param name="reason">Reason for the roll (e.g., "Attack roll", "Perception check").</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task RollDice(int chapterId, string diceType, int count, int[] results, int modifier, string? reason)
+    public async Task RollDice(int sessionId, string diceType, int count, int[] results, int modifier, string? reason)
     {
         var userId = this.GetUserId();
         var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
         var total = results.Sum() + modifier;
 
         this.logger.LogInformation(
-            "User {UserId} rolled {Count}{DiceType} in session {ChapterId}: {Total}",
+            "User {UserId} rolled {Count}{DiceType} in session {SessionId}: {Total}",
             userId,
             count,
             diceType,
-            chapterId,
+            sessionId,
             total);
 
         // Persist dice roll to database
         var diceRoll = new SessionDiceRoll
         {
-            ChapterId = chapterId,
+            SessionId = sessionId,
             UserId = userId,
             UserName = userName,
             DiceType = diceType,
@@ -164,6 +183,9 @@ public class SessionHub : Hub
         };
         this.db.SessionDiceRolls.Add(diceRoll);
         await this.db.SaveChangesAsync();
+
+        // Award any automatic achievement whose condition this roll satisfies (crit, fumble, dice count).
+        await this.achievementEvaluation.OnDiceRolledAsync(userId, sessionId, diceType, results);
 
         await this.Clients.Group(groupName).SendAsync(
             "DiceRolled",
@@ -182,57 +204,92 @@ public class SessionHub : Hub
     }
 
     /// <summary>
-    /// Proposes a theoretical trade between characters (theory-based RPG mechanic).
+    /// Proposes a theory-based object trade to another session member (GM→player or player→player).
+    /// The proposal is persisted and the recipient is notified; the pending list survives reconnection.
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="targetUserId">The user ID being offered the trade.</param>
     /// <param name="offerDescription">Description of what's being offered.</param>
     /// <param name="requestDescription">Description of what's being requested.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task ProposeTradeTheory(int chapterId, int targetUserId, string offerDescription, string requestDescription)
+    public async Task ProposeTrade(int sessionId, int targetUserId, string offerDescription, string requestDescription)
     {
         var userId = this.GetUserId();
-        var userName = this.GetUserName();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
+
+        var trade = await this.tradeService.ProposeTradeAsync(sessionId, userId, targetUserId, offerDescription, requestDescription);
+        if (trade == null)
+        {
+            throw new HubException("Impossible de proposer cet échange.");
+        }
 
         this.logger.LogInformation(
-            "User {UserId} proposed trade to {TargetUserId} in session {ChapterId}",
-            userId,
-            targetUserId,
-            chapterId);
+            "User {UserId} proposed trade {TradeId} to {TargetUserId} in session {SessionId}",
+            userId, trade.Id, targetUserId, sessionId);
 
-        await this.Clients.Group(groupName).SendAsync(
-            "TradeProposed",
-            new
-            {
-                FromUserId = userId,
-                FromUserName = userName,
-                ToUserId = targetUserId,
-                Offer = offerDescription,
-                Request = requestDescription,
-                Timestamp = DateTime.UtcNow
-            });
+        await this.Clients.Group(groupName).SendAsync("TradeProposed", trade);
+    }
+
+    /// <summary>
+    /// Responds to a pending trade (accept or decline). Only the recipient may respond.
+    /// </summary>
+    /// <param name="sessionId">The session identifier (for group broadcast).</param>
+    /// <param name="tradeId">The trade identifier.</param>
+    /// <param name="accept"><c>true</c> to accept, <c>false</c> to decline.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task RespondToTrade(int sessionId, int tradeId, bool accept)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var trade = await this.tradeService.RespondToTradeAsync(tradeId, userId, accept);
+        if (trade == null)
+        {
+            throw new HubException("Impossible de répondre à cet échange.");
+        }
+
+        await this.Clients.Group(groupName).SendAsync("TradeResolved", trade);
+    }
+
+    /// <summary>
+    /// Cancels a pending trade. Only the proposer may cancel it.
+    /// </summary>
+    /// <param name="sessionId">The session identifier (for group broadcast).</param>
+    /// <param name="tradeId">The trade identifier.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task CancelTrade(int sessionId, int tradeId)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var trade = await this.tradeService.CancelTradeAsync(tradeId, userId);
+        if (trade == null)
+        {
+            throw new HubException("Impossible d'annuler cet échange.");
+        }
+
+        await this.Clients.Group(groupName).SendAsync("TradeResolved", trade);
     }
 
     /// <summary>
     /// Updates a character's status (e.g., health, condition).
     /// </summary>
-    /// <param name="chapterId">The chapter identifier.</param>
+    /// <param name="sessionId">The session identifier.</param>
     /// <param name="characterId">The character identifier.</param>
     /// <param name="statusType">Type of status update (e.g., "health", "condition").</param>
     /// <param name="value">The new value or status description.</param>
     /// <returns>A task representing the async operation.</returns>
-    public async Task UpdateCharacterStatus(int chapterId, int characterId, string statusType, string value)
+    public async Task UpdateCharacterStatus(int sessionId, int characterId, string statusType, string value)
     {
         var userId = this.GetUserId();
-        var groupName = $"chapter_{chapterId}";
+        var groupName = $"session_{sessionId}";
 
         this.logger.LogInformation(
-            "User {UserId} updated character {CharacterId} status ({StatusType}) in session {ChapterId}",
+            "User {UserId} updated character {CharacterId} status ({StatusType}) in session {SessionId}",
             userId,
             characterId,
             statusType,
-            chapterId);
+            sessionId);
 
         await this.Clients.Group(groupName).SendAsync(
             "CharacterStatusUpdated",
@@ -268,6 +325,46 @@ public class SessionHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    /// <summary>
+    /// Checks whether a user belongs to the campaign owning the given session,
+    /// either as the Game Master or as a player participant.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns><c>true</c> if the user is authorized.</returns>
+    private async Task<bool> IsAuthorizedForSessionAsync(int sessionId, int userId)
+    {
+        if (userId <= 0)
+        {
+            return false;
+        }
+
+        var session = await this.db.Sessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session is null)
+        {
+            return false;
+        }
+
+        // Game Master of the campaign
+        var isGameMaster = await this.db.Campaigns
+            .AsNoTracking()
+            .AnyAsync(c => c.Id == session.CampaignId && c.CreatedBy == userId);
+
+        if (isGameMaster)
+        {
+            return true;
+        }
+
+        // Player participating in this session through a character they own
+        return await this.db.SessionParticipants
+            .AsNoTracking()
+            .AnyAsync(sp => sp.SessionId == sessionId
+                && sp.WorldCharacter.Character.UserId == userId);
     }
 
     /// <summary>

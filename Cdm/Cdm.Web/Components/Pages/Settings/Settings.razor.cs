@@ -2,6 +2,7 @@ using Cdm.Web.Resources;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
+using System.Globalization;
 
 namespace Cdm.Web.Components.Pages.Settings;
 
@@ -12,7 +13,11 @@ public partial class Settings
     [Inject] private NavigationManager Nav { get; set; } = default!;
 
     private bool IsDarkMode = true;
-    private string CurrentCulture = "fr";
+
+    // Source de vérité = la culture réellement appliquée par ASP.NET Core (cookie).
+    // Auparavant l'état du bouton venait de localStorage, ce qui pouvait diverger
+    // de la langue affichée (UI en anglais mais bouton « Français » surligné).
+    private string CurrentCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -22,9 +27,6 @@ public partial class Settings
             {
                 var theme = await JS.InvokeAsync<string?>("localStorage.getItem", "cdm-theme");
                 IsDarkMode = theme != "light";
-
-                var culture = await JS.InvokeAsync<string?>("localStorage.getItem", "cdm-culture");
-                CurrentCulture = culture ?? "fr";
 
                 await InvokeAsync(StateHasChanged);
             }
@@ -45,16 +47,18 @@ public partial class Settings
         catch { /* ignore */ }
     }
 
-    private async Task SetLanguage(string culture)
+    private void SetLanguage(string culture)
     {
-        CurrentCulture = culture;
-        try
+        if (string.Equals(culture, CurrentCulture, StringComparison.OrdinalIgnoreCase))
         {
-            await JS.InvokeVoidAsync("localStorage.setItem", "cdm-culture", culture);
-            // Reload for culture cookie to take effect
-            await JS.InvokeVoidAsync("eval",
-                $"document.cookie='Culture={culture};path=/;max-age=31536000'; location.reload();");
+            return;
         }
-        catch { /* ignore */ }
+
+        // Délègue au endpoint serveur qui pose le cookie de culture standard
+        // (.AspNetCore.Culture) puis redirige : c'est lui qui fait réellement
+        // basculer la langue de l'interface.
+        this.Nav.NavigateTo(
+            $"/set-culture?culture={Uri.EscapeDataString(culture)}&redirectUri={Uri.EscapeDataString("/settings")}",
+            forceLoad: true);
     }
 }

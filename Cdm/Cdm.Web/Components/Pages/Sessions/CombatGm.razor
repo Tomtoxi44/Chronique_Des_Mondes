@@ -36,6 +36,10 @@ else if (Combat != null)
             <div style="display:flex;gap:var(--spacing-sm);">
                 @if (Combat.Status == 1)
                 {
+                    <button class="btn btn-secondary btn-sm" @onclick="RollAllInitiative" disabled="@IsRollingInitiative"
+                            title="Lance l'initiative (1d20 + modificateur de Dextérité) pour tous les participants">
+                        <i class="bi bi-dice-5"></i> Initiative auto
+                    </button>
                     <button class="btn btn-primary btn-sm" @onclick="StartCombat" disabled="@(!AllReadyForCombat)"
                             title="@(!AllReadyForCombat ? "En attente des initiatives de tous les participants" : "Lancer le combat")">
                         <i class="bi bi-swords"></i> Démarrer le combat
@@ -66,6 +70,15 @@ else if (Combat != null)
                             <span class="initiative-name">@p.Name</span>
                             <span class="initiative-type-badge">
                                 @(p.IsPlayerCharacter ? "Joueur" : "PNJ")
+                            </span>
+
+                            <span class="initiative-defense-edit" style="display:inline-flex; align-items:center; gap:4px; font-size:var(--font-size-xs);" title="Corrige manuellement la CA et le modificateur de Dextérité">
+                                <label style="color:var(--color-text-muted);">CA</label>
+                                <input type="number" class="form-control" style="width:52px;" value="@p.ArmorClass"
+                                       @onchange="e => OnAcChanged(participant, e)" />
+                                <label style="color:var(--color-text-muted);">DEX</label>
+                                <input type="number" class="form-control" style="width:52px;" value="@p.DexterityModifier"
+                                       @onchange="e => OnDexChanged(participant, e)" />
                             </span>
 
                             @if (p.Initiative.HasValue)
@@ -249,7 +262,7 @@ else if (Combat != null)
 
                     <!-- Liste de tous les participants avec toggle actif/inactif -->
                     <div class="cdm-card" style="margin-top:var(--spacing-md);">
-                        <h4 style="margin-bottom:var(--spacing-sm);">Participants</h4>
+                        <AppSectionTitle Title="Participants" Icon="bi-people" />
                         <div class="combat-participants-list">
                             @foreach (var p in SortedParticipants)
                             {
@@ -271,9 +284,42 @@ else if (Combat != null)
                     </div>
                 </div>
 
-                <!-- Panel droit: log -->
+                <!-- Panel droit: log + résolution d'attaque -->
                 <div class="combat-log-panel">
                     <CombatLog Actions="@VisibleActionsForGm" Title="Journal de combat" />
+
+                    <div class="cdm-card" style="margin-top: var(--spacing-sm); padding: var(--spacing-sm);">
+                        <AppSectionTitle Title="Résoudre une attaque" Icon="bi-crosshair" />
+                        <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                            <select class="form-control" style="font-size: var(--font-size-sm);" @bind="AtkAttackerId">
+                                <option value="0">Attaquant…</option>
+                                @foreach (var p in Combat.Participants.Where(p => p.IsActive))
+                                {
+                                    <option value="@p.Id">@p.Name</option>
+                                }
+                            </select>
+                            <select class="form-control" style="font-size: var(--font-size-sm);" @bind="AtkTargetId">
+                                <option value="0">Cible…</option>
+                                @foreach (var p in Combat.Participants.Where(p => p.IsActive))
+                                {
+                                    <option value="@p.Id">@p.Name (CA @p.ArmorClass, PV @p.CurrentHp/@p.MaxHp)</option>
+                                }
+                            </select>
+                            <div style="display: flex; gap: var(--spacing-xs); align-items: center; flex-wrap: wrap;">
+                                <label style="font-size: var(--font-size-xs);">Att.</label>
+                                <input type="number" class="form-control" style="width: 60px; font-size: var(--font-size-sm);" @bind="AtkBonus" title="Bonus d'attaque (1d20 + bonus)" />
+                                <input class="form-control" style="width: 70px; font-size: var(--font-size-sm);" @bind="AtkDamageDice" title="Dés de dégâts" />
+                                <label style="font-size: var(--font-size-xs);">+</label>
+                                <input type="number" class="form-control" style="width: 55px; font-size: var(--font-size-sm);" @bind="AtkDamageBonus" title="Bonus de dégâts" />
+                            </div>
+                            <input class="form-control" style="font-size: var(--font-size-sm);" placeholder="Type de dégâts (ex: perçant)" @bind="AtkDamageType" />
+                            <input class="form-control" style="font-size: var(--font-size-sm);" placeholder="Libellé (ex: Épée longue)" @bind="AtkLabel" />
+                            <button class="btn btn-primary btn-sm" @onclick="ResolveAttack"
+                                    disabled="@(IsResolvingAttack || AtkAttackerId <= 0 || AtkTargetId <= 0 || AtkAttackerId == AtkTargetId)">
+                                <i class="bi bi-lightning-charge"></i> Résoudre (1d20 vs CA)
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         }

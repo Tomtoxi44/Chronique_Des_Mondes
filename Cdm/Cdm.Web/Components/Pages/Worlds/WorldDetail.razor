@@ -54,12 +54,13 @@ else
             <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
                 @if (IsOwner && IsWorldEditing)
                 {
-                    <div style="margin-bottom: var(--spacing-md); display: flex; justify-content: space-between; align-items: center;">
-                        <h3 class="card-title">Modifier les paramètres</h3>
-                        <button class="btn btn-ghost btn-sm" @onclick="() => IsWorldEditing = false">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </div>
+                    <AppSectionTitle Title="Modifier les paramètres" Icon="bi-sliders">
+                        <Actions>
+                            <button class="btn btn-ghost btn-sm" @onclick="() => IsWorldEditing = false">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </Actions>
+                    </AppSectionTitle>
 
                     <div class="form-group">
                         <label class="form-label">Nom du monde *</label>
@@ -73,7 +74,7 @@ else
                             {
                                 <button type="button"
                                         class="game-type-card @(WorldEditGameType == gt.Value ? "selected" : "")"
-                                        style="padding: var(--spacing-sm); @(WorldEditGameType == gt.Value ? "border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(99,102,241,0.1));" : "")"
+                                        style="padding: var(--spacing-sm); @(WorldEditGameType == gt.Value ? "border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(214,159,82,0.12));" : "")"
                                         @onclick="() => WorldEditGameType = gt.Value">
                                     <i class="bi @gt.Icon game-type-icon" style="font-size: 1.2rem; @(WorldEditGameType == gt.Value ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
                                     <span class="game-type-label" style="font-size: var(--font-size-xs);">@gt.Label</span>
@@ -93,16 +94,17 @@ else
                 }
                 else
                 {
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <h3 class="card-title">@L["Worlds_Information"]</h3>
-                        @if (IsOwner)
-                        {
-                            <button class="btn btn-ghost btn-sm" @onclick="BeginWorldEdit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                        }
-                    </div>
-                    <div class="info-grid" style="margin-top: var(--spacing-md);">
+                    <AppSectionTitle Title='@L["Worlds_Information"]' Icon="bi-info-circle">
+                        <Actions>
+                            @if (IsOwner)
+                            {
+                                <button class="btn btn-ghost btn-sm" @onclick="BeginWorldEdit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            }
+                        </Actions>
+                    </AppSectionTitle>
+                    <div class="info-grid">
                         <div>
                             <span class="info-label">@L["Worlds_GameType"]</span>
                             <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
@@ -125,8 +127,8 @@ else
             @if (!string.IsNullOrWhiteSpace(World.Description))
             {
                 <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                    <h3 class="card-title">Description</h3>
-                    <p style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: var(--spacing-md) 0 0;">@World.Description</p>
+                    <AppSectionTitle Title="Description" Icon="bi-card-text" />
+                    <p style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: 0;">@World.Description</p>
                     @if (IsOwner)
                     {
                         <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-md);">
@@ -138,32 +140,34 @@ else
             else
             {
                 <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <h3 class="card-title">Description</h3>
-                        @if (IsOwner)
-                        {
-                            <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm">
-                                <i class="bi bi-plus"></i> Ajouter une description
-                            </a>
-                        }
-                    </div>
-                    <p style="color: var(--color-text-muted); font-style: italic; margin-top: var(--spacing-sm);">@(IsOwner ? "Aucune description. Cliquez pour écrire." : "Aucune description.")</p>
+                    <AppSectionTitle Title="Description" Icon="bi-card-text">
+                        <Actions>
+                            @if (IsOwner)
+                            {
+                                <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm">
+                                    <i class="bi bi-plus"></i> Ajouter une description
+                                </a>
+                            }
+                        </Actions>
+                    </AppSectionTitle>
+                    <p style="color: var(--color-text-muted); font-style: italic; margin: 0;">@(IsOwner ? "Aucune description. Cliquez pour écrire." : "Aucune description.")</p>
                 </div>
             }
 
             @if (Campaigns.Count > 0)
             {
                 <div class="cdm-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                        <h3 class="card-title">@L["Worlds_Campaigns"]</h3>
-                        @if (IsOwner)
-                        {
-                            <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-ghost btn-sm">
-                                <i class="bi bi-plus"></i>
-                                @L["Campaigns_Create"]
-                            </a>
-                        }
-                    </div>
+                    <AppSectionTitle Title='@L["Worlds_Campaigns"]' Icon="bi-map">
+                        <Actions>
+                            @if (IsOwner)
+                            {
+                                <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-ghost btn-sm">
+                                    <i class="bi bi-plus"></i>
+                                    @L["Campaigns_Create"]
+                                </a>
+                            }
+                        </Actions>
+                    </AppSectionTitle>
 
                     @foreach (var campaign in Campaigns)
                     {
@@ -335,7 +339,7 @@ else
                 @if (IsOwner && IsCampaignEditing)
                 {
                     <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                        <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Modifier la campagne</h3>
+                        <AppSectionTitle Title="Modifier la campagne" Icon="bi-pencil-square" />
                         <div class="form-group">
                             <label class="form-label">Nom *</label>
                             <input type="text" class="form-control" @bind="CampaignEditName" />
@@ -380,19 +384,18 @@ else
                     @if (IsOwner && CampaignTab == "chapitres")
                     {
                         <div class="cdm-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                                <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                                    <h3 class="card-title">Chapitres</h3>
+                            <AppSectionTitle Title="Chapitres" Icon="bi-journals">
+                                <Actions>
                                     @if (IsReordering)
                                     {
                                         <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Enregistrement...</span>
                                     }
-                                </div>
-                                <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
-                                    <i class="bi bi-plus"></i>
-                                    @L["Chapters_Create"]
-                                </a>
-                            </div>
+                                    <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
+                                        <i class="bi bi-plus"></i>
+                                        @L["Chapters_Create"]
+                                    </a>
+                                </Actions>
+                            </AppSectionTitle>
 
                             @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var tabChapters) && tabChapters.Count > 0)
                             {
@@ -441,28 +444,27 @@ else
                     @if (IsOwner && CampaignTab == "session")
                     {
                         <div class="cdm-card" style="border-top: 2px solid var(--theme-primary, var(--color-primary));">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
-                                <div>
-                                    <h3 class="card-title" style="margin: 0;">Session de jeu</h3>
-                                    <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
-                                        Lancez une session pour commencer à jouer cette campagne.
-                                    </p>
-                                </div>
-                                @if (ActiveSession == null && !IsStartSessionPanelOpen)
-                                {
-                                    <button class="btn btn-primary btn-sm" @onclick="OpenStartSessionPanel">
-                                        <i class="bi bi-play-fill"></i>
-                                        Lancer une session
-                                    </button>
-                                }
-                                else if (ActiveSession != null)
-                                {
-                                    <a href="/sessions/@ActiveSession.Id/gm" class="btn btn-primary btn-sm">
-                                        <i class="bi bi-play-fill"></i>
-                                        Reprendre la session
-                                    </a>
-                                }
-                            </div>
+                            <AppSectionTitle Title="Session de jeu" Icon="bi-play-circle" Rule="false">
+                                <Actions>
+                                    @if (ActiveSession == null && !IsStartSessionPanelOpen)
+                                    {
+                                        <button class="btn btn-primary btn-sm" @onclick="OpenStartSessionPanel">
+                                            <i class="bi bi-play-fill"></i>
+                                            Lancer une session
+                                        </button>
+                                    }
+                                    else if (ActiveSession != null)
+                                    {
+                                        <a href="/sessions/@ActiveSession.Id/gm" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-play-fill"></i>
+                                            Reprendre la session
+                                        </a>
+                                    }
+                                </Actions>
+                            </AppSectionTitle>
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: 0 0 var(--spacing-sm);">
+                                Lancez une session pour commencer à jouer cette campagne.
+                            </p>
 
                             @if (IsLoadingSession)
                             {
@@ -536,8 +538,8 @@ else
                     @if (CampaignTab == "infos" || !IsOwner)
                     {
                         <div class="cdm-card">
-                            <h3 class="card-title">Informations</h3>
-                            <div class="info-grid" style="margin-top: var(--spacing-md);">
+                            <AppSectionTitle Title="Informations" Icon="bi-info-circle" />
+                            <div class="info-grid">
                                 <div>
                                     <span class="info-label">Visibilité</span>
                                     <span class="info-value">@(SelectedCampaign.Visibility == Visibility.Public ? "Publique" : "Privée")</span>
@@ -701,20 +703,19 @@ else
                 @if (ChapterTab == "pnj")
                 {
                     <div class="cdm-card">
-                        <div class="npc-panel-header">
-                            <div>
-                                <h3 class="card-title" style="margin: 0;">Personnages non-joueurs</h3>
-                                <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: var(--spacing-xs) 0 0;">
-                                    PNJ de ce chapitre — visibles uniquement par le MJ
-                                </p>
-                            </div>
-                            @if (!ShowNpcForm)
-                            {
-                                <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
-                                    <i class="bi bi-plus"></i> Ajouter
-                                </button>
-                            }
-                        </div>
+                        <AppSectionTitle Title="Personnages non-joueurs" Icon="bi-person-badge" Rule="false">
+                            <Actions>
+                                @if (!ShowNpcForm)
+                                {
+                                    <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
+                                        <i class="bi bi-plus"></i> Ajouter
+                                    </button>
+                                }
+                            </Actions>
+                        </AppSectionTitle>
+                        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: 0 0 var(--spacing-md);">
+                            PNJ de ce chapitre — visibles uniquement par le MJ
+                        </p>
 
                         @if (ShowNpcForm)
                         {
@@ -1020,121 +1021,8 @@ else
                            Icon="bi-lightning"
                            Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new("Événements") })" />
 
-            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
-                Les événements sont des modificateurs actifs qui affectent tous les personnages de ce monde.
-            </p>
-
-            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md);">
-                <button class="btn btn-primary btn-sm" @onclick="() => ShowNewEventForm = !ShowNewEventForm">
-                    <i class="bi bi-plus"></i> Créer un événement
-                </button>
-            </div>
-
-            @if (ShowNewEventForm)
-            {
-                <div class="cdm-card" style="margin-bottom: var(--spacing-lg); border: 1px solid var(--theme-card-border, var(--color-border));">
-                    <h4 class="card-title" style="margin-bottom: var(--spacing-md);">Nouvel événement de monde</h4>
-                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                        <label class="form-label">Nom <span style="color:var(--color-error)">*</span></label>
-                        <input type="text" class="form-control" @bind="NewEvent.Name" placeholder="Nom de l'événement..." />
-                    </div>
-                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="3" @bind="NewEvent.Description" placeholder="Description narrative de l'événement..."></textarea>
-                    </div>
-                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
-                        <div class="form-group">
-                            <label class="form-label">Type d'effet</label>
-                            <select class="form-control" @bind="NewEvent.EffectType">
-                                <option value="@EventEffectType.Narrative">Narratif</option>
-                                <option value="@EventEffectType.StatModifier">Modificateur de stat</option>
-                                <option value="@EventEffectType.HealthModifier">Modificateur de PV</option>
-                                <option value="@EventEffectType.DiceModifier">Modificateur de dé</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Durée</label>
-                            <select class="form-control" @bind="NewEvent.IsPermanent">
-                                <option value="true">Permanent</option>
-                                <option value="false">Temporaire</option>
-                            </select>
-                        </div>
-                    </div>
-                    @if (NewEvent.EffectType != EventEffectType.Narrative)
-                    {
-                        <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
-                            <div class="form-group">
-                                <label class="form-label">Stat ciblée</label>
-                                <input type="text" class="form-control" @bind="NewEvent.TargetStat" placeholder="ex: Force, PV..." />
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Valeur modificateur</label>
-                                <input type="number" class="form-control" @bind="NewEvent.ModifierValue" />
-                            </div>
-                        </div>
-                    }
-                    <div style="display: flex; gap: var(--spacing-sm);">
-                        <button class="btn btn-primary btn-sm" @onclick="CreateEvent" disabled="@IsSaving">
-                            <i class="bi bi-check"></i> Créer
-                        </button>
-                        <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewEventForm = false">@L["Common_Cancel"]</button>
-                    </div>
-                </div>
-            }
-
-            @if (IsLoadingEvents)
-            {
-                <AppLoadingSpinner Label="Chargement des événements..." />
-            }
-            else if (WorldEvents.Count == 0)
-            {
-                <AppEmptyState Icon="bi-lightning"
-                               Title="Aucun événement"
-                               Message="Aucun événement actif dans ce monde pour l'instant." />
-            }
-            else
-            {
-                @foreach (var ev in WorldEvents.OrderByDescending(e => e.CreatedAt))
-                {
-                    <div class="cdm-card" style="margin-bottom: var(--spacing-sm); border-left: 3px solid @(ev.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-border)");">
-                        <div style="display: flex; align-items: flex-start; gap: var(--spacing-md);">
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-xs);">
-                                    <span style="font-weight: 600; color: var(--color-text-primary);">@ev.Name</span>
-                                    @if (ev.IsActive)
-                                    {
-                                        <span class="status-badge status-active">Actif</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="status-badge status-paused">Inactif</span>
-                                    }
-                                    <span class="status-badge" style="background: var(--color-bg-secondary);">@GetEffectLabel(ev.EffectType)</span>
-                                    <span class="status-badge" style="background: var(--color-bg-secondary);">@(ev.IsPermanent ? "Permanent" : "Temporaire")</span>
-                                </div>
-                                @if (!string.IsNullOrWhiteSpace(ev.Description))
-                                {
-                                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0;">@ev.Description</p>
-                                }
-                                @if (ev.EffectType != EventEffectType.Narrative && ev.ModifierValue.HasValue)
-                                {
-                                    <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
-                                        @ev.TargetStat : @(ev.ModifierValue > 0 ? "+" : "")@ev.ModifierValue
-                                    </p>
-                                }
-                            </div>
-                            <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
-                                <button class="btn btn-ghost btn-sm" @onclick="() => ToggleEventActive(ev)" title="@(ev.IsActive ? "Désactiver" : "Activer")">
-                                    <i class="bi @(ev.IsActive ? "bi-pause-circle" : "bi-play-circle")"></i>
-                                </button>
-                                <button class="btn btn-ghost btn-sm" @onclick="() => DeleteEvent(ev.Id)" style="color: var(--color-error);" title="Supprimer">
-                                    <i class="bi bi-trash3"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
+            @* Contenu événements (composant extrait, auto-chargeant) *@
+            <WorldEventsPanel WorldId="WorldId" />
         }
 
         @* ──────────────────────────────────────────────────────────
@@ -1146,109 +1034,8 @@ else
                            Icon="bi-trophy"
                            Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new("Succès") })" />
 
-            <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-lg);">
-                Les succès récompensent les accomplissements des joueurs dans ce monde.
-            </p>
-
-            <div style="display: flex; justify-content: flex-end; margin-bottom: var(--spacing-md);">
-                <button class="btn btn-primary btn-sm" @onclick="() => ShowNewAchievementForm = !ShowNewAchievementForm">
-                    <i class="bi bi-plus"></i> Créer un succès
-                </button>
-            </div>
-
-            @if (ShowNewAchievementForm)
-            {
-                <div class="cdm-card" style="margin-bottom: var(--spacing-lg); border: 1px solid var(--theme-card-border, var(--color-border));">
-                    <h4 class="card-title" style="margin-bottom: var(--spacing-md);">Nouveau succès de monde</h4>
-                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                        <label class="form-label">Nom <span style="color:var(--color-error)">*</span></label>
-                        <input type="text" class="form-control" @bind="NewAchievement.Name" placeholder="Nom du succès..." />
-                    </div>
-                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                        <label class="form-label">Description <span style="color:var(--color-error)">*</span></label>
-                        <textarea class="form-control" rows="3" @bind="NewAchievement.Description" placeholder="Décrivez ce succès et comment l'obtenir..."></textarea>
-                    </div>
-                    <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
-                        <div class="form-group">
-                            <label class="form-label">Rareté</label>
-                            <select class="form-control" @bind="NewAchievement.Rarity">
-                                <option value="@AchievementRarity.Common">Commun</option>
-                                <option value="@AchievementRarity.Rare">Rare</option>
-                                <option value="@AchievementRarity.Epic">Épique</option>
-                                <option value="@AchievementRarity.Legendary">Légendaire</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Visibilité</label>
-                            <select class="form-control" @bind="NewAchievement.IsSecret">
-                                <option value="false">Visible</option>
-                                <option value="true">Secret</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group" style="margin-bottom: var(--spacing-sm);">
-                        <label class="form-label">Récompense (optionnel)</label>
-                        <input type="text" class="form-control" @bind="NewAchievement.RewardDescription" placeholder="Description de la récompense..." />
-                    </div>
-                    <div style="display: flex; gap: var(--spacing-sm);">
-                        <button class="btn btn-primary btn-sm" @onclick="CreateAchievement" disabled="@IsSaving">
-                            <i class="bi bi-check"></i> Créer
-                        </button>
-                        <button class="btn btn-ghost btn-sm" @onclick="() => ShowNewAchievementForm = false">@L["Common_Cancel"]</button>
-                    </div>
-                </div>
-            }
-
-            @if (IsLoadingAchievements)
-            {
-                <AppLoadingSpinner Label="Chargement des succès..." />
-            }
-            else if (WorldAchievements.Count == 0)
-            {
-                <AppEmptyState Icon="bi-trophy"
-                               Title="Aucun succès"
-                               Message="Aucun succès défini pour ce monde." />
-            }
-            else
-            {
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-md);">
-                    @foreach (var ach in WorldAchievements.OrderBy(a => a.Rarity).ThenBy(a => a.Name))
-                    {
-                        <div class="cdm-card" style="@GetRarityBorderStyle(ach.Rarity)">
-                            <div style="display: flex; align-items: flex-start; gap: var(--spacing-sm); justify-content: space-between;">
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing-xs); flex-wrap: wrap;">
-                                        <i class="bi bi-trophy" style="color: @GetRarityColor(ach.Rarity);"></i>
-                                        <span style="font-weight: 600; color: var(--color-text-primary); font-size: var(--font-size-sm);">@ach.Name</span>
-                                        <span class="status-badge @GetRarityClass(ach.Rarity)">@GetRarityLabel(ach.Rarity)</span>
-                                        @if (ach.IsSecret)
-                                        {
-                                            <span class="status-badge" style="background: var(--color-bg-secondary);"><i class="bi bi-eye-slash"></i> Secret</span>
-                                        }
-                                    </div>
-                                    <p style="color: var(--color-text-secondary); font-size: var(--font-size-xs); margin: 0;">@ach.Description</p>
-                                    @if (!string.IsNullOrWhiteSpace(ach.RewardDescription))
-                                    {
-                                        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
-                                            <i class="bi bi-gift"></i> @ach.RewardDescription
-                                        </p>
-                                    }
-                                    @if (ach.UnlockCount > 0)
-                                    {
-                                        <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-xs);">
-                                            @ach.UnlockCount débloqué(s)
-                                        </p>
-                                    }
-                                </div>
-                                <button class="btn btn-ghost btn-sm" @onclick="() => DeleteAchievement(ach.Id)"
-                                        style="color: var(--color-error); flex-shrink: 0;" title="Supprimer">
-                                    <i class="bi bi-trash3"></i>
-                                </button>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
+            @* Contenu succès (composant extrait, auto-chargeant) *@
+            <WorldAchievementsPanel WorldId="WorldId" />
         }
 
         @* ──────────────────────────────────────────────────────────
@@ -1260,134 +1047,19 @@ else
                            Icon="bi-person-plus"
                            Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new("Invitations") })" />
 
-            @* Lien d'invitation monde *@
-            <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                <div class="world-section-header">
-                    <div>
-                        <h3 class="card-title" style="margin: 0;">Lien d'invitation au monde</h3>
-                        <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--spacing-xs) 0 0;">
-                            Partagez ce lien pour inviter des joueurs à rejoindre le monde avec leur personnage. Valable 30 jours.
-                        </p>
-                    </div>
-                </div>
-                @if (!string.IsNullOrEmpty(WorldInviteToken))
-                {
-                    var worldInviteUrl = $"{Nav.BaseUri}worlds/join/{WorldInviteToken}";
-                    var qrUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(worldInviteUrl)}&bgcolor=1a1a2e&color=d4af37";
-                    <div class="invite-token-box" style="margin: var(--spacing-md) 0;">@worldInviteUrl</div>
-                    <div style="display: flex; gap: var(--spacing-md); align-items: flex-start; flex-wrap: wrap;">
-                        <div style="display: flex; gap: var(--spacing-sm);">
-                            <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(worldInviteUrl)" title="Copier le lien">
-                                <i class="bi bi-clipboard"></i>
-                                Copier
-                            </button>
-                            <button class="btn btn-ghost btn-sm" @onclick="GenerateWorldInviteToken" disabled="@IsGeneratingWorldToken">
-                                <i class="bi bi-arrow-repeat"></i>
-                                Régénérer
-                            </button>
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--spacing-xs);">
-                            <img src="@qrUrl" alt="QR Code d'invitation" width="120" height="120"
-                                 style="border-radius: var(--radius-md); border: 2px solid var(--color-border);" />
-                            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Scanner pour rejoindre</span>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <button class="btn btn-primary btn-sm" style="margin-top: var(--spacing-md);" @onclick="GenerateWorldInviteToken" disabled="@IsGeneratingWorldToken">
-                        <i class="bi bi-link-45deg"></i>
-                        @(IsGeneratingWorldToken ? "Génération..." : "Générer un lien d'invitation")
-                    </button>
-                }
-            </div>
+            @* Lien d'invitation monde (composant extrait) *@
+            <WorldInvitePanel WorldId="WorldId" />
 
-            @* Joueurs actuels *@
-            <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                <h3 class="card-title" style="margin-bottom: var(--spacing-md);">Joueurs dans le monde</h3>
-                @if (IsLoadingWorldCharacters)
-                {
-                    <AppLoadingSpinner Label="Chargement..." />
-                }
-                else if (WorldCharacters.Count == 0)
-                {
-                    <AppEmptyState Icon="bi-people"
-                                   Title="Aucun joueur"
-                                   Message="Aucun joueur n'a encore rejoint ce monde. Partagez le lien ci-dessus." />
-                }
-                else
-                {
-                    <div class="character-list">
-                        @foreach (var wc in WorldCharacters)
-                        {
-                            <div class="invite-row">
-                                <div class="character-avatar-mini">
-                                    @wc.CharacterName.Substring(0, 1).ToUpperInvariant()
-                                </div>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="font-weight: 600; font-size: var(--font-size-sm);">@wc.CharacterName</div>
-                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
-                                        Rejoint le @wc.JoinedAt.ToLocalTime().ToString("dd/MM/yyyy")
-                                    </div>
-                                </div>
-                                <button class="btn btn-ghost btn-sm" style="color: var(--color-danger);"
-                                        @onclick="() => RemoveWorldCharacter(wc.CharacterId)"
-                                        title="Retirer du monde">
-                                    <i class="bi bi-person-x"></i>
-                                </button>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
+            @* Joueurs actuels (composant extrait) *@
+            <WorldPlayersPanel IsLoading="IsLoadingWorldCharacters"
+                               Players="WorldCharacters"
+                               OnRemove="RemoveWorldCharacter" />
 
             @* Invitations par campagne *@
-            <div class="cdm-card">
-                <h3 class="card-title" style="margin-bottom: var(--spacing-sm);">Liens d'invitation par campagne</h3>
-                <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
-                    Générez un lien par campagne pour rejoindre directement cette campagne.
-                </p>
-                @if (Campaigns.Count == 0)
-                {
-                    <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); font-style: italic;">Aucune campagne dans ce monde.</p>
-                }
-                else
-                {
-                    @foreach (var campaign in Campaigns)
-                    {
-                        var token = campaign.InviteToken;
-                        var inviteUrl = token != null ? $"{Nav.BaseUri}join?token={token}" : null;
-                        <div class="invite-row">
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 600; font-size: var(--font-size-sm); margin-bottom: var(--spacing-xs);">
-                                    <i class="bi bi-map" style="color: var(--color-text-muted); margin-right: var(--spacing-xs);"></i>
-                                    @campaign.Name
-                                </div>
-                                @if (inviteUrl != null)
-                                {
-                                    <div class="invite-token-box">@inviteUrl</div>
-                                }
-                                else
-                                {
-                                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic;">Aucun lien généré</span>
-                                }
-                            </div>
-                            <div style="display: flex; gap: var(--spacing-xs); flex-shrink: 0;">
-                                <button class="btn btn-ghost btn-sm" @onclick="() => GenerateInviteToken(campaign.Id)" disabled="@IsGeneratingToken">
-                                    <i class="bi bi-arrow-repeat"></i>
-                                    @(token == null ? "Générer" : "Régénérer")
-                                </button>
-                                @if (inviteUrl != null)
-                                {
-                                    <button class="btn btn-ghost btn-sm" @onclick="() => CopyToClipboard(inviteUrl)" title="Copier le lien">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    }
-                }
-            </div>
+            @* Invitations par campagne (composant extrait) *@
+            <WorldCampaignInvitesPanel Campaigns="Campaigns"
+                                       IsGenerating="IsGeneratingToken"
+                                       OnGenerate="GenerateInviteToken" />
         }
 
     </AppThemeWrapper>
