@@ -34,6 +34,7 @@
   --color-success: #22c55e;
   --color-warning: #d97706;
   --color-error:   #ef4444;
+  --color-danger:  #ef4444;
   --color-info:    #3b82f6;
 
   /* ============================================
@@ -111,8 +112,10 @@
   --color-bg-elevated:  #12151d;
   --color-bg-card:      #0e131b;
   --color-bg-input:     #0a0f16;
+  --color-bg-tertiary:  #161b26;
 
   /* Surface aliases (used by dropdowns, panels, notifications) */
+  --color-surface:           var(--color-bg-card);
   --color-surface-primary:   var(--color-bg-card);
   --color-surface-secondary: var(--color-bg-elevated);
   --color-surface-alt:       var(--color-bg-secondary);
@@ -150,8 +153,10 @@
   --color-bg-elevated:  #fbf7ee;
   --color-bg-card:      #f8f3ea;
   --color-bg-input:     #e9e2d3;
+  --color-bg-tertiary:  #ded5c3;
 
   /* Surface aliases */
+  --color-surface:           var(--color-bg-card);
   --color-surface-primary:   var(--color-bg-card);
   --color-surface-secondary: var(--color-bg-elevated);
   --color-surface-alt:       var(--color-bg-secondary);
