@@ -1,9 +1,10 @@
 @* Titre de section « codex » : petit label en capitales espacées, icône accent
    et filet inférieur. Réutilise .section-eyebrow (voir components.css).
    Utiliser pour les en-têtes de section À L'INTÉRIEUR d'une carte — pas pour
-   les noms d'entité (campagne, session…), qui gardent .card-title (serif). *@
+   les noms d'entité (campagne, session…), qui gardent .card-title (serif).
+   Rule=false : sans filet (ex. header suivi immédiatement d'un sous-titre). *@
 
-<h3 class="section-eyebrow">
+<h3 class="section-eyebrow@(Rule ? "" : " section-eyebrow--flush")">
     @if (!string.IsNullOrEmpty(Icon))
     {
         <i class="bi @Icon"></i>
@@ -18,5 +19,6 @@
 @code {
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string? Icon { get; set; }
+    [Parameter] public bool Rule { get; set; } = true;
     [Parameter] public RenderFragment? Actions { get; set; }
 }

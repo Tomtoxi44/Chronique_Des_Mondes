@@ -86,15 +86,13 @@ else
             {
                 <!-- Section PNJ (GM uniquement) -->
                 <div class="cdm-card" style="margin-top: var(--spacing-lg);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                        <h4 class="card-title" style="margin: 0;">
-                            <i class="bi bi-person-badge"></i>
-                            Personnages non-joueurs
-                        </h4>
-                        <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
-                            <i class="bi bi-plus"></i> Ajouter
-                        </button>
-                    </div>
+                    <AppSectionTitle Title="Personnages non-joueurs" Icon="bi-person-badge">
+                        <Actions>
+                            <button class="btn btn-ghost btn-sm" @onclick="ShowAddNpc">
+                                <i class="bi bi-plus"></i> Ajouter
+                            </button>
+                        </Actions>
+                    </AppSectionTitle>
 
                     @if (ShowNpcForm)
                     {

@@ -1091,6 +1091,12 @@ textarea.form-control {
   line-height: 1;
 }
 
+.section-eyebrow--flush {
+  padding-bottom: 0;
+  border-bottom: 0;
+  margin-bottom: 6px;
+}
+
 .section-eyebrow > .bi {
   color: var(--theme-primary, var(--color-primary));
   font-size: 0.95rem;
