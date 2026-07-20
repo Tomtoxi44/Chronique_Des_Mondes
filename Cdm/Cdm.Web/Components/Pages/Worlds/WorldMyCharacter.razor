@@ -194,6 +194,11 @@ else
                                         <div class="char-stat-box">
                                             <span class="char-stat-label">@pair.Item2</span>
                                             <span class="char-stat-value" style="font-size: var(--font-size-md);">@val</span>
+                                            @if (int.TryParse(val, out var score))
+                                            {
+                                                var mod = (int)Math.Floor((score - 10) / 2.0);
+                                                <span class="char-stat-mod">@(mod >= 0 ? $"+{mod}" : mod.ToString())</span>
+                                            }
                                         </div>
                                     }
                                 }
