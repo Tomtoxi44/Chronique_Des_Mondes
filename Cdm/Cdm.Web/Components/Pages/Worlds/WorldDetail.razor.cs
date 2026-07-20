@@ -142,26 +142,15 @@ public partial class WorldDetail : IDisposable
     private int? _lastChapterIdForTab;
     private bool ChapterPreviewMode = false;
 
-    // NPC management (per chapter)
+    // NPC list for the selected chapter — chargée ici (badge + @mentions),
+    // l'UI/CRUD est déléguée au composant WorldChapterNpcsPanel.
     private List<NpcDto> ChapterNpcs = new();
-    private bool ShowNpcForm = false;
-    private bool IsSavingNpc = false;
-    private CreateNpcDto NewNpc = new();
-    private NpcDto? NpcToDelete;
-    private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
     private int? _lastNpcChapterId;
 
-    // D&D 5e NPC stats (used only when World.GameType == DnD5e)
-    private DndNpcStats NewNpcDndStats = new();
-    private DndNpcStats EditingNpcDndStats = new();
+    // PNJ à déplier dans le panneau (piloté par un clic sur une @mention).
+    private int? MentionExpandNpcId;
 
     private bool IsWorldDnD5e => World?.GameType == GameType.DnD5e;
-
-    // NPC expand/edit (per card)
-    private HashSet<int> ExpandedNpcIds = new();
-    private int? EditingNpcId;
-    private CreateNpcDto EditingNpcDraft = new();
-    private bool IsSavingEditNpc = false;
 
     // @mention JS interop
     private DotNetObjectReference<WorldDetail>? _dotNetRef;
@@ -211,13 +200,12 @@ public partial class WorldDetail : IDisposable
             if (SelectedChapter != null)
                 ChapterContentDraft = SelectedChapter.Content ?? string.Empty;
 
-            // Load NPCs when chapter changes
+            // Load NPCs when chapter changes (le badge et les @mentions lisent ChapterNpcs ;
+            // l'affichage/CRUD est délégué à WorldChapterNpcsPanel).
             if (SelectedChapterId != _lastNpcChapterId)
             {
                 _lastNpcChapterId = SelectedChapterId;
-                ShowNpcForm = false;
-                ExpandedNpcIds.Clear();
-                EditingNpcId = null;
+                MentionExpandNpcId = null;
                 if (SelectedChapterId.HasValue && SelectedChapter != null)
                     ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(SelectedChapterId.Value);
                 else
@@ -779,105 +767,6 @@ public partial class WorldDetail : IDisposable
         IsStartingSession = false;
     }
 
-    private void ShowAddNpc()
-    {
-        NewNpc = new CreateNpcDto { ChapterId = SelectedChapter!.Id };
-        NewNpcDndStats = new DndNpcStats();
-        ShowNpcForm = true;
-    }
-
-    private async Task CreateNpc()
-    {
-        if (SelectedChapter == null) return;
-        IsSavingNpc = true;
-        NewNpc.ChapterId = SelectedChapter.Id;
-        if (IsWorldDnD5e)
-            NewNpc.GameSpecificData = JsonSerializer.Serialize(NewNpcDndStats, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        var result = await NpcClient.CreateNpcAsync(NewNpc);
-        if (result != null)
-        {
-            ChapterNpcs.Add(result);
-            NewNpc = new CreateNpcDto { ChapterId = SelectedChapter.Id };
-            NewNpcDndStats = new DndNpcStats();
-            ShowNpcForm = false;
-        }
-        IsSavingNpc = false;
-    }
-
-    private void ConfirmDeleteNpc(NpcDto npc)
-    {
-        NpcToDelete = npc;
-        DeleteNpcDialog.Show();
-    }
-
-    private async Task DeleteNpc()
-    {
-        if (NpcToDelete == null) return;
-        var ok = await NpcClient.DeleteNpcAsync(NpcToDelete.Id);
-        if (ok)
-            ChapterNpcs.Remove(NpcToDelete);
-        NpcToDelete = null;
-    }
-
-    // ── NPC expand / edit ────────────────────────────────────────────────
-
-    private void ToggleNpcExpand(int npcId)
-    {
-        if (ExpandedNpcIds.Contains(npcId))
-            ExpandedNpcIds.Remove(npcId);
-        else
-            ExpandedNpcIds.Add(npcId);
-        // Close edit mode if collapsing
-        if (!ExpandedNpcIds.Contains(npcId) && EditingNpcId == npcId)
-        {
-            EditingNpcId = null;
-            EditingNpcDraft = new();
-        }
-    }
-
-    private void StartEditNpc(NpcDto npc)
-    {
-        EditingNpcId = npc.Id;
-        ExpandedNpcIds.Add(npc.Id);
-        EditingNpcDraft = new CreateNpcDto
-        {
-            ChapterId = npc.ChapterId,
-            FirstName = npc.FirstName,
-            Name = npc.Name,
-            Description = npc.Description,
-            PhysicalDescription = npc.PhysicalDescription,
-            Age = npc.Age,
-            GameSpecificData = npc.GameSpecificData
-        };
-        EditingNpcDndStats = IsWorldDnD5e && !string.IsNullOrEmpty(npc.GameSpecificData)
-            ? JsonSerializer.Deserialize<DndNpcStats>(npc.GameSpecificData, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) ?? new DndNpcStats()
-            : new DndNpcStats();
-    }
-
-    private void CancelEditNpc()
-    {
-        EditingNpcId = null;
-        EditingNpcDraft = new();
-        EditingNpcDndStats = new();
-    }
-
-    private async Task SaveEditNpc()
-    {
-        if (EditingNpcId == null) return;
-        IsSavingEditNpc = true;
-        if (IsWorldDnD5e)
-            EditingNpcDraft.GameSpecificData = JsonSerializer.Serialize(EditingNpcDndStats, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        var result = await NpcClient.UpdateNpcAsync(EditingNpcId.Value, EditingNpcDraft);
-        if (result != null)
-        {
-            var idx = ChapterNpcs.FindIndex(n => n.Id == EditingNpcId.Value);
-            if (idx >= 0) ChapterNpcs[idx] = result;
-            EditingNpcId = null;
-            EditingNpcDraft = new();
-            EditingNpcDndStats = new();
-        }
-        IsSavingEditNpc = false;
-    }
 
     // ── @mention JS interop ───────────────────────────────────────────────
 
@@ -898,7 +787,7 @@ public partial class WorldDetail : IDisposable
         if (type == "npc")
         {
             ChapterTab = "pnj";
-            ExpandedNpcIds.Add(id);
+            MentionExpandNpcId = id;
             await InvokeAsync(StateHasChanged);
         }
         else if (type == "pc")
@@ -993,25 +882,4 @@ public partial class WorldDetail : IDisposable
     }
 
     public record MentionItem(int Id, string DisplayName, string Description, string Type);
-
-    /// <summary>D&amp;D 5e stat block for a Non-Player Character.</summary>
-    public class DndNpcStats
-    {
-        public string? CreatureType { get; set; }
-        public string? Race { get; set; }
-        public string? ClassName { get; set; }
-        public string? ChallengeRating { get; set; }
-        public int Strength { get; set; } = 10;
-        public int Dexterity { get; set; } = 10;
-        public int Constitution { get; set; } = 10;
-        public int Intelligence { get; set; } = 10;
-        public int Wisdom { get; set; } = 10;
-        public int Charisma { get; set; } = 10;
-        public int MaxHitPoints { get; set; } = 10;
-        public int ArmorClass { get; set; } = 10;
-        public int Speed { get; set; } = 9;
-
-        public static int Modifier(int score) => (score - 10) / 2;
-        public static string ModStr(int score) { var m = Modifier(score); return m >= 0 ? $"+{m}" : $"{m}"; }
-    }
 }
