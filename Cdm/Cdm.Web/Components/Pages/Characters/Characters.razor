@@ -70,19 +70,19 @@ else
                 @if (character.IsBaseCharacter)
                 {
                     <span class="card-meta-badge" style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); font-size: var(--font-size-xs);">
-                        <i class="bi bi-bookmark-star"></i> Personnage de base
+                        <i class="bi bi-bookmark-star"></i> @L["Characters_BadgeBase"]
                     </span>
                 }
                 else if (character.SourceCharacterId.HasValue)
                 {
                     <span class="card-meta-badge" style="background: var(--theme-primary, var(--color-primary)); color: var(--theme-on-primary, #17110a); font-size: var(--font-size-xs);">
-                        <i class="bi bi-globe2"></i> Copie monde
+                        <i class="bi bi-globe2"></i> @L["Characters_BadgeWorldCopy"]
                     </span>
                 }
 
                 @if (character.Age.HasValue)
                 {
-                    <span class="card-meta-badge">@character.Age ans</span>
+                    <span class="card-meta-badge">@string.Format(L["Common_YearsOld"], character.Age)</span>
                 }
 
                 @if (!string.IsNullOrEmpty(character.Description))

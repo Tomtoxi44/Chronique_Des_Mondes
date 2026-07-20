@@ -300,4 +300,7 @@
   <data name="Error_Profile_NicknameAlreadyUsed" xml:space="preserve"><value>Ce pseudo est déjà utilisé par un autre joueur.</value></data>
   <data name="Error_Profile_UpdateFailed" xml:space="preserve"><value>Erreur lors de la mise à jour du profil. Veuillez réessayer.</value></data>
   <data name="Error_Profile_AvatarUploadFailed" xml:space="preserve"><value>Erreur lors de l'envoi de l'avatar. Vérifiez le format (PNG/JPG, max 5 Mo).</value></data>
+  <data name="Characters_BadgeBase" xml:space="preserve"><value>Personnage de base</value></data>
+  <data name="Characters_BadgeWorldCopy" xml:space="preserve"><value>Copie de monde</value></data>
+  <data name="Common_YearsOld" xml:space="preserve"><value>{0} ans</value></data>
 </root>

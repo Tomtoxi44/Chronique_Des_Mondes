@@ -254,4 +254,7 @@
   <!-- Visibility -->
   <data name="Visibility_Private" xml:space="preserve"><value>Privé</value></data>
   <data name="Visibility_Public" xml:space="preserve"><value>Public</value></data>
+  <data name="Characters_BadgeBase" xml:space="preserve"><value>Personnage de base</value></data>
+  <data name="Characters_BadgeWorldCopy" xml:space="preserve"><value>Copie de monde</value></data>
+  <data name="Common_YearsOld" xml:space="preserve"><value>{0} ans</value></data>
 </root>
