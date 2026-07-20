@@ -24,14 +24,25 @@ else if (Campaign == null)
 else
 {
     <AppThemeWrapper GameType="@Campaign.GameType">
-        <AppPageHeader Title="@Campaign.Name"
-                       Subtitle="@Campaign.Description"
-                       Icon="bi-map"
-                       Breadcrumbs="@Breadcrumbs">
-            <Actions>
-                <span class="status-badge @GetStatusClass(Campaign.Status)">@GetStatusLabel(Campaign.Status)</span>
-            </Actions>
-        </AppPageHeader>
+        <nav style="margin-bottom: var(--spacing-md);">
+            <a href="/campaigns" class="btn btn-ghost btn-sm">
+                <i class="bi bi-arrow-left"></i> @L["Nav_Campaigns"]
+            </a>
+        </nav>
+
+        <CdmHero GameType="@Campaign.GameType">
+            <div class="cdm-hero-badge">CAMPAGNE</div>
+            <h1 class="cdm-hero-title">@Campaign.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(Campaign.Description))
+            {
+                <p class="cdm-hero-tagline">@Campaign.Description</p>
+            }
+            <div class="cdm-hero-meta">
+                <span><i class="bi bi-flag"></i> @GetStatusLabel(Campaign.Status)</span>
+            </div>
+        </CdmHero>
+
+        <div style="margin-bottom: var(--spacing-lg);"></div>
 
         <!-- Contenu du chapitre sélectionné ou vue générale -->
         @if (SelectedChapter != null)

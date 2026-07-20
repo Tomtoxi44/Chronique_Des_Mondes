@@ -34,6 +34,7 @@
   --color-success: #22c55e;
   --color-warning: #d97706;
   --color-error:   #ef4444;
+  --color-danger:  #ef4444;
   --color-info:    #3b82f6;
 
   /* ============================================
@@ -106,23 +107,25 @@
      Refonte « codex premium » : fonds bleu-graphite profonds,
      bordures neutres (plus d'indigo), accent par défaut = ambre.
      ============================================ */
-  --color-bg-primary:   #0b0d12;
-  --color-bg-secondary: #12151d;
-  --color-bg-elevated:  #1b2130;
-  --color-bg-card:      #161a23;
-  --color-bg-input:     #0e1117;
+  --color-bg-primary:   #070a0d;
+  --color-bg-secondary: #0e131b;
+  --color-bg-elevated:  #12151d;
+  --color-bg-card:      #0e131b;
+  --color-bg-input:     #0a0f16;
+  --color-bg-tertiary:  #161b26;
 
   /* Surface aliases (used by dropdowns, panels, notifications) */
+  --color-surface:           var(--color-bg-card);
   --color-surface-primary:   var(--color-bg-card);
   --color-surface-secondary: var(--color-bg-elevated);
   --color-surface-alt:       var(--color-bg-secondary);
 
   --color-text-primary:   #e9ebf1;
   --color-text-secondary: #b7bccb;
-  --color-text-muted:     #9aa1b2;
+  --color-text-muted:     #8b93a3;
   --color-text-disabled:  #666d7e;
 
-  --color-border:         rgba(200, 210, 232, 0.11);
+  --color-border:         rgba(200, 210, 232, 0.10);
   --color-border-hover:   rgba(200, 210, 232, 0.20);
   --color-border-focus:   #d69f52;
 
@@ -145,13 +148,15 @@
    ============================================ */
 [data-theme="light"] {
   /* Mode clair « parchemin chaud » — accueillant, jamais le blanc bleuté générique. */
-  --color-bg-primary:   #e9e5dd;
-  --color-bg-secondary: #f1ede4;
-  --color-bg-elevated:  #fffdf9;
-  --color-bg-card:      #fffdf9;
-  --color-bg-input:     #fffdf9;
+  --color-bg-primary:   #e4ddce;
+  --color-bg-secondary: #eee7d9;
+  --color-bg-elevated:  #fbf7ee;
+  --color-bg-card:      #f8f3ea;
+  --color-bg-input:     #e9e2d3;
+  --color-bg-tertiary:  #ded5c3;
 
   /* Surface aliases */
+  --color-surface:           var(--color-bg-card);
   --color-surface-primary:   var(--color-bg-card);
   --color-surface-secondary: var(--color-bg-elevated);
   --color-surface-alt:       var(--color-bg-secondary);
