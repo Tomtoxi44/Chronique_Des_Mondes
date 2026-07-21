@@ -52,10 +52,9 @@ public partial class WorldDetail : IDisposable
     // lightweight flag to show the "active session" dot on the Session tab.
     private bool _campaignHasActiveSession;
 
-    // World settings editor (inline in overview)
-    private bool IsWorldEditing = false;
-    private string WorldEditName = string.Empty;
-    private GameType WorldEditGameType = GameType.Generic;
+    // World settings editing is delegated to WorldSettingsCard; the parent keeps the
+    // previewed game type so the page theme follows the picker live.
+    private GameType? _previewGameType;
 
     // Description editing is delegated to WorldDescriptionEditor.
 
@@ -108,18 +107,6 @@ public partial class WorldDetail : IDisposable
     // (Événements du monde : gérés par WorldEventsPanel)
 
     // (Succès du monde : gérés par WorldAchievementsPanel)
-
-    private static readonly List<(GameType Value, string Label, string Icon)> GameTypeOptions = new()
-    {
-        (GameType.Generic,       "Générique",          "bi-globe2"),
-        (GameType.DnD5e,         "D&D 5e",             "bi-shield-fill"),
-        (GameType.Pathfinder,    "Pathfinder",         "bi-shield-fill-check"),
-        (GameType.CallOfCthulhu, "L'Appel de Cthulhu", "bi-eye-fill"),
-        (GameType.Warhammer,     "Warhammer",          "bi-hammer"),
-        (GameType.Cyberpunk,     "Cyberpunk",          "bi-cpu-fill"),
-        (GameType.Skyrim,        "Skyrim",             "bi-snow2"),
-        (GameType.Custom,        "Personnalisé",       "bi-stars"),
-    };
 
     /// <summary>Applies the world returned by <c>WorldDescriptionEditor</c> after a save.</summary>
     private void OnWorldDescriptionSaved(WorldDto updated)
@@ -362,32 +349,11 @@ public partial class WorldDetail : IDisposable
         );
     }
 
-    private async Task SaveWorldSettings()
+    /// <summary>Applies the world returned by <c>WorldSettingsCard</c> after a save.</summary>
+    private void OnWorldSettingsSaved(WorldDto updated)
     {
-        if (World == null || string.IsNullOrWhiteSpace(WorldEditName)) return;
-        IsSaving = true;
-        try
-        {
-            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(WorldEditName, World.Description ?? string.Empty, World.IsActive, WorldEditGameType));
-            if (result != null)
-            {
-                World = result;
-                IsWorldEditing = false;
-                SetSecondaryNav();
-            }
-        }
-        finally
-        {
-            IsSaving = false;
-        }
-    }
-
-    private void BeginWorldEdit()
-    {
-        if (World == null) return;
-        WorldEditName = World.Name;
-        WorldEditGameType = World.GameType;
-        IsWorldEditing = true;
+        World = updated;
+        SetSecondaryNav();
     }
 
     /// <summary>Applies the chapter saved by <c>WorldChapterEditorPanel</c>.</summary>
