@@ -237,6 +237,18 @@ builder.Services.AddScoped<LootApiClient>(sp =>
 
 builder.Services.AddHttpClient("LootApiClient", ConfigureApiClient);
 
+// Register InventoryApiClient with scoped lifetime
+builder.Services.AddScoped<InventoryApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("InventoryApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<InventoryApiClient>>();
+    return new InventoryApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("InventoryApiClient", ConfigureApiClient);
+
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {
