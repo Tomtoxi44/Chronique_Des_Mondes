@@ -1,3 +1,4 @@
+using Cdm.Web.Extensions;
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.DTOs.DnD5e;
 using Cdm.Common.Enums;
@@ -221,25 +222,9 @@ public partial class CampaignDetail : IDisposable
         ChapterToDelete = null;
     }
 
-    public string GetStatusClass(CampaignStatus status) => status switch
-    {
-        CampaignStatus.Active => "status-active",
-        CampaignStatus.Planning => "status-planning",
-        CampaignStatus.Completed => "status-completed",
-        CampaignStatus.Cancelled => "status-cancelled",
-        CampaignStatus.OnHold => "status-paused",
-        _ => ""
-    };
+    public string GetStatusClass(CampaignStatus status) => status.ToCssClass();
 
-    public string GetStatusLabel(CampaignStatus status) => status switch
-    {
-        CampaignStatus.Active => L["Campaigns_Status_Active"],
-        CampaignStatus.Planning => L["Campaigns_Status_Planning"],
-        CampaignStatus.Completed => L["Campaigns_Status_Completed"],
-        CampaignStatus.Cancelled => L["Campaigns_Status_Cancelled"],
-        CampaignStatus.OnHold => L["Campaigns_Status_OnHold"],
-        _ => status.ToString()
-    };
+    public string GetStatusLabel(CampaignStatus status) => L[status.ToLabelKey()];
 
     public void Dispose() => NavContext.ClearContext();
 

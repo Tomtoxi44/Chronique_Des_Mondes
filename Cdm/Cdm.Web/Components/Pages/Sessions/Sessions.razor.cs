@@ -1,3 +1,4 @@
+using Cdm.Web.Extensions;
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Common.Enums;
 using Cdm.Web.Resources;
@@ -33,21 +34,7 @@ public partial class Sessions
 
     private bool IsGm(SessionDto session) => session.StartedById == CurrentUserId;
 
-    private static string GetSessionStatusLabel(SessionStatus status) => status switch
-    {
-        SessionStatus.Active => "En cours",
-        SessionStatus.Paused => "En pause",
-        SessionStatus.Ended => "Terminée",
-        SessionStatus.Cancelled => "Annulée",
-        _ => "Planifiée"
-    };
+    private static string GetSessionStatusLabel(SessionStatus status) => status.ToLabel();
 
-    private static string GetSessionStatusClass(SessionStatus status) => status switch
-    {
-        SessionStatus.Active => "status-active",
-        SessionStatus.Paused => "status-pending",
-        SessionStatus.Ended => "status-completed",
-        SessionStatus.Cancelled => "status-archived",
-        _ => "status-draft"
-    };
+    private static string GetSessionStatusClass(SessionStatus status) => status.ToCssClass();
 }
