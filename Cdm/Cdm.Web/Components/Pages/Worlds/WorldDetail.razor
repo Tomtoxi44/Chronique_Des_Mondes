@@ -222,57 +222,9 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (IsOwner && Section == "description")
         {
-            <div class="editor-section">
-                <div class="world-section-header">
-                    <div>
-                        <h2 class="world-section-title">
-                            <i class="bi bi-pencil" style="color: var(--theme-primary, var(--color-primary)); margin-right: var(--spacing-xs);"></i>
-                            Description — @World.Name
-                        </h2>
-                    </div>
-                    <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
-                        @if (!string.IsNullOrEmpty(SaveMessage))
-                        {
-                            <span style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)");">
-                                @SaveMessage
-                            </span>
-                        }
-                        <button class="btn btn-primary btn-sm" @onclick="SaveDescription" disabled="@IsSaving">
-                            @if (IsSaving)
-                            {
-                                <i class="bi bi-hourglass-split"></i>
-                            }
-                            else
-                            {
-                                <i class="bi bi-floppy"></i>
-                            }
-                            Enregistrer
-                        </button>
-                    </div>
-                </div>
-
-                <div class="description-editor-container" style="flex: 1; min-height: 0;">
-                    <div class="description-editor-toolbar">
-                        <span class="description-editor-hint">
-                            <i class="bi bi-info-circle"></i>
-                            Texte brut — les retours à la ligne sont préservés
-                        </span>
-                        @if (DescriptionDirty)
-                        {
-                            <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Modifications non sauvegardées</span>
-                        }
-                    </div>
-                    <textarea class="description-editor-textarea"
-                              placeholder="Décrivez votre monde : son histoire, sa géographie, ses factions, ses mystères..."
-                              value="@DescriptionDraft"
-                              @oninput="OnDescriptionInput"></textarea>
-                </div>
-            </div>
+            <WorldDescriptionEditor WorldId="WorldId" World="World" OnSaved="OnWorldDescriptionSaved" />
         }
 
-        @* ──────────────────────────────────────────────────────────
-           SECTION: NOUVELLE CAMPAGNE (formulaire dédié)
-           ────────────────────────────────────────────────────────── *@
         @if (IsOwner && Section == "new-campaign" && !SelectedCampaignId.HasValue)
         {
             <AppPageHeader Title="@L["Campaigns_Create"]"

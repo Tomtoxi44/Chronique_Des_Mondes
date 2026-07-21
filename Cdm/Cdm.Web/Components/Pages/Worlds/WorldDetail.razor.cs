@@ -62,9 +62,7 @@ public partial class WorldDetail : IDisposable
     private string WorldEditName = string.Empty;
     private GameType WorldEditGameType = GameType.Generic;
 
-    // Description editor
-    private string DescriptionDraft = string.Empty;
-    private bool DescriptionDirty = false;
+    // Description editing is delegated to WorldDescriptionEditor.
 
     // Campaign detail
     private CampaignDto? SelectedCampaign;
@@ -138,11 +136,11 @@ public partial class WorldDetail : IDisposable
         (GameType.Custom,        "Personnalisé",       "bi-stars"),
     };
 
-    private void OnDescriptionInput(ChangeEventArgs e)
+    /// <summary>Applies the world returned by <c>WorldDescriptionEditor</c> after a save.</summary>
+    private void OnWorldDescriptionSaved(WorldDto updated)
     {
-        DescriptionDraft = e.Value?.ToString() ?? string.Empty;
-        DescriptionDirty = true;
-        SaveMessage = null;
+        World = updated;
+        SetSecondaryNav();
     }
 
     private void OnChapterContentInput(ChangeEventArgs e)
@@ -268,9 +266,6 @@ public partial class WorldDetail : IDisposable
             CampaignTab = "chapitres";
         }
 
-        if (Section == "description")
-            DescriptionDraft = World.Description ?? string.Empty;
-
         if (Section == "new-chapter" && SelectedCampaignId.HasValue)
         {
             var existingChapters = CampaignChapters.TryGetValue(SelectedCampaignId.Value, out var chs) ? chs : new();
@@ -305,7 +300,6 @@ public partial class WorldDetail : IDisposable
             {
                 // Use world-level campaign endpoint (works for both GM and players)
                 Campaigns = await WorldClient.GetWorldCampaignsAsync(WorldId);
-                DescriptionDraft = World.Description ?? string.Empty;
                 SetSecondaryNav();
             }
         }
@@ -437,34 +431,6 @@ public partial class WorldDetail : IDisposable
             items: items,
             gameType: World.GameType
         );
-    }
-
-    private async Task SaveDescription()
-    {
-        if (World == null) return;
-        IsSaving = true;
-        SaveMessage = null;
-        try
-        {
-            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(World.Name, DescriptionDraft, World.IsActive, World.GameType));
-            if (result != null)
-            {
-                World = result;
-                DescriptionDirty = false;
-                SaveSuccess = true;
-                SaveMessage = "Description sauvegardée.";
-                SetSecondaryNav();
-            }
-            else
-            {
-                SaveSuccess = false;
-                SaveMessage = "Erreur lors de la sauvegarde.";
-            }
-        }
-        finally
-        {
-            IsSaving = false;
-        }
     }
 
     private async Task SaveWorldSettings()
