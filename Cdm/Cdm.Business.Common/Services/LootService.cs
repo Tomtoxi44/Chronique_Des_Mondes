@@ -233,6 +233,9 @@ public class LootService(AppDbContext dbContext, ILogger<LootService> logger) : 
                 Category = string.IsNullOrWhiteSpace(loot.ItemType) ? "Objet" : loot.ItemType!,
                 Quantity = loot.Quantity,
                 Notes = loot.Description,
+                GameType = loot.GameType,
+                GameSpecificData = loot.GameSpecificData,
+                ImageUrl = loot.ImageUrl,
                 CreatedAt = DateTime.UtcNow,
             };
             this.dbContext.DndInventoryItems.Add(inventoryItem);

@@ -8,8 +8,17 @@ namespace Cdm.Data.Common.Models;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Cdm.Common.Enums;
 
-/// <summary>An item in a D&amp;D 5e character's inventory (world-specific).</summary>
+/// <summary>
+/// A world character's inventory item. Despite the historical <c>DndInventoryItems</c> table name,
+/// this is the <b>unified</b> inventory store for every game system: <see cref="GameType"/> tells
+/// which system an item belongs to. The D&amp;D combat columns (<see cref="AttackBonus"/>,
+/// <see cref="DamageDice"/>, <see cref="DamageType"/>, <see cref="DndItemId"/>) are only meaningful
+/// when <see cref="GameType"/> is <see cref="Cdm.Common.Enums.GameType.DnD5e"/>; other systems put
+/// their own structured stats in <see cref="GameSpecificData"/>. A <see cref="Cdm.Common.Enums.GameType.Generic"/>
+/// item carries no rules and can sit on any character.
+/// </summary>
 [Table("DndInventoryItems")]
 public class DndInventoryItem
 {
@@ -29,6 +38,16 @@ public class DndInventoryItem
     public string Category { get; set; } = string.Empty;
 
     public int Quantity { get; set; } = 1;
+
+    /// <summary>The game system this item belongs to (Generic = no rules, usable anywhere).</summary>
+    public GameType GameType { get; set; } = GameType.Generic;
+
+    /// <summary>Optional theme-specific structured stats (JSON) for systems other than D&amp;D.</summary>
+    public string? GameSpecificData { get; set; }
+
+    /// <summary>Optional image URL.</summary>
+    [MaxLength(1000)]
+    public string? ImageUrl { get; set; }
 
     public int? AttackBonus { get; set; }
 

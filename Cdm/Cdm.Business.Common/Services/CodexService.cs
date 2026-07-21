@@ -191,6 +191,9 @@ public class CodexService(AppDbContext dbContext, ILogger<CodexService> logger) 
                 Category = string.IsNullOrWhiteSpace(item.ItemType) ? "Objet" : item.ItemType!,
                 Quantity = 1,
                 Notes = item.Description,
+                GameType = item.GameType,
+                GameSpecificData = item.GameSpecificData,
+                ImageUrl = item.ImageUrl,
                 CreatedAt = DateTime.UtcNow,
             };
 
