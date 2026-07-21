@@ -52,6 +52,11 @@ else
                         <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
                             <i class="bi bi-plus"></i> @L["Campaigns_Create"]
                         </a>
+                        <button class="btn @(World.IsShared ? "btn-primary" : "btn-ghost")" @onclick="ToggleWorldShared" disabled="@IsSharingWorld"
+                                title="@(World.IsShared ? "Retirer de la marketplace" : "Publier sur la marketplace")">
+                            <i class="bi @(World.IsShared ? "bi-share-fill" : "bi-share")"></i>
+                            @(World.IsShared ? "Publié" : "Publier")
+                        </button>
                         <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
                             <i class="bi bi-trash3"></i> @L["Common_Delete"]
                         </button>
@@ -338,6 +343,11 @@ else
                                     Modifier
                                 </button>
                             }
+                            <button class="btn @(SelectedCampaign.IsShared ? "btn-primary" : "btn-ghost") btn-sm" @onclick="ToggleCampaignShared" disabled="@IsSharingCampaign"
+                                    title="@(SelectedCampaign.IsShared ? "Retirer de la marketplace" : "Publier sur la marketplace")">
+                                <i class="bi @(SelectedCampaign.IsShared ? "bi-share-fill" : "bi-share")"></i>
+                                @(SelectedCampaign.IsShared ? "Publiée" : "Publier")
+                            </button>
                             <button class="btn btn-ghost btn-sm" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
                                 <i class="bi bi-trash3"></i>
                                 @L["Common_Delete"]

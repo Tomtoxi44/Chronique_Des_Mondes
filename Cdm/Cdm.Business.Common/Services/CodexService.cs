@@ -198,6 +198,28 @@ public class CodexService(AppDbContext dbContext, ILogger<CodexService> logger) 
                 CreatedAt = DateTime.UtcNow,
             };
 
+            // For D&D items, hydrate the dedicated combat columns from the stored JSON so the
+            // weapon can pre-fill attack rolls in session.
+            if (item.GameType == GameType.DnD5e && !string.IsNullOrWhiteSpace(item.GameSpecificData))
+            {
+                try
+                {
+                    var stats = System.Text.Json.JsonSerializer.Deserialize<DndItemStats>(
+                        item.GameSpecificData,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+                    if (stats != null)
+                    {
+                        inventoryItem.DamageDice = stats.DamageDice;
+                        inventoryItem.DamageType = stats.DamageType;
+                        inventoryItem.AttackBonus = stats.AttackBonus;
+                    }
+                }
+                catch
+                {
+                    // GameSpecificData non conforme : on garde l'item sans stats de combat.
+                }
+            }
+
             this.dbContext.DndInventoryItems.Add(inventoryItem);
             await this.dbContext.SaveChangesAsync();
 
