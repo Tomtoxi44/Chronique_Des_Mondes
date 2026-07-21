@@ -158,6 +158,9 @@ builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
+
+// Image storage abstraction (local disk by default; Azure Blob to be wired via config).
+builder.Services.AddScoped<Cdm.Common.Services.IImageStorage, Cdm.Common.Services.LocalImageStorage>();
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<ICharacterService, CharacterService>();
 builder.Services.AddScoped<IWorldService, WorldService>();
