@@ -212,17 +212,7 @@ else
 }
 
 @code {
-    private static readonly (GameType Value, string Label)[] GameTypes = new[]
-    {
-        (GameType.Generic, "Générique"),
-        (GameType.DnD5e, "D&D 5e"),
-        (GameType.Pathfinder, "Pathfinder"),
-        (GameType.CallOfCthulhu, "Cthulhu"),
-        (GameType.Warhammer, "Warhammer"),
-        (GameType.Cyberpunk, "Cyberpunk"),
-        (GameType.Skyrim, "Skyrim"),
-        (GameType.Custom, "Personnalisé"),
-    };
+    private static readonly IReadOnlyList<(GameType Value, string Label)> GameTypes = Cdm.Web.Extensions.GameTypeExtensions.Selectable;
 
     private List<CodexItemDto> Items = new();
     private bool IsLoading = true;
@@ -262,7 +252,7 @@ else
 
     private void SetFilter(GameType? type) => FilterType = type;
 
-    private static string GameLabel(GameType type) => GameTypes.FirstOrDefault(g => g.Value == type).Label ?? type.ToString();
+    private static string GameLabel(GameType type) => Cdm.Web.Extensions.GameTypeExtensions.ToShortName(type);
 
     /// <summary>Short damage label ("1d8 tranchant (+5)") from a D&amp;D item's stored stats, or empty.</summary>
     private static string DndDamageLabel(string? gameSpecificData)

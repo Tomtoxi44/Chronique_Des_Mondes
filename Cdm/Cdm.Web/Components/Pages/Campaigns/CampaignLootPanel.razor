@@ -192,18 +192,7 @@
         ShowForm = true;
     }
 
-    private static string GameTypeLabel(GameType type) => type switch
-    {
-        GameType.Generic => "Générique",
-        GameType.DnD5e => "D&D 5e",
-        GameType.Pathfinder => "Pathfinder",
-        GameType.CallOfCthulhu => "Cthulhu",
-        GameType.Warhammer => "Warhammer",
-        GameType.Cyberpunk => "Cyberpunk",
-        GameType.Skyrim => "Skyrim",
-        GameType.Custom => "Personnalisé",
-        _ => type.ToString(),
-    };
+    private static string GameTypeLabel(GameType type) => Cdm.Web.Extensions.GameTypeExtensions.ToShortName(type);
 
     private async Task SaveLoot()
     {
