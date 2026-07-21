@@ -44,8 +44,6 @@ public partial class SessionPlayer : IAsyncDisposable
 
     private string ActiveTab = "character";
     private Dictionary<string, string> GameSpecificFields { get; set; } = new();
-    private List<InventoryItem> Inventory { get; set; } = new();
-    private string NewItemName = "";
 
     // SignalR
     private HubConnection? _hub;
@@ -479,7 +477,6 @@ public partial class SessionPlayer : IAsyncDisposable
     private void ParseGameSpecificData()
     {
         GameSpecificFields = new();
-        Inventory = new();
         if (string.IsNullOrWhiteSpace(MyCharacter?.GameSpecificData)) return;
         try
         {
@@ -487,38 +484,13 @@ public partial class SessionPlayer : IAsyncDisposable
             if (dict == null) return;
             foreach (var kv in dict)
             {
-                if (kv.Key == "inventory" && kv.Value.ValueKind == JsonValueKind.Array)
-                    Inventory = kv.Value.Deserialize<List<InventoryItem>>() ?? new();
-                else
-                    GameSpecificFields[kv.Key] = kv.Value.ToString();
+                // "inventory" was a legacy JSON blob; the inventory now lives in the unified table.
+                if (kv.Key == "inventory")
+                    continue;
+                GameSpecificFields[kv.Key] = kv.Value.ToString();
             }
         }
         catch { }
-    }
-
-    private async Task AddInventoryItem()
-    {
-        if (string.IsNullOrWhiteSpace(NewItemName) || MyCharacter == null) return;
-        Inventory.Add(new InventoryItem { Name = NewItemName.Trim(), Qty = 1 });
-        NewItemName = "";
-        await SaveInventory();
-    }
-
-    private async Task RemoveInventoryItem(InventoryItem item)
-    {
-        Inventory.Remove(item);
-        await SaveInventory();
-    }
-
-    private async Task SaveInventory()
-    {
-        if (MyCharacter == null) return;
-        var dict = new Dictionary<string, object>(GameSpecificFields.ToDictionary(kv => kv.Key, kv => (object)kv.Value));
-        dict["inventory"] = Inventory;
-        var json = JsonSerializer.Serialize(dict);
-        var request = new UpdateWorldCharacterProfileRequest(MyCharacter.Level, MyCharacter.CurrentHealth, MyCharacter.MaxHealth, json);
-        var result = await WorldClient.UpdateMyWorldCharacterAsync(Session!.WorldId, request);
-        if (result != null) MyCharacter = result;
     }
 
     private static string GetStatusLabel(SessionStatus status) => status switch
@@ -543,14 +515,6 @@ public partial class SessionPlayer : IAsyncDisposable
         {
             await _hub.DisposeAsync();
         }
-    }
-
-    private record InventoryItem
-    {
-        [System.Text.Json.Serialization.JsonPropertyName("name")]
-        public string Name { get; set; } = "";
-        [System.Text.Json.Serialization.JsonPropertyName("qty")]
-        public int Qty { get; set; } = 1;
     }
 
     private record ChatEntry(string Type, string UserName, string? Text, string? DiceType, int[]? Results, DateTime Timestamp, string? Reason = null, int Modifier = 0);

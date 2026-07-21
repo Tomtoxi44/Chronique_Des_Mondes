@@ -141,13 +141,19 @@ public class CodexApiClient
         }
     }
 
-    /// <summary>Lists the user's world characters compatible with (of the same) game type.</summary>
-    public async Task<List<WorldCharacterDto>> GetCompatibleCharactersAsync(GameType gameType)
+    /// <summary>
+    /// Lists the user's world characters compatible with an item: a specific game type,
+    /// or all characters when <paramref name="gameType"/> is null (generic items go anywhere).
+    /// </summary>
+    public async Task<List<WorldCharacterDto>> GetCompatibleCharactersAsync(GameType? gameType)
     {
         try
         {
             await AddAuthHeaderAsync();
-            var response = await _httpClient.GetAsync($"api/characters/world-characters?gameType={(int)gameType}");
+            var url = gameType.HasValue
+                ? $"api/characters/world-characters?gameType={(int)gameType.Value}"
+                : "api/characters/world-characters";
+            var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) return new();
             return await response.Content.ReadFromJsonAsync<List<WorldCharacterDto>>() ?? new();
         }

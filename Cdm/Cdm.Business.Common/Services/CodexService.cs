@@ -178,7 +178,8 @@ public class CodexService(AppDbContext dbContext, ILogger<CodexService> logger) 
                 return (false, "Ce personnage ne vous appartient pas.");
             }
 
-            if (character.World.GameType != item.GameType)
+            // A generic item goes on any character; a themed item requires a matching world.
+            if (item.GameType != GameType.Generic && character.World.GameType != item.GameType)
             {
                 return (false, "Le type de jeu de l'item ne correspond pas à celui du personnage.");
             }
@@ -191,6 +192,9 @@ public class CodexService(AppDbContext dbContext, ILogger<CodexService> logger) 
                 Category = string.IsNullOrWhiteSpace(item.ItemType) ? "Objet" : item.ItemType!,
                 Quantity = 1,
                 Notes = item.Description,
+                GameType = item.GameType,
+                GameSpecificData = item.GameSpecificData,
+                ImageUrl = item.ImageUrl,
                 CreatedAt = DateTime.UtcNow,
             };
 

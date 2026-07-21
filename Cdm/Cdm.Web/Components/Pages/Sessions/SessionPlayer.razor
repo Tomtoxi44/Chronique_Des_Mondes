@@ -168,35 +168,9 @@ else if (Session != null)
                         else if (ActiveTab == "inventory")
                         {
                             <div style="margin-top: var(--spacing-md);">
-                                @if (Inventory.Count == 0)
-                                {
-                                    <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); font-style: italic;">Inventaire vide.</p>
-                                }
-                                else
-                                {
-                                    <div class="inventory-list">
-                                        @foreach (var item in Inventory)
-                                        {
-                                            <div class="inventory-item">
-                                                <span class="inventory-item-name">@item.Name</span>
-                                                <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
-                                                    <span class="inventory-item-qty">×@item.Qty</span>
-                                                    <button class="btn btn-ghost btn-xs" @onclick="() => RemoveInventoryItem(item)">
-                                                        <i class="bi bi-trash3" style="font-size: 0.7rem;"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                <div style="display: flex; gap: var(--spacing-xs); margin-top: var(--spacing-sm);">
-                                    <input type="text" class="form-control" placeholder="Nouvel objet..."
-                                           @bind="NewItemName"
-                                           @onkeydown="@(async e => { if (e.Key == "Enter") await AddInventoryItem(); })" />
-                                    <button class="btn btn-primary btn-sm" @onclick="AddInventoryItem" disabled="@string.IsNullOrWhiteSpace(NewItemName)">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>
+                                <CharacterInventoryPanel WorldCharacterId="MyCharacter.Id"
+                                                         WorldGameType="MyCharacter.GameType"
+                                                         OnChanged="LoadDndSheetAsync" />
                             </div>
                         }
                         else if (ActiveTab == "gametype" && MyCharacter.GameType == Cdm.Common.Enums.GameType.DnD5e)

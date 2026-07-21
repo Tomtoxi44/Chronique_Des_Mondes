@@ -204,6 +204,22 @@ public class CodexServiceTests
     }
 
     [Fact]
+    public async Task AddToCharacter_GenericItem_GoesToAnyCharacter()
+    {
+        using var ctx = NewContext();
+        Seed(ctx, 1, OwnerId, GameType.Generic, name: "Corde");
+        SeedWorldCharacter(ctx, 50, OwnerId, GameType.DnD5e);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var (ok, error) = await service.AddToCharacterInventoryAsync(1, 50, OwnerId);
+
+        Assert.True(ok);
+        Assert.Null(error);
+        var inv = Assert.Single(ctx.DndInventoryItems);
+        Assert.Equal(GameType.Generic, inv.GameType);
+    }
+
+    [Fact]
     public async Task AddToCharacter_NotOwnerOfCharacter_Fails()
     {
         using var ctx = NewContext();

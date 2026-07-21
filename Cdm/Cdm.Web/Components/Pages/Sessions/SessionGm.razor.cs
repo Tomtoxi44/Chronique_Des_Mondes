@@ -25,6 +25,7 @@ public partial class SessionGm : IAsyncDisposable
     [Inject] private NpcApiClient NpcClient { get; set; } = default!;
     [Inject] private CombatApiClient CombatClient { get; set; } = default!;
     [Inject] private LootApiClient LootClient { get; set; } = default!;
+    [Inject] private InventoryApiClient InventoryClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -439,10 +440,22 @@ public partial class SessionGm : IAsyncDisposable
             Nav.NavigateTo($"/sessions/{SessionId}/combat/setup");
     }
 
-    private void TogglePlayerSheet(SessionParticipantDto participant)
+    private List<InventoryItemDto> SelectedPlayerInventory { get; set; } = new();
+
+    private async Task TogglePlayerSheet(SessionParticipantDto participant)
     {
         var sheet = WorldCharacters.FirstOrDefault(wc => wc.Id == participant.WorldCharacterId);
-        SelectedPlayerSheet = SelectedPlayerSheet?.Id == sheet?.Id ? null : sheet;
+        if (SelectedPlayerSheet?.Id == sheet?.Id)
+        {
+            SelectedPlayerSheet = null;
+            SelectedPlayerInventory = new();
+            return;
+        }
+
+        SelectedPlayerSheet = sheet;
+        SelectedPlayerInventory = sheet != null
+            ? await InventoryClient.GetForCharacterAsGmAsync(sheet.Id)
+            : new();
     }
 
     private MarkupString RenderChapterContent(string text)
