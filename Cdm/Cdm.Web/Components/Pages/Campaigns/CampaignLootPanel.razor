@@ -6,7 +6,7 @@
 <div class="cdm-card" style="margin-top: var(--spacing-lg);">
     <AppSectionTitle Title="Butin (loot)" Icon="bi-gem">
         <Actions>
-            <button class="btn btn-ghost btn-sm" @onclick="() => ShowForm = !ShowForm">
+            <button class="btn btn-ghost btn-sm" @onclick="ToggleForm">
                 <i class="bi bi-plus"></i> Ajouter
             </button>
         </Actions>
@@ -45,6 +45,16 @@
                     </select>
                 </div>
             </div>
+            @if (WorldGameType != GameType.Generic && WorldGameType != GameType.Empty)
+            {
+                <div class="form-group" style="margin-top: var(--spacing-sm);">
+                    <label class="form-label">Système</label>
+                    <select class="form-control" @bind="Draft.GameType">
+                        <option value="@GameType.Generic">Générique (va sur n'importe quel personnage)</option>
+                        <option value="@WorldGameType">@GameTypeLabel(WorldGameType) (stats du système)</option>
+                    </select>
+                </div>
+            }
             <div class="form-group" style="margin-top: var(--spacing-sm);">
                 <label class="form-label">Description</label>
                 <textarea class="form-control" rows="2" @bind="Draft.Description" placeholder="Effet, apparence..."></textarea>
@@ -91,6 +101,7 @@
                             <i class="bi bi-@(loot.ChapterId.HasValue ? "bookmark" : "map")"></i>
                             @ScopeLabel(loot.ChapterId)
                         </span>
+                        <span class="status-badge" style="background: var(--color-surface-alt);">@GameTypeLabel(loot.GameType)</span>
                         @if (!string.IsNullOrEmpty(loot.Description))
                         {
                             <p class="card-description" style="margin: 4px 0 0;">@loot.Description</p>
@@ -113,6 +124,7 @@
 @code {
     [Parameter] public int CampaignId { get; set; }
     [Parameter] public List<ChapterDto> Chapters { get; set; } = new();
+    [Parameter] public GameType WorldGameType { get; set; } = GameType.Generic;
 
     private List<CampaignLootDto> Loot = new();
     private bool IsLoading = true;
@@ -138,6 +150,24 @@
         return ch != null ? $"Ch. {ch.ChapterNumber}" : "Chapitre";
     }
 
+    private GameType DefaultGameType =>
+        (WorldGameType != GameType.Generic && WorldGameType != GameType.Empty) ? WorldGameType : GameType.Generic;
+
+    private void ToggleForm()
+    {
+        if (ShowForm)
+        {
+            CancelForm();
+        }
+        else
+        {
+            EditingId = null;
+            FormError = null;
+            Draft = new LootDraft { GameType = DefaultGameType };
+            ShowForm = true;
+        }
+    }
+
     private void CancelForm()
     {
         ShowForm = false;
@@ -156,10 +186,24 @@
             Description = loot.Description,
             Quantity = loot.Quantity,
             ChapterId = loot.ChapterId?.ToString() ?? string.Empty,
+            GameType = loot.GameType,
         };
         FormError = null;
         ShowForm = true;
     }
+
+    private static string GameTypeLabel(GameType type) => type switch
+    {
+        GameType.Generic => "Générique",
+        GameType.DnD5e => "D&D 5e",
+        GameType.Pathfinder => "Pathfinder",
+        GameType.CallOfCthulhu => "Cthulhu",
+        GameType.Warhammer => "Warhammer",
+        GameType.Cyberpunk => "Cyberpunk",
+        GameType.Skyrim => "Skyrim",
+        GameType.Custom => "Personnalisé",
+        _ => type.ToString(),
+    };
 
     private async Task SaveLoot()
     {
@@ -178,6 +222,7 @@
             Description = string.IsNullOrWhiteSpace(Draft.Description) ? null : Draft.Description.Trim(),
             Quantity = Draft.Quantity < 1 ? 1 : Draft.Quantity,
             ChapterId = int.TryParse(Draft.ChapterId, out var cid) ? cid : null,
+            GameType = Draft.GameType,
         };
 
         var result = EditingId.HasValue
@@ -210,5 +255,6 @@
         public string? Description { get; set; }
         public int Quantity { get; set; } = 1;
         public string ChapterId { get; set; } = string.Empty;
+        public GameType GameType { get; set; } = GameType.Generic;
     }
 }

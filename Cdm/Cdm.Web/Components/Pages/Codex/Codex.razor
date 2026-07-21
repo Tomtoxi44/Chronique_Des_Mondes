@@ -133,7 +133,9 @@ else
                                 @if (CompatibleCharacters.Count == 0)
                                 {
                                     <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic; margin: 0;">
-                                        Aucun personnage de ce type. Créez-en un dans un monde @GameLabel(item.GameType).
+                                        @(item.GameType == GameType.Generic
+                                            ? "Aucun personnage. Créez-en un pour recevoir cet objet."
+                                            : $"Aucun personnage de ce type. Créez-en un dans un monde {GameLabel(item.GameType)}.")
                                     </p>
                                     <button class="btn btn-ghost btn-sm" @onclick="() => AddTargetItemId = null">Fermer</button>
                                 }
@@ -311,7 +313,10 @@ else
         AddTargetItemId = item.Id;
         SelectedCharacterId = 0;
         AddError = null;
-        CompatibleCharacters = await CodexClient.GetCompatibleCharactersAsync(item.GameType);
+        // A generic item can be added to any character; a themed item only to matching-type characters.
+        CompatibleCharacters = item.GameType == GameType.Generic
+            ? await CodexClient.GetCompatibleCharactersAsync(null)
+            : await CodexClient.GetCompatibleCharactersAsync(item.GameType);
     }
 
     private async Task ConfirmAdd(CodexItemDto item)

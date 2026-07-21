@@ -258,6 +258,7 @@
 - [x] `IInventoryService` universel (CRUD scopé au propriétaire du perso) + endpoints `/api/world-characters/{id}/inventory` & `/api/inventory/{id}` + `InventoryApiClient`.
 - [x] Composant `CharacterInventoryPanel` (liste + ajout/suppression + **« spécifier »** un item générique vers un système, ce qui révèle les champs de calcul du thème — dés de dégâts, type, bonus d'attaque pour D&D). Intègre l'onglet Inventaire du joueur en session (remplace l'ancien blob JSON) et rafraîchit les jets depuis la fiche.
 - [x] Un item **générique** va sur n'importe quel perso sans règles ; le « spécifier » en D&D lui donne les stats qui pré-remplissent les jets. Les futurs thèmes ajoutent leur éditeur + module de calcul sans toucher au reste.
-- [ ] (Reste) Afficher/éditer l'inventaire unifié aussi hors session sur les fiches de perso non-D&D ; migrer les éventuels inventaires legacy (blob JSON) vers la table.
+- [x] **Liens items ↔ inventaire** : un item **générique** du Codex s'ajoute désormais à **n'importe quel** perso (thème matché seulement pour les items typés) ; le loot peut être marqué **générique ou du système** de la campagne ; l'inventaire unifié est affiché/éditable **hors session** sur la fiche « Mon personnage » (`WorldMyCharacter`).
+- [ ] (Reste) Migrer les éventuels inventaires legacy (blob JSON) vers la table ; inventaire visible par le MJ sur la fiche joueur en session (lecture seule).
 
 > **Note localisation** : le mécanisme fr/en (resx `AppStrings.*.resx` + `@L["Clé"]`) est **déjà en place**. Continuer à externaliser les chaînes en dur au fil de l'eau.

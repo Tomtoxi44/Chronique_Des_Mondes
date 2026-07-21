@@ -8,6 +8,7 @@ namespace Cdm.Business.Common.Services;
 
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.Services;
+using Cdm.Common.Enums;
 using Cdm.Data.Common;
 using Cdm.Data.Common.Models;
 using Microsoft.EntityFrameworkCore;
@@ -55,7 +56,8 @@ public class LootService(AppDbContext dbContext, ILogger<LootService> logger) : 
                 ItemType = dto.ItemType,
                 GameSpecificData = dto.GameSpecificData,
                 Quantity = dto.Quantity < 1 ? 1 : dto.Quantity,
-                GameType = campaign.World.GameType,
+                // Loot is either generic (goes on any character) or the campaign world's system.
+                GameType = dto.GameType == GameType.Generic ? GameType.Generic : campaign.World.GameType,
                 CreatedBy = userId,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
@@ -131,6 +133,7 @@ public class LootService(AppDbContext dbContext, ILogger<LootService> logger) : 
         {
             var loot = await this.dbContext.CampaignLoots
                 .Include(l => l.Campaign)
+                .ThenInclude(c => c.World)
                 .FirstOrDefaultAsync(l => l.Id == lootId && l.IsActive);
             if (loot == null || loot.Campaign.CreatedBy != userId)
             {
@@ -147,6 +150,7 @@ public class LootService(AppDbContext dbContext, ILogger<LootService> logger) : 
                 }
             }
 
+            loot.GameType = dto.GameType == GameType.Generic ? GameType.Generic : loot.Campaign.World.GameType;
             loot.ChapterId = dto.ChapterId;
             loot.Name = dto.Name;
             loot.Description = dto.Description;

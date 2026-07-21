@@ -63,18 +63,53 @@ public class LootServiceTests
     // ── CRUD ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task CreateAsync_GmCreatesLoot_GameTypeFromWorld()
+    public async Task CreateAsync_ThemedLoot_FollowsWorldGameType()
     {
         using var ctx = NewContext();
         var campaignId = SeedCampaign(ctx, GameType.CallOfCthulhu);
         var service = this.NewService(ctx);
 
-        var result = await service.CreateAsync(campaignId, NewLootDto(), GmId);
+        // GM picks the campaign's system (not generic) → loot follows the world's game type.
+        var dto = NewLootDto();
+        dto.GameType = GameType.CallOfCthulhu;
+        var result = await service.CreateAsync(campaignId, dto, GmId);
 
         Assert.NotNull(result);
         Assert.Equal("Épée +1", result!.Name);
         Assert.Equal(GameType.CallOfCthulhu, result.GameType);
         Assert.Equal(campaignId, result.CampaignId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_GenericLoot_StaysGeneric()
+    {
+        using var ctx = NewContext();
+        var campaignId = SeedCampaign(ctx, GameType.CallOfCthulhu);
+        var service = this.NewService(ctx);
+
+        // GM marks the loot generic → it stays generic even in a themed campaign.
+        var dto = NewLootDto();
+        dto.GameType = GameType.Generic;
+        var result = await service.CreateAsync(campaignId, dto, GmId);
+
+        Assert.NotNull(result);
+        Assert.Equal(GameType.Generic, result!.GameType);
+    }
+
+    [Fact]
+    public async Task CreateAsync_IncompatibleThemeForcedToWorldType()
+    {
+        using var ctx = NewContext();
+        var campaignId = SeedCampaign(ctx, GameType.CallOfCthulhu);
+        var service = this.NewService(ctx);
+
+        // GM sends a mismatched theme → server forces the campaign world's type (never a wrong theme).
+        var dto = NewLootDto();
+        dto.GameType = GameType.DnD5e;
+        var result = await service.CreateAsync(campaignId, dto, GmId);
+
+        Assert.NotNull(result);
+        Assert.Equal(GameType.CallOfCthulhu, result!.GameType);
     }
 
     [Fact]
