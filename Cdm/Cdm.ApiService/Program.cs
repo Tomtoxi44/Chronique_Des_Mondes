@@ -264,6 +264,7 @@ app.MapCombatEndpoints();
 app.MapDndEndpoints();
 app.MapStatisticsEndpoints();
 app.MapImageEndpoints();
+app.MapCodexEndpoints();
 
 // Map SignalR hubs
 app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");

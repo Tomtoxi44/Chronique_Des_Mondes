@@ -157,4 +157,75 @@ public class CodexServiceTests
         Assert.False(ok);
         Assert.True((await ctx.CodexItems.FindAsync(1))!.IsActive);
     }
+
+    // ── AddToCharacterInventoryAsync ─────────────────────────────────────
+
+    /// <summary>Seeds a world character (world of <paramref name="worldType"/>) owned by <paramref name="ownerId"/>.</summary>
+    private static void SeedWorldCharacter(AppDbContext ctx, int worldCharacterId, int ownerId, GameType worldType)
+    {
+        ctx.Users.Add(new User { Id = ownerId, Email = $"u{ownerId}@t", Nickname = $"U{ownerId}", PasswordHash = "h", CreatedAt = DateTime.UtcNow });
+        ctx.Characters.Add(new Character { Id = worldCharacterId * 10, UserId = ownerId, Name = "Hero", IsActive = true, CreatedAt = DateTime.UtcNow });
+        ctx.Worlds.Add(new World { Id = worldCharacterId * 10, Name = "W", GameType = worldType, UserId = ownerId, CreatedAt = DateTime.UtcNow });
+        ctx.WorldCharacters.Add(new WorldCharacter { Id = worldCharacterId, CharacterId = worldCharacterId * 10, WorldId = worldCharacterId * 10, JoinedAt = DateTime.UtcNow, IsActive = true });
+        ctx.SaveChanges();
+    }
+
+    [Fact]
+    public async Task AddToCharacter_MatchingType_CreatesInventoryCopy()
+    {
+        using var ctx = NewContext();
+        Seed(ctx, 1, OwnerId, GameType.DnD5e, name: "Potion de soin");
+        SeedWorldCharacter(ctx, 50, OwnerId, GameType.DnD5e);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var (ok, error) = await service.AddToCharacterInventoryAsync(1, 50, OwnerId);
+
+        Assert.True(ok);
+        Assert.Null(error);
+        var inv = Assert.Single(ctx.DndInventoryItems);
+        Assert.Equal("Potion de soin", inv.Name);
+        Assert.Equal(50, inv.WorldCharacterId);
+        Assert.Equal(1, inv.Quantity);
+    }
+
+    [Fact]
+    public async Task AddToCharacter_TypeMismatch_Fails()
+    {
+        using var ctx = NewContext();
+        Seed(ctx, 1, OwnerId, GameType.Cyberpunk);
+        SeedWorldCharacter(ctx, 50, OwnerId, GameType.DnD5e);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var (ok, error) = await service.AddToCharacterInventoryAsync(1, 50, OwnerId);
+
+        Assert.False(ok);
+        Assert.NotNull(error);
+        Assert.Empty(ctx.DndInventoryItems);
+    }
+
+    [Fact]
+    public async Task AddToCharacter_NotOwnerOfCharacter_Fails()
+    {
+        using var ctx = NewContext();
+        Seed(ctx, 1, OwnerId, GameType.DnD5e);
+        SeedWorldCharacter(ctx, 50, OtherUserId, GameType.DnD5e);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var (ok, _) = await service.AddToCharacterInventoryAsync(1, 50, OwnerId);
+
+        Assert.False(ok);
+        Assert.Empty(ctx.DndInventoryItems);
+    }
+
+    [Fact]
+    public async Task AddToCharacter_ItemNotFound_Fails()
+    {
+        using var ctx = NewContext();
+        SeedWorldCharacter(ctx, 50, OwnerId, GameType.DnD5e);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var (ok, _) = await service.AddToCharacterInventoryAsync(999, 50, OwnerId);
+
+        Assert.False(ok);
+    }
 }

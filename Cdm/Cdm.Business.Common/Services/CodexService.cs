@@ -152,6 +152,64 @@ public class CodexService(AppDbContext dbContext, ILogger<CodexService> logger) 
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<(bool Success, string? Error)> AddToCharacterInventoryAsync(int codexItemId, int worldCharacterId, int userId)
+    {
+        try
+        {
+            var item = await this.dbContext.CodexItems
+                .FirstOrDefaultAsync(c => c.Id == codexItemId && c.UserId == userId && c.IsActive);
+            if (item == null)
+            {
+                return (false, "Item du codex introuvable.");
+            }
+
+            var character = await this.dbContext.WorldCharacters
+                .Include(w => w.Character)
+                .Include(w => w.World)
+                .FirstOrDefaultAsync(w => w.Id == worldCharacterId && w.IsActive);
+            if (character == null)
+            {
+                return (false, "Personnage introuvable.");
+            }
+
+            if (character.Character.UserId != userId)
+            {
+                return (false, "Ce personnage ne vous appartient pas.");
+            }
+
+            if (character.World.GameType != item.GameType)
+            {
+                return (false, "Le type de jeu de l'item ne correspond pas à celui du personnage.");
+            }
+
+            // Copie indépendante dans l'inventaire (la modification ultérieure du codex n'affecte pas la copie).
+            var inventoryItem = new DndInventoryItem
+            {
+                WorldCharacterId = worldCharacterId,
+                Name = item.Name,
+                Category = string.IsNullOrWhiteSpace(item.ItemType) ? "Objet" : item.ItemType!,
+                Quantity = 1,
+                Notes = item.Description,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            this.dbContext.DndInventoryItems.Add(inventoryItem);
+            await this.dbContext.SaveChangesAsync();
+
+            this.logger.LogInformation(
+                "Copied codex item {ItemId} into inventory of world character {WorldCharacterId}",
+                codexItemId,
+                worldCharacterId);
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error adding codex item {ItemId} to character {WorldCharacterId}", codexItemId, worldCharacterId);
+            return (false, "Erreur lors de l'ajout à l'inventaire.");
+        }
+    }
+
     private static CodexItemDto MapToDto(CodexItem item) => new()
     {
         Id = item.Id,

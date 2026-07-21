@@ -30,4 +30,11 @@ public interface ICodexService
 
     /// <summary>Soft-deletes one of the user's codex items.</summary>
     Task<bool> DeleteAsync(int id, int userId);
+
+    /// <summary>
+    /// Copies a codex item into a world character's inventory (independent copy).
+    /// The character must belong to the user and its world's game type must match the item's.
+    /// </summary>
+    /// <returns>Success flag and, on failure, a user-facing error message.</returns>
+    Task<(bool Success, string? Error)> AddToCharacterInventoryAsync(int codexItemId, int worldCharacterId, int userId);
 }
