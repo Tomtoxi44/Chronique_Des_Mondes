@@ -93,7 +93,6 @@ public partial class WorldDetail : IDisposable
         }
         IsSharingCampaign = false;
     }
-    private CreateChapterDto NewChapter = new();
     private bool IsCampaignEditing = false;
     private string CampaignEditName = string.Empty;
     private string CampaignEditDescription = string.Empty;
@@ -258,15 +257,6 @@ public partial class WorldDetail : IDisposable
         {
             _lastCampaignIdForTab = SelectedCampaignId;
             CampaignTab = "chapitres";
-        }
-
-        if (Section == "new-chapter" && SelectedCampaignId.HasValue)
-        {
-            var existingChapters = CampaignChapters.TryGetValue(SelectedCampaignId.Value, out var chs) ? chs : new();
-            NewChapter = new CreateChapterDto
-            {
-                ChapterNumber = existingChapters.Count > 0 ? existingChapters.Max(c => c.ChapterNumber) + 1 : 1
-            };
         }
 
         if (Section == "invitations" && !IsLoadingWorldCharacters && WorldCharacters.Count == 0)
@@ -491,22 +481,15 @@ public partial class WorldDetail : IDisposable
         }
     }
 
-    private async Task CreateChapter()
+    /// <summary>Adds the chapter created by <c>WorldNewChapterForm</c> and opens it.</summary>
+    private void OnChapterCreated(ChapterDto created)
     {
         if (!SelectedCampaignId.HasValue) return;
-        IsSaving = true;
-        NewChapter.CampaignId = SelectedCampaignId.Value;
-        var result = await ChapterClient.CreateChapterAsync(NewChapter);
-        if (result != null)
-        {
-            if (!CampaignChapters.ContainsKey(SelectedCampaignId.Value))
-                CampaignChapters[SelectedCampaignId.Value] = new();
-            CampaignChapters[SelectedCampaignId.Value].Add(result);
-            NewChapter = new CreateChapterDto();
-            SetSecondaryNav();
-            Nav.NavigateTo($"/worlds/{WorldId}?campaignId={SelectedCampaignId.Value}&chapterId={result.Id}");
-        }
-        IsSaving = false;
+        if (!CampaignChapters.ContainsKey(SelectedCampaignId.Value))
+            CampaignChapters[SelectedCampaignId.Value] = new();
+        CampaignChapters[SelectedCampaignId.Value].Add(created);
+        SetSecondaryNav();
+        Nav.NavigateTo($"/worlds/{WorldId}?campaignId={SelectedCampaignId.Value}&chapterId={created.Id}");
     }
 
     // ── Drag-and-drop chapter reordering ──────────────────────────────────

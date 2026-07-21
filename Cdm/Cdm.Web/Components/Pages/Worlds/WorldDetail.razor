@@ -358,31 +358,11 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (IsOwner && SelectedCampaignId.HasValue && Section == "new-chapter")
         {
-            var parentCampaign = Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId.Value);
-            <AppPageHeader Title="@L["Chapters_Create"]"
-                           Icon="bi-book"
-                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(parentCampaign?.Name ?? "Campagne", $"/worlds/{WorldId}?campaignId={SelectedCampaignId}"), new(L["Chapters_Create"]) })" />
-
-            <div style="max-width: 480px;">
-                <div class="cdm-card">
-                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
-                        <div class="form-group">
-                            <label class="form-label">N°</label>
-                            <input type="number" class="form-control" @bind="NewChapter.ChapterNumber" min="1" style="text-align: center;" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Titre du chapitre *</label>
-                            <input type="text" class="form-control" @bind="NewChapter.Title" placeholder="Titre du chapitre..." />
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: var(--spacing-sm);">
-                        <button class="btn btn-primary" @onclick="CreateChapter" disabled="@IsSaving">
-                            <i class="bi bi-check"></i> @L["Common_Create"]
-                        </button>
-                        <a href="/worlds/@WorldId?campaignId=@SelectedCampaignId" class="btn btn-ghost">@L["Common_Cancel"]</a>
-                    </div>
-                </div>
-            </div>
+            <WorldNewChapterForm WorldId="WorldId" World="World"
+                                 CampaignId="SelectedCampaignId!.Value"
+                                 Campaign="@Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId!.Value)"
+                                 Chapters="@(CampaignChapters.TryGetValue(SelectedCampaignId!.Value, out var newChapterSiblings) ? newChapterSiblings : new())"
+                                 OnCreated="OnChapterCreated" />
         }
 
 
