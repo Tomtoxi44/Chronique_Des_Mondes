@@ -205,6 +205,44 @@ public partial class SessionGm : IAsyncDisposable
         }
     }
 
+    // ── Image poussée aux joueurs ──────────────────────────────────────────
+    private string? UploadedImageUrl;   // dernière image envoyée, prête à montrer
+    private string? PushedImageUrl;      // image actuellement affichée aux joueurs
+
+    private void OnSessionImageUploaded(string url)
+    {
+        UploadedImageUrl = url;
+    }
+
+    private async Task PushImageToPlayers()
+    {
+        if (_hub == null || !IsHubConnected || string.IsNullOrEmpty(UploadedImageUrl)) return;
+        try
+        {
+            await _hub.InvokeAsync("ShowImage", SessionId, UploadedImageUrl);
+            PushedImageUrl = UploadedImageUrl;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Impossible de montrer l'image (session {SessionId})", SessionId);
+            Toast.ShowError("Image non transmise. Vérifiez votre connexion.", "Session");
+        }
+    }
+
+    private async Task HidePushedImage()
+    {
+        if (_hub == null || !IsHubConnected) return;
+        try
+        {
+            await _hub.InvokeAsync("HideImage", SessionId);
+            PushedImageUrl = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Impossible de masquer l'image (session {SessionId})", SessionId);
+        }
+    }
+
     private async Task RollDice(int faces)
     {
         if (_hub == null || !IsHubConnected || RollingDie.HasValue) return;

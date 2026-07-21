@@ -143,6 +143,54 @@ public class SessionHub : Hub
     }
 
     /// <summary>
+    /// The game master pushes an image that every player in the session is shown
+    /// (forced full-screen overlay). Only the session's game master may call this.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <param name="imageUrl">The public URL of the image to show.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task ShowImage(int sessionId, string imageUrl)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var session = await this.db.Sessions.FindAsync(sessionId);
+        if (session == null || session.StartedById != userId)
+        {
+            this.logger.LogWarning("User {UserId} not allowed to push an image in session {SessionId}", userId, sessionId);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return;
+        }
+
+        this.logger.LogInformation("GM {UserId} pushed an image in session {SessionId}", userId, sessionId);
+        await this.Clients.Group(groupName).SendAsync("ShowImage", imageUrl);
+    }
+
+    /// <summary>
+    /// The game master hides the currently forced image. Only the session's game master may call this.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task HideImage(int sessionId)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var session = await this.db.Sessions.FindAsync(sessionId);
+        if (session == null || session.StartedById != userId)
+        {
+            return;
+        }
+
+        this.logger.LogInformation("GM {UserId} hid the pushed image in session {SessionId}", userId, sessionId);
+        await this.Clients.Group(groupName).SendAsync("HideImage");
+    }
+
+    /// <summary>
     /// Broadcasts a dice roll result to the session.
     /// </summary>
     /// <param name="sessionId">The session identifier.</param>

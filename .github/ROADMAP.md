@@ -222,3 +222,31 @@
 8. **Rapports automatiques** mensuel/annuel + envoi email.
 9. **Systèmes de règles des autres jeux** (Skyrim, Pathfinder, Cthulhu, Warhammer, Cyberpunk) — chacun = un bloc de stats/règles dédié.
 10. **Phase 6** : vocal, générateurs, carte interactive, ambiance sonore, amis, messagerie, partage.
+
+---
+
+## Phase 7 : Vision produit (demandée le 21/07/2026)
+
+### 1. Images & médias (branche `feature/images-blob`)
+- [x] **Stockage Azure Blob** — abstraction `IImageStorage` (local en dev/CI, **Azure Blob** en prod via config), compte de stockage + conteneur + rôle MI dans bicep. Validation par magic-bytes + 5 Mo.
+- [x] **Plomberie d'upload générique** — `POST /api/images/{category}` + `ImageApiClient` + composant réutilisable `AppImageUpload` (à déposer dans n'importe quel formulaire).
+- [x] **En session, le MJ « pousse » une image à tous les joueurs** — `SessionHub.ShowImage/HideImage` (vérif MJ) + overlay plein écran non fermable côté joueur. Couvre l'affichage **carte / lieu** du MJ en session.
+- [x] Avatar de profil / de personnage — déjà présents (upload local ; migrables sur `IImageStorage` si besoin d'unifier).
+- [ ] **Image attachée à un item** — dépend de la création d'items (voir Codex ci-dessous) ; le composant d'upload est prêt à y être branché.
+
+> À faire au **déploiement** : appliquer le bicep + poser les app settings `ImageStorage__Provider=AzureBlob`, `ImageStorage__BlobServiceUri`, `ImageStorage__ContainerName` (sinon reste en local).
+
+### 2. Marketplace / Partage
+- [ ] Les utilisateurs partagent : **monde**, **campagne**, **personnages génériques** (pas les copies liées à un monde), **items**.
+- [ ] **DataGrid** avec **onglets par type d'élément** + **filtres** (type de jeu, etc.).
+- [ ] Intégration contextuelle : ajouter une campagne partagée → propose les **mondes du même type** de l'utilisateur ; ajouter un item → propose les **personnages du même type**. Bouton **grisé** si l'utilisateur n'a pas de monde/personnage cible.
+
+### 3. Codex d'items
+- [ ] Système de création d'items **de tous les thèmes**, rangés dans un **codex** personnel.
+- [ ] Depuis le codex : **partager** un item, ou l'**ajouter à un personnage** (y compris créé plus tard).
+
+### 4. Loot en campagne / chapitre
+- [ ] Le MJ attache des **items (loot)** à une campagne ou un chapitre.
+- [ ] En session, le MJ **distribue** ce loot aux joueurs quand il estime qu'ils l'ont mérité.
+
+> **Note localisation** : le mécanisme fr/en (resx `AppStrings.*.resx` + `@L["Clé"]`) est **déjà en place**. Continuer à externaliser les chaînes en dur au fil de l'eau.
