@@ -227,10 +227,14 @@
 
 ## Phase 7 : Vision produit (demandée le 21/07/2026)
 
-### 1. Images & médias (⭐ EN COURS — branche `feature/images-blob`)
-- [~] **Stockage Azure Blob** — aujourd'hui les images sont locales (`wwwroot/uploads`). Introduire une abstraction `IImageStorage` (local pour le dev, **Azure Blob** en prod) + compte de stockage bicep + wiring Aspire.
-- [ ] Ajouter une image sur : **avatar de profil** (déjà présent, à migrer sur blob), **avatar de personnage** (idem), **item**, **carte / lieu** (côté MJ).
-- [ ] **En session, le MJ « pousse » une image à tous les joueurs** (« forcer » l'affichage) — diffusion SignalR + overlay non fermable côté joueur tant que le MJ ne la retire pas.
+### 1. Images & médias (branche `feature/images-blob`)
+- [x] **Stockage Azure Blob** — abstraction `IImageStorage` (local en dev/CI, **Azure Blob** en prod via config), compte de stockage + conteneur + rôle MI dans bicep. Validation par magic-bytes + 5 Mo.
+- [x] **Plomberie d'upload générique** — `POST /api/images/{category}` + `ImageApiClient` + composant réutilisable `AppImageUpload` (à déposer dans n'importe quel formulaire).
+- [x] **En session, le MJ « pousse » une image à tous les joueurs** — `SessionHub.ShowImage/HideImage` (vérif MJ) + overlay plein écran non fermable côté joueur. Couvre l'affichage **carte / lieu** du MJ en session.
+- [x] Avatar de profil / de personnage — déjà présents (upload local ; migrables sur `IImageStorage` si besoin d'unifier).
+- [ ] **Image attachée à un item** — dépend de la création d'items (voir Codex ci-dessous) ; le composant d'upload est prêt à y être branché.
+
+> À faire au **déploiement** : appliquer le bicep + poser les app settings `ImageStorage__Provider=AzureBlob`, `ImageStorage__BlobServiceUri`, `ImageStorage__ContainerName` (sinon reste en local).
 
 ### 2. Marketplace / Partage
 - [ ] Les utilisateurs partagent : **monde**, **campagne**, **personnages génériques** (pas les copies liées à un monde), **items**.
