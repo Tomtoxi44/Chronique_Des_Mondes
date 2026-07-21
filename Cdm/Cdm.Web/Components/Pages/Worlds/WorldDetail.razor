@@ -673,6 +673,9 @@ else
                             <span style="background: var(--color-bg-secondary); color: var(--color-text-muted); font-size: 10px; padding: 1px 6px; border-radius: var(--radius-sm); font-weight: 600;">@ChapterNpcs.Count</span>
                         }
                     </button>
+                    <button class="campaign-tab-btn @(ChapterTab == "images" ? "active" : "")" @onclick='() => SwitchToChapterTab("images")'>
+                        <i class="bi bi-image"></i> Plans & lieux
+                    </button>
                 </div>
 
                 <!-- Contenu tab -->
@@ -714,6 +717,12 @@ else
                 {
                     <WorldChapterNpcsPanel Npcs="ChapterNpcs" ChapterId="SelectedChapter!.Id" IsDnD="IsWorldDnD5e"
                                            ExpandNpcId="MentionExpandNpcId" OnChanged="StateHasChanged" />
+                }
+
+                <!-- Plans & lieux tab -->
+                @if (ChapterTab == "images")
+                {
+                    <Cdm.Web.Components.Pages.Campaigns.ChapterImageGallery ChapterId="SelectedChapter!.Id" />
                 }
             }
         }
