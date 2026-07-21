@@ -1,0 +1,265 @@
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@inject Cdm.Web.Services.ApiClients.InventoryApiClient InventoryClient
+
+@* Unified inventory for a world character (any game system). *@
+<div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+    @if (IsLoading)
+    {
+        <AppLoadingSpinner Inline="true" Size="sm" />
+    }
+    else if (Items.Count == 0 && !ShowForm)
+    {
+        <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); font-style: italic;">Inventaire vide.</p>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+            @foreach (var item in Items)
+            {
+                <div class="inventory-item" style="align-items: flex-start; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: var(--spacing-xs);">
+                        <div style="display: flex; align-items: center; gap: var(--spacing-xs); min-width: 0;">
+                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" alt="@item.Name" style="width: 28px; height: 28px; object-fit: cover; border-radius: var(--radius-sm);" />
+                            }
+                            <span class="inventory-item-name">@item.Name</span>
+                            @if (item.Quantity > 1)
+                            {
+                                <span class="inventory-item-qty">×@item.Quantity</span>
+                            }
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;">
+                            <button class="btn btn-ghost btn-xs" title="Modifier / spécifier" @onclick="() => EditItem(item)">
+                                <i class="bi bi-pencil" style="font-size: 0.7rem;"></i>
+                            </button>
+                            <button class="btn btn-ghost btn-xs" title="Supprimer" @onclick="() => DeleteItem(item.Id)">
+                                <i class="bi bi-trash3" style="font-size: 0.7rem;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                        <span class="status-badge" style="background: var(--color-bg-tertiary); font-size: 0.65rem;">@GameTypeLabel(item.GameType)</span>
+                        @if (!string.IsNullOrEmpty(item.Category))
+                        {
+                            <span class="status-badge" style="background: var(--color-surface-alt); font-size: 0.65rem;">@item.Category</span>
+                        }
+                        @if (item.GameType == GameType.DnD5e && !string.IsNullOrEmpty(item.DamageDice))
+                        {
+                            <span class="status-badge" style="background: var(--color-surface-alt); font-size: 0.65rem;">
+                                <i class="bi bi-lightning-charge"></i> @item.DamageDice @item.DamageType
+                                @if (item.AttackBonus.HasValue) { <text> (att. @(item.AttackBonus >= 0 ? "+" : "")@item.AttackBonus)</text> }
+                            </span>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(item.Description))
+                    {
+                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">@item.Description</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (ShowForm)
+    {
+        <div class="cdm-card" style="background: var(--color-surface-alt); padding: var(--spacing-sm);">
+            <div style="display: flex; gap: var(--spacing-xs);">
+                <div class="form-group" style="margin-bottom: 0; flex: 2;">
+                    <label class="form-label" style="font-size: 0.7rem;">Nom</label>
+                    <input class="form-control form-control-sm" @bind="Draft.Name" placeholder="Objet..." />
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                    <label class="form-label" style="font-size: 0.7rem;">Qté</label>
+                    <input type="number" min="1" class="form-control form-control-sm" @bind="Draft.Quantity" />
+                </div>
+            </div>
+            <div style="display: flex; gap: var(--spacing-xs); margin-top: var(--spacing-xs);">
+                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                    <label class="form-label" style="font-size: 0.7rem;">Catégorie</label>
+                    <input class="form-control form-control-sm" @bind="Draft.Category" placeholder="Arme, Potion..." />
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                    <label class="form-label" style="font-size: 0.7rem;">Système</label>
+                    <select class="form-control form-control-sm" @bind="Draft.GameType">
+                        <option value="@GameType.Generic">Générique</option>
+                        @if (WorldGameType != GameType.Generic && WorldGameType != GameType.Empty)
+                        {
+                            <option value="@WorldGameType">@GameTypeLabel(WorldGameType)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0; margin-top: var(--spacing-xs);">
+                <label class="form-label" style="font-size: 0.7rem;">Description</label>
+                <input class="form-control form-control-sm" @bind="Draft.Description" placeholder="Effet, apparence..." />
+            </div>
+
+            @if (Draft.GameType == GameType.DnD5e)
+            {
+                <div style="display: flex; gap: var(--spacing-xs); margin-top: var(--spacing-xs);">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="form-label" style="font-size: 0.7rem;">Dés dégâts</label>
+                        <input class="form-control form-control-sm" @bind="Draft.DamageDice" placeholder="1d8" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="form-label" style="font-size: 0.7rem;">Type</label>
+                        <input class="form-control form-control-sm" @bind="Draft.DamageType" placeholder="tranchant" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                        <label class="form-label" style="font-size: 0.7rem;">Bonus att.</label>
+                        <input type="number" class="form-control form-control-sm" @bind="Draft.AttackBonus" placeholder="0" />
+                    </div>
+                </div>
+                <p style="font-size: 0.65rem; color: var(--color-text-muted); margin: 4px 0 0;">
+                    Renseigné, cet objet pourra pré-remplir vos jets D&amp;D en session.
+                </p>
+            }
+
+            <div style="display: flex; justify-content: flex-end; gap: var(--spacing-xs); margin-top: var(--spacing-sm);">
+                <button class="btn btn-ghost btn-sm" @onclick="CancelForm">Annuler</button>
+                <button class="btn btn-primary btn-sm" @onclick="SaveItem" disabled="@(IsSaving || string.IsNullOrWhiteSpace(Draft.Name))">
+                    @if (IsSaving) { <AppLoadingSpinner Inline="true" Size="sm" /> }
+                    @(EditingId.HasValue ? "Enregistrer" : "Ajouter")
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <button class="btn btn-ghost btn-sm" @onclick="StartAdd" style="align-self: flex-start;">
+            <i class="bi bi-plus"></i> Ajouter un objet
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public int WorldCharacterId { get; set; }
+    [Parameter] public GameType WorldGameType { get; set; } = GameType.Generic;
+
+    private List<InventoryItemDto> Items = new();
+    private bool IsLoading = true;
+    private bool ShowForm;
+    private bool IsSaving;
+    private int? EditingId;
+    private ItemDraft Draft = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (WorldCharacterId > 0 && (Items.Count == 0 || _loadedFor != WorldCharacterId))
+        {
+            _loadedFor = WorldCharacterId;
+            await Reload();
+        }
+    }
+
+    private int _loadedFor;
+
+    private async Task Reload()
+    {
+        IsLoading = true;
+        Items = await InventoryClient.GetForCharacterAsync(WorldCharacterId);
+        IsLoading = false;
+    }
+
+    private static string GameTypeLabel(GameType type) => type switch
+    {
+        GameType.Generic => "Générique",
+        GameType.DnD5e => "D&D 5e",
+        GameType.Pathfinder => "Pathfinder",
+        GameType.CallOfCthulhu => "Cthulhu",
+        GameType.Warhammer => "Warhammer",
+        GameType.Cyberpunk => "Cyberpunk",
+        GameType.Skyrim => "Skyrim",
+        GameType.Custom => "Personnalisé",
+        _ => type.ToString(),
+    };
+
+    private void StartAdd()
+    {
+        EditingId = null;
+        Draft = new ItemDraft { GameType = GameType.Generic };
+        ShowForm = true;
+    }
+
+    private void EditItem(InventoryItemDto item)
+    {
+        EditingId = item.Id;
+        Draft = new ItemDraft
+        {
+            Name = item.Name,
+            Category = item.Category,
+            Quantity = item.Quantity,
+            Description = item.Description,
+            GameType = item.GameType,
+            DamageDice = item.DamageDice,
+            DamageType = item.DamageType,
+            AttackBonus = item.AttackBonus,
+        };
+        ShowForm = true;
+    }
+
+    private void CancelForm()
+    {
+        ShowForm = false;
+        EditingId = null;
+        Draft = new ItemDraft();
+    }
+
+    private async Task SaveItem()
+    {
+        if (string.IsNullOrWhiteSpace(Draft.Name)) return;
+        IsSaving = true;
+        var dto = new CreateInventoryItemDto
+        {
+            Name = Draft.Name.Trim(),
+            Category = string.IsNullOrWhiteSpace(Draft.Category) ? "Objet" : Draft.Category.Trim(),
+            Quantity = Draft.Quantity < 1 ? 1 : Draft.Quantity,
+            Description = string.IsNullOrWhiteSpace(Draft.Description) ? null : Draft.Description.Trim(),
+            GameType = Draft.GameType,
+            DamageDice = string.IsNullOrWhiteSpace(Draft.DamageDice) ? null : Draft.DamageDice.Trim(),
+            DamageType = string.IsNullOrWhiteSpace(Draft.DamageType) ? null : Draft.DamageType.Trim(),
+            AttackBonus = Draft.AttackBonus,
+        };
+
+        var result = EditingId.HasValue
+            ? await InventoryClient.UpdateAsync(EditingId.Value, dto)
+            : await InventoryClient.AddAsync(WorldCharacterId, dto);
+
+        IsSaving = false;
+        if (result != null)
+        {
+            CancelForm();
+            await Reload();
+            if (OnChanged.HasDelegate) await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        if (await InventoryClient.DeleteAsync(id))
+        {
+            Items.RemoveAll(i => i.Id == id);
+            if (OnChanged.HasDelegate) await OnChanged.InvokeAsync();
+        }
+    }
+
+    /// <summary>Raised after the inventory changes so the host can refresh dependent views (e.g. D&D roll pickers).</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    /// <summary>Reloads the inventory from the server (callable by the host).</summary>
+    public Task RefreshAsync() => Reload();
+
+    private sealed class ItemDraft
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Category { get; set; } = "Objet";
+        public int Quantity { get; set; } = 1;
+        public string? Description { get; set; }
+        public GameType GameType { get; set; } = GameType.Generic;
+        public string? DamageDice { get; set; }
+        public string? DamageType { get; set; }
+        public int? AttackBonus { get; set; }
+    }
+}

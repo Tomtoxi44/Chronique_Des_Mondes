@@ -246,11 +246,18 @@
 - [x] Système de création d'items **de tous les thèmes** (`CodexItem` : GameType + JSON + image), rangés dans un **codex** personnel — page `/codex` (CRUD + filtres par univers).
 - [x] Depuis le codex : **ajouter à un personnage** (copie indépendante dans l'inventaire d'un perso du même type ; sélecteur des persos compatibles).
 - [x] **Partager** un item (marketplace) — onglet Items de `/marketplace` + bouton de partage depuis le Codex.
-- [~] L'ajout à l'inventaire utilise `DndInventoryItem` (seule table d'inventaire existante) : fonctionne pour tout perso, mais l'inventaire n'est affiché que sur la fiche D&D. Un inventaire générique par système reste à faire.
+- [x] Inventaire unifié multi-systèmes (voir §5) : `DndInventoryItems` porte désormais un `GameType` ; l'ajout Codex→perso y écrit le bon type et s'affiche sur la fiche de tout perso.
 
 ### 4. Loot en campagne / chapitre (branche `feature/campaign-loot`)
 - [x] Le MJ attache des **items (loot)** à une campagne ou un chapitre — entités `CampaignLoot` (+ `LootDistribution`), `ILootService` (CRUD MJ + distribution), panneau « Butin » sur la fiche de campagne (`CampaignLootPanel`). Loot facultativement copié depuis un item du Codex.
 - [x] En session, le MJ **distribue** ce loot à un personnage joueur : hub `DistributeLoot` → copie dans l'inventaire (`DndInventoryItem`) + événement temps réel `LootReceived` (toast joueur, entrée dans le chat, rafraîchissement de la fiche). Panneau « Butin » dans l'écran MJ de session.
-- [~] Comme pour le Codex, la copie atterrit dans `DndInventoryItem` (affiché sur la fiche D&D). Un inventaire générique par système reste à faire.
+- [x] La copie atterrit dans l'inventaire unifié avec le bon `GameType` (voir §5), donc visible sur tout perso quel que soit le thème.
+
+### 5. Inventaire unifié multi-systèmes (branche `feature/generic-inventory`)
+- [x] `DndInventoryItems` devient le **magasin d'inventaire unique** pour tous les thèmes : ajout de `GameType` (lignes existantes = D&D), `GameSpecificData` (stats structurées par thème en JSON) et `ImageUrl`. Colonnes de combat D&D conservées, pertinentes seulement si `GameType == DnD5e`.
+- [x] `IInventoryService` universel (CRUD scopé au propriétaire du perso) + endpoints `/api/world-characters/{id}/inventory` & `/api/inventory/{id}` + `InventoryApiClient`.
+- [x] Composant `CharacterInventoryPanel` (liste + ajout/suppression + **« spécifier »** un item générique vers un système, ce qui révèle les champs de calcul du thème — dés de dégâts, type, bonus d'attaque pour D&D). Intègre l'onglet Inventaire du joueur en session (remplace l'ancien blob JSON) et rafraîchit les jets depuis la fiche.
+- [x] Un item **générique** va sur n'importe quel perso sans règles ; le « spécifier » en D&D lui donne les stats qui pré-remplissent les jets. Les futurs thèmes ajoutent leur éditeur + module de calcul sans toucher au reste.
+- [ ] (Reste) Afficher/éditer l'inventaire unifié aussi hors session sur les fiches de perso non-D&D ; migrer les éventuels inventaires legacy (blob JSON) vers la table.
 
 > **Note localisation** : le mécanisme fr/en (resx `AppStrings.*.resx` + `@L["Clé"]`) est **déjà en place**. Continuer à externaliser les chaînes en dur au fil de l'eau.
