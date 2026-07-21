@@ -236,15 +236,16 @@
 
 > À faire au **déploiement** : appliquer le bicep + poser les app settings `ImageStorage__Provider=AzureBlob`, `ImageStorage__BlobServiceUri`, `ImageStorage__ContainerName` (sinon reste en local).
 
-### 2. Marketplace / Partage
-- [ ] Les utilisateurs partagent : **monde**, **campagne**, **personnages génériques** (pas les copies liées à un monde), **items**.
-- [ ] **DataGrid** avec **onglets par type d'élément** + **filtres** (type de jeu, etc.).
-- [ ] Intégration contextuelle : ajouter une campagne partagée → propose les **mondes du même type** de l'utilisateur ; ajouter un item → propose les **personnages du même type**. Bouton **grisé** si l'utilisateur n'a pas de monde/personnage cible.
+### 2. Marketplace / Partage (branche `feature/marketplace-full`)
+- [x] Les utilisateurs partagent : **monde**, **campagne**, **personnages génériques** (base only), **items** — `IMarketplaceService` (share/browse/import) + `MarketplaceEndpoints` + `MarketplaceApiClient`. Toggles de partage sur les listes Mondes / Campagnes / Personnages.
+- [x] Page `/marketplace` avec **onglets par type d'élément** (Items, Mondes, Campagnes, Personnages) + **filtres** (type de jeu) + recherche.
+- [x] Intégration contextuelle : importer une campagne partagée → sélecteur des **mondes du même type** de l'utilisateur ; bouton **grisé** (« Aucun monde compatible ») s'il n'a pas de monde cible. Import = **copie indépendante** (monde, campagne + chapitres, perso de base).
+- [ ] (Optionnel) Item → suggérer les **personnages du même type** à l'import direct (aujourd'hui l'ajout à un perso se fait depuis le Codex).
 
 ### 3. Codex d'items (branche `feature/codex`)
 - [x] Système de création d'items **de tous les thèmes** (`CodexItem` : GameType + JSON + image), rangés dans un **codex** personnel — page `/codex` (CRUD + filtres par univers).
 - [x] Depuis le codex : **ajouter à un personnage** (copie indépendante dans l'inventaire d'un perso du même type ; sélecteur des persos compatibles).
-- [ ] **Partager** un item (marketplace) — `IsShared` posé, UI de partage à faire avec la marketplace.
+- [x] **Partager** un item (marketplace) — onglet Items de `/marketplace` + bouton de partage depuis le Codex.
 - [~] L'ajout à l'inventaire utilise `DndInventoryItem` (seule table d'inventaire existante) : fonctionne pour tout perso, mais l'inventaire n'est affiché que sur la fiche D&D. Un inventaire générique par système reste à faire.
 
 ### 4. Loot en campagne / chapitre

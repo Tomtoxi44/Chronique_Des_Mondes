@@ -70,4 +70,9 @@ public class CharacterDto
     /// Gets or sets the source character ID for world copies (null for base characters).
     /// </summary>
     public int? SourceCharacterId { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this base character is shared on the marketplace.
+    /// </summary>
+    public bool IsShared { get; set; }
 }

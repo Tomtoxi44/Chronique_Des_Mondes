@@ -588,6 +588,7 @@ public class CharacterService(
             AvatarUrl = character.AvatarUrl,
             IsLocked = character.IsLocked,
             IsBaseCharacter = character.IsBaseCharacter,
+            IsShared = character.IsShared,
             SourceCharacterId = character.SourceCharacterId,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt

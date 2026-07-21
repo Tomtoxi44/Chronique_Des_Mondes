@@ -41,6 +41,11 @@ else
                     <div class="card-header-row">
                         <AppGameBadge GameType="@campaign.GameType" />
                         <div class="card-actions">
+                            <button class="btn btn-ghost btn-icon @(campaign.IsShared ? "danger" : "")"
+                                    @onclick="() => ToggleShare(campaign)"
+                                    title="@(campaign.IsShared ? L["Marketplace_Unshare"] : L["Marketplace_Share"])">
+                                <i class="bi @(campaign.IsShared ? "bi-share-fill" : "bi-share")"></i>
+                            </button>
                             <a href="/campaigns/@campaign.Id" class="btn btn-ghost btn-icon" title="@L["Common_Details"]">
                                 <i class="bi bi-arrow-right"></i>
                             </a>

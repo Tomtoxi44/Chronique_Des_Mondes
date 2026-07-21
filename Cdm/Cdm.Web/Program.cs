@@ -213,6 +213,18 @@ builder.Services.AddScoped<CodexApiClient>(sp =>
 
 builder.Services.AddHttpClient("CodexApiClient", ConfigureApiClient);
 
+// Register MarketplaceApiClient with scoped lifetime
+builder.Services.AddScoped<MarketplaceApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("MarketplaceApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<MarketplaceApiClient>>();
+    return new MarketplaceApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("MarketplaceApiClient", ConfigureApiClient);
+
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {

@@ -378,7 +378,8 @@ public class CampaignService(
             CreatedBy = campaign.CreatedBy,
             CreatedAt = campaign.CreatedAt,
             UpdatedAt = campaign.UpdatedAt,
-            IsActive = campaign.IsActive
+            IsActive = campaign.IsActive,
+            IsShared = campaign.IsShared
         };
     }
 

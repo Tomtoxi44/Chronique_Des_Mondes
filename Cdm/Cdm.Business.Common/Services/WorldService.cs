@@ -365,6 +365,7 @@ public class WorldService(
             Description = world.Description,
             GameType = world.GameType,
             IsActive = world.IsActive,
+            IsShared = world.IsShared,
             CreatedAt = world.CreatedAt,
             UpdatedAt = world.UpdatedAt,
             CampaignCount = world.Campaigns?.Count(c => c.IsActive && !c.IsDeleted) ?? 0,

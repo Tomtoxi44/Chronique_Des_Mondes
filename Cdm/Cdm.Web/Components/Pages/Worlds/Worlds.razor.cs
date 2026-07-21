@@ -10,6 +10,7 @@ namespace Cdm.Web.Components.Pages.Worlds;
 public partial class Worlds
 {
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
+    [Inject] private MarketplaceApiClient MarketClient { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
 
@@ -51,6 +52,16 @@ public partial class Worlds
     }
 
     private void NavigateToWorld(int worldId) => Nav.NavigateTo($"/worlds/{worldId}");
+
+    private async Task ToggleShare(WorldDto world)
+    {
+        var newValue = !world.IsShared;
+        var ok = await MarketClient.SetWorldSharedAsync(world.Id, newValue);
+        if (ok)
+        {
+            world.IsShared = newValue;
+        }
+    }
 
     private void ConfirmDelete(WorldDto world)
     {

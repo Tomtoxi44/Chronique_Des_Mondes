@@ -43,6 +43,9 @@ public class World
     /// </summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether the world is shared on the marketplace.</summary>
+    public bool IsShared { get; set; } = false;
+
     /// <summary>
     /// Gets or sets the invite token for joining the world (generated on demand).
     /// </summary>
