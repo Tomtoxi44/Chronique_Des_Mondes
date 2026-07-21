@@ -35,6 +35,59 @@ public static class CodexEndpoints
         group.MapDelete("/{id:int}", DeleteItemAsync).WithName("DeleteCodexItem");
         group.MapPost("/{id:int}/add-to-character/{worldCharacterId:int}", AddToCharacterAsync)
             .WithName("AddCodexItemToCharacter");
+        group.MapPut("/{id:int}/share", SetSharedAsync)
+            .WithName("ShareCodexItem");
+
+        // ── Marketplace ──────────────────────────────────────────────────
+        var market = app.MapGroup("/api/marketplace")
+            .WithTags("Marketplace")
+            .RequireAuthorization();
+
+        market.MapGet("/items", GetMarketplaceItemsAsync).WithName("GetMarketplaceItems");
+        market.MapPost("/items/{id:int}/import", ImportItemAsync).WithName("ImportMarketplaceItem");
+    }
+
+    private static async Task<IResult> SetSharedAsync(
+        int id,
+        [FromServices] ICodexService codex,
+        ClaimsPrincipal user,
+        [FromQuery] bool shared = true)
+    {
+        var userId = GetUserId(user);
+        if (userId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var ok = await codex.SetSharedAsync(id, userId.Value, shared);
+        return ok ? Results.NoContent() : Results.NotFound();
+    }
+
+    private static async Task<IResult> GetMarketplaceItemsAsync(
+        [FromServices] ICodexService codex,
+        ClaimsPrincipal user,
+        [FromQuery] GameType? gameType = null,
+        [FromQuery] string? search = null)
+    {
+        if (GetUserId(user) is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var items = await codex.GetMarketplaceItemsAsync(gameType, search);
+        return Results.Ok(items);
+    }
+
+    private static async Task<IResult> ImportItemAsync(int id, [FromServices] ICodexService codex, ClaimsPrincipal user)
+    {
+        var userId = GetUserId(user);
+        if (userId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var imported = await codex.ImportToMyCodexAsync(id, userId.Value);
+        return imported is null ? Results.BadRequest(new { error = "Import impossible." }) : Results.Ok(imported);
     }
 
     private static int? GetUserId(ClaimsPrincipal user)

@@ -31,6 +31,9 @@ public class CodexItemDto
     public bool IsShared { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>Owner's display name — populated only for marketplace listings.</summary>
+    public string? SharedByName { get; set; }
 }
 
 /// <summary>

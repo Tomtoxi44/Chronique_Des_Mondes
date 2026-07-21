@@ -91,6 +91,56 @@ public class CodexApiClient
         }
     }
 
+    public async Task<bool> SetSharedAsync(int id, bool shared)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.PutAsync($"api/codex/{id}/share?shared={shared.ToString().ToLowerInvariant()}", null);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sharing codex item {Id}", id);
+            return false;
+        }
+    }
+
+    public async Task<List<CodexItemDto>> GetMarketplaceItemsAsync(GameType? gameType = null, string? search = null)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var query = new List<string>();
+            if (gameType.HasValue) query.Add($"gameType={(int)gameType.Value}");
+            if (!string.IsNullOrWhiteSpace(search)) query.Add($"search={Uri.EscapeDataString(search)}");
+            var url = "api/marketplace/items" + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
+            var response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return new();
+            return await response.Content.ReadFromJsonAsync<List<CodexItemDto>>() ?? new();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching marketplace items");
+            return new();
+        }
+    }
+
+    public async Task<CodexItemDto?> ImportItemAsync(int id)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.PostAsync($"api/marketplace/items/{id}/import", null);
+            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<CodexItemDto>() : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing marketplace item {Id}", id);
+            return null;
+        }
+    }
+
     /// <summary>Lists the user's world characters compatible with (of the same) game type.</summary>
     public async Task<List<WorldCharacterDto>> GetCompatibleCharactersAsync(GameType gameType)
     {
