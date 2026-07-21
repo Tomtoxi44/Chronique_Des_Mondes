@@ -117,4 +117,21 @@ public class UserProfileService : IUserProfileService
 
         return !exists;
     }
+
+    /// <inheritdoc/>
+    public async Task<(bool Found, string? OldAvatarUrl)> SetAvatarUrlAsync(int userId, string avatarUrl)
+    {
+        var user = await this.dbContext.Set<User>().FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            this.logger.LogWarning("User {UserId} not found when setting avatar URL", userId);
+            return (false, null);
+        }
+
+        var oldAvatarUrl = user.AvatarUrl;
+        user.AvatarUrl = avatarUrl;
+        user.UpdatedAt = DateTime.UtcNow;
+        await this.dbContext.SaveChangesAsync();
+        return (true, oldAvatarUrl);
+    }
 }

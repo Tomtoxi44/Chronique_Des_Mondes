@@ -30,4 +30,13 @@ public interface IUserProfileService
     /// <param name="currentUserId">Current user ID to exclude from check</param>
     /// <returns>True if username is available, false otherwise</returns>
     Task<bool> IsUsernameAvailableAsync(string username, int currentUserId);
+
+    /// <summary>
+    /// Sets the user's avatar URL.
+    /// </summary>
+    /// <param name="userId">User unique identifier.</param>
+    /// <param name="avatarUrl">The new avatar URL.</param>
+    /// <returns><c>Found</c> is false if the user does not exist; <c>OldAvatarUrl</c> is the
+    /// previous URL (for the caller to clean up the old image), or null.</returns>
+    Task<(bool Found, string? OldAvatarUrl)> SetAvatarUrlAsync(int userId, string avatarUrl);
 }
