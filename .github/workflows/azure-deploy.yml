@@ -157,3 +157,38 @@ jobs:
           app-name: 'app-chroniquedesmondes-api'
           slot-name: 'Production'
           package: .
+
+      # Wire the external-service app settings so images (Azure Blob) and email (ACS)
+      # don't silently fall back to broken local/logging modes. Idempotent (settings persist).
+      # Requires the repository variable AZURE_RESOURCE_GROUP; skipped if not set.
+      - name: Configure external-service app settings
+        if: ${{ vars.AZURE_RESOURCE_GROUP != '' }}
+        run: |
+          set -e
+          RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+          API="app-chroniquedesmondes-api"
+
+          STORAGE=$(az storage account list -g "$RG" --query "[?starts_with(name,'stcdm')].name | [0]" -o tsv)
+          if [ -n "$STORAGE" ]; then
+            BLOB=$(az storage account show -n "$STORAGE" -g "$RG" --query primaryEndpoints.blob -o tsv)
+            az webapp config appsettings set -n "$API" -g "$RG" --only-show-errors --settings \
+              ImageStorage__Provider=AzureBlob \
+              ImageStorage__ContainerName=images \
+              ImageStorage__BlobServiceUri="$BLOB"
+            echo "Image storage app settings applied (blob: $BLOB)."
+          else
+            echo "::warning::No storage account starting with 'stcdm' found in $RG — image settings skipped."
+          fi
+
+          ACS=$(az communication list -g "$RG" --query "[0].name" -o tsv 2>/dev/null || true)
+          if [ -n "$ACS" ]; then
+            CS=$(az communication list-key -n "$ACS" -g "$RG" --query primaryConnectionString -o tsv)
+            SETTINGS=(AzureEmail__ConnectionString="$CS")
+            if [ -n "${{ vars.AZURE_EMAIL_FROM }}" ]; then
+              SETTINGS+=(AzureEmail__FromAddress="${{ vars.AZURE_EMAIL_FROM }}")
+            fi
+            az webapp config appsettings set -n "$API" -g "$RG" --only-show-errors --settings "${SETTINGS[@]}"
+            echo "Email (ACS) app settings applied."
+          else
+            echo "::warning::No Communication Services resource found in $RG — email settings skipped."
+          fi
