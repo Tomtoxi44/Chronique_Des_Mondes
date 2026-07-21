@@ -88,7 +88,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var session = await sessionService.StartSessionAsync(dto, userId.Value);
@@ -111,7 +111,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var sessions = await sessionService.GetMySessionsAsync(userId.Value);
@@ -132,7 +132,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var session = await sessionService.GetSessionAsync(id, userId.Value);
@@ -155,7 +155,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var session = await sessionService.GetActiveSessionByCampaignAsync(campaignId, userId.Value);
@@ -179,7 +179,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var ended = await sessionService.EndSessionAsync(id, userId.Value);
@@ -206,7 +206,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var session = await sessionService.JoinSessionAsync(id, request.WorldCharacterId, userId.Value);
@@ -230,7 +230,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var session = await sessionService.UpdateCurrentChapterAsync(id, request.ChapterId, userId.Value);
@@ -253,7 +253,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var left = await sessionService.LeaveSessionAsync(id, userId.Value);
@@ -276,7 +276,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var history = await sessionService.GetSessionHistoryAsync(id, userId.Value);
@@ -299,7 +299,7 @@ public static class SessionEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var trades = await tradeService.GetPendingTradesAsync(id, userId.Value);
@@ -314,12 +314,6 @@ public static class SessionEndpoints
         }
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var claim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (claim == null || !int.TryParse(claim.Value, out var userId)) return null;
-        return userId;
-    }
 }
 
 internal record JoinSessionRequest(int WorldCharacterId);

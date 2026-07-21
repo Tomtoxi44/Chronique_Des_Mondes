@@ -83,7 +83,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await eventService.CreateEventAsync(request, userId.Value);
@@ -99,7 +99,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var events = await eventService.GetEventsByWorldAsync(worldId, userId.Value);
@@ -112,7 +112,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var events = await eventService.GetEventsByCampaignAsync(campaignId, userId.Value);
@@ -125,7 +125,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var events = await eventService.GetEventsByChapterAsync(chapterId, userId.Value);
@@ -138,7 +138,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var eventDto = await eventService.GetEventByIdAsync(id, userId.Value);
@@ -155,7 +155,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var eventDto = await eventService.UpdateEventAsync(id, request, userId.Value);
@@ -171,7 +171,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var success = await eventService.DeleteEventAsync(id, userId.Value);
@@ -188,7 +188,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var eventDto = await eventService.SetEventActiveAsync(id, request.IsActive, userId.Value);
@@ -198,13 +198,6 @@ public static class EventEndpoints
         return Results.Ok(eventDto);
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-            return null;
-        return userId;
-    }
 
     private static async Task<IResult> MarkAsPermanentAsync(
         int id,
@@ -212,7 +205,7 @@ public static class EventEndpoints
         ILogger<EventEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await eventService.MarkAsPermanentAsync(id, userId.Value);

@@ -53,7 +53,7 @@ public static class CodexEndpoints
         ClaimsPrincipal user,
         [FromQuery] bool shared = true)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -69,7 +69,7 @@ public static class CodexEndpoints
         [FromQuery] GameType? gameType = null,
         [FromQuery] string? search = null)
     {
-        if (GetUserId(user) is null)
+        if (user.GetUserId() is null)
         {
             return Results.Unauthorized();
         }
@@ -80,7 +80,7 @@ public static class CodexEndpoints
 
     private static async Task<IResult> ImportItemAsync(int id, [FromServices] ICodexService codex, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -90,18 +90,13 @@ public static class CodexEndpoints
         return imported is null ? Results.BadRequest(new { error = "Import impossible." }) : Results.Ok(imported);
     }
 
-    private static int? GetUserId(ClaimsPrincipal user)
-    {
-        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(claim, out var id) ? id : null;
-    }
 
     private static async Task<IResult> GetMyItemsAsync(
         [FromServices] ICodexService codex,
         ClaimsPrincipal user,
         [FromQuery] GameType? gameType = null)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -113,7 +108,7 @@ public static class CodexEndpoints
 
     private static async Task<IResult> GetItemAsync(int id, [FromServices] ICodexService codex, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -128,7 +123,7 @@ public static class CodexEndpoints
         [FromServices] ICodexService codex,
         ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -146,7 +141,7 @@ public static class CodexEndpoints
         [FromServices] ICodexService codex,
         ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -158,7 +153,7 @@ public static class CodexEndpoints
 
     private static async Task<IResult> DeleteItemAsync(int id, [FromServices] ICodexService codex, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -174,7 +169,7 @@ public static class CodexEndpoints
         [FromServices] ICodexService codex,
         ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();

@@ -226,6 +226,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
+// Serve locally stored images (LocalImageStorage writes to wwwroot/uploads/…).
+// In production, images are served directly from Azure Blob (absolute URLs), so this only
+// matters for local development — but without it, /uploads/… URLs 404 everywhere.
+app.UseStaticFiles();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
