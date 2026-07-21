@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Cdm.Business.Abstraction\Cdm.Business.Abstraction.csproj" />
     <ProjectReference Include="..\Cdm.Data.Common\Cdm.Data.Common.csproj" />
     <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Infrastructure.ExternalServices\Cdm.Infrastructure.ExternalServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>
