@@ -1,3 +1,4 @@
+using Cdm.Web.Extensions;
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Common.Enums;
 using Cdm.Web.Resources;
@@ -561,19 +562,9 @@ public partial class SessionGm : IAsyncDisposable
         catch { return new(); }
     }
 
-    private static string GetParticipantStatusClass(SessionParticipantStatus status) => status switch
-    {
-        SessionParticipantStatus.Joined => "status-active",
-        SessionParticipantStatus.Invited => "status-pending",
-        _ => "status-draft"
-    };
+    private static string GetParticipantStatusClass(SessionParticipantStatus status) => status.ToCssClass();
 
-    private static string GetParticipantStatusLabel(SessionParticipantStatus status) => status switch
-    {
-        SessionParticipantStatus.Joined => "Connecté",
-        SessionParticipantStatus.Invited => "Invité",
-        _ => "Déconnecté"
-    };
+    private static string GetParticipantStatusLabel(SessionParticipantStatus status) => status.ToLabel();
 
     public async ValueTask DisposeAsync()
     {

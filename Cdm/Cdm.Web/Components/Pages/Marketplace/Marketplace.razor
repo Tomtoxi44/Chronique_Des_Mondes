@@ -204,17 +204,7 @@ else
 @code {
     private enum Tab { Items, Worlds, Campaigns, Characters }
 
-    private static readonly (GameType Value, string Label)[] GameTypes = new[]
-    {
-        (GameType.Generic, "Générique"),
-        (GameType.DnD5e, "D&D 5e"),
-        (GameType.Pathfinder, "Pathfinder"),
-        (GameType.CallOfCthulhu, "Cthulhu"),
-        (GameType.Warhammer, "Warhammer"),
-        (GameType.Cyberpunk, "Cyberpunk"),
-        (GameType.Skyrim, "Skyrim"),
-        (GameType.Custom, "Personnalisé"),
-    };
+    private static readonly IReadOnlyList<(GameType Value, string Label)> GameTypes = Cdm.Web.Extensions.GameTypeExtensions.Selectable;
 
     private Tab ActiveTab = Tab.Items;
     private List<CodexItemDto> Items = new();

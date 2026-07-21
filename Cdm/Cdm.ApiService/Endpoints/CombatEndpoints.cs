@@ -104,7 +104,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.CreateCombatAsync(request, userId.Value);
@@ -120,7 +120,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.GetCombatAsync(id, userId.Value);
@@ -136,7 +136,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.GetActiveCombatForSessionAsync(sessionId, userId.Value);
@@ -153,7 +153,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.StartInitiativePhaseAsync(id, request, userId.Value);
@@ -171,7 +171,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.SetInitiativeAsync(id, participantId, request, userId.Value);
@@ -187,7 +187,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.RollInitiativeAsync(id, userId.Value);
@@ -205,7 +205,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.ResolveAttackAsync(id, attackerId, request, userId.Value);
@@ -223,7 +223,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.UpdateParticipantDefenseAsync(id, participantId, request, userId.Value);
@@ -240,7 +240,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         StartCombatDto? request = null;
@@ -263,7 +263,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.RecordActionAsync(id, request, userId.Value);
@@ -281,7 +281,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.UpdateHpAsync(id, participantId, request, userId.Value);
@@ -297,7 +297,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.NextTurnAsync(id, userId.Value);
@@ -314,7 +314,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.EndCombatAsync(id, request, userId.Value);
@@ -332,7 +332,7 @@ public static class CombatEndpoints
         ILogger<CombatEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await combatService.ToggleParticipantActiveAsync(id, participantId, request, userId.Value);
@@ -342,10 +342,4 @@ public static class CombatEndpoints
         return Results.Ok(result);
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var claim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (claim == null || !int.TryParse(claim.Value, out var userId)) return null;
-        return userId;
-    }
 }

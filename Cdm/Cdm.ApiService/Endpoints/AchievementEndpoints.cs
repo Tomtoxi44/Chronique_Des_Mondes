@@ -93,7 +93,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await achievementService.CreateAchievementAsync(request, userId.Value);
@@ -109,7 +109,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var achievements = await achievementService.GetAchievementsByWorldAsync(worldId, userId.Value);
@@ -122,7 +122,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var achievements = await achievementService.GetAchievementsByCampaignAsync(campaignId, userId.Value);
@@ -135,7 +135,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var achievements = await achievementService.GetAchievementsByChapterAsync(chapterId, userId.Value);
@@ -148,7 +148,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var achievement = await achievementService.GetAchievementByIdAsync(id, userId.Value);
@@ -165,7 +165,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var achievement = await achievementService.UpdateAchievementAsync(id, request, userId.Value);
@@ -181,7 +181,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var success = await achievementService.DeleteAchievementAsync(id, userId.Value);
@@ -198,7 +198,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var userAchievement = await achievementService.AwardAchievementAsync(id, request.TargetUserId, userId.Value, request.Message);
@@ -213,7 +213,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var achievements = await achievementService.GetUserAchievementsAsync(userId.Value);
@@ -227,7 +227,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var currentUserId = GetUserId(httpContext);
+        var currentUserId = httpContext.GetUserId();
         if (currentUserId == null) return Results.Unauthorized();
 
         var achievements = await achievementService.GetUserAchievementsInWorldAsync(userId, worldId);
@@ -240,7 +240,7 @@ public static class AchievementEndpoints
         ILogger<AchievementEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var success = await achievementService.RevokeAchievementAsync(userAchievementId, userId.Value);
@@ -250,13 +250,6 @@ public static class AchievementEndpoints
         return Results.NoContent();
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-            return null;
-        return userId;
-    }
 
     /// <summary>
     /// Request model for awarding an achievement.

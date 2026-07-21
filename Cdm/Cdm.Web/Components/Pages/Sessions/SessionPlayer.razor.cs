@@ -1,3 +1,4 @@
+using Cdm.Web.Extensions;
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.DTOs.DnD5e;
 using Cdm.Common;
@@ -493,21 +494,9 @@ public partial class SessionPlayer : IAsyncDisposable
         catch { }
     }
 
-    private static string GetStatusLabel(SessionStatus status) => status switch
-    {
-        SessionStatus.Active => "En cours",
-        SessionStatus.Paused => "En pause",
-        SessionStatus.Ended => "Terminée",
-        _ => "Planifiée"
-    };
+    private static string GetStatusLabel(SessionStatus status) => status.ToLabel();
 
-    private static string GetStatusClass(SessionStatus status) => status switch
-    {
-        SessionStatus.Active => "status-active",
-        SessionStatus.Paused => "status-pending",
-        SessionStatus.Ended => "status-completed",
-        _ => "status-draft"
-    };
+    private static string GetStatusClass(SessionStatus status) => status.ToCssClass();
 
     public async ValueTask DisposeAsync()
     {

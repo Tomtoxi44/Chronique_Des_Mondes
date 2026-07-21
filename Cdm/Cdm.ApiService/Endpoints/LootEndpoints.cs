@@ -38,7 +38,7 @@ public static class LootEndpoints
 
     private static async Task<IResult> GetCampaignLootAsync(int campaignId, [FromServices] ILootService loot, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -49,7 +49,7 @@ public static class LootEndpoints
 
     private static async Task<IResult> CreateLootAsync(int campaignId, [FromBody] CreateLootDto dto, [FromServices] ILootService loot, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -61,7 +61,7 @@ public static class LootEndpoints
 
     private static async Task<IResult> UpdateLootAsync(int lootId, [FromBody] CreateLootDto dto, [FromServices] ILootService loot, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -73,7 +73,7 @@ public static class LootEndpoints
 
     private static async Task<IResult> DeleteLootAsync(int lootId, [FromServices] ILootService loot, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -90,7 +90,7 @@ public static class LootEndpoints
         [FromQuery] int worldCharacterId,
         [FromQuery] int? sessionId = null)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -100,9 +100,4 @@ public static class LootEndpoints
         return success ? Results.Ok(result) : Results.BadRequest(new { error });
     }
 
-    private static int? GetUserId(ClaimsPrincipal user)
-    {
-        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(claim, out var id) ? id : null;
-    }
 }

@@ -37,7 +37,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> GetForCharacterAsync(int worldCharacterId, [FromServices] IInventoryService inventory, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -48,7 +48,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> GetForCharacterAsGmAsync(int worldCharacterId, [FromServices] IInventoryService inventory, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -59,7 +59,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> AddAsync(int worldCharacterId, [FromBody] CreateInventoryItemDto dto, [FromServices] IInventoryService inventory, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -71,7 +71,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> UpdateAsync(int itemId, [FromBody] CreateInventoryItemDto dto, [FromServices] IInventoryService inventory, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -83,7 +83,7 @@ public static class InventoryEndpoints
 
     private static async Task<IResult> DeleteAsync(int itemId, [FromServices] IInventoryService inventory, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -93,9 +93,4 @@ public static class InventoryEndpoints
         return ok ? Results.NoContent() : Results.NotFound();
     }
 
-    private static int? GetUserId(ClaimsPrincipal user)
-    {
-        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(claim, out var id) ? id : null;
-    }
 }

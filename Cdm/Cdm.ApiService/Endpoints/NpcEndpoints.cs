@@ -59,7 +59,7 @@ public static class NpcEndpoints
         ILogger<NpcEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await npcService.CreateNpcAsync(request, userId.Value);
@@ -75,7 +75,7 @@ public static class NpcEndpoints
         ILogger<NpcEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var npcs = await npcService.GetNpcsByChapterAsync(chapterId, userId.Value);
@@ -88,7 +88,7 @@ public static class NpcEndpoints
         ILogger<NpcEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var npc = await npcService.GetNpcByIdAsync(id, userId.Value);
@@ -105,7 +105,7 @@ public static class NpcEndpoints
         ILogger<NpcEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await npcService.UpdateNpcAsync(id, request, userId.Value);
@@ -121,7 +121,7 @@ public static class NpcEndpoints
         ILogger<NpcEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var success = await npcService.DeleteNpcAsync(id, userId.Value);
@@ -131,10 +131,4 @@ public static class NpcEndpoints
         return Results.NoContent();
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var claim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (claim == null || !int.TryParse(claim.Value, out var userId)) return null;
-        return userId;
-    }
 }

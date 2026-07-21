@@ -35,7 +35,7 @@ public static class ChapterImageEndpoints
 
     private static async Task<IResult> GetForChapterAsync(int chapterId, [FromServices] IChapterImageService images, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -46,7 +46,7 @@ public static class ChapterImageEndpoints
 
     private static async Task<IResult> AddAsync(int chapterId, [FromBody] AddChapterImageDto dto, [FromServices] IChapterImageService images, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -58,7 +58,7 @@ public static class ChapterImageEndpoints
 
     private static async Task<IResult> DeleteAsync(int imageId, [FromServices] IChapterImageService images, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -68,9 +68,4 @@ public static class ChapterImageEndpoints
         return ok ? Results.NoContent() : Results.NotFound();
     }
 
-    private static int? GetUserId(ClaimsPrincipal user)
-    {
-        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(claim, out var id) ? id : null;
-    }
 }

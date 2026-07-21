@@ -108,14 +108,14 @@ public static class DndEndpoints
 
         group.MapGet("/{wcId:int}/stats", async (int wcId, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             var stats = await svc.GetDndStatsAsync(wcId, uid.Value);
             return stats is null ? Results.NotFound() : Results.Ok(stats);
         }).WithName("GetDndCharacterStats");
 
         group.MapPut("/{wcId:int}/stats", async (int wcId, [FromBody] DndCharacterStatsDto dto, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             dto.WorldCharacterId = wcId;
             var ok = await svc.ApplyDndStatsAsync(wcId, dto, uid.Value);
             return ok ? Results.Ok() : Results.Forbid();
@@ -132,13 +132,13 @@ public static class DndEndpoints
 
         group.MapGet("/{wcId:int}/inventory", async (int wcId, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             return Results.Ok(await svc.GetInventoryAsync(wcId, uid.Value));
         }).WithName("GetDndInventory");
 
         group.MapPost("/{wcId:int}/inventory", async (int wcId, [FromBody] DndInventoryItemDto dto, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             try
             {
                 dto.WorldCharacterId = wcId;
@@ -153,7 +153,7 @@ public static class DndEndpoints
 
         group.MapDelete("/{wcId:int}/inventory/{itemId:int}", async (int wcId, int itemId, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             return await svc.RemoveInventoryItemAsync(wcId, itemId, uid.Value) ? Results.NoContent() : Results.NotFound();
         }).WithName("RemoveDndInventoryItem");
     }
@@ -168,13 +168,13 @@ public static class DndEndpoints
 
         group.MapGet("/{wcId:int}/spells", async (int wcId, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             return Results.Ok(await svc.GetSpellsAsync(wcId, uid.Value));
         }).WithName("GetDndCharacterSpells");
 
         group.MapPost("/{wcId:int}/spells", async (int wcId, [FromBody] DndCharacterSpellDto dto, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             try
             {
                 dto.WorldCharacterId = wcId;
@@ -189,7 +189,7 @@ public static class DndEndpoints
 
         group.MapDelete("/{wcId:int}/spells/{spellId:int}", async (int wcId, int spellId, HttpContext ctx, [FromServices] IDndCharacterService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             return await svc.RemoveSpellAsync(wcId, spellId, uid.Value) ? Results.NoContent() : Results.NotFound();
         }).WithName("RemoveDndCharacterSpell");
     }
@@ -204,7 +204,7 @@ public static class DndEndpoints
 
         group.MapGet("/chapter/{chapterId:int}", async (int chapterId, HttpContext ctx, [FromServices] IDndNpcService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             return Results.Ok(await svc.GetDndNpcsAsync(chapterId));
         }).WithName("GetDndNpcs");
 
@@ -216,7 +216,7 @@ public static class DndEndpoints
 
         group.MapPost("/chapter/{chapterId:int}", async (int chapterId, [FromBody] CreateDndNpcDto dto, HttpContext ctx, [FromServices] IDndNpcService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             try
             {
                 var npc = await svc.CreateDndNpcAsync(chapterId, dto, uid.Value);
@@ -230,22 +230,16 @@ public static class DndEndpoints
 
         group.MapPut("/{id:int}", async (int id, [FromBody] CreateDndNpcDto dto, HttpContext ctx, [FromServices] IDndNpcService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             var result = await svc.UpdateDndNpcAsync(id, dto, uid.Value);
             return result is null ? Results.NotFound() : Results.Ok(result);
         }).WithName("UpdateDndNpc");
 
         group.MapDelete("/{id:int}", async (int id, HttpContext ctx, [FromServices] IDndNpcService svc) =>
         {
-            var uid = GetUserId(ctx); if (uid is null) return Results.Unauthorized();
+            var uid = ctx.GetUserId(); if (uid is null) return Results.Unauthorized();
             return await svc.DeleteDndNpcAsync(id, uid.Value) ? Results.NoContent() : Results.NotFound();
         }).WithName("DeleteDndNpc");
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var claim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (claim == null || !int.TryParse(claim.Value, out var userId)) return null;
-        return userId;
-    }
 }
