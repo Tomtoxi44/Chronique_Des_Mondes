@@ -28,6 +28,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
+    <!-- IImageStorage / LocalImageStorage / ImageValidation now live in the external-services project. -->
+    <ProjectReference Include="..\Cdm.Infrastructure.ExternalServices\Cdm.Infrastructure.ExternalServices.csproj" />
   </ItemGroup>
 
 </Project>
