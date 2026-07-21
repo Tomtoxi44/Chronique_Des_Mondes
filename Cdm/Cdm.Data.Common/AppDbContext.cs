@@ -138,6 +138,9 @@ public class AppDbContext : DbContext
     /// <summary>D&amp;D 5e inventory items owned by world characters.</summary>
     public DbSet<DndInventoryItem> DndInventoryItems { get; set; } = null!;
 
+    /// <summary>Codex items (user-owned generic item templates).</summary>
+    public DbSet<CodexItem> CodexItems { get; set; } = null!;
+
     /// <summary>D&amp;D 5e spells known/prepared by world characters.</summary>
     public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
 

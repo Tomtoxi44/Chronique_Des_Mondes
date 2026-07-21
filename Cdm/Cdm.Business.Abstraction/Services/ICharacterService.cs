@@ -26,6 +26,11 @@ public interface ICharacterService
     Task<IEnumerable<CharacterDto>> GetMyCharactersAsync(int userId);
 
     /// <summary>
+    /// Lists the user's world characters (characters joined to a world), optionally filtered by game type.
+    /// </summary>
+    Task<IEnumerable<WorldCharacterDto>> GetMyWorldCharactersAsync(int userId, Cdm.Common.Enums.GameType? gameType = null);
+
+    /// <summary>
     /// Gets a character by its identifier
     /// </summary>
     /// <param name="characterId">The character identifier</param>

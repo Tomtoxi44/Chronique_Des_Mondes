@@ -201,6 +201,18 @@ builder.Services.AddScoped<ImageApiClient>(sp =>
 
 builder.Services.AddHttpClient("ImageApiClient", ConfigureApiClient);
 
+// Register CodexApiClient with scoped lifetime
+builder.Services.AddScoped<CodexApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("CodexApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<CodexApiClient>>();
+    return new CodexApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("CodexApiClient", ConfigureApiClient);
+
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {
