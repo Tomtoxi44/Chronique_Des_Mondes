@@ -22,6 +22,8 @@ public partial class CharacterEdit
     private string ErrorMessage = string.Empty;
     private string SuccessMessage = string.Empty;
 
+    private void OnAvatarUploaded(string url) => Model.AvatarUrl = url;
+
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
         new BreadcrumbItem(L["Characters_Title"], "/characters"),

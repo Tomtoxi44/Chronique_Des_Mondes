@@ -61,6 +61,12 @@ public class NonPlayerCharacter
     public int? Age { get; set; }
 
     /// <summary>
+    /// Gets or sets the NPC's portrait image URL (nullable).
+    /// </summary>
+    [MaxLength(1000)]
+    public string? ImageUrl { get; set; }
+
+    /// <summary>
     /// Gets or sets game-specific data stored as JSON (for D&amp;D 5e stats, etc.).
     /// </summary>
     [Column(TypeName = "nvarchar(max)")]

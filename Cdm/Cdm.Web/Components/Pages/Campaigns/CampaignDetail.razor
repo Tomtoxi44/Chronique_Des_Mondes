@@ -160,6 +160,11 @@ else
                                         <label class="form-label">Description</label>
                                         <InputTextArea @bind-Value="NewDndNpc.Description" class="form-control" rows="2" placeholder="Description..." />
                                     </div>
+                                    <div class="form-group" style="margin-top: var(--spacing-sm);">
+                                        <label class="form-label">Portrait</label>
+                                        <AppImageUpload Category="misc" CurrentUrl="@NewDndNpc.ImageUrl"
+                                                        Label="Ajouter un portrait" OnUploaded="@((string url) => NewDndNpc.ImageUrl = url)" />
+                                    </div>
 
                                     @* D&D Stats *@
                                     <div style="margin-top: var(--spacing-sm); margin-bottom: var(--spacing-xs);">
@@ -245,6 +250,11 @@ else
                                         <label class="form-label">Description physique</label>
                                         <InputTextArea @bind-Value="NewNpc.PhysicalDescription" class="form-control" rows="2" placeholder="Apparence physique..." />
                                     </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Portrait</label>
+                                        <AppImageUpload Category="misc" CurrentUrl="@NewNpc.ImageUrl"
+                                                        Label="Ajouter un portrait" OnUploaded="@((string url) => NewNpc.ImageUrl = url)" />
+                                    </div>
                                     <div class="form-actions" style="margin-top: var(--spacing-sm);">
                                         <button type="button" class="btn btn-ghost btn-sm" @onclick="() => ShowNpcForm = false">Annuler</button>
                                         <button type="submit" class="btn btn-primary btn-sm" disabled="@IsSavingNpc">
@@ -269,7 +279,12 @@ else
                                 var dndNpc = npc as DndNpcDto;
                                 <div class="npc-card">
                                     <div class="npc-card-header">
-                                        <div>
+                                        <div style="display: flex; align-items: center; gap: var(--spacing-sm); min-width: 0;">
+                                            @if (!string.IsNullOrEmpty(npc.ImageUrl))
+                                            {
+                                                <img src="@npc.ImageUrl" alt="@npc.DisplayName"
+                                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); flex-shrink: 0;" />
+                                            }
                                             <strong>@npc.DisplayName</strong>
                                             @if (dndNpc?.Race != null || dndNpc?.CharacterClass != null)
                                             {
