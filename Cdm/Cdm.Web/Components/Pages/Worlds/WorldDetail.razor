@@ -317,61 +317,9 @@ else
                     <!-- Chapitres tab -->
                     @if (IsOwner && CampaignTab == "chapitres")
                     {
-                        <div class="cdm-card">
-                            <AppSectionTitle Title="Chapitres" Icon="bi-journals">
-                                <Actions>
-                                    @if (IsReordering)
-                                    {
-                                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Enregistrement...</span>
-                                    }
-                                    <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
-                                        <i class="bi bi-plus"></i>
-                                        @L["Chapters_Create"]
-                                    </a>
-                                </Actions>
-                            </AppSectionTitle>
-
-                            @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var tabChapters) && tabChapters.Count > 0)
-                            {
-                                <div class="chapter-drag-list">
-                                    @foreach (var ch in tabChapters.OrderBy(c => c.ChapterNumber))
-                                    {
-                                        var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
-                                        var isDragOver = _dragOverChapterId == ch.Id;
-                                        <div class="chapter-drag-row @(isDragOver ? "drag-over" : "")"
-                                             draggable="true"
-                                             @ondragstart="() => OnChapterDragStart(ch)"
-                                             @ondragover:preventDefault
-                                             @ondragover="() => OnChapterDragOver(ch)"
-                                             @ondragleave="OnChapterDragLeave"
-                                             @ondrop="() => OnChapterDrop(ch)">
-                                            <i class="bi bi-grip-vertical drag-handle"></i>
-                                            <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&chapterId=@ch.Id" class="chapter-drag-link">
-                                                <i class="bi @chIcon" style="color: @(ch.IsCompleted ? "var(--color-success)" : ch.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-text-muted)");"></i>
-                                                <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
-                                                @if (ch.IsCompleted)
-                                                {
-                                                    <span class="status-badge status-completed">@L["Common_Completed"]</span>
-                                                }
-                                                else if (ch.IsActive)
-                                                {
-                                                    <span class="status-badge status-active">@L["Common_InProgress"]</span>
-                                                }
-                                            </a>
-                                        </div>
-                                    }
-                                </div>
-                                <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-sm);">
-                                    <i class="bi bi-grip-vertical"></i> Glisser-déposer pour réordonner
-                                </p>
-                            }
-                            else
-                            {
-                                <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">
-                                    Aucun chapitre pour le moment.
-                                </p>
-                            }
-                        </div>
+                        <WorldChapterListPanel WorldId="WorldId" CampaignId="SelectedCampaign!.Id"
+                                               Chapters="@(CampaignChapters.TryGetValue(SelectedCampaign!.Id, out var tabChapters) ? tabChapters : new())"
+                                               OnReordered="OnChaptersReordered" />
                     }
 
                     <!-- Session tab -->

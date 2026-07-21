@@ -98,11 +98,7 @@ public partial class WorldDetail : IDisposable
     private string CampaignEditName = string.Empty;
     private string CampaignEditDescription = string.Empty;
 
-    // Chapter drag-and-drop reorder
-    private ChapterDto? _draggedChapter;
-    private int? _dragOverChapterId;
-    private bool IsReordering = false;
-
+    // Chapter list + drag-and-drop reorder is delegated to WorldChapterListPanel.
     // Campaign creation is delegated to WorldNewCampaignForm.
 
     // Chapter detail
@@ -514,64 +510,11 @@ public partial class WorldDetail : IDisposable
     }
 
     // ── Drag-and-drop chapter reordering ──────────────────────────────────
-    private void OnChapterDragStart(ChapterDto chapter)
+    /// <summary>Applies the chapter order produced by <c>WorldChapterListPanel</c>.</summary>
+    private void OnChaptersReordered(List<ChapterDto> ordered)
     {
-        _draggedChapter = chapter;
-    }
-
-    private void OnChapterDragOver(ChapterDto target)
-    {
-        _dragOverChapterId = target.Id;
-    }
-
-    private void OnChapterDragLeave()
-    {
-        _dragOverChapterId = null;
-    }
-
-    private async Task OnChapterDrop(ChapterDto target)
-    {
-        if (_draggedChapter == null || _draggedChapter.Id == target.Id || !SelectedCampaignId.HasValue) return;
-        if (!CampaignChapters.TryGetValue(SelectedCampaignId.Value, out var chapters)) return;
-
-        // Reorder list in memory
-        var ordered = chapters.OrderBy(c => c.ChapterNumber).ToList();
-        var from = ordered.IndexOf(_draggedChapter);
-        var to = ordered.IndexOf(target);
-        if (from < 0 || to < 0) return;
-
-        ordered.RemoveAt(from);
-        ordered.Insert(to, _draggedChapter);
-
-        // Renumber starting at 1
-        IsReordering = true;
-        _draggedChapter = null;
-        _dragOverChapterId = null;
-
-        var tasks = new List<Task>();
-        for (int i = 0; i < ordered.Count; i++)
-        {
-            var ch = ordered[i];
-            var newNumber = i + 1;
-            if (ch.ChapterNumber != newNumber)
-            {
-                ch.ChapterNumber = newNumber;
-                var dto = new CreateChapterDto
-                {
-                    CampaignId = ch.CampaignId,
-                    ChapterNumber = newNumber,
-                    Title = ch.Title,
-                    Content = ch.Content
-                };
-                tasks.Add(ChapterClient.UpdateChapterAsync(ch.Id, dto).ContinueWith(_ => { }));
-            }
-        }
-
+        if (!SelectedCampaignId.HasValue) return;
         CampaignChapters[SelectedCampaignId.Value] = ordered;
-        StateHasChanged();
-
-        await Task.WhenAll(tasks);
-        IsReordering = false;
         SetSecondaryNav();
     }
 
