@@ -25,6 +25,7 @@ public class SessionHub : Hub
     private readonly AppDbContext db;
     private readonly ITradeService tradeService;
     private readonly IAchievementEvaluationService achievementEvaluation;
+    private readonly ILootService lootService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionHub"/> class.
@@ -33,12 +34,14 @@ public class SessionHub : Hub
     /// <param name="db">Database context.</param>
     /// <param name="tradeService">Trade service for object-exchange proposals.</param>
     /// <param name="achievementEvaluation">Evaluator that awards automatic achievements.</param>
-    public SessionHub(ILogger<SessionHub> logger, AppDbContext db, ITradeService tradeService, IAchievementEvaluationService achievementEvaluation)
+    /// <param name="lootService">Loot service for in-session loot distribution.</param>
+    public SessionHub(ILogger<SessionHub> logger, AppDbContext db, ITradeService tradeService, IAchievementEvaluationService achievementEvaluation, ILootService lootService)
     {
         this.logger = logger;
         this.db = db;
         this.tradeService = tradeService;
         this.achievementEvaluation = achievementEvaluation;
+        this.lootService = lootService;
     }
 
     /// <summary>
@@ -140,6 +143,54 @@ public class SessionHub : Hub
                 Message = message,
                 Timestamp = DateTime.UtcNow
             });
+    }
+
+    /// <summary>
+    /// The game master pushes an image that every player in the session is shown
+    /// (forced full-screen overlay). Only the session's game master may call this.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <param name="imageUrl">The public URL of the image to show.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task ShowImage(int sessionId, string imageUrl)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var session = await this.db.Sessions.FindAsync(sessionId);
+        if (session == null || session.StartedById != userId)
+        {
+            this.logger.LogWarning("User {UserId} not allowed to push an image in session {SessionId}", userId, sessionId);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return;
+        }
+
+        this.logger.LogInformation("GM {UserId} pushed an image in session {SessionId}", userId, sessionId);
+        await this.Clients.Group(groupName).SendAsync("ShowImage", imageUrl);
+    }
+
+    /// <summary>
+    /// The game master hides the currently forced image. Only the session's game master may call this.
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task HideImage(int sessionId)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var session = await this.db.Sessions.FindAsync(sessionId);
+        if (session == null || session.StartedById != userId)
+        {
+            return;
+        }
+
+        this.logger.LogInformation("GM {UserId} hid the pushed image in session {SessionId}", userId, sessionId);
+        await this.Clients.Group(groupName).SendAsync("HideImage");
     }
 
     /// <summary>
@@ -269,6 +320,36 @@ public class SessionHub : Hub
         }
 
         await this.Clients.Group(groupName).SendAsync("TradeResolved", trade);
+    }
+
+    /// <summary>
+    /// The game master hands a prepared loot item to a player's character during the session.
+    /// The loot is copied into the recipient's inventory and every session member is notified.
+    /// Only the campaign's GM may distribute (enforced by the loot service).
+    /// </summary>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <param name="lootId">The loot identifier.</param>
+    /// <param name="worldCharacterId">The recipient world character identifier.</param>
+    /// <returns>A task representing the async operation.</returns>
+    public async Task DistributeLoot(int sessionId, int lootId, int worldCharacterId)
+    {
+        var userId = this.GetUserId();
+        var groupName = $"session_{sessionId}";
+
+        var (success, error, result) = await this.lootService.DistributeAsync(lootId, worldCharacterId, sessionId, userId);
+        if (!success || result is null)
+        {
+            throw new HubException(error ?? "Impossible de distribuer ce loot.");
+        }
+
+        this.logger.LogInformation(
+            "GM {UserId} distributed loot {LootId} to character {WorldCharacterId} in session {SessionId}",
+            userId,
+            lootId,
+            worldCharacterId,
+            sessionId);
+
+        await this.Clients.Group(groupName).SendAsync("LootReceived", result);
     }
 
     /// <summary>

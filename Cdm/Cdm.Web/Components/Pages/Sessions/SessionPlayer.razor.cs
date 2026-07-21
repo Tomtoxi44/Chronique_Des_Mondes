@@ -51,6 +51,9 @@ public partial class SessionPlayer : IAsyncDisposable
     private HubConnection? _hub;
     private bool IsHubConnected => _hub?.State == HubConnectionState.Connected;
     private List<ChatEntry> ChatEntries { get; set; } = new();
+
+    // Image forcée par le MJ (overlay non fermable tant que le MJ ne la retire pas).
+    private string? ForcedImageUrl;
     private string ChatInput = "";
     private int? RollingDie;
 
@@ -201,6 +204,18 @@ public partial class SessionPlayer : IAsyncDisposable
             InvokeAsync(StateHasChanged);
         });
 
+        _hub.On<string>("ShowImage", url =>
+        {
+            ForcedImageUrl = url;
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On("HideImage", () =>
+        {
+            ForcedImageUrl = null;
+            InvokeAsync(StateHasChanged);
+        });
+
         _hub.On<SessionTradeDto>("TradeProposed", trade =>
         {
             PendingTrades.RemoveAll(t => t.Id == trade.Id);
@@ -212,6 +227,25 @@ public partial class SessionPlayer : IAsyncDisposable
         {
             // Once accepted, declined or cancelled, the trade leaves the pending list.
             PendingTrades.RemoveAll(t => t.Id == trade.Id);
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<LootDistributionResultDto>("LootReceived", loot =>
+        {
+            var qty = loot.Quantity > 1 ? $" ×{loot.Quantity}" : string.Empty;
+            ChatEntries.Add(new ChatEntry("text", "🎁 Butin", $"{loot.RecipientName} reçoit {loot.LootName}{qty}.", null, null, DateTime.UtcNow));
+
+            if (loot.RecipientUserId == CurrentUserId)
+            {
+                Toast.ShowSuccess($"Vous recevez : {loot.LootName}{qty}.", "Butin obtenu !");
+                // The item was added to the inventory server-side; refresh the sheet so it appears.
+                _ = InvokeAsync(async () =>
+                {
+                    await LoadDndSheetAsync();
+                    StateHasChanged();
+                });
+            }
+
             InvokeAsync(StateHasChanged);
         });
 

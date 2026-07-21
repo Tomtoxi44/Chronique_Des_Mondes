@@ -22,6 +22,7 @@ public partial class Profile
     private UpdateProfileRequest UpdateModel { get; set; } = new();
     private List<UserAchievementDto> MyAchievements { get; set; } = new();
     private DiceStatsDto? DiceStats;
+    private ParticipationStatsDto? ParticipationStats;
     private bool IsLoading = true;
     private bool IsSaving = false;
     private string ErrorMessage = string.Empty;
@@ -48,6 +49,7 @@ public partial class Profile
 
             MyAchievements = await AchievementClient.GetMyAchievementsAsync();
             DiceStats = await StatisticsClient.GetMyDiceStatsAsync();
+            ParticipationStats = await StatisticsClient.GetMyParticipationStatsAsync();
         }
         catch { /* ignore */ }
         finally

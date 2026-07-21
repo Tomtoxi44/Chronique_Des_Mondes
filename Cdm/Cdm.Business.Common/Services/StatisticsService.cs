@@ -108,6 +108,77 @@ public class StatisticsService(AppDbContext dbContext, ILogger<StatisticsService
             .ToArray();
     }
 
+    /// <inheritdoc/>
+    public async Task<ParticipationStatsDto> GetParticipationStatsForUserAsync(int userId)
+    {
+        var stats = new ParticipationStatsDto();
+
+        try
+        {
+            var gmSessionIds = await this.dbContext.Sessions
+                .Where(s => s.StartedById == userId)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            var playerSessionIds = await this.dbContext.SessionParticipants
+                .Where(p => p.WorldCharacter.Character.UserId == userId)
+                .Select(p => p.SessionId)
+                .Distinct()
+                .ToListAsync();
+
+            var involvedIds = gmSessionIds.Union(playerSessionIds).ToList();
+            if (involvedIds.Count == 0)
+            {
+                return stats;
+            }
+
+            var sessions = await this.dbContext.Sessions
+                .Where(s => involvedIds.Contains(s.Id))
+                .Select(s => new
+                {
+                    s.CampaignId,
+                    s.StartedAt,
+                    s.EndedAt,
+                    ParticipantCount = s.Participants.Count,
+                })
+                .ToListAsync();
+
+            var gmSet = gmSessionIds.ToHashSet();
+            stats.SessionsAsGm = gmSessionIds.Count;
+            stats.SessionsAsPlayer = playerSessionIds.Count(id => !gmSet.Contains(id));
+            stats.TotalSessions = involvedIds.Count;
+            stats.CampaignsPlayed = sessions.Select(s => s.CampaignId).Distinct().Count();
+            stats.AverageGroupSize = sessions.Count > 0
+                ? Math.Round(sessions.Average(s => s.ParticipantCount), 1)
+                : 0;
+            stats.TotalHoursPlayed = Math.Round(
+                sessions.Where(s => s.EndedAt.HasValue)
+                        .Sum(s => Math.Max(0, (s.EndedAt!.Value - s.StartedAt).TotalHours)),
+                1);
+
+            stats.ByMonth = sessions
+                .GroupBy(s => new { s.StartedAt.Year, s.StartedAt.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                .Select(g => new MonthlyActivityDto
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Sessions = g.Count(),
+                    Hours = Math.Round(
+                        g.Where(s => s.EndedAt.HasValue)
+                         .Sum(s => Math.Max(0, (s.EndedAt!.Value - s.StartedAt).TotalHours)),
+                        1),
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error computing participation stats for user {UserId}", userId);
+        }
+
+        return stats;
+    }
+
     /// <summary>
     /// Normalizes a dice type to the "D&lt;faces&gt;" upper-case form (e.g. "d20" → "D20").
     /// </summary>

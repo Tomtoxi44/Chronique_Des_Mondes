@@ -20,4 +20,12 @@ public interface IStatisticsService
     /// <param name="userId">The user identifier.</param>
     /// <returns>The dice statistics (empty stats if the user has never rolled).</returns>
     Task<DiceStatsDto> GetDiceStatsForUserAsync(int userId);
+
+    /// <summary>
+    /// Computes participation statistics for a user: sessions played (as GM/player),
+    /// hours, average group size and monthly activity.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns>The participation statistics (zeroed if the user never took part in a session).</returns>
+    Task<ParticipationStatsDto> GetParticipationStatsForUserAsync(int userId);
 }

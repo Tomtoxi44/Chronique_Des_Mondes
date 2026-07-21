@@ -77,4 +77,9 @@ public class CampaignDto
     /// Gets or sets whether the campaign is active (deprecated - use Status)
     /// </summary>
     public bool IsActive { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the campaign is shared on the marketplace.
+    /// </summary>
+    public bool IsShared { get; set; }
 }

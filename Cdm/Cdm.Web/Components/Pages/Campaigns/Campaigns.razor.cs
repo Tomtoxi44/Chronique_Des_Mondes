@@ -11,6 +11,7 @@ namespace Cdm.Web.Components.Pages.Campaigns;
 public partial class Campaigns
 {
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
+    [Inject] private MarketplaceApiClient MarketClient { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
 
     private List<CampaignDto> CampaignList { get; set; } = new();
@@ -23,6 +24,16 @@ public partial class Campaigns
         IsLoading = true;
         CampaignList = await CampaignClient.GetMyCampaignsAsync();
         IsLoading = false;
+    }
+
+    private async Task ToggleShare(CampaignDto campaign)
+    {
+        var newValue = !campaign.IsShared;
+        var ok = await MarketClient.SetCampaignSharedAsync(campaign.Id, newValue);
+        if (ok)
+        {
+            campaign.IsShared = newValue;
+        }
     }
 
     private void ConfirmDelete(CampaignDto campaign)

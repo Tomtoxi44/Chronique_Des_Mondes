@@ -1,0 +1,43 @@
+// -----------------------------------------------------------------------
+// <copyright file="CreateLootDto.cs" company="ANGIBAUD Tommy">
+// Copyright (c) ANGIBAUD Tommy. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace Cdm.Business.Abstraction.DTOs;
+
+using Cdm.Common.Enums;
+
+/// <summary>Payload to create or update a piece of campaign loot.</summary>
+public class CreateLootDto
+{
+    /// <summary>Gets or sets the optional chapter scope (null = whole campaign).</summary>
+    public int? ChapterId { get; set; }
+
+    /// <summary>Gets or sets the loot name.</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the optional description.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Gets or sets the optional image URL.</summary>
+    public string? ImageUrl { get; set; }
+
+    /// <summary>Gets or sets the game system / theme.</summary>
+    public GameType GameType { get; set; }
+
+    /// <summary>Gets or sets the optional item category.</summary>
+    public string? ItemType { get; set; }
+
+    /// <summary>Gets or sets the optional game-specific data (JSON).</summary>
+    public string? GameSpecificData { get; set; }
+
+    /// <summary>Gets or sets the quantity handed out per distribution.</summary>
+    public int Quantity { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets an optional codex item id to copy the loot from (owned by the GM).
+    /// When set, its fields seed the loot; explicit fields above still override.
+    /// </summary>
+    public int? SourceCodexItemId { get; set; }
+}

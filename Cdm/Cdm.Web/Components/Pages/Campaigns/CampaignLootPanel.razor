@@ -1,0 +1,214 @@
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@inject Cdm.Web.Services.ApiClients.LootApiClient LootClient
+
+@* GM-only panel to prepare the loot handed out to players during sessions. *@
+<div class="cdm-card" style="margin-top: var(--spacing-lg);">
+    <AppSectionTitle Title="Butin (loot)" Icon="bi-gem">
+        <Actions>
+            <button class="btn btn-ghost btn-sm" @onclick="() => ShowForm = !ShowForm">
+                <i class="bi bi-plus"></i> Ajouter
+            </button>
+        </Actions>
+    </AppSectionTitle>
+
+    <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-top: -4px;">
+        Préparez des objets à distribuer aux joueurs en session, pour l'ensemble de la campagne ou un chapitre précis.
+    </p>
+
+    @if (ShowForm)
+    {
+        <div class="cdm-card" style="background: var(--color-surface-alt); margin-bottom: var(--spacing-md);">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-sm);">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Nom</label>
+                    <input class="form-control" @bind="Draft.Name" placeholder="Épée longue, Potion de soin..." />
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Catégorie</label>
+                    <input class="form-control" @bind="Draft.ItemType" placeholder="Arme, Potion..." />
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Quantité</label>
+                    <input type="number" min="1" class="form-control" @bind="Draft.Quantity" />
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Portée</label>
+                    <select class="form-control" @bind="Draft.ChapterId">
+                        <option value="">Toute la campagne</option>
+                        @foreach (var ch in Chapters.OrderBy(c => c.ChapterNumber))
+                        {
+                            <option value="@ch.Id">Chapitre @ch.ChapterNumber — @ch.Title</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: var(--spacing-sm);">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="2" @bind="Draft.Description" placeholder="Effet, apparence..."></textarea>
+            </div>
+            @if (!string.IsNullOrEmpty(FormError))
+            {
+                <p style="color: var(--color-error, #e88); font-size: var(--font-size-sm);">@FormError</p>
+            }
+            <div class="form-actions" style="margin-top: var(--spacing-sm);">
+                <button type="button" class="btn btn-ghost btn-sm" @onclick="CancelForm">Annuler</button>
+                <button type="button" class="btn btn-primary btn-sm" @onclick="SaveLoot" disabled="@IsSaving">
+                    @if (IsSaving) { <AppLoadingSpinner Inline="true" Size="sm" /> }
+                    @(EditingId.HasValue ? "Enregistrer" : "Ajouter le butin")
+                </button>
+            </div>
+        </div>
+    }
+
+    @if (IsLoading)
+    {
+        <AppLoadingSpinner Inline="true" Size="sm" />
+    }
+    else if (Loot.Count == 0)
+    {
+        <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">Aucun butin préparé.</p>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+            @foreach (var loot in Loot)
+            {
+                <div class="cdm-card" style="display: flex; justify-content: space-between; align-items: flex-start; gap: var(--spacing-sm); padding: var(--spacing-sm);">
+                    <div style="min-width: 0;">
+                        <strong>@loot.Name</strong>
+                        @if (loot.Quantity > 1)
+                        {
+                            <span class="status-badge" style="background: var(--color-surface-alt);">×@loot.Quantity</span>
+                        }
+                        @if (!string.IsNullOrEmpty(loot.ItemType))
+                        {
+                            <span class="status-badge" style="background: var(--color-surface-alt);">@loot.ItemType</span>
+                        }
+                        <span class="status-badge" style="background: var(--color-bg-tertiary);">
+                            <i class="bi bi-@(loot.ChapterId.HasValue ? "bookmark" : "map")"></i>
+                            @ScopeLabel(loot.ChapterId)
+                        </span>
+                        @if (!string.IsNullOrEmpty(loot.Description))
+                        {
+                            <p class="card-description" style="margin: 4px 0 0;">@loot.Description</p>
+                        }
+                    </div>
+                    <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                        <button class="btn btn-ghost btn-icon" title="Modifier" @onclick="() => EditLoot(loot)">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-ghost btn-icon danger" title="Supprimer" @onclick="() => DeleteLoot(loot.Id)">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int CampaignId { get; set; }
+    [Parameter] public List<ChapterDto> Chapters { get; set; } = new();
+
+    private List<CampaignLootDto> Loot = new();
+    private bool IsLoading = true;
+    private bool ShowForm;
+    private bool IsSaving;
+    private int? EditingId;
+    private string? FormError;
+    private LootDraft Draft = new();
+
+    protected override async Task OnInitializedAsync() => await Reload();
+
+    private async Task Reload()
+    {
+        IsLoading = true;
+        Loot = await LootClient.GetCampaignLootAsync(CampaignId);
+        IsLoading = false;
+    }
+
+    private string ScopeLabel(int? chapterId)
+    {
+        if (!chapterId.HasValue) return "Campagne";
+        var ch = Chapters.FirstOrDefault(c => c.Id == chapterId.Value);
+        return ch != null ? $"Ch. {ch.ChapterNumber}" : "Chapitre";
+    }
+
+    private void CancelForm()
+    {
+        ShowForm = false;
+        EditingId = null;
+        FormError = null;
+        Draft = new LootDraft();
+    }
+
+    private void EditLoot(CampaignLootDto loot)
+    {
+        EditingId = loot.Id;
+        Draft = new LootDraft
+        {
+            Name = loot.Name,
+            ItemType = loot.ItemType,
+            Description = loot.Description,
+            Quantity = loot.Quantity,
+            ChapterId = loot.ChapterId?.ToString() ?? string.Empty,
+        };
+        FormError = null;
+        ShowForm = true;
+    }
+
+    private async Task SaveLoot()
+    {
+        if (string.IsNullOrWhiteSpace(Draft.Name))
+        {
+            FormError = "Le nom est requis.";
+            return;
+        }
+
+        IsSaving = true;
+        FormError = null;
+        var dto = new CreateLootDto
+        {
+            Name = Draft.Name.Trim(),
+            ItemType = string.IsNullOrWhiteSpace(Draft.ItemType) ? null : Draft.ItemType.Trim(),
+            Description = string.IsNullOrWhiteSpace(Draft.Description) ? null : Draft.Description.Trim(),
+            Quantity = Draft.Quantity < 1 ? 1 : Draft.Quantity,
+            ChapterId = int.TryParse(Draft.ChapterId, out var cid) ? cid : null,
+        };
+
+        var result = EditingId.HasValue
+            ? await LootClient.UpdateAsync(EditingId.Value, dto)
+            : await LootClient.CreateAsync(CampaignId, dto);
+
+        IsSaving = false;
+        if (result == null)
+        {
+            FormError = "Enregistrement impossible.";
+            return;
+        }
+
+        CancelForm();
+        await Reload();
+    }
+
+    private async Task DeleteLoot(int id)
+    {
+        if (await LootClient.DeleteAsync(id))
+        {
+            Loot.RemoveAll(l => l.Id == id);
+        }
+    }
+
+    private sealed class LootDraft
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? ItemType { get; set; }
+        public string? Description { get; set; }
+        public int Quantity { get; set; } = 1;
+        public string ChapterId { get; set; } = string.Empty;
+    }
+}

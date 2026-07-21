@@ -1,0 +1,92 @@
+@* Upload d'image réutilisable : sélection d'un fichier, envoi via ImageApiClient,
+   aperçu + callback OnUploaded(url). Limite 5 Mo, images uniquement. *@
+@using Microsoft.AspNetCore.Components.Forms
+@inject Cdm.Web.Services.ApiClients.ImageApiClient ImageClient
+
+<div style="display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap;">
+    @if (!string.IsNullOrEmpty(PreviewUrl))
+    {
+        <img src="@PreviewUrl" alt="Aperçu"
+             style="width: 72px; height: 72px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--theme-card-border, var(--color-border));" />
+    }
+
+    <label class="btn btn-ghost btn-sm" style="cursor: pointer;">
+        <i class="bi bi-image"></i>
+        @(string.IsNullOrEmpty(PreviewUrl) ? Label : "Changer l'image")
+        <InputFile OnChange="OnFileSelected" accept="image/png,image/jpeg,image/webp" style="display: none;" />
+    </label>
+
+    @if (IsUploading)
+    {
+        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+            <i class="bi bi-hourglass-split"></i> Envoi…
+        </span>
+    }
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <span style="font-size: var(--font-size-xs); color: var(--color-error);">@Error</span>
+    }
+</div>
+
+@code {
+    [Parameter] public string Category { get; set; } = "misc";
+    [Parameter] public string? CurrentUrl { get; set; }
+    [Parameter] public string Label { get; set; } = "Ajouter une image";
+    [Parameter] public EventCallback<string> OnUploaded { get; set; }
+
+    private const long MaxBytes = 5 * 1024 * 1024;
+
+    private string? PreviewUrl;
+    private bool IsUploading;
+    private string? Error;
+
+    protected override void OnParametersSet()
+    {
+        if (PreviewUrl is null && !string.IsNullOrEmpty(CurrentUrl))
+        {
+            PreviewUrl = CurrentUrl;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        Error = null;
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        if (file.Size > MaxBytes)
+        {
+            Error = "Image trop lourde (maximum 5 Mo).";
+            return;
+        }
+
+        IsUploading = true;
+        try
+        {
+            using var buffer = new MemoryStream();
+            await using (var stream = file.OpenReadStream(MaxBytes))
+            {
+                await stream.CopyToAsync(buffer);
+            }
+
+            buffer.Position = 0;
+            var (url, error) = await ImageClient.UploadAsync(buffer, file.Name, file.ContentType, Category);
+            if (!string.IsNullOrEmpty(url))
+            {
+                PreviewUrl = url;
+                await OnUploaded.InvokeAsync(url);
+            }
+            else
+            {
+                Error = error ?? "Échec de l'envoi de l'image.";
+            }
+        }
+        finally
+        {
+            IsUploading = false;
+        }
+    }
+}

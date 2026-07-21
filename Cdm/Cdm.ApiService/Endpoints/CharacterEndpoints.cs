@@ -32,6 +32,11 @@ public static class CharacterEndpoints
             .WithName("GetMyCharacters")
             .WithOpenApi();
 
+        // GET /api/characters/world-characters?gameType= — my world characters (optionally by type)
+        group.MapGet("/world-characters", GetMyWorldCharactersAsync)
+            .WithName("GetMyWorldCharacters")
+            .WithOpenApi();
+
         // GET /api/characters/{id}
         group.MapGet("/{id:int}", GetCharacterByIdAsync)
             .WithName("GetCharacterById")
@@ -96,6 +101,21 @@ public static class CharacterEndpoints
             logger.LogError(ex, "Error fetching characters");
             return Results.Problem("An error occurred while fetching characters");
         }
+    }
+
+    private static async Task<IResult> GetMyWorldCharactersAsync(
+        [FromServices] ICharacterService characterService,
+        HttpContext httpContext,
+        [FromQuery] Cdm.Common.Enums.GameType? gameType = null)
+    {
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var characters = await characterService.GetMyWorldCharactersAsync(userId, gameType);
+        return Results.Ok(characters);
     }
 
     /// <summary>

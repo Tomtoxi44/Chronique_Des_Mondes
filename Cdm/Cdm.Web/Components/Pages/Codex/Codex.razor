@@ -1,0 +1,339 @@
+@page "/codex"
+@attribute [Authorize]
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@inject Cdm.Web.Services.ApiClients.CodexApiClient CodexClient
+
+<PageTitle>Mon Codex — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="Mon Codex" Subtitle="Vos items réutilisables, tous univers confondus" Icon="bi-journal-bookmark">
+    <Actions>
+        @if (!IsFormOpen)
+        {
+            <button class="btn btn-primary" @onclick="StartCreate">
+                <i class="bi bi-plus"></i> Créer un item
+            </button>
+        }
+    </Actions>
+</AppPageHeader>
+
+@if (IsFormOpen)
+{
+    <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+        <AppSectionTitle Title="@FormTitle" Icon="bi-pencil-square" />
+        <div class="form-two-col" style="margin-bottom: var(--spacing-sm);">
+            <div class="form-group">
+                <label class="form-label">Nom *</label>
+                <input type="text" class="form-control" @bind="Form.Name" placeholder="Nom de l'item..." />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type d'item</label>
+                <input type="text" class="form-control" @bind="Form.ItemType" placeholder="Arme, Armure, Potion, Objet..." />
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+            <label class="form-label">Univers</label>
+            <select class="form-control" @bind="Form.GameType" style="max-width: 260px;">
+                @foreach (var gt in GameTypes)
+                {
+                    <option value="@gt.Value">@gt.Label</option>
+                }
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: var(--spacing-sm);">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" rows="3" @bind="Form.Description" placeholder="Description de l'item..."></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: var(--spacing-md);">
+            <label class="form-label">Image</label>
+            <AppImageUpload Category="items" CurrentUrl="@Form.ImageUrl" Label="Ajouter une image"
+                            OnUploaded="@(url => Form.ImageUrl = url)" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(FormError))
+        {
+            <p style="color: var(--color-error); font-size: var(--font-size-sm);">@FormError</p>
+        }
+
+        <div style="display: flex; gap: var(--spacing-sm);">
+            <button class="btn btn-primary btn-sm" @onclick="SaveForm" disabled="@(IsSaving || string.IsNullOrWhiteSpace(Form.Name))">
+                <i class="bi bi-check"></i> @(EditingId.HasValue ? "Enregistrer" : "Créer")
+            </button>
+            <button class="btn btn-ghost btn-sm" @onclick="CancelForm">Annuler</button>
+        </div>
+    </div>
+}
+
+@* Filtres par univers *@
+<div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs); margin-bottom: var(--spacing-lg);">
+    <button class="btn btn-sm @(FilterType == null ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(null)">Tous</button>
+    @foreach (var gt in GameTypes)
+    {
+        <button class="btn btn-sm @(FilterType == gt.Value ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(gt.Value)">
+            @gt.Label
+        </button>
+    }
+</div>
+
+@if (IsLoading)
+{
+    <div class="cards-grid">
+        @for (int i = 0; i < 3; i++) { <AppSkeletonCard /> }
+    </div>
+}
+else if (Filtered.Count == 0)
+{
+    <AppEmptyState Icon="bi-journal-bookmark"
+                   Title="Aucun item"
+                   Message="Créez votre premier item pour l'ajouter plus tard à un personnage." />
+}
+else
+{
+    <div class="cards-grid">
+        @foreach (var item in Filtered)
+        {
+            <AppThemeWrapper GameType="@item.GameType">
+                <div class="cdm-card character-card">
+                    <div class="card-header-row">
+                        <AppGameBadge GameType="@item.GameType" />
+                        <div class="card-actions">
+                            <button class="btn btn-ghost btn-icon" title="Modifier" @onclick="() => StartEdit(item)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-ghost btn-icon danger" title="Supprimer" @onclick="() => Delete(item)">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: var(--spacing-md); align-items: flex-start;">
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" alt="@item.Name"
+                                 style="width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--theme-card-border, var(--color-border)); flex-shrink: 0;" />
+                        }
+                        <div style="min-width: 0;">
+                            <h3 class="card-title">@item.Name</h3>
+                            @if (!string.IsNullOrEmpty(item.ItemType))
+                            {
+                                <span class="status-badge" style="background: var(--color-bg-tertiary);">@item.ItemType</span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(item.Description))
+                    {
+                        <p class="card-description">@item.Description</p>
+                    }
+
+                    <div style="margin-top: var(--spacing-md);">
+                        @if (AddTargetItemId == item.Id)
+                        {
+                            <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                                @if (CompatibleCharacters.Count == 0)
+                                {
+                                    <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic; margin: 0;">
+                                        Aucun personnage de ce type. Créez-en un dans un monde @GameLabel(item.GameType).
+                                    </p>
+                                    <button class="btn btn-ghost btn-sm" @onclick="() => AddTargetItemId = null">Fermer</button>
+                                }
+                                else
+                                {
+                                    <select class="form-control" @bind="SelectedCharacterId">
+                                        <option value="0">Choisir un personnage…</option>
+                                        @foreach (var c in CompatibleCharacters)
+                                        {
+                                            <option value="@c.Id">@c.CharacterName — @c.WorldName</option>
+                                        }
+                                    </select>
+                                    <div style="display: flex; gap: var(--spacing-xs);">
+                                        <button class="btn btn-primary btn-sm" @onclick="() => ConfirmAdd(item)" disabled="@(SelectedCharacterId == 0 || IsAdding)">
+                                            <i class="bi bi-check"></i> Ajouter
+                                        </button>
+                                        <button class="btn btn-ghost btn-sm" @onclick="() => AddTargetItemId = null">Annuler</button>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(AddError))
+                                    {
+                                        <span style="font-size: var(--font-size-xs); color: var(--color-error);">@AddError</span>
+                                    }
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="display: flex; gap: var(--spacing-xs); flex-wrap: wrap; align-items: center;">
+                                <button class="btn btn-ghost btn-sm" @onclick="() => OpenAdd(item)">
+                                    <i class="bi bi-person-plus"></i> Ajouter à un personnage
+                                </button>
+                                <button class="btn btn-ghost btn-sm" @onclick="() => ToggleShare(item)"
+                                        title="@(item.IsShared ? " Retirer de la marketplace" : "Partager sur la marketplace")">
+                                    <i class="bi @(item.IsShared ? "bi-share-fill" : "bi-share")"
+                                       style="@(item.IsShared ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
+                                    @(item.IsShared ? "Partagé" : "Partager")
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </AppThemeWrapper>
+        }
+    </div>
+}
+
+@code {
+    private static readonly (GameType Value, string Label)[] GameTypes = new[]
+    {
+        (GameType.Generic, "Générique"),
+        (GameType.DnD5e, "D&D 5e"),
+        (GameType.Pathfinder, "Pathfinder"),
+        (GameType.CallOfCthulhu, "Cthulhu"),
+        (GameType.Warhammer, "Warhammer"),
+        (GameType.Cyberpunk, "Cyberpunk"),
+        (GameType.Skyrim, "Skyrim"),
+        (GameType.Custom, "Personnalisé"),
+    };
+
+    private List<CodexItemDto> Items = new();
+    private bool IsLoading = true;
+    private GameType? FilterType;
+
+    private bool IsFormOpen;
+    private int? EditingId;
+    private CreateCodexItemDto Form = new();
+    private bool IsSaving;
+    private string? FormError;
+
+    // Ajout à un personnage
+    private int? AddTargetItemId;
+    private List<WorldCharacterDto> CompatibleCharacters = new();
+    private int SelectedCharacterId;
+    private bool IsAdding;
+    private string? AddError;
+
+    private string FormTitle => EditingId.HasValue ? "Modifier l'item" : "Nouvel item";
+
+    private List<CodexItemDto> Filtered =>
+        FilterType.HasValue ? Items.Where(i => i.GameType == FilterType.Value).ToList() : Items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Items = await CodexClient.GetMyItemsAsync();
+        IsLoading = false;
+    }
+
+    private void SetFilter(GameType? type) => FilterType = type;
+
+    private static string GameLabel(GameType type) => GameTypes.FirstOrDefault(g => g.Value == type).Label ?? type.ToString();
+
+    private void StartCreate()
+    {
+        EditingId = null;
+        Form = new CreateCodexItemDto { GameType = FilterType ?? GameType.Generic };
+        FormError = null;
+        IsFormOpen = true;
+    }
+
+    private void StartEdit(CodexItemDto item)
+    {
+        EditingId = item.Id;
+        Form = new CreateCodexItemDto
+        {
+            Name = item.Name,
+            Description = item.Description,
+            ImageUrl = item.ImageUrl,
+            GameType = item.GameType,
+            ItemType = item.ItemType,
+            GameSpecificData = item.GameSpecificData,
+        };
+        FormError = null;
+        IsFormOpen = true;
+    }
+
+    private void CancelForm()
+    {
+        IsFormOpen = false;
+        EditingId = null;
+    }
+
+    private async Task SaveForm()
+    {
+        if (string.IsNullOrWhiteSpace(Form.Name)) return;
+        IsSaving = true;
+        FormError = null;
+        try
+        {
+            if (EditingId.HasValue)
+            {
+                var updated = await CodexClient.UpdateAsync(EditingId.Value, Form);
+                if (updated != null)
+                {
+                    var idx = Items.FindIndex(i => i.Id == EditingId.Value);
+                    if (idx >= 0) Items[idx] = updated;
+                    IsFormOpen = false;
+                }
+                else { FormError = "Échec de la mise à jour."; }
+            }
+            else
+            {
+                var created = await CodexClient.CreateAsync(Form);
+                if (created != null)
+                {
+                    Items.Insert(0, created);
+                    IsFormOpen = false;
+                }
+                else { FormError = "Échec de la création."; }
+            }
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task Delete(CodexItemDto item)
+    {
+        if (await CodexClient.DeleteAsync(item.Id))
+        {
+            Items.RemoveAll(i => i.Id == item.Id);
+        }
+    }
+
+    private async Task ToggleShare(CodexItemDto item)
+    {
+        if (await CodexClient.SetSharedAsync(item.Id, !item.IsShared))
+        {
+            item.IsShared = !item.IsShared;
+        }
+    }
+
+    private async Task OpenAdd(CodexItemDto item)
+    {
+        AddTargetItemId = item.Id;
+        SelectedCharacterId = 0;
+        AddError = null;
+        CompatibleCharacters = await CodexClient.GetCompatibleCharactersAsync(item.GameType);
+    }
+
+    private async Task ConfirmAdd(CodexItemDto item)
+    {
+        if (SelectedCharacterId == 0) return;
+        IsAdding = true;
+        AddError = null;
+        try
+        {
+            var (ok, error) = await CodexClient.AddToCharacterAsync(item.Id, SelectedCharacterId);
+            if (ok)
+            {
+                AddTargetItemId = null;
+            }
+            else
+            {
+                AddError = error ?? "Ajout impossible.";
+            }
+        }
+        finally
+        {
+            IsAdding = false;
+        }
+    }
+}

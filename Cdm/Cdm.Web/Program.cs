@@ -189,6 +189,54 @@ builder.Services.AddScoped<StatisticsApiClient>(sp =>
 
 builder.Services.AddHttpClient("StatisticsApiClient", ConfigureApiClient);
 
+// Register ImageApiClient with scoped lifetime
+builder.Services.AddScoped<ImageApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("ImageApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<ImageApiClient>>();
+    return new ImageApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("ImageApiClient", ConfigureApiClient);
+
+// Register CodexApiClient with scoped lifetime
+builder.Services.AddScoped<CodexApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("CodexApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<CodexApiClient>>();
+    return new CodexApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("CodexApiClient", ConfigureApiClient);
+
+// Register MarketplaceApiClient with scoped lifetime
+builder.Services.AddScoped<MarketplaceApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("MarketplaceApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<MarketplaceApiClient>>();
+    return new MarketplaceApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("MarketplaceApiClient", ConfigureApiClient);
+
+// Register LootApiClient with scoped lifetime
+builder.Services.AddScoped<LootApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("LootApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<LootApiClient>>();
+    return new LootApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("LootApiClient", ConfigureApiClient);
+
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {

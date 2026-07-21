@@ -102,6 +102,44 @@ public class CharacterService(
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Cdm.Business.Abstraction.DTOs.WorldCharacterDto>> GetMyWorldCharactersAsync(int userId, Cdm.Common.Enums.GameType? gameType = null)
+    {
+        try
+        {
+            var query = this.dbContext.WorldCharacters
+                .Include(wc => wc.Character)
+                .Include(wc => wc.World)
+                .Where(wc => wc.IsActive && wc.Character.UserId == userId);
+
+            if (gameType.HasValue)
+            {
+                query = query.Where(wc => wc.World.GameType == gameType.Value);
+            }
+
+            var list = await query
+                .OrderBy(wc => wc.World.Name)
+                .ToListAsync();
+
+            return list.Select(wc => new Cdm.Business.Abstraction.DTOs.WorldCharacterDto
+            {
+                Id = wc.Id,
+                CharacterId = wc.CharacterId,
+                CharacterName = wc.Character.FirstName ?? wc.Character.Name,
+                WorldId = wc.WorldId,
+                WorldName = wc.World.Name,
+                GameType = wc.World.GameType,
+                Level = wc.Level,
+                CurrentHealth = wc.CurrentHealth,
+            });
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error listing world characters for user {UserId}", userId);
+            return Enumerable.Empty<Cdm.Business.Abstraction.DTOs.WorldCharacterDto>();
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<CharacterDto?> GetCharacterByIdAsync(int characterId, int userId)
     {
         try
@@ -550,6 +588,7 @@ public class CharacterService(
             AvatarUrl = character.AvatarUrl,
             IsLocked = character.IsLocked,
             IsBaseCharacter = character.IsBaseCharacter,
+            IsShared = character.IsShared,
             SourceCharacterId = character.SourceCharacterId,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt
