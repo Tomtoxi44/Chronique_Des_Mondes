@@ -37,4 +37,13 @@ public interface ICodexService
     /// </summary>
     /// <returns>Success flag and, on failure, a user-facing error message.</returns>
     Task<(bool Success, string? Error)> AddToCharacterInventoryAsync(int codexItemId, int worldCharacterId, int userId);
+
+    /// <summary>Publishes or unpublishes one of the user's codex items to the marketplace.</summary>
+    Task<bool> SetSharedAsync(int id, int userId, bool isShared);
+
+    /// <summary>Lists items shared on the marketplace by any user, optionally filtered by type and search term.</summary>
+    Task<IEnumerable<CodexItemDto>> GetMarketplaceItemsAsync(GameType? gameType = null, string? search = null);
+
+    /// <summary>Imports a shared marketplace item as an independent copy into the user's codex.</summary>
+    Task<CodexItemDto?> ImportToMyCodexAsync(int sourceItemId, int userId);
 }

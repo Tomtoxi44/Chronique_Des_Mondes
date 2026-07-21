@@ -1,0 +1,171 @@
+@page "/marketplace"
+@attribute [Authorize]
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@inject Cdm.Web.Services.ApiClients.CodexApiClient CodexClient
+
+<PageTitle>Marketplace — Chronique des Mondes</PageTitle>
+
+<AppPageHeader Title="Marketplace" Subtitle="Découvrez et importez le contenu partagé par la communauté" Icon="bi-shop" />
+
+@* Onglets par type d'élément *@
+<div style="display: flex; gap: var(--spacing-xs); border-bottom: 1px solid var(--color-border); margin-bottom: var(--spacing-lg);">
+    <button class="mkt-tab active"><i class="bi bi-journal-bookmark"></i> Items</button>
+    <button class="mkt-tab" disabled title="Bientôt"><i class="bi bi-globe2"></i> Mondes <span class="mkt-soon">bientôt</span></button>
+    <button class="mkt-tab" disabled title="Bientôt"><i class="bi bi-map"></i> Campagnes <span class="mkt-soon">bientôt</span></button>
+    <button class="mkt-tab" disabled title="Bientôt"><i class="bi bi-people"></i> Personnages <span class="mkt-soon">bientôt</span></button>
+</div>
+
+<style>
+    .mkt-tab { background: none; border: none; border-bottom: 3px solid transparent; padding: var(--spacing-sm) var(--spacing-md);
+               color: var(--color-text-secondary); font-size: var(--font-size-sm); cursor: pointer; display: flex; align-items: center;
+               gap: var(--spacing-xs); white-space: nowrap; margin-bottom: -1px; }
+    .mkt-tab.active { color: var(--theme-ink, var(--color-primary)); border-bottom-color: var(--theme-primary, var(--color-primary)); font-weight: 600; }
+    .mkt-tab:disabled { opacity: 0.5; cursor: not-allowed; }
+    .mkt-soon { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; background: var(--color-bg-tertiary);
+                padding: 1px 5px; border-radius: var(--radius-sm); }
+</style>
+
+@* Filtres *@
+<div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm); align-items: center; margin-bottom: var(--spacing-lg);">
+    <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs);">
+        <button class="btn btn-sm @(FilterType == null ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(null)">Tous</button>
+        @foreach (var gt in GameTypes)
+        {
+            <button class="btn btn-sm @(FilterType == gt.Value ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(gt.Value)">@gt.Label</button>
+        }
+    </div>
+    <div class="form-group" style="margin: 0; min-width: 200px;">
+        <input type="text" class="form-control" placeholder="Rechercher un item…" @bind="SearchTerm" @bind:event="oninput" @onkeyup="OnSearchKey" />
+    </div>
+</div>
+
+@if (IsLoading)
+{
+    <div class="cards-grid">
+        @for (int i = 0; i < 3; i++) { <AppSkeletonCard /> }
+    </div>
+}
+else if (Items.Count == 0)
+{
+    <AppEmptyState Icon="bi-shop"
+                   Title="Rien à afficher"
+                   Message="Aucun item partagé ne correspond. Partagez les vôtres depuis votre Codex !" />
+}
+else
+{
+    <div class="cards-grid">
+        @foreach (var item in Items)
+        {
+            <AppThemeWrapper GameType="@item.GameType">
+                <div class="cdm-card">
+                    <div class="card-header-row">
+                        <AppGameBadge GameType="@item.GameType" />
+                        @if (!string.IsNullOrEmpty(item.SharedByName))
+                        {
+                            <span class="status-badge" style="background: var(--color-bg-tertiary);">
+                                <i class="bi bi-person"></i> @item.SharedByName
+                            </span>
+                        }
+                    </div>
+
+                    <div style="display: flex; gap: var(--spacing-md); align-items: flex-start;">
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" alt="@item.Name"
+                                 style="width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--theme-card-border, var(--color-border)); flex-shrink: 0;" />
+                        }
+                        <div style="min-width: 0;">
+                            <h3 class="card-title">@item.Name</h3>
+                            @if (!string.IsNullOrEmpty(item.ItemType))
+                            {
+                                <span class="status-badge" style="background: var(--color-bg-tertiary);">@item.ItemType</span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(item.Description))
+                    {
+                        <p class="card-description">@item.Description</p>
+                    }
+
+                    <div style="margin-top: var(--spacing-md);">
+                        @if (ImportedIds.Contains(item.Id))
+                        {
+                            <span style="font-size: var(--font-size-sm); color: var(--color-success);">
+                                <i class="bi bi-check-circle"></i> Ajouté à votre codex
+                            </span>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary btn-sm" @onclick="() => Import(item)" disabled="@(ImportingId == item.Id)">
+                                <i class="bi bi-plus"></i> Ajouter à mon codex
+                            </button>
+                        }
+                    </div>
+                </div>
+            </AppThemeWrapper>
+        }
+    </div>
+}
+
+@code {
+    private static readonly (GameType Value, string Label)[] GameTypes = new[]
+    {
+        (GameType.Generic, "Générique"),
+        (GameType.DnD5e, "D&D 5e"),
+        (GameType.Pathfinder, "Pathfinder"),
+        (GameType.CallOfCthulhu, "Cthulhu"),
+        (GameType.Warhammer, "Warhammer"),
+        (GameType.Cyberpunk, "Cyberpunk"),
+        (GameType.Skyrim, "Skyrim"),
+        (GameType.Custom, "Personnalisé"),
+    };
+
+    private List<CodexItemDto> Items = new();
+    private bool IsLoading = true;
+    private GameType? FilterType;
+    private string SearchTerm = string.Empty;
+    private int? ImportingId;
+    private readonly HashSet<int> ImportedIds = new();
+
+    protected override async Task OnInitializedAsync() => await Reload();
+
+    private async Task Reload()
+    {
+        IsLoading = true;
+        Items = await CodexClient.GetMarketplaceItemsAsync(FilterType, string.IsNullOrWhiteSpace(SearchTerm) ? null : SearchTerm);
+        IsLoading = false;
+    }
+
+    private async Task SetFilter(GameType? type)
+    {
+        FilterType = type;
+        await Reload();
+    }
+
+    private async Task OnSearchKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Reload();
+        }
+    }
+
+    private async Task Import(CodexItemDto item)
+    {
+        ImportingId = item.Id;
+        try
+        {
+            var imported = await CodexClient.ImportItemAsync(item.Id);
+            if (imported != null)
+            {
+                ImportedIds.Add(item.Id);
+            }
+        }
+        finally
+        {
+            ImportingId = null;
+        }
+    }
+}

@@ -161,9 +161,17 @@ else
                         }
                         else
                         {
-                            <button class="btn btn-ghost btn-sm" @onclick="() => OpenAdd(item)">
-                                <i class="bi bi-person-plus"></i> Ajouter à un personnage
-                            </button>
+                            <div style="display: flex; gap: var(--spacing-xs); flex-wrap: wrap; align-items: center;">
+                                <button class="btn btn-ghost btn-sm" @onclick="() => OpenAdd(item)">
+                                    <i class="bi bi-person-plus"></i> Ajouter à un personnage
+                                </button>
+                                <button class="btn btn-ghost btn-sm" @onclick="() => ToggleShare(item)"
+                                        title="@(item.IsShared ? " Retirer de la marketplace" : "Partager sur la marketplace")">
+                                    <i class="bi @(item.IsShared ? "bi-share-fill" : "bi-share")"
+                                       style="@(item.IsShared ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
+                                    @(item.IsShared ? "Partagé" : "Partager")
+                                </button>
+                            </div>
                         }
                     </div>
                 </div>
@@ -287,6 +295,14 @@ else
         if (await CodexClient.DeleteAsync(item.Id))
         {
             Items.RemoveAll(i => i.Id == item.Id);
+        }
+    }
+
+    private async Task ToggleShare(CodexItemDto item)
+    {
+        if (await CodexClient.SetSharedAsync(item.Id, !item.IsShared))
+        {
+            item.IsShared = !item.IsShared;
         }
     }
 

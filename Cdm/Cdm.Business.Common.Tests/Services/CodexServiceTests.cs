@@ -228,4 +228,105 @@ public class CodexServiceTests
 
         Assert.False(ok);
     }
+
+    // ── Marketplace (partage / import) ───────────────────────────────────
+
+    private static void SeedUser(AppDbContext ctx, int id, string nickname)
+    {
+        ctx.Users.Add(new User { Id = id, Email = $"u{id}@t", Nickname = nickname, PasswordHash = "h", CreatedAt = DateTime.UtcNow });
+        ctx.SaveChanges();
+    }
+
+    [Fact]
+    public async Task SetSharedAsync_Owner_TogglesFlag()
+    {
+        using var ctx = NewContext();
+        Seed(ctx, 1, OwnerId);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        Assert.True(await service.SetSharedAsync(1, OwnerId, true));
+        Assert.True((await ctx.CodexItems.FindAsync(1))!.IsShared);
+    }
+
+    [Fact]
+    public async Task SetSharedAsync_NotOwner_ReturnsFalse()
+    {
+        using var ctx = NewContext();
+        Seed(ctx, 1, OwnerId);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        Assert.False(await service.SetSharedAsync(1, OtherUserId, true));
+        Assert.False((await ctx.CodexItems.FindAsync(1))!.IsShared);
+    }
+
+    [Fact]
+    public async Task GetMarketplaceItems_ReturnsOnlySharedActive_FromAnyUser_WithOwnerName()
+    {
+        using var ctx = NewContext();
+        SeedUser(ctx, OtherUserId, "Alice");
+        ctx.CodexItems.AddRange(
+            new CodexItem { Id = 1, UserId = OtherUserId, Name = "Shared", GameType = GameType.DnD5e, IsShared = true, IsActive = true, CreatedAt = DateTime.UtcNow },
+            new CodexItem { Id = 2, UserId = OtherUserId, Name = "Private", GameType = GameType.DnD5e, IsShared = false, IsActive = true, CreatedAt = DateTime.UtcNow },
+            new CodexItem { Id = 3, UserId = OtherUserId, Name = "SharedButDeleted", GameType = GameType.DnD5e, IsShared = true, IsActive = false, CreatedAt = DateTime.UtcNow });
+        ctx.SaveChanges();
+
+        var service = new CodexService(ctx, this.loggerMock.Object);
+        var result = (await service.GetMarketplaceItemsAsync()).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Shared", result[0].Name);
+        Assert.Equal("Alice", result[0].SharedByName);
+    }
+
+    [Fact]
+    public async Task GetMarketplaceItems_FiltersByTypeAndSearch()
+    {
+        using var ctx = NewContext();
+        SeedUser(ctx, OtherUserId, "Bob");
+        ctx.CodexItems.AddRange(
+            new CodexItem { Id = 1, UserId = OtherUserId, Name = "Épée longue", GameType = GameType.DnD5e, IsShared = true, IsActive = true, CreatedAt = DateTime.UtcNow },
+            new CodexItem { Id = 2, UserId = OtherUserId, Name = "Cyberdeck", GameType = GameType.Cyberpunk, IsShared = true, IsActive = true, CreatedAt = DateTime.UtcNow },
+            new CodexItem { Id = 3, UserId = OtherUserId, Name = "Épée courte", GameType = GameType.DnD5e, IsShared = true, IsActive = true, CreatedAt = DateTime.UtcNow });
+        ctx.SaveChanges();
+
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var byType = (await service.GetMarketplaceItemsAsync(GameType.Cyberpunk)).ToList();
+        Assert.Single(byType);
+        Assert.Equal("Cyberdeck", byType[0].Name);
+
+        var bySearch = (await service.GetMarketplaceItemsAsync(null, "Épée")).ToList();
+        Assert.Equal(2, bySearch.Count);
+    }
+
+    [Fact]
+    public async Task ImportToMyCodex_SharedItem_CreatesIndependentCopyForImporter()
+    {
+        using var ctx = NewContext();
+        SeedUser(ctx, OtherUserId, "Owner");
+        ctx.CodexItems.Add(new CodexItem { Id = 1, UserId = OtherUserId, Name = "Grimoire", GameType = GameType.CallOfCthulhu, IsShared = true, IsActive = true, CreatedAt = DateTime.UtcNow });
+        ctx.SaveChanges();
+
+        var service = new CodexService(ctx, this.loggerMock.Object);
+        var result = await service.ImportToMyCodexAsync(1, OwnerId);
+
+        Assert.NotNull(result);
+        Assert.Equal("Grimoire", result!.Name);
+        var copy = await ctx.CodexItems.FirstOrDefaultAsync(c => c.UserId == OwnerId);
+        Assert.NotNull(copy);
+        Assert.False(copy!.IsShared); // la copie n'est pas partagée
+        Assert.NotEqual(1, copy.Id); // nouvelle ligne
+    }
+
+    [Fact]
+    public async Task ImportToMyCodex_NotShared_ReturnsNull()
+    {
+        using var ctx = NewContext();
+        Seed(ctx, 1, OtherUserId, active: true); // active but IsShared=false by default
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var result = await service.ImportToMyCodexAsync(1, OwnerId);
+
+        Assert.Null(result);
+    }
 }

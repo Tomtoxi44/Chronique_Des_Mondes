@@ -210,6 +210,109 @@ public class CodexService(AppDbContext dbContext, ILogger<CodexService> logger) 
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<bool> SetSharedAsync(int id, int userId, bool isShared)
+    {
+        try
+        {
+            var item = await this.dbContext.CodexItems
+                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId && c.IsActive);
+            if (item == null)
+            {
+                return false;
+            }
+
+            item.IsShared = isShared;
+            item.UpdatedAt = DateTime.UtcNow;
+            await this.dbContext.SaveChangesAsync();
+            this.logger.LogInformation("Codex item {ItemId} share set to {IsShared}", id, isShared);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error setting share on codex item {ItemId}", id);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<CodexItemDto>> GetMarketplaceItemsAsync(GameType? gameType = null, string? search = null)
+    {
+        try
+        {
+            var query = this.dbContext.CodexItems
+                .Include(c => c.User)
+                .Where(c => c.IsActive && c.IsShared);
+
+            if (gameType.HasValue)
+            {
+                query = query.Where(c => c.GameType == gameType.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(c => c.Name.Contains(term));
+            }
+
+            var items = await query
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            return items.Select(c =>
+            {
+                var dto = MapToDto(c);
+                dto.SharedByName = c.User != null ? c.User.Nickname : null;
+                return dto;
+            });
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error listing marketplace items");
+            return Enumerable.Empty<CodexItemDto>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<CodexItemDto?> ImportToMyCodexAsync(int sourceItemId, int userId)
+    {
+        try
+        {
+            var source = await this.dbContext.CodexItems
+                .FirstOrDefaultAsync(c => c.Id == sourceItemId && c.IsActive && c.IsShared);
+            if (source == null)
+            {
+                return null;
+            }
+
+            // Copie indépendante dans le codex de l'utilisateur (non partagée par défaut).
+            var copy = new CodexItem
+            {
+                UserId = userId,
+                Name = source.Name,
+                Description = source.Description,
+                ImageUrl = source.ImageUrl,
+                GameType = source.GameType,
+                ItemType = source.ItemType,
+                GameSpecificData = source.GameSpecificData,
+                IsShared = false,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            this.dbContext.CodexItems.Add(copy);
+            await this.dbContext.SaveChangesAsync();
+            this.logger.LogInformation("User {UserId} imported marketplace item {SourceId} as {NewId}", userId, sourceItemId, copy.Id);
+            return MapToDto(copy);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error importing marketplace item {SourceId} for user {UserId}", sourceItemId, userId);
+            return null;
+        }
+    }
+
     private static CodexItemDto MapToDto(CodexItem item) => new()
     {
         Id = item.Id,

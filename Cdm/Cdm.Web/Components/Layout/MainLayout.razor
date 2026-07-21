@@ -34,6 +34,11 @@
                 <i class="bi bi-journal-bookmark nav-icon"></i>
                 <span class="nav-label">Codex</span>
             </a>
+            <a href="/marketplace" class="nav-item @ActiveClass("/marketplace")" title="Marketplace"
+               aria-current="@(ActiveClass("/marketplace") == "active" ? "page" : null)">
+                <i class="bi bi-shop nav-icon"></i>
+                <span class="nav-label">Marketplace</span>
+            </a>
             <a href="/sessions" class="nav-item @ActiveClass("/sessions")" title="@L["Nav_Sessions"]"
                aria-current="@(ActiveClass("/sessions") == "active" ? "page" : null)">
                 <span class="nav-icon-wrapper">
