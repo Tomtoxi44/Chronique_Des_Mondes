@@ -103,9 +103,7 @@ public partial class WorldDetail : IDisposable
     private int? _dragOverChapterId;
     private bool IsReordering = false;
 
-    // New campaign (inline)
-    private CreateCampaignDto NewCampaign = new();
-    private string? CampaignCreateError;
+    // Campaign creation is delegated to WorldNewCampaignForm.
 
     // Chapter detail
     private ChapterDto? SelectedChapter;
@@ -599,25 +597,12 @@ public partial class WorldDetail : IDisposable
         IsSaving = false;
     }
 
-    private async Task CreateCampaignInline()
+    /// <summary>Adds the campaign created by <c>WorldNewCampaignForm</c> and opens it.</summary>
+    private void OnCampaignCreated(CampaignDto created)
     {
-        if (World == null) return;
-        IsSaving = true;
-        CampaignCreateError = null;
-        NewCampaign.WorldId = WorldId;
-        var result = await CampaignClient.CreateCampaignAsync(NewCampaign);
-        if (result != null)
-        {
-            Campaigns.Add(result);
-            NewCampaign = new CreateCampaignDto();
-            SetSecondaryNav();
-            Nav.NavigateTo($"/worlds/{WorldId}?campaignId={result.Id}");
-        }
-        else
-        {
-            CampaignCreateError = "Erreur lors de la création de la campagne.";
-        }
-        IsSaving = false;
+        Campaigns.Add(created);
+        SetSecondaryNav();
+        Nav.NavigateTo($"/worlds/{WorldId}?campaignId={created.Id}");
     }
 
     private async Task LoadWorldCharactersAsync()
