@@ -51,6 +51,9 @@ public partial class SessionPlayer : IAsyncDisposable
     private HubConnection? _hub;
     private bool IsHubConnected => _hub?.State == HubConnectionState.Connected;
     private List<ChatEntry> ChatEntries { get; set; } = new();
+
+    // Image forcée par le MJ (overlay non fermable tant que le MJ ne la retire pas).
+    private string? ForcedImageUrl;
     private string ChatInput = "";
     private int? RollingDie;
 
@@ -198,6 +201,18 @@ public partial class SessionPlayer : IAsyncDisposable
         _hub.On<HubDiceDto>("DiceRolled", dto =>
         {
             ChatEntries.Add(new ChatEntry("dice", dto.UserName ?? "?", null, dto.DiceType, dto.Results, dto.Timestamp, dto.Reason, dto.Modifier));
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<string>("ShowImage", url =>
+        {
+            ForcedImageUrl = url;
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On("HideImage", () =>
+        {
+            ForcedImageUrl = null;
             InvokeAsync(StateHasChanged);
         });
 

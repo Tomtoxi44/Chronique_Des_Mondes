@@ -3,6 +3,21 @@
 
 <PageTitle>Session — Chronique des Mondes</PageTitle>
 
+@* Image forcée par le MJ : overlay plein écran, non fermable par le joueur. *@
+@if (!string.IsNullOrEmpty(ForcedImageUrl))
+{
+    <div style="position: fixed; inset: 0; z-index: 3000; background: rgba(3, 5, 8, 0.92);
+                display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px;">
+        <div style="font-family: var(--theme-display-font, var(--font-heading)); font-size: 0.72rem; font-weight: 700;
+                    letter-spacing: 0.16em; text-transform: uppercase; color: var(--theme-ink, var(--color-primary));">
+            <i class="bi bi-easel"></i> Le maître de jeu vous montre une image
+        </div>
+        <img src="@ForcedImageUrl" alt="Image du maître de jeu"
+             style="max-width: 92vw; max-height: 82vh; object-fit: contain; border-radius: var(--radius-md);
+                    border: 1px solid var(--theme-card-border, var(--color-border)); box-shadow: 0 20px 60px -20px rgba(0,0,0,0.8);" />
+    </div>
+}
+
 @if (IsLoading)
 {
     <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">

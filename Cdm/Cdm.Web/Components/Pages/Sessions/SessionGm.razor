@@ -332,6 +332,36 @@ else if (Session != null)
                     </div>
                 </div>
 
+                <!-- Image à montrer aux joueurs -->
+                <div class="gm-chat-section">
+                    <div class="gm-chat-header">
+                        <i class="bi bi-image"></i>
+                        <span>Image aux joueurs</span>
+                    </div>
+                    <div style="padding: var(--spacing-sm); display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                        <AppImageUpload Category="session" Label="Choisir une image (carte, lieu…)"
+                                        OnUploaded="OnSessionImageUploaded" />
+                        <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+                            <button class="btn btn-primary btn-sm" @onclick="PushImageToPlayers"
+                                    disabled="@(string.IsNullOrEmpty(UploadedImageUrl) || !IsHubConnected)">
+                                <i class="bi bi-broadcast"></i> Montrer aux joueurs
+                            </button>
+                            @if (!string.IsNullOrEmpty(PushedImageUrl))
+                            {
+                                <button class="btn btn-ghost btn-sm" @onclick="HidePushedImage">
+                                    <i class="bi bi-eye-slash"></i> Masquer
+                                </button>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(PushedImageUrl))
+                        {
+                            <p style="color: var(--color-success); font-size: var(--font-size-xs); margin: 0;">
+                                <i class="bi bi-check-circle"></i> Image affichée chez les joueurs.
+                            </p>
+                        }
+                    </div>
+                </div>
+
                 <!-- Échanges d'objets -->
                 <div class="gm-chat-section">
                     <div class="gm-chat-header">
