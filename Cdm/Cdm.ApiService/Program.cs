@@ -159,8 +159,23 @@ builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 
-// Image storage abstraction (local disk by default; Azure Blob to be wired via config).
-builder.Services.AddScoped<Cdm.Common.Services.IImageStorage, Cdm.Common.Services.LocalImageStorage>();
+// Image storage abstraction: local disk in dev/CI, Azure Blob in prod (selected by config).
+if (string.Equals(builder.Configuration["ImageStorage:Provider"], "AzureBlob", StringComparison.OrdinalIgnoreCase))
+{
+    var blobServiceUri = builder.Configuration["ImageStorage:BlobServiceUri"]
+        ?? throw new InvalidOperationException("ImageStorage:BlobServiceUri is required when ImageStorage:Provider=AzureBlob.");
+    var containerName = builder.Configuration["ImageStorage:ContainerName"] ?? "images";
+
+    // Managed identity in production (no connection string / account key).
+    builder.Services.AddSingleton(_ =>
+        new Azure.Storage.Blobs.BlobServiceClient(new Uri(blobServiceUri), new Azure.Identity.DefaultAzureCredential())
+            .GetBlobContainerClient(containerName));
+    builder.Services.AddScoped<Cdm.Common.Services.IImageStorage, Cdm.Common.Services.AzureBlobImageStorage>();
+}
+else
+{
+    builder.Services.AddScoped<Cdm.Common.Services.IImageStorage, Cdm.Common.Services.LocalImageStorage>();
+}
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<ICharacterService, CharacterService>();
 builder.Services.AddScoped<IWorldService, WorldService>();

@@ -363,6 +363,62 @@ resource webAppRootBinding 'Microsoft.Web/sites/hostNameBindings@2024-11-01' = i
 }
 
 // =============================================================================
+// Stockage Blob — images (avatars, items, cartes/lieux)
+// =============================================================================
+
+@description('Nom du compte de stockage (globalement unique, 3-24 minuscules/chiffres).')
+param storageAccountName string = toLower('stcdm${uniqueString(resourceGroup().id)}')
+
+@description('Nom du conteneur d\'images (lecture blob anonyme).')
+param imagesContainerName string = 'images'
+
+var roleStorageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: true // lecture anonyme des blobs (affichage <img>)
+    allowSharedKeyAccess: false // écriture uniquement via identité managée (pas de clé/secret)
+  }
+}
+
+resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
+  parent: storageAccount
+  name: 'default'
+}
+
+resource imagesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: imagesContainerName
+  properties: {
+    publicAccess: 'Blob' // lecture anonyme des blobs ; les noms sont des GUID
+  }
+}
+
+// L'API (identité managée système) peut écrire/supprimer les images.
+resource apiStorageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (assignKeyVaultRoles) {
+  name: guid(storageAccount.id, apiApp.id, roleStorageBlobDataContributor)
+  scope: storageAccount
+  properties: {
+    principalId: apiApp.identity.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleStorageBlobDataContributor)
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// À configurer dans les app settings de l'API (hors Bicep, via le pipeline) :
+//   ImageStorage__Provider=AzureBlob
+//   ImageStorage__BlobServiceUri=<sortie storageBlobEndpoint>
+//   ImageStorage__ContainerName=<sortie blobImagesContainer>
+
+// =============================================================================
 // Sorties
 // =============================================================================
 
@@ -372,3 +428,5 @@ output webAppDefaultHostName string = webApp.properties.defaultHostName
 output keyVaultUri string = keyVault.properties.vaultUri
 output sqlServerFqdn string = sqlServer.properties.fullyQualifiedDomainName
 output appInsightsConnectionString string = appInsights.properties.ConnectionString
+output storageBlobEndpoint string = storageAccount.properties.primaryEndpoints.blob
+output blobImagesContainer string = imagesContainerName
