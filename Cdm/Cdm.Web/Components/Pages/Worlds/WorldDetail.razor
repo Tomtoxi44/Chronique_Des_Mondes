@@ -33,120 +33,15 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (Section == null && !SelectedCampaignId.HasValue)
         {
-            <nav style="margin-bottom: var(--spacing-md);">
-                <a href="/worlds" class="btn btn-ghost btn-sm">
-                    <i class="bi bi-arrow-left"></i> @L["Nav_Worlds"]
-                </a>
-            </nav>
-
-            <CdmHero GameType="@World.GameType">
-                <div class="cdm-hero-badge">MONDE &middot; @World.GameType.ToPickerLabel()</div>
-                <h1 class="cdm-hero-title">@World.Name</h1>
-                <div class="cdm-hero-meta">
-                    <span><i class="bi bi-map"></i> @Campaigns.Count @L["Worlds_Campaigns"]</span>
-                    <span><i class="bi bi-people"></i> @World.CharacterCount @L["Worlds_Characters"]</span>
-                    <span><i class="bi bi-calendar3"></i> @World.CreatedAt.ToString("d MMM yyyy")</span>
-                </div>
-                @if (IsOwner)
-                {
-                    <div class="cdm-hero-actions">
-                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
-                            <i class="bi bi-plus"></i> @L["Campaigns_Create"]
-                        </a>
-                        <button class="btn @(World.IsShared ? "btn-primary" : "btn-ghost")" @onclick="ToggleWorldShared" disabled="@IsSharingWorld"
-                                title="@(World.IsShared ? "Retirer de la marketplace" : "Publier sur la marketplace")">
-                            <i class="bi @(World.IsShared ? "bi-share-fill" : "bi-share")"></i>
-                            @(World.IsShared ? "Publié" : "Publier")
-                        </button>
-                        <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
-                            <i class="bi bi-trash3"></i> @L["Common_Delete"]
-                        </button>
-                    </div>
-                }
-            </CdmHero>
-
-            <div style="margin-bottom: var(--spacing-xl);"></div>
-
-            <WorldSettingsCard WorldId="WorldId" World="World" IsOwner="IsOwner"
-                               OnSaved="OnWorldSettingsSaved"
-                               OnPreviewGameTypeChanged="@(gt => _previewGameType = gt)" />
-
-            @if (!string.IsNullOrWhiteSpace(World.Description))
-            {
-                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                    <AppSectionTitle Title="Description" Icon="bi-card-text" />
-                    <p style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: 0;">@World.Description</p>
-                    @if (IsOwner)
-                    {
-                        <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-md);">
-                            <i class="bi bi-pencil"></i> Modifier
-                        </a>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                    <AppSectionTitle Title="Description" Icon="bi-card-text">
-                        <Actions>
-                            @if (IsOwner)
-                            {
-                                <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm">
-                                    <i class="bi bi-plus"></i> Ajouter une description
-                                </a>
-                            }
-                        </Actions>
-                    </AppSectionTitle>
-                    <p style="color: var(--color-text-muted); font-style: italic; margin: 0;">@(IsOwner ? "Aucune description. Cliquez pour écrire." : "Aucune description.")</p>
-                </div>
-            }
-
-            @if (Campaigns.Count > 0)
-            {
-                <div class="cdm-card">
-                    <AppSectionTitle Title='@L["Worlds_Campaigns"]' Icon="bi-map">
-                        <Actions>
-                            @if (IsOwner)
-                            {
-                                <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-ghost btn-sm">
-                                    <i class="bi bi-plus"></i>
-                                    @L["Campaigns_Create"]
-                                </a>
-                            }
-                        </Actions>
-                    </AppSectionTitle>
-
-                    @foreach (var campaign in Campaigns)
-                    {
-                        <a href="/worlds/@WorldId?campaignId=@campaign.Id" class="campaign-row">
-                            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                                <i class="bi bi-map" style="color: var(--color-text-muted);"></i>
-                                <span>@campaign.Name</span>
-                            </div>
-                            <span class="status-badge @GetStatusClass(campaign.Status)">@GetStatusLabel(campaign.Status)</span>
-                        </a>
-                    }
-                </div>
-            }
-            else if (IsOwner)
-            {
-                <AppEmptyState Icon="bi-map"
-                               Title="Aucune campagne"
-                               Message="Ce monde n'a pas encore de campagne.">
-                    <ActionContent>
-                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
-                            <i class="bi bi-plus"></i>
-                            @L["Campaigns_Create"]
-                        </a>
-                    </ActionContent>
-                </AppEmptyState>
-            }
-            else
-            {
-                <AppEmptyState Icon="bi-map"
-                               Title="Aucune campagne"
-                               Message="Ce monde n'a pas encore de campagne." />
-            }
+            <WorldOverviewPanel WorldId="WorldId" World="World" Campaigns="Campaigns" IsOwner="IsOwner"
+                                IsSharing="IsSharingWorld" OnToggleShared="ToggleWorldShared"
+                                OnDelete="ConfirmDeleteWorld">
+                <SettingsCard>
+                    <WorldSettingsCard WorldId="WorldId" World="World" IsOwner="IsOwner"
+                                       OnSaved="OnWorldSettingsSaved"
+                                       OnPreviewGameTypeChanged="@(gt => _previewGameType = gt)" />
+                </SettingsCard>
+            </WorldOverviewPanel>
         }
 
         @* ──────────────────────────────────────────────────────────
@@ -179,7 +74,7 @@ else
                                Icon="bi-map"
                                Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(SelectedCampaign.Name) })">
                     <Actions>
-                        <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
+                        <span class="status-badge @SelectedCampaign.Status.ToCssClass()">@L[SelectedCampaign.Status.ToLabelKey()]</span>
                         @if (IsOwner)
                         {
                             @if (!IsCampaignEditing)

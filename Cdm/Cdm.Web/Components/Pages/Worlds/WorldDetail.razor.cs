@@ -482,10 +482,6 @@ public partial class WorldDetail : IDisposable
         }
     }
 
-    public string GetStatusClass(CampaignStatus status) => status.ToCssClass();
-
-    public string GetStatusLabel(CampaignStatus status) => L[status.ToLabelKey()];
-
 
     public void Dispose()
     {
