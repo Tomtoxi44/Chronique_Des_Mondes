@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Cdm.Business.Common\Cdm.Business.Common.csproj" />
     <ProjectReference Include="..\Cdm.Data.Common\Cdm.Data.Common.csproj" />
     <ProjectReference Include="..\Cdm.Common\Cdm.Common.csproj" />
+    <ProjectReference Include="..\Cdm.Infrastructure.ExternalServices\Cdm.Infrastructure.ExternalServices.csproj" />
     <ProjectReference Include="..\Cdm.Migrations\Cdm.Migrations.csproj" />
     <ProjectReference Include="..\Cdm.Business.DnD5e\Cdm.Business.DnD5e.csproj" />
   </ItemGroup>

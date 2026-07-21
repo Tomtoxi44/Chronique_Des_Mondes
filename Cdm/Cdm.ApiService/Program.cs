@@ -157,23 +157,8 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
-// Image storage abstraction: local disk in dev/CI, Azure Blob in prod (selected by config).
-if (string.Equals(builder.Configuration["ImageStorage:Provider"], "AzureBlob", StringComparison.OrdinalIgnoreCase))
-{
-    var blobServiceUri = builder.Configuration["ImageStorage:BlobServiceUri"]
-        ?? throw new InvalidOperationException("ImageStorage:BlobServiceUri is required when ImageStorage:Provider=AzureBlob.");
-    var containerName = builder.Configuration["ImageStorage:ContainerName"] ?? "images";
-
-    // Managed identity in production (no connection string / account key).
-    builder.Services.AddSingleton(_ =>
-        new Azure.Storage.Blobs.BlobServiceClient(new Uri(blobServiceUri), new Azure.Identity.DefaultAzureCredential())
-            .GetBlobContainerClient(containerName));
-    builder.Services.AddScoped<Cdm.Common.Services.IImageStorage, Cdm.Common.Services.AzureBlobImageStorage>();
-}
-else
-{
-    builder.Services.AddScoped<Cdm.Common.Services.IImageStorage, Cdm.Common.Services.LocalImageStorage>();
-}
+// External-service integrations (image storage + email), provider selected by config.
+builder.Services.AddExternalServices(builder.Configuration);
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<ICharacterService, CharacterService>();
 builder.Services.AddScoped<ICodexService, CodexService>();
@@ -197,17 +182,6 @@ builder.Services.AddScoped<ICombatService, CombatService>();
 builder.Services.AddScoped<IDndReferenceService, DndReferenceService>();
 builder.Services.AddScoped<IDndNpcService, DndNpcService>();
 builder.Services.AddScoped<IDndCharacterService, DndCharacterService>();
-// Service d'email : Azure Communication Services si configuré, sinon repli qui
-// journalise (le parcours « mot de passe oublié » reste testable en local, le lien
-// de réinitialisation apparaît alors dans les logs de l'API).
-if (!string.IsNullOrWhiteSpace(builder.Configuration["AzureEmail:ConnectionString"]))
-{
-    builder.Services.AddScoped<IEmailService, AzureEmailService>();
-}
-else
-{
-    builder.Services.AddScoped<IEmailService, LoggingEmailService>();
-}
 
 // Configure SignalR
 builder.Services.AddSignalR(options =>
