@@ -24,6 +24,7 @@ public partial class SessionGm : IAsyncDisposable
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private NpcApiClient NpcClient { get; set; } = default!;
     [Inject] private CombatApiClient CombatClient { get; set; } = default!;
+    [Inject] private LootApiClient LootClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -62,6 +63,12 @@ public partial class SessionGm : IAsyncDisposable
     private string TradeRequest = "";
     private bool IsProposingTrade;
 
+    // Loot distribution
+    private List<CampaignLootDto> CampaignLoot { get; set; } = new();
+    private int DistributeLootId;
+    private int DistributeTargetWcId;
+    private bool IsDistributingLoot;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -95,6 +102,7 @@ public partial class SessionGm : IAsyncDisposable
 
         Chapters = await ChapterClient.GetChaptersByCampaignAsync(Session.CampaignId);
         WorldCharacters = await WorldClient.GetWorldCharactersTypedAsync(Session.WorldId);
+        CampaignLoot = await LootClient.GetCampaignLootAsync(Session.CampaignId);
 
         if (Session.CurrentChapterId.HasValue)
         {
@@ -170,6 +178,13 @@ public partial class SessionGm : IAsyncDisposable
         _hub.On<SessionTradeDto>("TradeResolved", trade =>
         {
             PendingTrades.RemoveAll(t => t.Id == trade.Id);
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<LootDistributionResultDto>("LootReceived", loot =>
+        {
+            var qty = loot.Quantity > 1 ? $" ×{loot.Quantity}" : string.Empty;
+            ChatEntries.Add(new ChatEntry("text", "🎁 Butin", $"{loot.RecipientName} reçoit {loot.LootName}{qty}.", null, null, DateTime.UtcNow));
             InvokeAsync(StateHasChanged);
         });
 
@@ -332,6 +347,49 @@ public partial class SessionGm : IAsyncDisposable
             Logger.LogWarning(ex, "Annulation de l'échange impossible (session {SessionId})", SessionId);
             Toast.ShowError("Annulation non envoyée.", "Échange");
         }
+    }
+
+    /// <summary>Selectable loot recipients: every session participant's character.</summary>
+    private List<(int WorldCharacterId, string Name)> LootTargets()
+    {
+        var targets = new List<(int, string)>();
+        if (Session == null) return targets;
+
+        foreach (var p in Session.Participants)
+        {
+            if (p.WorldCharacterId > 0)
+            {
+                targets.Add((p.WorldCharacterId, string.IsNullOrWhiteSpace(p.CharacterName) ? p.UserName : p.CharacterName));
+            }
+        }
+        return targets;
+    }
+
+    private string LootScopeLabel(int? chapterId)
+    {
+        if (!chapterId.HasValue) return "Campagne";
+        var ch = Chapters.FirstOrDefault(c => c.Id == chapterId.Value);
+        return ch != null ? $"Ch. {ch.ChapterNumber}" : "Chapitre";
+    }
+
+    private async Task DistributeLoot()
+    {
+        if (_hub == null || !IsHubConnected || IsDistributingLoot) return;
+        if (DistributeLootId <= 0 || DistributeTargetWcId <= 0) return;
+
+        IsDistributingLoot = true;
+        try
+        {
+            await _hub.InvokeAsync("DistributeLoot", SessionId, DistributeLootId, DistributeTargetWcId);
+            DistributeLootId = 0;
+            DistributeTargetWcId = 0;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Distribution de butin impossible (session {SessionId})", SessionId);
+            Toast.ShowError("Butin non distribué. Vérifiez votre connexion.", "Butin");
+        }
+        IsDistributingLoot = false;
     }
 
     private async Task SelectChapter(ChapterDto chapter)

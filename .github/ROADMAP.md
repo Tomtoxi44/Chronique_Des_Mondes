@@ -248,8 +248,9 @@
 - [x] **Partager** un item (marketplace) — onglet Items de `/marketplace` + bouton de partage depuis le Codex.
 - [~] L'ajout à l'inventaire utilise `DndInventoryItem` (seule table d'inventaire existante) : fonctionne pour tout perso, mais l'inventaire n'est affiché que sur la fiche D&D. Un inventaire générique par système reste à faire.
 
-### 4. Loot en campagne / chapitre
-- [ ] Le MJ attache des **items (loot)** à une campagne ou un chapitre.
-- [ ] En session, le MJ **distribue** ce loot aux joueurs quand il estime qu'ils l'ont mérité.
+### 4. Loot en campagne / chapitre (branche `feature/campaign-loot`)
+- [x] Le MJ attache des **items (loot)** à une campagne ou un chapitre — entités `CampaignLoot` (+ `LootDistribution`), `ILootService` (CRUD MJ + distribution), panneau « Butin » sur la fiche de campagne (`CampaignLootPanel`). Loot facultativement copié depuis un item du Codex.
+- [x] En session, le MJ **distribue** ce loot à un personnage joueur : hub `DistributeLoot` → copie dans l'inventaire (`DndInventoryItem`) + événement temps réel `LootReceived` (toast joueur, entrée dans le chat, rafraîchissement de la fiche). Panneau « Butin » dans l'écran MJ de session.
+- [~] Comme pour le Codex, la copie atterrit dans `DndInventoryItem` (affiché sur la fiche D&D). Un inventaire générique par système reste à faire.
 
 > **Note localisation** : le mécanisme fr/en (resx `AppStrings.*.resx` + `@L["Clé"]`) est **déjà en place**. Continuer à externaliser les chaînes en dur au fil de l'eau.

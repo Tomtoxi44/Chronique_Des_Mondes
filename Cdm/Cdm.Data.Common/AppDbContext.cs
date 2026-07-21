@@ -141,6 +141,12 @@ public class AppDbContext : DbContext
     /// <summary>Codex items (user-owned generic item templates).</summary>
     public DbSet<CodexItem> CodexItems { get; set; } = null!;
 
+    /// <summary>Loot the GM prepared for a campaign/chapter, to hand out in session.</summary>
+    public DbSet<CampaignLoot> CampaignLoots { get; set; } = null!;
+
+    /// <summary>Records of loot handed out to players' characters.</summary>
+    public DbSet<LootDistribution> LootDistributions { get; set; } = null!;
+
     /// <summary>D&amp;D 5e spells known/prepared by world characters.</summary>
     public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
 
