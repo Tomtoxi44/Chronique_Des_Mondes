@@ -385,6 +385,23 @@ else if (Session != null)
                                 <i class="bi bi-check-circle"></i> Image affichée chez les joueurs.
                             </p>
                         }
+
+                        @if (SelectedChapter != null && ChapterImages.Count > 0)
+                        {
+                            <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-sm);">
+                                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0 0 4px;">Plans & lieux du chapitre</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 4px;">
+                                    @foreach (var img in ChapterImages)
+                                    {
+                                        <button @onclick="() => ShowChapterImage(img.ImageUrl)" disabled="@(!IsHubConnected)"
+                                                title="@(string.IsNullOrEmpty(img.Caption) ? "Montrer aux joueurs" : img.Caption)"
+                                                style="border:1px solid var(--color-border); border-radius: var(--radius-sm); overflow:hidden; padding:0; cursor:pointer; background:none;">
+                                            <img src="@img.ImageUrl" alt="@img.Caption" style="width:100%; height:54px; object-fit:cover; display:block;" />
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
 

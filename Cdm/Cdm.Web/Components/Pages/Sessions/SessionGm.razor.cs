@@ -26,6 +26,7 @@ public partial class SessionGm : IAsyncDisposable
     [Inject] private CombatApiClient CombatClient { get; set; } = default!;
     [Inject] private LootApiClient LootClient { get; set; } = default!;
     [Inject] private InventoryApiClient InventoryClient { get; set; } = default!;
+    [Inject] private ChapterImageApiClient ChapterImageClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -63,6 +64,9 @@ public partial class SessionGm : IAsyncDisposable
     private string TradeOffer = "";
     private string TradeRequest = "";
     private bool IsProposingTrade;
+
+    // Chapter images (maps/places) the GM can push to players
+    private List<ChapterImageDto> ChapterImages { get; set; } = new();
 
     // Loot distribution
     private List<CampaignLootDto> CampaignLoot { get; set; } = new();
@@ -109,7 +113,10 @@ public partial class SessionGm : IAsyncDisposable
         {
             SelectedChapter = Chapters.FirstOrDefault(c => c.Id == Session.CurrentChapterId.Value);
             if (SelectedChapter != null)
+            {
                 ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(SelectedChapter.Id);
+                ChapterImages = await ChapterImageClient.GetForChapterAsync(SelectedChapter.Id);
+            }
         }
 
         NavContext.ClearContext();
@@ -241,6 +248,21 @@ public partial class SessionGm : IAsyncDisposable
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "Impossible de montrer l'image (session {SessionId})", SessionId);
+            Toast.ShowError("Image non transmise. Vérifiez votre connexion.", "Session");
+        }
+    }
+
+    private async Task ShowChapterImage(string url)
+    {
+        if (_hub == null || !IsHubConnected || string.IsNullOrEmpty(url)) return;
+        try
+        {
+            await _hub.InvokeAsync("ShowImage", SessionId, url);
+            PushedImageUrl = url;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Impossible de montrer l'image du chapitre (session {SessionId})", SessionId);
             Toast.ShowError("Image non transmise. Vérifiez votre connexion.", "Session");
         }
     }
@@ -397,6 +419,7 @@ public partial class SessionGm : IAsyncDisposable
     {
         SelectedChapter = chapter;
         ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(chapter.Id);
+        ChapterImages = await ChapterImageClient.GetForChapterAsync(chapter.Id);
         _needsPreviewClickInit = true;
         if (Session != null)
         {
