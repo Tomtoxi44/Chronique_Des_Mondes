@@ -53,15 +53,9 @@ public partial class WorldDetail : IDisposable
     private int CurrentUserId = 0;
     private bool IsOwner => World?.UserId == CurrentUserId;
 
-    // Session launch state
-    private SessionDto? ActiveSession;
-    private bool IsLoadingSession = false;
-    private bool IsStartSessionPanelOpen = false;
-    private bool IsStartingSession = false;
-    private string? SessionStartError;
-    private string? SessionWelcomeMessage;
-    private List<WorldCharacterDto> SessionParticipants = new();
-    private HashSet<int> SelectedWorldCharacterIds = new();
+    // Session launch is delegated to WorldSessionLaunchPanel; the parent keeps only a
+    // lightweight flag to show the "active session" dot on the Session tab.
+    private bool _campaignHasActiveSession;
 
     // World settings editor (inline in overview)
     private bool IsWorldEditing = false;
@@ -254,15 +248,17 @@ public partial class WorldDetail : IDisposable
                 _needsMentionInit = true;
             }
 
-            // Check for active session on this campaign (GM only)
-            if (IsOwner && !IsLoadingSession && Section == null && !SelectedChapterId.HasValue)
-                await LoadActiveSessionAsync(SelectedCampaignId.Value);
+            // The session-launch panel self-loads the active session; the parent only needs to
+            // know whether one exists to show the tab dot.
+            if (IsOwner && Section == null && !SelectedChapterId.HasValue)
+            {
+                _campaignHasActiveSession = await SessionClient.GetActiveSessionByCampaignAsync(SelectedCampaignId.Value) != null;
+            }
         }
         else
         {
             SelectedChapter = null;
-            ActiveSession = null;
-            IsStartSessionPanelOpen = false;
+            _campaignHasActiveSession = false;
         }
 
         // Reset tab when switching campaigns
@@ -726,59 +722,6 @@ public partial class WorldDetail : IDisposable
     public string GetStatusClass(CampaignStatus status) => status.ToCssClass();
 
     public string GetStatusLabel(CampaignStatus status) => L[status.ToLabelKey()];
-
-    private async Task LoadActiveSessionAsync(int campaignId)
-    {
-        IsLoadingSession = true;
-        ActiveSession = await SessionClient.GetActiveSessionByCampaignAsync(campaignId);
-        IsLoadingSession = false;
-    }
-
-    private async Task OpenStartSessionPanel()
-    {
-        IsStartSessionPanelOpen = true;
-        SessionStartError = null;
-        SessionWelcomeMessage = string.Empty;
-        SelectedWorldCharacterIds.Clear();
-
-        if (SessionParticipants.Count == 0)
-        {
-            SessionParticipants = await WorldClient.GetWorldCharactersTypedAsync(WorldId);
-        }
-    }
-
-    private void ToggleParticipant(int wcId)
-    {
-        if (SelectedWorldCharacterIds.Contains(wcId))
-            SelectedWorldCharacterIds.Remove(wcId);
-        else
-            SelectedWorldCharacterIds.Add(wcId);
-    }
-
-    private async Task StartSession()
-    {
-        if (SelectedCampaignId == null) return;
-        IsStartingSession = true;
-        SessionStartError = null;
-
-        var dto = new StartSessionDto
-        {
-            CampaignId = SelectedCampaignId.Value,
-            WelcomeMessage = SessionWelcomeMessage,
-            WorldCharacterIds = SelectedWorldCharacterIds.ToList()
-        };
-
-        var session = await SessionClient.StartSessionAsync(dto);
-        if (session != null)
-        {
-            Nav.NavigateTo($"/sessions/{session.Id}/gm");
-        }
-        else
-        {
-            SessionStartError = "Impossible de démarrer la session. Une session est peut-être déjà active.";
-        }
-        IsStartingSession = false;
-    }
 
 
     // ── @mention JS interop ───────────────────────────────────────────────
