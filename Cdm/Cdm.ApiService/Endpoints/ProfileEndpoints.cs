@@ -122,7 +122,7 @@ public static class ProfileEndpoints
         ClaimsPrincipal user,
         [FromServices] IImageStorage imageStorage,
         [FromServices] DbContext dbContext,
-        [FromServices] ILogger<IAvatarService> logger)
+        [FromServices] ILogger<Cdm.Business.Abstraction.Services.IUserProfileService> logger)
     {
         var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))

@@ -155,9 +155,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
-builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
-builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 
 // Image storage abstraction: local disk in dev/CI, Azure Blob in prod (selected by config).
 if (string.Equals(builder.Configuration["ImageStorage:Provider"], "AzureBlob", StringComparison.OrdinalIgnoreCase))

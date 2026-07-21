@@ -19,19 +19,37 @@ using Microsoft.Extensions.Logging;
 /// Service for managing campaign operations.
 /// </summary>
 /// <param name="dbContext">Database context for campaign data access.</param>
-/// <param name="imageStorageService">Service for image storage operations.</param>
+/// <param name="imageStorage">Unified image storage (local in dev, Azure Blob in prod).</param>
 /// <param name="notificationService">Notification service for sending user notifications.</param>
 /// <param name="logger">Logger instance for structured logging.</param>
 public class CampaignService(
     AppDbContext dbContext,
-    IImageStorageService imageStorageService,
+    IImageStorage imageStorage,
     INotificationService notificationService,
     ILogger<CampaignService> logger) : ICampaignService
 {
     private readonly AppDbContext dbContext = dbContext;
-    private readonly IImageStorageService imageStorageService = imageStorageService;
+    private readonly IImageStorage imageStorage = imageStorage;
     private readonly INotificationService notificationService = notificationService;
     private readonly ILogger<CampaignService> logger = logger;
+
+    /// <summary>Decodes a (possibly data-URI) base64 image and stores it under the "campaigns" category.</summary>
+    private async Task<string?> UploadCoverAsync(string base64Image, int campaignId)
+    {
+        var data = base64Image.Contains(',') ? base64Image[(base64Image.IndexOf(',') + 1)..] : base64Image;
+        byte[] bytes;
+        try
+        {
+            bytes = Convert.FromBase64String(data);
+        }
+        catch
+        {
+            return null;
+        }
+
+        var result = await this.imageStorage.UploadAsync(bytes, "campaigns", campaignId.ToString());
+        return result.Success ? result.Url : null;
+    }
 
     /// <inheritdoc/>
     public async Task<CampaignDto?> CreateCampaignAsync(CreateCampaignDto dto, int userId)
@@ -44,26 +62,6 @@ public class CampaignService(
                     "Creating campaign '{CampaignName}' for user {UserId}",
                     dto.Name,
                     userId);
-
-                // Handle image upload if provided
-                string? coverImageUrl = null;
-                if (!string.IsNullOrWhiteSpace(dto.CoverImageBase64))
-                {
-                    this.logger.LogDebug("Uploading cover image for campaign '{CampaignName}'", dto.Name);
-
-                    // Upload image (campaignId will be 0 initially, so we'll use a temporary ID)
-                    coverImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
-                        dto.CoverImageBase64,
-                        0); // Temporary ID
-
-                    if (coverImageUrl == null)
-                    {
-                        this.logger.LogWarning(
-                            "Failed to upload cover image for campaign '{CampaignName}'",
-                            dto.Name);
-                        return null;
-                    }
-                }
 
                 // Verify world exists
                 var world = await this.dbContext.Worlds.FindAsync(dto.WorldId);
@@ -83,7 +81,7 @@ public class CampaignService(
                     WorldId = dto.WorldId,
                     Visibility = dto.Visibility,
                     MaxPlayers = dto.MaxPlayers,
-                    CoverImageUrl = coverImageUrl,
+                    CoverImageUrl = null,
                     CreatedBy = userId,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
@@ -94,21 +92,18 @@ public class CampaignService(
                 this.dbContext.Campaigns.Add(campaign);
                 await this.dbContext.SaveChangesAsync();
 
-                // If we uploaded an image with temporary ID, rename it with actual campaign ID
-                if (coverImageUrl != null)
+                // Upload the cover once the campaign has its real id (storage names files by GUID).
+                if (!string.IsNullOrWhiteSpace(dto.CoverImageBase64))
                 {
-                    var actualImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
-                        dto.CoverImageBase64!,
-                        campaign.Id);
-
-                    if (actualImageUrl != null)
+                    var coverImageUrl = await this.UploadCoverAsync(dto.CoverImageBase64, campaign.Id);
+                    if (coverImageUrl != null)
                     {
-                        // Delete old temporary file
-                        await this.imageStorageService.DeleteCampaignCoverAsync(coverImageUrl);
-
-                        // Update campaign with new URL
-                        campaign.CoverImageUrl = actualImageUrl;
+                        campaign.CoverImageUrl = coverImageUrl;
                         await this.dbContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        this.logger.LogWarning("Failed to upload cover image for campaign {CampaignId}", campaign.Id);
                     }
                 }
 
@@ -246,13 +241,11 @@ public class CampaignService(
                 // Delete old image if exists
                 if (!string.IsNullOrWhiteSpace(campaign.CoverImageUrl))
                 {
-                    await this.imageStorageService.DeleteCampaignCoverAsync(campaign.CoverImageUrl);
+                    await this.imageStorage.DeleteAsync(campaign.CoverImageUrl);
                 }
 
                 // Upload new image
-                var coverImageUrl = await this.imageStorageService.UploadCampaignCoverAsync(
-                    dto.CoverImageBase64,
-                    campaignId);
+                var coverImageUrl = await this.UploadCoverAsync(dto.CoverImageBase64, campaignId);
 
                 if (coverImageUrl != null)
                 {

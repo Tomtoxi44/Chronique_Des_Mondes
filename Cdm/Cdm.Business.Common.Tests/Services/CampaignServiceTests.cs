@@ -23,7 +23,7 @@ using Xunit;
 /// </summary>
 public class CampaignServiceTests
 {
-    private readonly Mock<IImageStorageService> imageStorageServiceMock;
+    private readonly Mock<IImageStorage> imageStorageMock;
     private readonly Mock<INotificationService> notificationServiceMock;
     private readonly Mock<ILogger<CampaignService>> loggerMock;
 
@@ -32,13 +32,13 @@ public class CampaignServiceTests
     /// </summary>
     public CampaignServiceTests()
     {
-        this.imageStorageServiceMock = new Mock<IImageStorageService>();
+        this.imageStorageMock = new Mock<IImageStorage>();
         this.notificationServiceMock = new Mock<INotificationService>();
         this.loggerMock = new Mock<ILogger<CampaignService>>();
     }
 
     private CampaignService CreateService(AppDbContext context) =>
-        new(context, this.imageStorageServiceMock.Object, this.notificationServiceMock.Object, this.loggerMock.Object);
+        new(context, this.imageStorageMock.Object, this.notificationServiceMock.Object, this.loggerMock.Object);
 
     private static World SeedWorld(AppDbContext context, int id = 1, int ownerId = 1, GameType gameType = GameType.DnD5e)
     {
@@ -128,9 +128,9 @@ public class CampaignServiceTests
         await context.SaveChangesAsync();
 
         // Setup mock to return a valid image URL
-        this.imageStorageServiceMock
-            .Setup(x => x.UploadCampaignCoverAsync(It.IsAny<string>(), It.IsAny<int>()))
-            .ReturnsAsync("/uploads/campaigns/test-image.jpg");
+        this.imageStorageMock
+            .Setup(x => x.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.Threading.CancellationToken>()))
+            .ReturnsAsync(ImageUploadResult.Ok("/uploads/campaigns/test-image.jpg"));
 
         var service = this.CreateService(context);
 
@@ -148,10 +148,10 @@ public class CampaignServiceTests
         Assert.NotNull(result);
         Assert.NotNull(result!.CoverImageUrl);
 
-        // Verify image storage service was called twice (once with temp ID, once with actual campaign ID)
-        this.imageStorageServiceMock.Verify(
-            x => x.UploadCampaignCoverAsync(It.IsAny<string>(), It.IsAny<int>()),
-            Times.Exactly(2));
+        // Cover is uploaded once, after the campaign has its real id.
+        this.imageStorageMock.Verify(
+            x => x.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<System.Threading.CancellationToken>()),
+            Times.Once);
     }
 
     /// <summary>
