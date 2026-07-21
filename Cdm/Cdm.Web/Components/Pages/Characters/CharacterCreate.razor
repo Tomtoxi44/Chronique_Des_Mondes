@@ -50,8 +50,8 @@
 
             <div class="form-group">
                 <label class="form-label">@L["Characters_AvatarUrl"]</label>
-                <InputText @bind-Value="Model.AvatarUrl" class="form-control"
-                           type="url" placeholder="https://..." />
+                <AppImageUpload Category="misc" CurrentUrl="@Model.AvatarUrl"
+                                Label="Ajouter une photo" OnUploaded="OnAvatarUploaded" />
                 <ValidationMessage For="() => Model.AvatarUrl" class="form-error" />
             </div>
         </div>

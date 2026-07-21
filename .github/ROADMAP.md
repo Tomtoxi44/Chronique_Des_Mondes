@@ -231,7 +231,10 @@
 - [x] **Stockage Azure Blob** — abstraction `IImageStorage` (local en dev/CI, **Azure Blob** en prod via config), compte de stockage + conteneur + rôle MI dans bicep. Validation par magic-bytes + 5 Mo.
 - [x] **Plomberie d'upload générique** — `POST /api/images/{category}` + `ImageApiClient` + composant réutilisable `AppImageUpload` (à déposer dans n'importe quel formulaire).
 - [x] **En session, le MJ « pousse » une image à tous les joueurs** — `SessionHub.ShowImage/HideImage` (vérif MJ) + overlay plein écran non fermable côté joueur. Couvre l'affichage **carte / lieu** du MJ en session.
-- [x] Avatar de profil / de personnage — déjà présents (upload local ; migrables sur `IImageStorage` si besoin d'unifier).
+- [x] **Photo de profil** — bouton d'upload sur la page Profil (branché sur `/api/users/avatar`). *(branche `fix/image-uploads`)*
+- [x] **Avatar de personnage** — `AppImageUpload` dans la création/édition de perso (remplace l'ancien champ texte URL). *(branche `fix/image-uploads`)*
+- [x] **Portrait de PNJ** — champ `ImageUrl` (modèle + migration + DTOs/mappings) + upload dans les formulaires PNJ générique & D&D + miniature dans la liste. *(branche `fix/image-uploads`)*
+- [x] **Galerie d'images de chapitre (plans/lieux)** — table `ChapterImages` + `IChapterImageService` + endpoints + `ChapterImageGallery` (MJ) ; en session le MJ pousse une image du chapitre aux joueurs (réutilise `ShowImage`). *(branche `fix/image-uploads`)*
 - [x] **Image attachée à un item** — via le Codex (chaque item a une `ImageUrl` + `AppImageUpload`).
 
 > À faire au **déploiement** : appliquer le bicep + poser les app settings `ImageStorage__Provider=AzureBlob`, `ImageStorage__BlobServiceUri`, `ImageStorage__ContainerName` (sinon reste en local).

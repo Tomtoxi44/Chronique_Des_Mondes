@@ -40,7 +40,18 @@ else
                     <span class="avatar-initials-large">@UserInitials</span>
                 }
             </div>
-            <h3 class="card-title">@(UserProfile?.Nickname ?? UserName)</h3>
+
+            <label class="btn btn-ghost btn-sm" style="cursor: pointer;">
+                <i class="bi bi-camera"></i>
+                @(IsUploadingAvatar ? "Envoi…" : "Changer la photo")
+                <InputFile OnChange="UploadAvatar" accept="image/png,image/jpeg,image/webp" style="display: none;" disabled="@IsUploadingAvatar" />
+            </label>
+            @if (!string.IsNullOrEmpty(AvatarError))
+            {
+                <p style="font-size: var(--font-size-xs); color: var(--color-error); margin-top: var(--spacing-xs);">@AvatarError</p>
+            }
+
+            <h3 class="card-title" style="margin-top: var(--spacing-sm);">@(UserProfile?.Nickname ?? UserName)</h3>
             <p style="color: var(--color-text-muted); font-size: var(--font-size-sm);">@UserProfile?.Email</p>
             @if (UserProfile?.CreatedAt != null)
             {

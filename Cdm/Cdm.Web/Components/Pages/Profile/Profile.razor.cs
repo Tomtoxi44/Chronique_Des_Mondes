@@ -6,6 +6,7 @@ using Cdm.Web.Services;
 using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Localization;
 
 namespace Cdm.Web.Components.Pages.Profile;
@@ -25,6 +26,8 @@ public partial class Profile
     private ParticipationStatsDto? ParticipationStats;
     private bool IsLoading = true;
     private bool IsSaving = false;
+    private bool IsUploadingAvatar = false;
+    private string? AvatarError;
     private string ErrorMessage = string.Empty;
     private string SuccessMessage = string.Empty;
     private string UserName = string.Empty;
@@ -83,6 +86,46 @@ public partial class Profile
         finally
         {
             IsSaving = false;
+        }
+    }
+
+    private async Task UploadAvatar(InputFileChangeEventArgs e)
+    {
+        AvatarError = null;
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        // 2 Mo max côté serveur (avatar) ; on valide aussi ici pour un retour immédiat.
+        if (file.Size > 2 * 1024 * 1024)
+        {
+            AvatarError = "Image trop lourde (maximum 2 Mo).";
+            return;
+        }
+
+        IsUploadingAvatar = true;
+        try
+        {
+            var url = await ProfileClient.UploadAvatarAsync(file);
+            if (!string.IsNullOrEmpty(url) && UserProfile != null)
+            {
+                UserProfile.AvatarUrl = url;
+                SuccessMessage = L["Profile_SaveSuccess"];
+            }
+            else
+            {
+                AvatarError = "Échec de l'envoi de la photo.";
+            }
+        }
+        catch
+        {
+            AvatarError = "Échec de l'envoi de la photo.";
+        }
+        finally
+        {
+            IsUploadingAvatar = false;
         }
     }
 

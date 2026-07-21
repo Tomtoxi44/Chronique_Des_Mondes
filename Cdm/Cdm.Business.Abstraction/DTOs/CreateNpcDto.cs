@@ -42,6 +42,11 @@ public class CreateNpcDto
     public int? Age { get; set; }
 
     /// <summary>
+    /// Gets or sets the NPC's portrait image URL (nullable).
+    /// </summary>
+    public string? ImageUrl { get; set; }
+
+    /// <summary>
     /// Gets or sets game-specific data as a JSON string (e.g. D&amp;D 5e stat block).
     /// </summary>
     public string? GameSpecificData { get; set; }
