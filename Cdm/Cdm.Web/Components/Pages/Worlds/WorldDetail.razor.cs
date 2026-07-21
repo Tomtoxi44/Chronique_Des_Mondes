@@ -17,6 +17,7 @@ public partial class WorldDetail : IDisposable
 {
     [Inject] private WorldApiClient WorldClient { get; set; } = default!;
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
+    [Inject] private MarketplaceApiClient MarketClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
     [Inject] private NpcApiClient NpcClient { get; set; } = default!;
     [Inject] private EventApiClient EventClient { get; set; } = default!;
@@ -72,6 +73,33 @@ public partial class WorldDetail : IDisposable
 
     // Campaign detail
     private CampaignDto? SelectedCampaign;
+
+    private bool IsSharingWorld;
+    private bool IsSharingCampaign;
+
+    private async Task ToggleWorldShared()
+    {
+        if (World == null || IsSharingWorld) return;
+        IsSharingWorld = true;
+        var newValue = !World.IsShared;
+        if (await MarketClient.SetWorldSharedAsync(World.Id, newValue))
+        {
+            World.IsShared = newValue;
+        }
+        IsSharingWorld = false;
+    }
+
+    private async Task ToggleCampaignShared()
+    {
+        if (SelectedCampaign == null || IsSharingCampaign) return;
+        IsSharingCampaign = true;
+        var newValue = !SelectedCampaign.IsShared;
+        if (await MarketClient.SetCampaignSharedAsync(SelectedCampaign.Id, newValue))
+        {
+            SelectedCampaign.IsShared = newValue;
+        }
+        IsSharingCampaign = false;
+    }
     private CreateChapterDto NewChapter = new();
     private bool IsCampaignEditing = false;
     private string CampaignEditName = string.Empty;

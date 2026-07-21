@@ -189,6 +189,35 @@ public class CodexServiceTests
     }
 
     [Fact]
+    public async Task AddToCharacter_DndItemWithStats_HydratesCombatColumns()
+    {
+        using var ctx = NewContext();
+        ctx.CodexItems.Add(new CodexItem
+        {
+            Id = 1,
+            UserId = OwnerId,
+            Name = "Épée longue",
+            GameType = GameType.DnD5e,
+            ItemType = "Arme",
+            GameSpecificData = "{\"damageDice\":\"1d8\",\"damageType\":\"tranchant\",\"attackBonus\":5}",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+        });
+        ctx.SaveChanges();
+        SeedWorldCharacter(ctx, 50, OwnerId, GameType.DnD5e);
+        var service = new CodexService(ctx, this.loggerMock.Object);
+
+        var (ok, error) = await service.AddToCharacterInventoryAsync(1, 50, OwnerId);
+
+        Assert.True(ok);
+        Assert.Null(error);
+        var inv = Assert.Single(ctx.DndInventoryItems);
+        Assert.Equal("1d8", inv.DamageDice);
+        Assert.Equal("tranchant", inv.DamageType);
+        Assert.Equal(5, inv.AttackBonus);
+    }
+
+    [Fact]
     public async Task AddToCharacter_TypeMismatch_Fails()
     {
         using var ctx = NewContext();
