@@ -230,6 +230,25 @@ public partial class SessionPlayer : IAsyncDisposable
             InvokeAsync(StateHasChanged);
         });
 
+        _hub.On<LootDistributionResultDto>("LootReceived", loot =>
+        {
+            var qty = loot.Quantity > 1 ? $" ×{loot.Quantity}" : string.Empty;
+            ChatEntries.Add(new ChatEntry("text", "🎁 Butin", $"{loot.RecipientName} reçoit {loot.LootName}{qty}.", null, null, DateTime.UtcNow));
+
+            if (loot.RecipientUserId == CurrentUserId)
+            {
+                Toast.ShowSuccess($"Vous recevez : {loot.LootName}{qty}.", "Butin obtenu !");
+                // The item was added to the inventory server-side; refresh the sheet so it appears.
+                _ = InvokeAsync(async () =>
+                {
+                    await LoadDndSheetAsync();
+                    StateHasChanged();
+                });
+            }
+
+            InvokeAsync(StateHasChanged);
+        });
+
         _hub.On<object>("SessionEnded", _ =>
         {
             InvokeAsync(() =>

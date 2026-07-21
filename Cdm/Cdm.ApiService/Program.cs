@@ -180,6 +180,7 @@ builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<ICharacterService, CharacterService>();
 builder.Services.AddScoped<ICodexService, CodexService>();
 builder.Services.AddScoped<IMarketplaceService, MarketplaceService>();
+builder.Services.AddScoped<ILootService, LootService>();
 builder.Services.AddScoped<IWorldService, WorldService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IEventService, EventService>();
@@ -267,6 +268,7 @@ app.MapStatisticsEndpoints();
 app.MapImageEndpoints();
 app.MapCodexEndpoints();
 app.MapMarketplaceEndpoints();
+app.MapLootEndpoints();
 
 // Map SignalR hubs
 app.MapHub<Cdm.ApiService.Hubs.SessionHub>("/hubs/session");

@@ -225,6 +225,18 @@ builder.Services.AddScoped<MarketplaceApiClient>(sp =>
 
 builder.Services.AddHttpClient("MarketplaceApiClient", ConfigureApiClient);
 
+// Register LootApiClient with scoped lifetime
+builder.Services.AddScoped<LootApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("LootApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<LootApiClient>>();
+    return new LootApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("LootApiClient", ConfigureApiClient);
+
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {

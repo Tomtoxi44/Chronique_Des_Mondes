@@ -423,6 +423,43 @@ else if (Session != null)
                         </button>
                     </div>
                 </div>
+
+                <!-- Distribution de butin (loot) -->
+                <div class="gm-chat-section">
+                    <div class="gm-chat-header">
+                        <i class="bi bi-gem"></i>
+                        <span>Butin</span>
+                    </div>
+                    <div style="padding: var(--spacing-sm); display: flex; flex-direction: column; gap: var(--spacing-xs);">
+                        @if (CampaignLoot.Count == 0)
+                        {
+                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); font-style: italic; text-align: center;">
+                                Aucun butin préparé. Ajoutez-en depuis la fiche de campagne.
+                            </p>
+                        }
+                        else
+                        {
+                            <select class="form-control" style="font-size: var(--font-size-xs);" @bind="DistributeLootId" disabled="@(!IsHubConnected)">
+                                <option value="0">— Objet à donner —</option>
+                                @foreach (var loot in CampaignLoot)
+                                {
+                                    <option value="@loot.Id">@loot.Name@(loot.Quantity > 1 ? $" ×{loot.Quantity}" : "") — @LootScopeLabel(loot.ChapterId)</option>
+                                }
+                            </select>
+                            <select class="form-control" style="font-size: var(--font-size-xs);" @bind="DistributeTargetWcId" disabled="@(!IsHubConnected)">
+                                <option value="0">— Personnage destinataire —</option>
+                                @foreach (var target in LootTargets())
+                                {
+                                    <option value="@target.WorldCharacterId">@target.Name</option>
+                                }
+                            </select>
+                            <button class="btn btn-primary btn-sm" @onclick="DistributeLoot"
+                                    disabled="@(!IsHubConnected || IsDistributingLoot || DistributeLootId <= 0 || DistributeTargetWcId <= 0)">
+                                <i class="bi bi-gift"></i> Distribuer
+                            </button>
+                        }
+                    </div>
+                </div>
             </aside>
         </div>
     </div>
