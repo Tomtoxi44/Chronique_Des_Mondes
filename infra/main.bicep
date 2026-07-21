@@ -413,10 +413,19 @@ resource apiStorageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01'
   }
 }
 
-// À configurer dans les app settings de l'API (hors Bicep, via le pipeline) :
-//   ImageStorage__Provider=AzureBlob
-//   ImageStorage__BlobServiceUri=<sortie storageBlobEndpoint>
-//   ImageStorage__ContainerName=<sortie blobImagesContainer>
+// IMPORTANT — à configurer dans les app settings de l'API (hors Bicep, car les app settings
+// sont gérés par le pipeline pour ne pas écraser les secrets). SANS ces réglages, l'upload
+// d'images retombe sur le stockage disque local qui renvoie des URLs relatives cassées en
+// prod (API et Web sur des domaines différents). Les app settings persistent entre les
+// déploiements : une seule exécution suffit.
+//
+//   az webapp config appsettings set \
+//     --name app-chroniquedesmondes-api --resource-group <RG> \
+//     --settings ImageStorage__Provider=AzureBlob \
+//                ImageStorage__ContainerName=images \
+//                ImageStorage__BlobServiceUri=https://<storageAccountName>.blob.core.windows.net/
+//
+//   (storageAccountName = sortie du compte ci-dessus ; BlobServiceUri = sortie storageBlobEndpoint)
 
 // =============================================================================
 // Sorties

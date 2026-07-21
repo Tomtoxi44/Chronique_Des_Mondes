@@ -2,6 +2,7 @@ namespace Cdm.ApiService.Endpoints;
 
 using Cdm.Business.Abstraction.DTOs.Models;
 using Cdm.Business.Abstraction.Services;
+using Cdm.Common.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -119,7 +120,7 @@ public static class ProfileEndpoints
     private static async Task<IResult> UploadAvatar(
         HttpRequest request,
         ClaimsPrincipal user,
-        [FromServices] IAvatarService avatarService,
+        [FromServices] IImageStorage imageStorage,
         [FromServices] DbContext dbContext,
         [FromServices] ILogger<IAvatarService> logger)
     {
@@ -136,40 +137,48 @@ public static class ProfileEndpoints
         }
 
         var file = request.Form.Files[0];
-
-        if (!avatarService.ValidateAvatarFile(file, out var errorMessage))
+        if (file.Length == 0 || file.Length > ImageValidation.MaxFileSizeBytes)
         {
-            logger.LogWarning("Avatar validation failed: {Error}", errorMessage);
-            return Results.BadRequest(new { error = errorMessage });
+            return Results.BadRequest(new { error = "Fichier vide ou trop lourd (maximum 5 Mo)." });
         }
 
-        var avatarUrl = await avatarService.UploadAvatarAsync(userId, file);
-        if (avatarUrl == null)
+        // Store through the configured image storage (Azure Blob in prod, local in dev) so the
+        // returned URL is usable cross-origin — the old local-only path returned relative URLs
+        // that 404 when the Web app and the API are on different origins.
+        byte[] bytes;
+        using (var ms = new MemoryStream())
         {
-            logger.LogError("Avatar upload failed for user {UserId}", userId);
-            return Results.StatusCode(500);
+            await file.CopyToAsync(ms);
+            bytes = ms.ToArray();
         }
 
-        // Update user's avatar URL in database
+        var result = await imageStorage.UploadAsync(bytes, "avatars", userId.ToString());
+        if (!result.Success || string.IsNullOrEmpty(result.Url))
+        {
+            logger.LogError("Avatar upload failed for user {UserId}: {Error}", userId, result.Error);
+            return Results.BadRequest(new { error = result.Error ?? "Échec de l'envoi de l'avatar." });
+        }
+
         var userEntity = await dbContext.Set<Cdm.Data.Common.Models.User>()
             .FirstOrDefaultAsync(u => u.Id == userId);
-        
+
         if (userEntity == null)
         {
             logger.LogWarning("User not found after avatar upload for user {UserId}", userId);
             return Results.NotFound(new { error = "User not found" });
         }
 
-        // Delete old avatar if exists
-        if (!string.IsNullOrWhiteSpace(userEntity.AvatarUrl))
-        {
-            await avatarService.DeleteAvatarAsync(userEntity.AvatarUrl);
-        }
-
-        userEntity.AvatarUrl = avatarUrl;
+        var oldAvatarUrl = userEntity.AvatarUrl;
+        userEntity.AvatarUrl = result.Url;
         userEntity.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
 
-        return Results.Ok(new { avatarUrl });
+        // Best-effort cleanup of the previous image.
+        if (!string.IsNullOrWhiteSpace(oldAvatarUrl))
+        {
+            try { await imageStorage.DeleteAsync(oldAvatarUrl); } catch { /* non-blocking */ }
+        }
+
+        return Results.Ok(new { avatarUrl = result.Url });
     }
 }

@@ -91,7 +91,7 @@ public class ProfileApiClient
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
             content.Add(fileContent, "avatar", file.Name);
 
-            var response = await this.httpClient.PostAsync("api/users/avatar", content);
+            var response = await this.httpClient.PostAsync("api/users/profile/avatar", content);
             
             if (response.IsSuccessStatusCode)
             {
