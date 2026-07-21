@@ -379,117 +379,12 @@ else
             }
             else
             {
-                <!-- Chapter header -->
-                <div class="world-section-header">
-                    <div>
-                        <h2 class="world-section-title">
-                            Ch. @SelectedChapter.ChapterNumber — @SelectedChapter.Title
-                        </h2>
-                        <div style="display: flex; gap: var(--spacing-xs); margin-top: 4px; flex-wrap: wrap;">
-                            @if (SelectedChapter.IsCompleted)
-                            {
-                                <span class="status-badge status-completed">@L["Common_Completed"]</span>
-                            }
-                            else if (SelectedChapter.IsActive)
-                            {
-                                <span class="status-badge status-active">@L["Common_InProgress"]</span>
-                            }
-                        </div>
-                    </div>
-                    @if (ChapterTab == "contenu")
-                    {
-                        <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
-                            @if (!string.IsNullOrEmpty(SaveMessage))
-                            {
-                                <span style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)");">@SaveMessage</span>
-                            }
-                            @if (ChapterContentDirty && !ChapterPreviewMode)
-                            {
-                                <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Non sauvegardé</span>
-                            }
-                            <button class="btn btn-ghost btn-sm" @onclick="ToggleChapterPreview" title="@(ChapterPreviewMode ? "Éditer" : "Prévisualiser")">
-                                <i class="bi @(ChapterPreviewMode ? "bi-pencil" : "bi-eye")"></i>
-                                @(ChapterPreviewMode ? "Éditer" : "Aperçu")
-                            </button>
-                            @if (!ChapterPreviewMode)
-                            {
-                                <button class="btn btn-primary btn-sm" @onclick="SaveChapterContent" disabled="@IsSaving">
-                                    <i class="bi bi-floppy"></i> Enregistrer
-                                </button>
-                            }
-                        </div>
-                    }
-                </div>
-
-                <!-- Chapter tab bar -->
-                <div class="campaign-tabs" style="margin-bottom: var(--spacing-md);">
-                    <button class="campaign-tab-btn @(ChapterTab == "contenu" ? "active" : "")" @onclick='() => SwitchToChapterTab("contenu")'>
-                        <i class="bi bi-pencil-square"></i> Contenu
-                        @if (ChapterContentDirty)
-                        {
-                            <span class="tab-dot-active" style="background: var(--color-warning);"></span>
-                        }
-                    </button>
-                    <button class="campaign-tab-btn @(ChapterTab == "pnj" ? "active" : "")" @onclick='() => SwitchToChapterTab("pnj")'>
-                        <i class="bi bi-people"></i> PNJ
-                        @if (ChapterNpcs.Count > 0)
-                        {
-                            <span style="background: var(--color-bg-secondary); color: var(--color-text-muted); font-size: 10px; padding: 1px 6px; border-radius: var(--radius-sm); font-weight: 600;">@ChapterNpcs.Count</span>
-                        }
-                    </button>
-                    <button class="campaign-tab-btn @(ChapterTab == "images" ? "active" : "")" @onclick='() => SwitchToChapterTab("images")'>
-                        <i class="bi bi-image"></i> Plans & lieux
-                    </button>
-                </div>
-
-                <!-- Contenu tab -->
-                @if (ChapterTab == "contenu")
-                {
-                    @if (ChapterPreviewMode)
-                    {
-                        <div id="chapter-preview-content" class="chapter-preview">
-                            @if (string.IsNullOrWhiteSpace(ChapterContentDraft))
-                            {
-                                <span style="color: var(--color-text-muted); font-style: italic;">Aucun contenu rédigé.</span>
-                            }
-                            else
-                            {
-                                @RenderChapterContent(ChapterContentDraft)
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="description-editor-container" style="flex: 1; min-height: 0;">
-                            <div class="description-editor-toolbar">
-                                <span class="description-editor-hint">
-                                    <i class="bi bi-book"></i>
-                                    Contenu du chapitre &middot; Tapez <strong>@@</strong> pour mentionner un PNJ ou un PJ
-                                </span>
-                            </div>
-                            <textarea id="chapter-content-editor"
-                                      class="description-editor-textarea"
-                                      placeholder="Rédigez le contenu de ce chapitre... Tapez @@ pour mentionner un PNJ ou un PJ."
-                                      value="@ChapterContentDraft"
-                                      @oninput="OnChapterContentInput"></textarea>
-                        </div>
-                    }
-                }
-
-                <!-- PNJ tab -->
-                @if (ChapterTab == "pnj")
-                {
-                    <WorldChapterNpcsPanel Npcs="ChapterNpcs" ChapterId="SelectedChapter!.Id" IsDnD="IsWorldDnD5e"
-                                           ExpandNpcId="MentionExpandNpcId" OnChanged="StateHasChanged" />
-                }
-
-                <!-- Plans & lieux tab -->
-                @if (ChapterTab == "images")
-                {
-                    <Cdm.Web.Components.Pages.Campaigns.ChapterImageGallery ChapterId="SelectedChapter!.Id" />
-                }
+                <WorldChapterEditorPanel Chapter="SelectedChapter" CampaignId="SelectedCampaignId!.Value"
+                                         IsDnD="IsWorldDnD5e" WorldCharacters="WorldCharacters"
+                                         OnSaved="OnChapterSaved" />
             }
         }
+
 
         @* ──────────────────────────────────────────────────────────
            SECTION: ÉVÉNEMENTS
