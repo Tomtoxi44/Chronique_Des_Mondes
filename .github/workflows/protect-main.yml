@@ -1,0 +1,26 @@
+name: Protection de main
+
+# Empêche qu'une PR provenant d'une autre branche que `dev` soit mergée sur `main`.
+# GitHub ne sait pas restreindre nativement la branche SOURCE d'une PR : on l'enforce
+# donc par ce check, à rendre OBLIGATOIRE via le ruleset de `main`.
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  seule-dev-vers-main:
+    name: Seule dev peut viser main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier la branche source
+        run: |
+          echo "PR de '${{ github.head_ref }}' vers 'main'."
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "::error::Seule la branche 'dev' peut être mergée sur 'main' (source reçue : '${{ github.head_ref }}')."
+            exit 1
+          fi
+          echo "OK : la PR provient bien de 'dev'."
