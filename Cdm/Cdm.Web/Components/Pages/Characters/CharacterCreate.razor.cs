@@ -17,6 +17,8 @@ public partial class CharacterCreate
     private bool IsLoading = false;
     private string ErrorMessage = string.Empty;
 
+    private void OnAvatarUploaded(string url) => Model.AvatarUrl = url;
+
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
         new BreadcrumbItem(L["Characters_Title"], "/characters"),

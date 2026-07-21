@@ -147,6 +147,9 @@ public class AppDbContext : DbContext
     /// <summary>Records of loot handed out to players' characters.</summary>
     public DbSet<LootDistribution> LootDistributions { get; set; } = null!;
 
+    /// <summary>Images (maps/place visuals) attached to chapters by the GM.</summary>
+    public DbSet<ChapterImage> ChapterImages { get; set; } = null!;
+
     /// <summary>D&amp;D 5e spells known/prepared by world characters.</summary>
     public DbSet<DndCharacterSpell> DndCharacterSpells { get; set; } = null!;
 

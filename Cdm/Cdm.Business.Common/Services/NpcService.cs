@@ -52,6 +52,7 @@ public class NpcService(
                 Description = request.Description,
                 PhysicalDescription = request.PhysicalDescription,
                 Age = request.Age,
+                ImageUrl = request.ImageUrl,
                 GameSpecificData = request.GameSpecificData,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
@@ -154,6 +155,7 @@ public class NpcService(
             npc.Description = request.Description;
             npc.PhysicalDescription = request.PhysicalDescription;
             npc.Age = request.Age;
+            npc.ImageUrl = request.ImageUrl;
             npc.GameSpecificData = request.GameSpecificData;
             npc.UpdatedAt = DateTime.UtcNow;
 
@@ -230,6 +232,7 @@ public class NpcService(
             Description = npc.Description,
             PhysicalDescription = npc.PhysicalDescription,
             Age = npc.Age,
+            ImageUrl = npc.ImageUrl,
             GameSpecificData = npc.GameSpecificData,
             CreatedAt = npc.CreatedAt,
             UpdatedAt = npc.UpdatedAt

@@ -47,6 +47,11 @@ public class NpcDto
     public int? Age { get; set; }
 
     /// <summary>
+    /// Gets or sets the NPC's portrait image URL (nullable).
+    /// </summary>
+    public string? ImageUrl { get; set; }
+
+    /// <summary>
     /// Gets or sets the creation timestamp.
     /// </summary>
     public DateTime CreatedAt { get; set; }

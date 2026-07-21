@@ -79,6 +79,7 @@ public class DndNpcService(AppDbContext dbContext, ILogger<DndNpcService> logger
             Description = dto.Description,
             PhysicalDescription = dto.PhysicalDescription,
             Age = dto.Age,
+            ImageUrl = dto.ImageUrl,
             GameSpecificData = gameData,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
@@ -108,6 +109,7 @@ public class DndNpcService(AppDbContext dbContext, ILogger<DndNpcService> logger
         npc.Description = dto.Description;
         npc.PhysicalDescription = dto.PhysicalDescription;
         npc.Age = dto.Age;
+        npc.ImageUrl = dto.ImageUrl;
         npc.GameSpecificData = BuildGameSpecificData(dto);
         npc.UpdatedAt = DateTime.UtcNow;
 
@@ -176,6 +178,7 @@ public class DndNpcService(AppDbContext dbContext, ILogger<DndNpcService> logger
             Description = npc.Description,
             PhysicalDescription = npc.PhysicalDescription,
             Age = npc.Age,
+            ImageUrl = npc.ImageUrl,
             CreatedAt = npc.CreatedAt,
             UpdatedAt = npc.UpdatedAt
         };

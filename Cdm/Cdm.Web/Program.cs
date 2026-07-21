@@ -249,6 +249,18 @@ builder.Services.AddScoped<InventoryApiClient>(sp =>
 
 builder.Services.AddHttpClient("InventoryApiClient", ConfigureApiClient);
 
+// Register ChapterImageApiClient with scoped lifetime
+builder.Services.AddScoped<ChapterImageApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("ChapterImageApiClient");
+    var localStorage = sp.GetRequiredService<ILocalStorageService>();
+    var logger = sp.GetRequiredService<ILogger<ChapterImageApiClient>>();
+    return new ChapterImageApiClient(httpClient, logger, localStorage);
+});
+
+builder.Services.AddHttpClient("ChapterImageApiClient", ConfigureApiClient);
+
 // Register NotificationApiClient with scoped lifetime
 builder.Services.AddScoped<NotificationApiClient>(sp =>
 {
