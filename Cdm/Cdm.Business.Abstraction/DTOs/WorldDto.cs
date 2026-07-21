@@ -44,6 +44,11 @@ public class WorldDto
     public bool IsActive { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the world is shared on the marketplace.
+    /// </summary>
+    public bool IsShared { get; set; }
+
+    /// <summary>
     /// Gets or sets the creation date.
     /// </summary>
     public DateTime CreatedAt { get; set; }

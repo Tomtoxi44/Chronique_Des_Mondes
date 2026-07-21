@@ -109,6 +109,9 @@ public class Campaign
     [Required]
     public bool IsDeleted { get; set; } = false;
 
+    /// <summary>Gets or sets a value indicating whether the campaign is shared on the marketplace.</summary>
+    public bool IsShared { get; set; } = false;
+
     /// <summary>
     /// Gets or sets the chapters in this campaign.
     /// </summary>

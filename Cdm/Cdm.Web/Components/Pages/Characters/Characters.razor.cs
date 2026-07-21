@@ -10,6 +10,7 @@ namespace Cdm.Web.Components.Pages.Characters;
 public partial class Characters
 {
     [Inject] private ICharacterApiClient CharacterClient { get; set; } = default!;
+    [Inject] private MarketplaceApiClient MarketClient { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
 
     private List<CharacterDto> CharacterList { get; set; } = new();
@@ -37,6 +38,16 @@ public partial class Characters
         var success = await CharacterClient.DeleteCharacterAsync(CharacterToDelete.Id);
         if (success) CharacterList.Remove(CharacterToDelete);
         CharacterToDelete = null;
+    }
+
+    private async Task ToggleShare(CharacterDto character)
+    {
+        var newValue = !character.IsShared;
+        var ok = await MarketClient.SetCharacterSharedAsync(character.Id, newValue);
+        if (ok)
+        {
+            character.IsShared = newValue;
+        }
     }
 
     private static string GetInitials(CharacterDto character)

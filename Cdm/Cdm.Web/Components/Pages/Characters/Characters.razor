@@ -49,6 +49,14 @@ else
                         }
                     </div>
                     <div class="card-actions">
+                        @if (character.IsBaseCharacter)
+                        {
+                            <button class="btn btn-ghost btn-icon @(character.IsShared ? "danger" : "")"
+                                    @onclick="() => ToggleShare(character)"
+                                    title="@(character.IsShared ? L["Marketplace_Unshare"] : L["Marketplace_Share"])">
+                                <i class="bi @(character.IsShared ? "bi-share-fill" : "bi-share")"></i>
+                            </button>
+                        }
                         <a href="/characters/@character.Id/edit" class="btn btn-ghost btn-icon" title="@L["Common_Edit"]">
                             <i class="bi bi-pencil"></i>
                         </a>

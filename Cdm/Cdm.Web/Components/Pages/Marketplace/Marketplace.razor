@@ -3,6 +3,8 @@
 @using Cdm.Business.Abstraction.DTOs
 @using Cdm.Common.Enums
 @inject Cdm.Web.Services.ApiClients.CodexApiClient CodexClient
+@inject Cdm.Web.Services.ApiClients.MarketplaceApiClient MarketClient
+@inject Cdm.Web.Services.ApiClients.WorldApiClient WorldClient
 
 <PageTitle>Marketplace — Chronique des Mondes</PageTitle>
 
@@ -10,10 +12,10 @@
 
 @* Onglets par type d'élément *@
 <div style="display: flex; gap: var(--spacing-xs); border-bottom: 1px solid var(--color-border); margin-bottom: var(--spacing-lg);">
-    <button class="mkt-tab active"><i class="bi bi-journal-bookmark"></i> Items</button>
-    <button class="mkt-tab" disabled title="Bientôt"><i class="bi bi-globe2"></i> Mondes <span class="mkt-soon">bientôt</span></button>
-    <button class="mkt-tab" disabled title="Bientôt"><i class="bi bi-map"></i> Campagnes <span class="mkt-soon">bientôt</span></button>
-    <button class="mkt-tab" disabled title="Bientôt"><i class="bi bi-people"></i> Personnages <span class="mkt-soon">bientôt</span></button>
+    <button class="mkt-tab @(ActiveTab == Tab.Items ? "active" : "")" @onclick="() => SwitchTab(Tab.Items)"><i class="bi bi-journal-bookmark"></i> Items</button>
+    <button class="mkt-tab @(ActiveTab == Tab.Worlds ? "active" : "")" @onclick="() => SwitchTab(Tab.Worlds)"><i class="bi bi-globe2"></i> Mondes</button>
+    <button class="mkt-tab @(ActiveTab == Tab.Campaigns ? "active" : "")" @onclick="() => SwitchTab(Tab.Campaigns)"><i class="bi bi-map"></i> Campagnes</button>
+    <button class="mkt-tab @(ActiveTab == Tab.Characters ? "active" : "")" @onclick="() => SwitchTab(Tab.Characters)"><i class="bi bi-people"></i> Personnages</button>
 </div>
 
 <style>
@@ -22,23 +24,29 @@
                gap: var(--spacing-xs); white-space: nowrap; margin-bottom: -1px; }
     .mkt-tab.active { color: var(--theme-ink, var(--color-primary)); border-bottom-color: var(--theme-primary, var(--color-primary)); font-weight: 600; }
     .mkt-tab:disabled { opacity: 0.5; cursor: not-allowed; }
-    .mkt-soon { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; background: var(--color-bg-tertiary);
-                padding: 1px 5px; border-radius: var(--radius-sm); }
 </style>
 
 @* Filtres *@
 <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm); align-items: center; margin-bottom: var(--spacing-lg);">
-    <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs);">
-        <button class="btn btn-sm @(FilterType == null ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(null)">Tous</button>
-        @foreach (var gt in GameTypes)
-        {
-            <button class="btn btn-sm @(FilterType == gt.Value ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(gt.Value)">@gt.Label</button>
-        }
-    </div>
+    @if (ActiveTab != Tab.Characters)
+    {
+        <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs);">
+            <button class="btn btn-sm @(FilterType == null ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(null)">Tous</button>
+            @foreach (var gt in GameTypes)
+            {
+                <button class="btn btn-sm @(FilterType == gt.Value ? "btn-primary" : "btn-ghost")" @onclick="() => SetFilter(gt.Value)">@gt.Label</button>
+            }
+        </div>
+    }
     <div class="form-group" style="margin: 0; min-width: 200px;">
-        <input type="text" class="form-control" placeholder="Rechercher un item…" @bind="SearchTerm" @bind:event="oninput" @onkeyup="OnSearchKey" />
+        <input type="text" class="form-control" placeholder="@SearchPlaceholder" @bind="SearchTerm" @bind:event="oninput" @onkeyup="OnSearchKey" />
     </div>
 </div>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger" style="margin-bottom: var(--spacing-md);">@ErrorMessage</div>
+}
 
 @if (IsLoading)
 {
@@ -46,70 +54,156 @@
         @for (int i = 0; i < 3; i++) { <AppSkeletonCard /> }
     </div>
 }
-else if (Items.Count == 0)
+else if (ActiveTab == Tab.Items)
 {
-    <AppEmptyState Icon="bi-shop"
-                   Title="Rien à afficher"
-                   Message="Aucun item partagé ne correspond. Partagez les vôtres depuis votre Codex !" />
-}
-else
-{
-    <div class="cards-grid">
-        @foreach (var item in Items)
-        {
-            <AppThemeWrapper GameType="@item.GameType">
-                <div class="cdm-card">
-                    <div class="card-header-row">
-                        <AppGameBadge GameType="@item.GameType" />
-                        @if (!string.IsNullOrEmpty(item.SharedByName))
-                        {
-                            <span class="status-badge" style="background: var(--color-bg-tertiary);">
-                                <i class="bi bi-person"></i> @item.SharedByName
-                            </span>
-                        }
-                    </div>
-
-                    <div style="display: flex; gap: var(--spacing-md); align-items: flex-start;">
-                        @if (!string.IsNullOrEmpty(item.ImageUrl))
-                        {
-                            <img src="@item.ImageUrl" alt="@item.Name"
-                                 style="width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--theme-card-border, var(--color-border)); flex-shrink: 0;" />
-                        }
-                        <div style="min-width: 0;">
-                            <h3 class="card-title">@item.Name</h3>
-                            @if (!string.IsNullOrEmpty(item.ItemType))
+    @if (Items.Count == 0)
+    {
+        <AppEmptyState Icon="bi-shop" Title="Rien à afficher"
+                       Message="Aucun item partagé ne correspond. Partagez les vôtres depuis votre Codex !" />
+    }
+    else
+    {
+        <div class="cards-grid">
+            @foreach (var item in Items)
+            {
+                <AppThemeWrapper GameType="@item.GameType">
+                    <div class="cdm-card">
+                        <div class="card-header-row">
+                            <AppGameBadge GameType="@item.GameType" />
+                            @if (!string.IsNullOrEmpty(item.SharedByName))
                             {
-                                <span class="status-badge" style="background: var(--color-bg-tertiary);">@item.ItemType</span>
+                                <span class="status-badge" style="background: var(--color-bg-tertiary);"><i class="bi bi-person"></i> @item.SharedByName</span>
+                            }
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-md); align-items: flex-start;">
+                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" alt="@item.Name" class="mkt-thumb" />
+                            }
+                            <div style="min-width: 0;">
+                                <h3 class="card-title">@item.Name</h3>
+                                @if (!string.IsNullOrEmpty(item.ItemType))
+                                {
+                                    <span class="status-badge" style="background: var(--color-bg-tertiary);">@item.ItemType</span>
+                                }
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(item.Description))
+                        {
+                            <p class="card-description">@item.Description</p>
+                        }
+                        <div style="margin-top: var(--spacing-md);">
+                            @if (ImportedIds.Contains(item.Id))
+                            {
+                                <span style="font-size: var(--font-size-sm); color: var(--color-success);"><i class="bi bi-check-circle"></i> Ajouté à votre codex</span>
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary btn-sm" @onclick="() => ImportItem(item.Id)" disabled="@(ImportingId == item.Id)">
+                                    <i class="bi bi-plus"></i> Ajouter à mon codex
+                                </button>
                             }
                         </div>
                     </div>
-
-                    @if (!string.IsNullOrEmpty(item.Description))
-                    {
-                        <p class="card-description">@item.Description</p>
-                    }
-
-                    <div style="margin-top: var(--spacing-md);">
-                        @if (ImportedIds.Contains(item.Id))
+                </AppThemeWrapper>
+            }
+        </div>
+    }
+}
+else
+{
+    @if (Entries.Count == 0)
+    {
+        <AppEmptyState Icon="bi-shop" Title="Rien à afficher" Message="@EmptyMessage" />
+    }
+    else
+    {
+        <div class="cards-grid">
+            @foreach (var entry in Entries)
+            {
+                <AppThemeWrapper GameType="@entry.GameType">
+                    <div class="cdm-card">
+                        <div class="card-header-row">
+                            @if (ActiveTab != Tab.Characters)
+                            {
+                                <AppGameBadge GameType="@entry.GameType" />
+                            }
+                            else
+                            {
+                                <span class="status-badge" style="background: var(--color-bg-tertiary);"><i class="bi bi-person-badge"></i> Personnage</span>
+                            }
+                            @if (!string.IsNullOrEmpty(entry.SharedByName))
+                            {
+                                <span class="status-badge" style="background: var(--color-bg-tertiary);"><i class="bi bi-person"></i> @entry.SharedByName</span>
+                            }
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-md); align-items: flex-start;">
+                            @if (!string.IsNullOrEmpty(entry.ImageUrl))
+                            {
+                                <img src="@entry.ImageUrl" alt="@entry.Name" class="mkt-thumb" />
+                            }
+                            <div style="min-width: 0;">
+                                <h3 class="card-title">@entry.Name</h3>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(entry.Description))
                         {
-                            <span style="font-size: var(--font-size-sm); color: var(--color-success);">
-                                <i class="bi bi-check-circle"></i> Ajouté à votre codex
-                            </span>
+                            <p class="card-description">@entry.Description</p>
                         }
-                        else
-                        {
-                            <button class="btn btn-primary btn-sm" @onclick="() => Import(item)" disabled="@(ImportingId == item.Id)">
-                                <i class="bi bi-plus"></i> Ajouter à mon codex
-                            </button>
-                        }
+
+                        <div style="margin-top: var(--spacing-md);">
+                            @if (ImportedIds.Contains(entry.Id))
+                            {
+                                <span style="font-size: var(--font-size-sm); color: var(--color-success);"><i class="bi bi-check-circle"></i> Importé</span>
+                            }
+                            else if (ActiveTab == Tab.Campaigns)
+                            {
+                                var compatible = MyWorlds.Where(w => w.GameType == entry.GameType).ToList();
+                                @if (compatible.Count == 0)
+                                {
+                                    <button class="btn btn-secondary btn-sm" disabled title="Aucun monde compatible de type @entry.GameType">
+                                        <i class="bi bi-slash-circle"></i> Aucun monde compatible
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div style="display: flex; gap: var(--spacing-xs); flex-wrap: wrap; align-items: center;">
+                                        <select class="form-control" style="width: auto; min-width: 140px;"
+                                                value="@GetTargetWorld(entry.Id, compatible)"
+                                                @onchange="e => SetTargetWorld(entry.Id, e.Value?.ToString())">
+                                            @foreach (var w in compatible)
+                                            {
+                                                <option value="@w.Id">@w.Name</option>
+                                            }
+                                        </select>
+                                        <button class="btn btn-primary btn-sm" @onclick="() => ImportCampaign(entry.Id, compatible)" disabled="@(ImportingId == entry.Id)">
+                                            <i class="bi bi-download"></i> Importer
+                                        </button>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary btn-sm" @onclick="() => ImportEntry(entry.Id)" disabled="@(ImportingId == entry.Id)">
+                                    <i class="bi bi-download"></i> Importer
+                                </button>
+                            }
+                        </div>
                     </div>
-                </div>
-            </AppThemeWrapper>
-        }
-    </div>
+                </AppThemeWrapper>
+            }
+        </div>
+    }
 }
 
+<style>
+    .mkt-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-md);
+                 border: 1px solid var(--theme-card-border, var(--color-border)); flex-shrink: 0; }
+</style>
+
 @code {
+    private enum Tab { Items, Worlds, Campaigns, Characters }
+
     private static readonly (GameType Value, string Label)[] GameTypes = new[]
     {
         (GameType.Generic, "Générique"),
@@ -122,19 +216,71 @@ else
         (GameType.Custom, "Personnalisé"),
     };
 
+    private Tab ActiveTab = Tab.Items;
     private List<CodexItemDto> Items = new();
+    private List<MarketplaceEntryDto> Entries = new();
+    private List<WorldDto> MyWorlds = new();
+    private readonly Dictionary<int, int> TargetWorlds = new();
     private bool IsLoading = true;
     private GameType? FilterType;
     private string SearchTerm = string.Empty;
     private int? ImportingId;
     private readonly HashSet<int> ImportedIds = new();
+    private string? ErrorMessage;
 
-    protected override async Task OnInitializedAsync() => await Reload();
+    private string SearchPlaceholder => ActiveTab switch
+    {
+        Tab.Worlds => "Rechercher un monde…",
+        Tab.Campaigns => "Rechercher une campagne…",
+        Tab.Characters => "Rechercher un personnage…",
+        _ => "Rechercher un item…",
+    };
+
+    private string EmptyMessage => ActiveTab switch
+    {
+        Tab.Worlds => "Aucun monde partagé ne correspond.",
+        Tab.Campaigns => "Aucune campagne partagée ne correspond.",
+        Tab.Characters => "Aucun personnage partagé ne correspond.",
+        _ => "Aucun item partagé ne correspond.",
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        MyWorlds = await WorldClient.GetMyWorldsAsync();
+        await Reload();
+    }
+
+    private async Task SwitchTab(Tab tab)
+    {
+        if (ActiveTab == tab) return;
+        ActiveTab = tab;
+        FilterType = null;
+        SearchTerm = string.Empty;
+        ImportedIds.Clear();
+        ErrorMessage = null;
+        await Reload();
+    }
 
     private async Task Reload()
     {
         IsLoading = true;
-        Items = await CodexClient.GetMarketplaceItemsAsync(FilterType, string.IsNullOrWhiteSpace(SearchTerm) ? null : SearchTerm);
+        ErrorMessage = null;
+        var search = string.IsNullOrWhiteSpace(SearchTerm) ? null : SearchTerm;
+        switch (ActiveTab)
+        {
+            case Tab.Items:
+                Items = await CodexClient.GetMarketplaceItemsAsync(FilterType, search);
+                break;
+            case Tab.Worlds:
+                Entries = await MarketClient.GetSharedWorldsAsync(FilterType, search);
+                break;
+            case Tab.Campaigns:
+                Entries = await MarketClient.GetSharedCampaignsAsync(FilterType, search);
+                break;
+            case Tab.Characters:
+                Entries = await MarketClient.GetSharedCharactersAsync(search);
+                break;
+        }
         IsLoading = false;
     }
 
@@ -152,15 +298,81 @@ else
         }
     }
 
-    private async Task Import(CodexItemDto item)
+    private int GetTargetWorld(int campaignId, List<WorldDto> compatible)
+        => TargetWorlds.TryGetValue(campaignId, out var id) ? id : compatible[0].Id;
+
+    private void SetTargetWorld(int campaignId, string? value)
     {
-        ImportingId = item.Id;
+        if (int.TryParse(value, out var id))
+        {
+            TargetWorlds[campaignId] = id;
+        }
+    }
+
+    private async Task ImportItem(int id)
+    {
+        ImportingId = id;
         try
         {
-            var imported = await CodexClient.ImportItemAsync(item.Id);
+            var imported = await CodexClient.ImportItemAsync(id);
             if (imported != null)
             {
-                ImportedIds.Add(item.Id);
+                ImportedIds.Add(id);
+            }
+            else
+            {
+                ErrorMessage = "Import impossible.";
+            }
+        }
+        finally
+        {
+            ImportingId = null;
+        }
+    }
+
+    private async Task ImportEntry(int id)
+    {
+        ImportingId = id;
+        ErrorMessage = null;
+        try
+        {
+            var (success, error) = ActiveTab == Tab.Worlds
+                ? await MarketClient.ImportWorldAsync(id)
+                : await MarketClient.ImportCharacterAsync(id);
+            if (success)
+            {
+                ImportedIds.Add(id);
+                if (ActiveTab == Tab.Worlds)
+                {
+                    MyWorlds = await WorldClient.GetMyWorldsAsync();
+                }
+            }
+            else
+            {
+                ErrorMessage = error;
+            }
+        }
+        finally
+        {
+            ImportingId = null;
+        }
+    }
+
+    private async Task ImportCampaign(int id, List<WorldDto> compatible)
+    {
+        ImportingId = id;
+        ErrorMessage = null;
+        try
+        {
+            var targetWorldId = GetTargetWorld(id, compatible);
+            var (success, error) = await MarketClient.ImportCampaignAsync(id, targetWorldId);
+            if (success)
+            {
+                ImportedIds.Add(id);
+            }
+            else
+            {
+                ErrorMessage = error;
             }
         }
         finally

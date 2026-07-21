@@ -53,6 +53,12 @@ else
                     <div class="card-header-row">
                         <AppGameBadge GameType="@world.GameType" />
                         <div class="card-actions">
+                            <button class="btn btn-ghost btn-icon @(world.IsShared ? "danger" : "")"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => ToggleShare(world)"
+                                    title="@(world.IsShared ? L["Marketplace_Unshare"] : L["Marketplace_Share"])">
+                                <i class="bi @(world.IsShared ? "bi-share-fill" : "bi-share")"></i>
+                            </button>
                             <button class="btn btn-ghost btn-icon danger"
                                     @onclick:stopPropagation="true"
                                     @onclick="() => ConfirmDelete(world)"

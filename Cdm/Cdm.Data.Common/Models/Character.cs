@@ -57,6 +57,9 @@ public class Character
     /// </summary>
     public bool IsBaseCharacter { get; set; } = false;
 
+    /// <summary>Gets or sets a value indicating whether this base character is shared on the marketplace.</summary>
+    public bool IsShared { get; set; } = false;
+
     /// <summary>
     /// Gets or sets the source character ID (for world copies).
     /// Null for base characters. Points to the original Character that was duplicated.
