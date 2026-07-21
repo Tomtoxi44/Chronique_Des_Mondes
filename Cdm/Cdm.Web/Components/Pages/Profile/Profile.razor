@@ -170,5 +170,73 @@ else
                 }
             }
         </div>
+
+        <!-- Statistiques de participation -->
+        <div class="cdm-card">
+            <AppSectionTitle Title="Statistiques de participation" Icon="bi-calendar-week" />
+
+            @if (ParticipationStats == null || ParticipationStats.TotalSessions == 0)
+            {
+                <p style="color: var(--color-text-muted); font-style: italic;">
+                    Aucune session pour l'instant. Lancez ou rejoignez une session pour voir vos statistiques !
+                </p>
+            }
+            else
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@ParticipationStats.TotalSessions</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">sessions</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@ParticipationStats.SessionsAsGm</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">en tant que MJ</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@ParticipationStats.SessionsAsPlayer</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">en tant que joueur</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@ParticipationStats.TotalHoursPlayed.ToString("0.#")</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">heures jouées</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@ParticipationStats.AverageGroupSize.ToString("0.#")</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">taille de groupe moy.</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-xl); font-weight: 700; color: var(--color-primary);">@ParticipationStats.CampaignsPlayed</div>
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">campagnes</div>
+                    </div>
+                </div>
+
+                @if (ParticipationStats.ByMonth.Count > 0)
+                {
+                    var maxSessions = ParticipationStats.ByMonth.Max(m => m.Sessions);
+                    <h4 style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--spacing-sm);">Activité par mois</h4>
+                    <div style="display: flex; align-items: flex-end; gap: var(--spacing-sm); height: 120px; overflow-x: auto; padding-bottom: 4px;">
+                        @foreach (var m in ParticipationStats.ByMonth)
+                        {
+                            var pct = maxSessions > 0 ? (int)Math.Round(100.0 * m.Sessions / maxSessions) : 0;
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 44px; height: 100%;"
+                                 title="@m.Sessions session(s), @m.Hours.ToString("0.#") h">
+                                <div style="font-size: var(--font-size-xs); font-weight: 700; color: var(--color-text-secondary); margin-bottom: 2px;">@m.Sessions</div>
+                                <div style="width: 60%; min-height: 3px; height: @(Math.Max(pct, 4))%; background: var(--theme-primary, var(--color-primary)); border-radius: var(--radius-sm) var(--radius-sm) 0 0;"></div>
+                                <div style="font-size: 0.62rem; color: var(--color-text-muted); margin-top: 4px; white-space: nowrap;">@MonthLabel(m.Month) @(m.Year % 100)</div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
     </div>
+}
+
+@functions {
+    private static string MonthLabel(int month) => month switch
+    {
+        1 => "janv.", 2 => "févr.", 3 => "mars", 4 => "avr.", 5 => "mai", 6 => "juin",
+        7 => "juil.", 8 => "août", 9 => "sept.", 10 => "oct.", 11 => "nov.", 12 => "déc.",
+        _ => "?"
+    };
 }
