@@ -47,6 +47,34 @@ public class InventoryService(AppDbContext dbContext, ILogger<InventoryService> 
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<InventoryItemDto>> GetForCharacterAsGmAsync(int worldCharacterId, int gmUserId)
+    {
+        try
+        {
+            // The GM is the owner of the world the character belongs to.
+            var isGm = await this.dbContext.WorldCharacters
+                .Include(w => w.World)
+                .AnyAsync(w => w.Id == worldCharacterId && w.World.UserId == gmUserId);
+            if (!isGm)
+            {
+                return Enumerable.Empty<InventoryItemDto>();
+            }
+
+            var items = await this.dbContext.DndInventoryItems
+                .Where(i => i.WorldCharacterId == worldCharacterId)
+                .OrderBy(i => i.Id)
+                .ToListAsync();
+
+            return items.Select(MapToDto);
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(ex, "Error listing inventory (GM view) for world character {WorldCharacterId}", worldCharacterId);
+            return Enumerable.Empty<InventoryItemDto>();
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<InventoryItemDto?> AddAsync(int worldCharacterId, CreateInventoryItemDto dto, int userId)
     {
         try

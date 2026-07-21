@@ -24,6 +24,7 @@ public static class InventoryEndpoints
             .RequireAuthorization();
 
         charGroup.MapGet("/", GetForCharacterAsync).WithName("GetCharacterInventory");
+        charGroup.MapGet("/gm", GetForCharacterAsGmAsync).WithName("GetCharacterInventoryAsGm");
         charGroup.MapPost("/", AddAsync).WithName("AddInventoryItem");
 
         var itemGroup = app.MapGroup("/api/inventory")
@@ -43,6 +44,17 @@ public static class InventoryEndpoints
         }
 
         return Results.Ok(await inventory.GetForCharacterAsync(worldCharacterId, userId.Value));
+    }
+
+    private static async Task<IResult> GetForCharacterAsGmAsync(int worldCharacterId, [FromServices] IInventoryService inventory, ClaimsPrincipal user)
+    {
+        var userId = GetUserId(user);
+        if (userId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        return Results.Ok(await inventory.GetForCharacterAsGmAsync(worldCharacterId, userId.Value));
     }
 
     private static async Task<IResult> AddAsync(int worldCharacterId, [FromBody] CreateInventoryItemDto dto, [FromServices] IInventoryService inventory, ClaimsPrincipal user)

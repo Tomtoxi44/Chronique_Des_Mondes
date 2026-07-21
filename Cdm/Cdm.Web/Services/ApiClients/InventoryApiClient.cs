@@ -44,6 +44,23 @@ public class InventoryApiClient
         }
     }
 
+    /// <summary>GM read-only view of a player's inventory (GM owns the world).</summary>
+    public async Task<List<InventoryItemDto>> GetForCharacterAsGmAsync(int worldCharacterId)
+    {
+        try
+        {
+            await AddAuthHeaderAsync();
+            var response = await _httpClient.GetAsync($"api/world-characters/{worldCharacterId}/inventory/gm");
+            if (!response.IsSuccessStatusCode) return new();
+            return await response.Content.ReadFromJsonAsync<List<InventoryItemDto>>() ?? new();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching GM inventory view for world character {WorldCharacterId}", worldCharacterId);
+            return new();
+        }
+    }
+
     public async Task<InventoryItemDto?> AddAsync(int worldCharacterId, CreateInventoryItemDto dto)
     {
         try

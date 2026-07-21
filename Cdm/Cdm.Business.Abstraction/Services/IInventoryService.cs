@@ -20,6 +20,12 @@ public interface IInventoryService
     /// <summary>Lists the inventory of a world character owned by the user.</summary>
     Task<IEnumerable<InventoryItemDto>> GetForCharacterAsync(int worldCharacterId, int userId);
 
+    /// <summary>
+    /// Read-only listing for the Game Master: returns the inventory of any character in a world
+    /// the GM owns (used to inspect a player's inventory during a session).
+    /// </summary>
+    Task<IEnumerable<InventoryItemDto>> GetForCharacterAsGmAsync(int worldCharacterId, int gmUserId);
+
     /// <summary>Adds an item to a world character owned by the user.</summary>
     Task<InventoryItemDto?> AddAsync(int worldCharacterId, CreateInventoryItemDto dto, int userId);
 

@@ -240,6 +240,32 @@ else if (Session != null)
                                             }
                                         </div>
                                     }
+
+                                    <div style="margin-top:var(--spacing-sm);">
+                                        <span class="info-label"><i class="bi bi-bag"></i> Inventaire</span>
+                                        @if (SelectedPlayerInventory.Count == 0)
+                                        {
+                                            <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-style:italic;margin:2px 0 0;">Inventaire vide.</p>
+                                        }
+                                        else
+                                        {
+                                            <div style="display:flex;flex-direction:column;gap:2px;margin-top:2px;">
+                                                @foreach (var inv in SelectedPlayerInventory)
+                                                {
+                                                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:var(--font-size-xs);gap:var(--spacing-xs);">
+                                                        <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                                            @inv.Name
+                                                            @if (inv.Quantity > 1) { <span style="color:var(--color-text-muted);">×@inv.Quantity</span> }
+                                                        </span>
+                                                        @if (inv.GameType == Cdm.Common.Enums.GameType.DnD5e && !string.IsNullOrEmpty(inv.DamageDice))
+                                                        {
+                                                            <span style="color:var(--color-text-muted);flex-shrink:0;"><i class="bi bi-lightning-charge"></i> @inv.DamageDice</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
                             }
                         </div>

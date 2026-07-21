@@ -103,6 +103,25 @@ public class InventoryServiceTests
     }
 
     [Fact]
+    public async Task GetForCharacterAsGmAsync_WorldOwnerSeesInventory_StrangerDoesNot()
+    {
+        using var ctx = NewContext();
+        // World owned by the GM (OwnerId); the character belongs to a different player.
+        ctx.Worlds.Add(new World { Id = 100, UserId = OwnerId, Name = "W", GameType = GameType.DnD5e, IsActive = true, CreatedAt = DateTime.UtcNow });
+        ctx.Characters.Add(new Character { Id = 300, UserId = OtherUserId, Name = "Joueur", IsActive = true, CreatedAt = DateTime.UtcNow });
+        ctx.WorldCharacters.Add(new WorldCharacter { Id = 400, CharacterId = 300, WorldId = 100, IsActive = true });
+        ctx.DndInventoryItems.Add(new DndInventoryItem { WorldCharacterId = 400, Name = "Loot", Category = "Objet", Quantity = 1, GameType = GameType.Generic, CreatedAt = DateTime.UtcNow });
+        ctx.SaveChanges();
+        var service = this.NewService(ctx);
+
+        var asGm = (await service.GetForCharacterAsGmAsync(400, OwnerId)).ToList();
+        var asStranger = (await service.GetForCharacterAsGmAsync(400, 999)).ToList();
+
+        Assert.Single(asGm);
+        Assert.Empty(asStranger);
+    }
+
+    [Fact]
     public async Task UpdateAsync_SpecifyGenericItemToDnd()
     {
         using var ctx = NewContext();
