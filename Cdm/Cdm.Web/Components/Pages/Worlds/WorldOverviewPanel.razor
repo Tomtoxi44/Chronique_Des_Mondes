@@ -45,7 +45,7 @@
 {
     <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
         <AppSectionTitle Title="Description" Icon="bi-card-text" />
-        <p style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: 0;">@World.Description</p>
+        <p class="prose-measure" style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: 0;">@World.Description</p>
         @if (IsOwner)
         {
             <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-md);">

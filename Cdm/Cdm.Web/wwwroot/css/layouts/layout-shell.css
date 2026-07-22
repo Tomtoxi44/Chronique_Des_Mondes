@@ -413,6 +413,11 @@
   flex: 1;
   min-height: 100vh;
   transition: margin-left var(--duration-normal) var(--ease-in-out);
+  /* Un enfant flex vaut min-width:auto par défaut : il refuse alors de rétrécir sous la
+     largeur intrinsèque de son contenu. Un titre long ou une rangée de boutons suffisait
+     à pousser toute la page au-delà du viewport (mesuré : 909 px de large sur un écran de
+     375 px). C'est LA cause des débordements horizontaux sur mobile. */
+  min-width: 0;
 }
 
 /* Marges dynamiques selon l'état des sidebars */
@@ -436,12 +441,16 @@
   top: 0;
   z-index: var(--z-topbar);
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  /* Le fil d'Ariane cède la place aux actions plutôt que de les pousser hors écran. */
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Topbar breadcrumb */
@@ -477,6 +486,8 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  /* Notifications, thème et avatar restent toujours atteignables. */
+  flex-shrink: 0;
 }
 
 .topbar-icon-btn {
@@ -608,6 +619,8 @@
   top: calc(100% + 8px);
   right: 0;
   width: 340px;
+  /* Ancre a droite : sur un petit telephone les 340 px depassaient par la gauche. */
+  max-width: calc(100vw - var(--spacing-md) * 2);
   max-height: 420px;
   background: var(--color-surface-primary);
   border: 1px solid var(--color-border);
@@ -760,6 +773,9 @@
   padding: var(--spacing-xl);
   overflow-y: auto;
   background: var(--color-bg-primary);
+  /* Même raison que .app-main-wrapper : le contenu se plie au viewport, il ne l'étire pas. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Combat pages need full-height layout without outer scroll */
@@ -767,6 +783,21 @@
 .app-main-wrapper:has(.combat-player-shell) {
   height: 100vh;
   overflow: hidden;
+}
+
+/* Sur mobile les panneaux de combat s'empilent : la page doit reprendre son
+   defilement normal, sinon tout ce qui depasse la hauteur d'ecran est perdu. */
+@media (max-width: 768px) {
+  .app-main-wrapper:has(.combat-gm-shell),
+  .app-main-wrapper:has(.combat-player-shell) {
+    height: auto;
+    overflow: visible;
+  }
+
+  .app-content:has(.combat-gm-shell),
+  .app-content:has(.combat-player-shell) {
+    overflow: visible;
+  }
 }
 
 .app-content:has(.combat-gm-shell),

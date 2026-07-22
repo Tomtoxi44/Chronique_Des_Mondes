@@ -11,7 +11,7 @@
 <AppPageHeader Title="Marketplace" Subtitle="Découvrez et importez le contenu partagé par la communauté" Icon="bi-shop" />
 
 @* Onglets par type d'élément *@
-<div style="display: flex; gap: var(--spacing-xs); border-bottom: 1px solid var(--color-border); margin-bottom: var(--spacing-lg);">
+<div class="tab-strip" style="margin-bottom: var(--spacing-lg);">
     <button class="mkt-tab @(ActiveTab == Tab.Items ? "active" : "")" @onclick="() => SwitchTab(Tab.Items)"><i class="bi bi-journal-bookmark"></i> Items</button>
     <button class="mkt-tab @(ActiveTab == Tab.Worlds ? "active" : "")" @onclick="() => SwitchTab(Tab.Worlds)"><i class="bi bi-globe2"></i> Mondes</button>
     <button class="mkt-tab @(ActiveTab == Tab.Campaigns ? "active" : "")" @onclick="() => SwitchTab(Tab.Campaigns)"><i class="bi bi-map"></i> Campagnes</button>

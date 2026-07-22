@@ -14,6 +14,20 @@
   flex-wrap: wrap;
 }
 
+/* Barre d'onglets horizontale : sur petit ecran les onglets ne rentrent pas et
+   `white-space: nowrap` les faisait deborder sans moyen de les atteindre. Ils
+   defilent lateralement, comme la barre contextuelle mobile du shell. */
+.tab-strip {
+  display: flex;
+  gap: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tab-strip::-webkit-scrollbar { display: none; }
+
 .campaign-tab-btn {
   display: inline-flex;
   align-items: center;
@@ -1014,6 +1028,7 @@ textarea.form-control {
   .hide-mobile { display: none !important; }
   .cdm-card-grid { grid-template-columns: 1fr; }
 
+
   /* Cards grid : 1 seule colonne sur mobile étroit */
   .cards-grid {
     grid-template-columns: 1fr;
@@ -1386,6 +1401,33 @@ textarea.form-control {
   gap: var(--spacing-md);
 }
 
+/* ============================================
+   GRILLES RESPONSIVES (utilitaires)
+   ============================================
+   Remplacent les `style="display:grid; grid-template-columns: ..."` en dur qui
+   restaient a N colonnes quel que soit l'ecran : a 375 px, deux champs cote a cote
+   tombaient sous 130 px et les six caracteristiques D&D sous 50 px. */
+.grid-2,
+.grid-3,
+.grid-2-1,
+.grid-1-3,
+.grid-abilities {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.grid-2  { grid-template-columns: 1fr 1fr; }
+.grid-3  { grid-template-columns: repeat(3, 1fr); }
+.grid-2-1 { grid-template-columns: 2fr 1fr; }
+.grid-1-3 { grid-template-columns: 1fr 3fr; }
+
+/* Six caracteristiques (FOR/DEX/CON/INT/SAG/CHA) : jamais empilees, mais reparties
+   sur deux rangees de trois des que la largeur ne suit plus. */
+.grid-abilities {
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-xs);
+}
+
 .form-error {
   font-size: var(--font-size-xs);
   color: var(--color-error);
@@ -1418,6 +1460,29 @@ textarea.form-control {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-md);
+}
+
+/* Toutes les grilles a colonnes fixes s'effondrent sur petit ecran. */
+@media (max-width: 640px) {
+  .form-two-col,
+  .info-grid,
+  .grid-2,
+  .grid-3,
+  .grid-2-1,
+  .grid-1-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-abilities {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Grilles aux proportions trop specifiques pour meriter leur propre classe : elles
+     gardent leur gabarit en ligne sur grand ecran et s'empilent ici. Le !important est
+     necessaire pour l'emporter sur l'attribut style. */
+  .collapse-sm {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 .info-label {
@@ -4331,4 +4396,52 @@ textarea.form-control {
 .combat-participant-avatar-sm,
 .topbar-avatar {
   border-radius: var(--radius-md);
+}
+
+/* ============================================
+   AJUSTEMENTS RESPONSIVES — A GARDER EN FIN DE FICHIER
+   ============================================
+   Une media query n'ajoute aucune specificite : une regle placee avant la definition
+   du composant qu'elle vise est simplement ecrasee par celle-ci. C'est ce qui rendait
+   muet le `.info-grid { grid-template-columns: 1fr }` du bloc mobile situe plus haut,
+   alors que `.info-grid` est defini apres lui. Ces surcharges restent donc ici, en
+   dernier. */
+@media (max-width: 768px) {
+  /* Mises en page a colonne laterale fixe : elles reservaient de 280 a 360 px au
+     panneau lateral, ne laissant que quelques dizaines de pixels au contenu
+     principal sur un telephone (mesure : 34 px pour la colonne de droite du profil). */
+  .profile-layout,
+  .combat-player-body,
+  .initiative-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Empilee, la vue MJ doit defiler : en trois colonnes chaque panneau gerait son
+     propre defilement, d'ou le overflow:hidden du parent qui, une fois empile,
+     rendrait le bas de l'ecran inatteignable. */
+  .session-gm-body {
+    overflow: auto;
+  }
+
+  .session-chapters-sidebar,
+  .session-participants-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+/* ============================================
+   CONFORT DE LECTURE SUR GRAND ECRAN
+   ============================================
+   Rien ne bornait la largeur du texte suivi : sur un ecran 1920, la description d'un
+   monde s'etalait sur 1791 px, soit ~250 caracteres par ligne (l'oeil en suit
+   confortablement 60 a 80). On borne les blocs de prose ; les grilles de cartes, elles,
+   gardent toute la largeur puisqu'elles s'en servent pour afficher plus de colonnes. */
+.chapter-preview,
+.prose-measure {
+  max-width: 78ch;
 }

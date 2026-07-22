@@ -78,7 +78,7 @@
                         <input type="text" class="form-control" @bind="NewNpcDndStats.ChallengeRating" placeholder="1/4, 1/2, 1, 5..." style="max-width: 100px;" />
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);">
+                <div class="grid-abilities" style="margin-bottom: var(--spacing-sm);">
                     @foreach (var (Label, Getter, Setter) in new (string, Func<int>, Action<int>)[] {
                         ("FOR", () => NewNpcDndStats.Strength,     v => NewNpcDndStats.Strength = v),
                         ("DEX", () => NewNpcDndStats.Dexterity,    v => NewNpcDndStats.Dexterity = v),
@@ -227,7 +227,7 @@
                                             <input type="text" class="form-control" @bind="EditingNpcDndStats.ChallengeRating" placeholder="1/4, 1, 5..." style="max-width: 80px;" />
                                         </div>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);">
+                                    <div class="grid-abilities" style="margin-bottom: var(--spacing-sm);">
                                         @foreach (var (Label, Getter, Setter) in new (string, Func<int>, Action<int>)[] {
                                             ("FOR", () => EditingNpcDndStats.Strength,     v => EditingNpcDndStats.Strength = v),
                                             ("DEX", () => EditingNpcDndStats.Dexterity,    v => EditingNpcDndStats.Dexterity = v),
@@ -298,7 +298,7 @@
                                             <span>🛡 CA @dndStats.ArmorClass</span>
                                             <span>💨 @dndStats.Speed m</span>
                                         </div>
-                                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; font-size: var(--font-size-xs); text-align: center;">
+                                        <div class="grid-abilities" style="gap: 4px; font-size: var(--font-size-xs); text-align: center;">
                                             @foreach (var (Label, Val) in new[] { ("FOR", dndStats.Strength), ("DEX", dndStats.Dexterity), ("CON", dndStats.Constitution), ("INT", dndStats.Intelligence), ("SAG", dndStats.Wisdom), ("CHA", dndStats.Charisma) })
                                             {
                                                 <div style="background: var(--color-bg-tertiary, var(--color-bg-secondary)); border-radius: 4px; padding: 4px 2px;">

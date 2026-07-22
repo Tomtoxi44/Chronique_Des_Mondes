@@ -110,7 +110,7 @@ else
                     Personnalisez l'identité de votre personnage pour ce monde. Ces informations peuvent différer de votre personnage de base.
                 </p>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+                <div class="grid-2">
                     <div class="form-group">
                         <label class="form-label">Prénom *</label>
                         <input class="form-control" @bind="CharacterFirstName" placeholder="Ex: Elara" />
@@ -120,7 +120,7 @@ else
                         <input class="form-control" @bind="CharacterName" placeholder="Ex: Lumenveil" />
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 3fr; gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                <div class="grid-1-3" style="margin-top: var(--spacing-md);">
                     <div class="form-group">
                         <label class="form-label">Âge</label>
                         <input type="number" class="form-control" @bind="CharacterAge" min="0" max="10000" placeholder="Ex: 127" />
@@ -149,7 +149,7 @@ else
                 </p>
 
                 @* Niveau + Classe + Race *@
-                <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                <div class="collapse-sm" style="display: grid; grid-template-columns: 1fr 2fr 2fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                     <div class="form-group">
                         <label class="form-label">Niveau (1-20)</label>
                         <input type="number" class="form-control" @bind="Stats.Level" @bind:after="OnStatsChanged" min="1" max="20" placeholder="1" />
@@ -294,7 +294,7 @@ else
                 }
 
                 @* Caractéristiques *@
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                <div class="grid-3" style="margin-bottom: var(--spacing-md);">
                     <div class="form-group" style="text-align: center;">
                         <label class="form-label" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em;">Force</label>
                         <input type="number" class="form-control" style="text-align: center; font-weight: 700;" min="1" max="30" placeholder="—"
@@ -358,7 +358,7 @@ else
                 </div>
 
                 @* PV et CA *@
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                <div class="grid-3" style="margin-bottom: var(--spacing-md);">
                     <div class="form-group">
                         <label class="form-label">Points de vie max</label>
                         <input type="number" class="form-control" @bind="Stats.MaxHitPoints" min="1" placeholder="@GetSuggestedHp()" />
@@ -455,7 +455,7 @@ else
                         </select>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-sm);">
+                    <div class="grid-2-1" style="gap: var(--spacing-sm);">
                         <div class="form-group">
                             <label class="form-label">Nom de l'objet *</label>
                             <input class="form-control" @bind="NewItem.Name" placeholder="Ex: Épée courte" />
@@ -465,7 +465,7 @@ else
                             <input type="number" class="form-control" @bind="NewItem.Quantity" min="1" />
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                    <div class="grid-2" style="gap: var(--spacing-sm);">
                         <div class="form-group">
                             <label class="form-label">Catégorie</label>
                             <select class="form-select" @bind="NewItem.Category">
@@ -487,7 +487,7 @@ else
                     </div>
                     @if (NewItem.Category == "Arme")
                     {
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                        <div class="grid-2" style="gap: var(--spacing-sm);">
                             <div class="form-group">
                                 <label class="form-label">Dés de dégâts</label>
                                 <input class="form-control" @bind="NewItem.DamageDice" placeholder="Ex: 1d6, 2d4+2" />
@@ -602,7 +602,7 @@ else
                         </select>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-sm);">
+                    <div class="collapse-sm" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-sm);">
                         <div class="form-group">
                             <label class="form-label">Nom du sort *</label>
                             <input class="form-control" @bind="NewSpell.Name" placeholder="Ex: Boule de feu" />
@@ -627,7 +627,7 @@ else
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                    <div class="grid-2" style="gap: var(--spacing-sm);">
                         <div class="form-group">
                             <label class="form-label">Dés de dégâts</label>
                             <input class="form-control" @bind="NewSpell.DamageDice" placeholder="Ex: 8d6" />

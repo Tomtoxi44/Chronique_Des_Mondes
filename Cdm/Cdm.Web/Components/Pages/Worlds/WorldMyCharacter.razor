@@ -116,7 +116,7 @@ else
                             <label class="form-label">Background</label>
                             <input type="text" class="form-control" @bind="EditDndBackground" placeholder="Ex: Soldat" />
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                        <div class="grid-3" style="gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
                             <div class="form-group">
                                 <label class="form-label" style="font-size: 0.7rem;">FOR</label>
                                 <input type="number" class="form-control" @bind="EditDndStrength" min="1" max="30" />
@@ -202,7 +202,7 @@ else
                         </div>
                         @if (new[] {"strength","dexterity","constitution","intelligence","wisdom","charisma"}.Any(k => GameSpecificFields.ContainsKey(k)))
                         {
-                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-top: var(--spacing-sm);">
+                            <div class="grid-abilities" style="margin-top: var(--spacing-sm);">
                                 @foreach (var pair in new[] { ("strength","FOR"), ("dexterity","DEX"), ("constitution","CON"), ("intelligence","INT"), ("wisdom","SAG"), ("charisma","CHA") })
                                 {
                                     @if (GameSpecificFields.TryGetValue(pair.Item1, out var val))
