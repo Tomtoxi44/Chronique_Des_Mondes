@@ -29,7 +29,8 @@ public class AzureBlobImageStorage(BlobContainerClient container, ILogger<AzureB
     /// <inheritdoc/>
     public async Task<ImageUploadResult> UploadAsync(byte[] imageBytes, string category, string entityKey, CancellationToken cancellationToken = default)
     {
-        if (!ImageValidation.TryValidate(imageBytes, out var mimeType, out var extension, out var error))
+        // Les limites dépendent de l'usage : un portrait est bridé, une carte non.
+        if (!ImageValidation.TryValidate(imageBytes, ImagePolicy.For(category), out var mimeType, out var extension, out var error))
         {
             return ImageUploadResult.Fail(error!);
         }

@@ -50,7 +50,7 @@
 
             <div class="form-group">
                 <label class="form-label">@L["Characters_AvatarUrl"]</label>
-                <AppImageUpload Category="misc" CurrentUrl="@Model.AvatarUrl"
+                <AppImageUpload Category="portraits" CurrentUrl="@Model.AvatarUrl"
                                 Label="Ajouter une photo" OnUploaded="OnAvatarUploaded" />
                 <ValidationMessage For="() => Model.AvatarUrl" class="form-error" />
             </div>

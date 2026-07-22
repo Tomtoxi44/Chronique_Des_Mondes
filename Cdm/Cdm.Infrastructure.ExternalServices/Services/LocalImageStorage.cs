@@ -27,7 +27,8 @@ public class LocalImageStorage(ILogger<LocalImageStorage> logger) : IImageStorag
     /// <inheritdoc/>
     public async Task<ImageUploadResult> UploadAsync(byte[] imageBytes, string category, string entityKey, CancellationToken cancellationToken = default)
     {
-        if (!ImageValidation.TryValidate(imageBytes, out _, out var extension, out var error))
+        // Les limites dépendent de l'usage : un portrait est bridé, une carte non.
+        if (!ImageValidation.TryValidate(imageBytes, ImagePolicy.For(category), out _, out var extension, out var error))
         {
             return ImageUploadResult.Fail(error!);
         }

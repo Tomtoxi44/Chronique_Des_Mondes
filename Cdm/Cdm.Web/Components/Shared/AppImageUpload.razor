@@ -1,6 +1,8 @@
 @* Upload d'image réutilisable : sélection d'un fichier, envoi via ImageApiClient,
-   aperçu + callback OnUploaded(url). Limite 5 Mo, images uniquement. *@
+   aperçu + callback OnUploaded(url). Les limites viennent d'ImagePolicy (partagée avec
+   l'API) et sont annoncées à l'utilisateur avant qu'il choisisse son fichier. *@
 @using Microsoft.AspNetCore.Components.Forms
+@using Cdm.Common.Services
 @inject Cdm.Web.Services.ApiClients.ImageApiClient ImageClient
 
 <div style="display: flex; align-items: center; gap: var(--spacing-md); flex-wrap: wrap;">
@@ -28,13 +30,17 @@
     }
 </div>
 
+<p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: var(--spacing-xs) 0 0;">
+    <i class="bi bi-info-circle"></i> @Policy.Describe()
+</p>
+
 @code {
     [Parameter] public string Category { get; set; } = "misc";
     [Parameter] public string? CurrentUrl { get; set; }
     [Parameter] public string Label { get; set; } = "Ajouter une image";
     [Parameter] public EventCallback<string> OnUploaded { get; set; }
 
-    private const long MaxBytes = 5 * 1024 * 1024;
+    private ImagePolicy Policy => ImagePolicy.For(Category);
 
     private string? PreviewUrl;
     private bool IsUploading;
@@ -57,9 +63,10 @@
             return;
         }
 
-        if (file.Size > MaxBytes)
+        if (file.Size > Policy.MaxFileSizeBytes)
         {
-            Error = "Image trop lourde (maximum 5 Mo).";
+            // Refus immédiat : inutile de faire transiter le fichier pour se faire jeter.
+            Error = Policy.TooHeavyMessage();
             return;
         }
 
@@ -67,7 +74,7 @@
         try
         {
             using var buffer = new MemoryStream();
-            await using (var stream = file.OpenReadStream(MaxBytes))
+            await using (var stream = file.OpenReadStream(Policy.MaxFileSizeBytes))
             {
                 await stream.CopyToAsync(buffer);
             }
