@@ -12,6 +12,9 @@ using Microsoft.AspNetCore.Components.Forms;
 /// </summary>
 public class ProfileApiClient
 {
+    /// <summary>Taille maximale d'un avatar — alignée sur ImageValidation.MaxFileSizeBytes côté API.</summary>
+    private const long MaxAvatarBytes = 5 * 1024 * 1024;
+
     private readonly HttpClient httpClient;
     private readonly ILocalStorageService localStorage;
     private readonly ILogger<ProfileApiClient> logger;
@@ -85,24 +88,38 @@ public class ProfileApiClient
     {
         try
         {
+            // On lit d'abord le fichier en mémoire (même approche que AppImageUpload). Passer
+            // directement le flux du navigateur à StreamContent ferait tenir la requête HTTP
+            // ouverte pendant tout le transfert par le circuit SignalR : côté API on a mesuré
+            // 14 s pour 2 Mo, et le moindre hoquet du circuit avortait l'appel — l'image
+            // finissait dans le blob mais l'utilisateur voyait une erreur.
+            using var buffer = new MemoryStream();
+            await using (var stream = file.OpenReadStream(MaxAvatarBytes))
+            {
+                await stream.CopyToAsync(buffer);
+            }
+
             await this.AddAuthHeaderAsync();
             using var content = new MultipartFormDataContent();
-            var fileContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024));
+            var fileContent = new ByteArrayContent(buffer.ToArray());
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
             content.Add(fileContent, "avatar", file.Name);
 
             var response = await this.httpClient.PostAsync("api/users/profile/avatar", content);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
                 return result?["avatarUrl"];
             }
 
+            this.logger.LogWarning("Avatar upload rejected by the API ({Status})", response.StatusCode);
             return null;
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
         {
+            // IOException : lecture du fichier interrompue / trop volumineux.
+            // TaskCanceledException : délai HttpClient dépassé.
             this.logger.LogError(ex, "Error uploading avatar");
             return null;
         }

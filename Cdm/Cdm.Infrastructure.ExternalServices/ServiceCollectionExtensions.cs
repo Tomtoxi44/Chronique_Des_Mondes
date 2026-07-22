@@ -32,8 +32,20 @@ public static class ServiceCollectionExtensions
             var containerName = configuration["ImageStorage:ContainerName"] ?? "images";
 
             // Managed identity in production (no connection string / account key).
+            // On écarte les credentials de développeur : sur un App Service Linux ils sont
+            // absents, mais DefaultAzureCredential les sonde quand même (chacun avec son
+            // propre délai) avant d'abandonner — plusieurs secondes ajoutées à la première
+            // écriture. Même réglage que les sources de configuration dans Program.cs.
+            var credentialOptions = new DefaultAzureCredentialOptions
+            {
+                ExcludeVisualStudioCredential = true,
+                ExcludeAzurePowerShellCredential = true,
+                ExcludeAzureDeveloperCliCredential = true,
+                ExcludeInteractiveBrowserCredential = true,
+            };
+
             services.AddSingleton(_ =>
-                new BlobServiceClient(new Uri(blobServiceUri), new DefaultAzureCredential())
+                new BlobServiceClient(new Uri(blobServiceUri), new DefaultAzureCredential(credentialOptions))
                     .GetBlobContainerClient(containerName));
             services.AddScoped<IImageStorage, AzureBlobImageStorage>();
         }
