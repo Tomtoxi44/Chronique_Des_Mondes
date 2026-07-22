@@ -132,7 +132,7 @@ else
                                     }
 
                                     @* Base NPC fields *@
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                                    <div class="grid-2" style="gap: var(--spacing-sm);">
                                         <div class="form-group" style="margin-bottom: 0;">
                                             <label class="form-label">Prénom</label>
                                             <InputText @bind-Value="NewDndNpc.FirstName" class="form-control" placeholder="Prénom..." />
@@ -142,7 +142,7 @@ else
                                             <InputText @bind-Value="NewDndNpc.Name" class="form-control" placeholder="Nom..." />
                                         </div>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                                    <div class="grid-3" style="gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
                                         <div class="form-group" style="margin-bottom: 0;">
                                             <label class="form-label">Âge</label>
                                             <InputNumber @bind-Value="NewDndNpc.Age" class="form-control" placeholder="Âge..." />
@@ -172,7 +172,7 @@ else
                                             <i class="bi bi-shield-fill-check" style="margin-right: 4px;"></i>Statistiques D&amp;D
                                         </strong>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-xs);">
+                                    <div class="collapse-sm" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-xs);">
                                         <div class="form-group" style="margin-bottom: 0;">
                                             <label class="form-label" style="font-size: 0.7rem;">Niveau</label>
                                             <InputNumber @bind-Value="NewDndNpc.Level" class="form-control form-control-sm" placeholder="1" />
@@ -190,7 +190,7 @@ else
                                             <InputNumber @bind-Value="NewDndNpc.Speed" class="form-control form-control-sm" placeholder="30" />
                                         </div>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--spacing-xs); margin-top: var(--spacing-xs);">
+                                    <div class="grid-abilities" style="margin-top: var(--spacing-xs);">
                                         <div class="form-group" style="margin-bottom: 0; text-align: center;">
                                             <label class="form-label" style="font-size: 0.7rem;">FOR</label>
                                             <InputNumber @bind-Value="NewDndNpc.Strength" class="form-control form-control-sm" placeholder="10" />
@@ -228,7 +228,7 @@ else
                             else
                             {
                                 <EditForm Model="NewNpc" OnValidSubmit="CreateNpc" FormName="npc-create">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm);">
+                                    <div class="grid-2" style="gap: var(--spacing-sm);">
                                         <div class="form-group" style="margin-bottom: 0;">
                                             <label class="form-label">Prénom</label>
                                             <InputText @bind-Value="NewNpc.FirstName" class="form-control" placeholder="Prénom..." />
@@ -326,7 +326,7 @@ else
                                         </div>
                                         @if (dndNpc.Strength.HasValue)
                                         {
-                                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; font-size: 0.7rem; text-align: center; margin-top: 4px;">
+                                            <div class="grid-abilities" style="gap: 4px; font-size: 0.7rem; text-align: center; margin-top: 4px;">
                                                 @{
                                                     int Mod(int? v) => v.HasValue ? (v.Value - 10) / 2 : 0;
                                                     string Sign(int m) => m >= 0 ? $"+{m}" : $"{m}";

@@ -19,7 +19,7 @@
     @if (ShowForm)
     {
         <div class="cdm-card" style="background: var(--color-surface-alt); margin-bottom: var(--spacing-md);">
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-sm);">
+            <div class="grid-2-1" style="gap: var(--spacing-sm);">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">Nom</label>
                     <input class="form-control" @bind="Draft.Name" placeholder="Épée longue, Potion de soin..." />
@@ -29,7 +29,7 @@
                     <input class="form-control" @bind="Draft.ItemType" placeholder="Arme, Potion..." />
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+            <div class="grid-2" style="gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">Quantité</label>
                     <input type="number" min="1" class="form-control" @bind="Draft.Quantity" />
