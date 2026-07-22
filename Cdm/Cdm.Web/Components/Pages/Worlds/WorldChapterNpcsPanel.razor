@@ -49,7 +49,7 @@
             </div>
             <div class="form-group" style="margin-bottom: var(--spacing-md);">
                 <label class="form-label">Portrait</label>
-                <AppImageUpload Category="misc" CurrentUrl="@NewNpc.ImageUrl"
+                <AppImageUpload Category="portraits" CurrentUrl="@NewNpc.ImageUrl"
                                 Label="Ajouter un portrait" OnUploaded="@((string url) => NewNpc.ImageUrl = url)" />
             </div>
             @if (IsDnD)
@@ -198,7 +198,7 @@
                                 </div>
                                 <div class="form-group" style="margin-bottom: var(--spacing-md);">
                                     <label class="form-label">Portrait</label>
-                                    <AppImageUpload Category="misc" CurrentUrl="@EditingNpcDraft.ImageUrl"
+                                    <AppImageUpload Category="portraits" CurrentUrl="@EditingNpcDraft.ImageUrl"
                                                     Label="Ajouter un portrait" OnUploaded="@((string url) => EditingNpcDraft.ImageUrl = url)" />
                                 </div>
                                 @if (IsDnD)

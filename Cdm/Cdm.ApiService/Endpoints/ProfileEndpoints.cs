@@ -136,10 +136,12 @@ public static class ProfileEndpoints
             return Results.BadRequest(new { error = "No file provided" });
         }
 
+        // Une photo de profil suit les limites « portrait » (poids et dimensions bridés).
+        var policy = ImagePolicy.For("avatars");
         var file = request.Form.Files[0];
-        if (file.Length == 0 || file.Length > ImageValidation.MaxFileSizeBytes)
+        if (file.Length == 0 || file.Length > policy.MaxFileSizeBytes)
         {
-            return Results.BadRequest(new { error = "Fichier vide ou trop lourd (maximum 5 Mo)." });
+            return Results.BadRequest(new { error = file.Length == 0 ? "Fichier vide." : policy.TooHeavyMessage() });
         }
 
         // Store through the configured image storage (Azure Blob in prod, local in dev) so the

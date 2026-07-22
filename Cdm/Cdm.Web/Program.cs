@@ -104,6 +104,30 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Les images envoyées par les utilisateurs sont servies par le stockage blob, donc depuis
+// une autre origine que le site. Sans l'ajouter à img-src, le navigateur les bloque : le
+// blob répond bien 200 mais l'utilisateur ne voit qu'une icône d'image cassée. En local le
+// problème n'apparaît pas (stockage disque servi par la même origine).
+var imageOrigin = builder.Configuration["ImageStorage:BlobServiceUri"];
+var imgSrc = "img-src 'self' data:";
+if (!string.IsNullOrWhiteSpace(imageOrigin) && Uri.TryCreate(imageOrigin, UriKind.Absolute, out var imageUri))
+{
+    imgSrc += $" {imageUri.GetLeftPart(UriPartial.Authority)}";
+}
+
+// Content-Security-Policy tuned for Blazor Server + FluentUI + external fonts/icons.
+// connect-src is restricted to same-origin (+ websockets) which limits token exfiltration
+// even if a script is injected — the main mitigation for the token stored in localStorage.
+// Follow-up: migrate the JWT to an HttpOnly cookie and drop 'unsafe-inline' from script-src via nonce/hash.
+var contentSecurityPolicy =
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; " +
+    "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
+    imgSrc + "; " +
+    "connect-src 'self' ws: wss:; " +
+    "frame-ancestors 'none'; object-src 'none'; base-uri 'self'";
+
 // Security headers (OWASP Best Practices) — audit fix #4 (XSS mitigation) & #11
 app.Use(async (context, next) =>
 {
@@ -113,18 +137,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
     context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
 
-    // Content-Security-Policy tuned for Blazor Server + FluentUI + external fonts/icons.
-    // connect-src is restricted to same-origin (+ websockets) which limits token exfiltration
-    // even if a script is injected — the main mitigation for the token stored in localStorage.
-    // Follow-up: migrate the JWT to an HttpOnly cookie and drop 'unsafe-inline' from script-src via nonce/hash.
-    context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; " +
-        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
-        "img-src 'self' data:; " +
-        "connect-src 'self' ws: wss:; " +
-        "frame-ancestors 'none'; object-src 'none'; base-uri 'self'";
+    context.Response.Headers["Content-Security-Policy"] = contentSecurityPolicy;
 
     await next();
 });

@@ -1,6 +1,7 @@
 using Cdm.Business.Abstraction.DTOs;
 using Cdm.Business.Abstraction.DTOs.Models;
 using Cdm.Business.Abstraction.DTOs.ViewModels;
+using Cdm.Common.Services;
 using Cdm.Web.Resources;
 using Cdm.Web.Services;
 using Cdm.Web.Services.ApiClients;
@@ -27,6 +28,9 @@ public partial class Profile
     private bool IsLoading = true;
     private bool IsSaving = false;
     private bool IsUploadingAvatar = false;
+
+    /// <summary>Limites de la photo de profil — partagées avec l'API via ImagePolicy.</summary>
+    private static readonly ImagePolicy AvatarPolicy = ImagePolicy.For("avatars");
     private string? AvatarError;
     private string ErrorMessage = string.Empty;
     private string SuccessMessage = string.Empty;
@@ -98,10 +102,10 @@ public partial class Profile
             return;
         }
 
-        // 2 Mo max côté serveur (avatar) ; on valide aussi ici pour un retour immédiat.
-        if (file.Size > 2 * 1024 * 1024)
+        // Mêmes limites que côté serveur (ImagePolicy), validées ici pour un retour immédiat.
+        if (file.Size > AvatarPolicy.MaxFileSizeBytes)
         {
-            AvatarError = "Image trop lourde (maximum 2 Mo).";
+            AvatarError = AvatarPolicy.TooHeavyMessage();
             return;
         }
 
