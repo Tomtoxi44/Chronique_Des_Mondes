@@ -20,7 +20,7 @@ public static class ImageEndpoints
     }
 
     private static readonly HashSet<string> AllowedCategories =
-        new(StringComparer.OrdinalIgnoreCase) { "session", "maps", "items", "misc" };
+        new(StringComparer.OrdinalIgnoreCase) { "session", "maps", "items", "misc", "portraits" };
 
     /// <summary>Maps the image endpoints.</summary>
     public static void MapImageEndpoints(this IEndpointRouteBuilder app)
@@ -59,10 +59,14 @@ public static class ImageEndpoints
             return Results.BadRequest(new { error = "Aucun fichier fourni." });
         }
 
+        // Les limites dependent de la categorie (portraits brides, illustrations libres).
+        // Ce pre-controle evite de lire tout le corps pour rien ; ImageValidation refait
+        // le controle sur les octets, dimensions comprises.
+        var policy = ImagePolicy.For(category);
         var file = request.Form.Files[0];
-        if (file.Length == 0 || file.Length > ImageValidation.MaxFileSizeBytes)
+        if (file.Length == 0 || file.Length > policy.MaxFileSizeBytes)
         {
-            return Results.BadRequest(new { error = "Fichier vide ou trop lourd (maximum 5 Mo)." });
+            return Results.BadRequest(new { error = file.Length == 0 ? "Fichier vide." : policy.TooHeavyMessage() });
         }
 
         try

@@ -51,6 +51,10 @@ else
                 <p style="font-size: var(--font-size-xs); color: var(--color-error); margin-top: var(--spacing-xs);">@AvatarError</p>
             }
 
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--spacing-xs);">
+                @AvatarPolicy.Describe()
+            </p>
+
             <h3 class="card-title" style="margin-top: var(--spacing-sm);">@(UserProfile?.Nickname ?? UserName)</h3>
             <p style="color: var(--color-text-muted); font-size: var(--font-size-sm);">@UserProfile?.Email</p>
             @if (UserProfile?.CreatedAt != null)
