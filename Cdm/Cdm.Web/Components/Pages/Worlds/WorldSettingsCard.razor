@@ -1,0 +1,152 @@
+@* World information card with its inline settings editor (extracted from WorldDetail).
+   Owns the edit state; reports the previewed game type so the parent can re-theme live. *@
+@namespace Cdm.Web.Components.Pages.Worlds
+@using Cdm.Business.Abstraction.DTOs
+@using Cdm.Common.Enums
+@using Cdm.Web.Extensions
+@inject Cdm.Web.Services.ApiClients.WorldApiClient WorldClient
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Cdm.Web.Resources.AppStrings> L
+
+<div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
+    @if (IsOwner && IsEditing)
+    {
+        <AppSectionTitle Title="Modifier les paramètres" Icon="bi-sliders">
+            <Actions>
+                <button class="btn btn-ghost btn-sm" @onclick="CancelEdit">
+                    <i class="bi bi-x"></i>
+                </button>
+            </Actions>
+        </AppSectionTitle>
+
+        <div class="form-group">
+            <label class="form-label">Nom du monde *</label>
+            <input type="text" class="form-control" @bind="EditName" placeholder="Nom du monde..." />
+        </div>
+
+        <div class="form-group" style="margin-top: var(--spacing-md);">
+            <label class="form-label">@L["Worlds_GameType"]</label>
+            <div class="game-type-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--spacing-sm); margin-top: var(--spacing-xs);">
+                @foreach (var gt in GameTypeExtensions.Picker)
+                {
+                    <button type="button"
+                            class="game-type-card @(EditGameType == gt.Value ? "selected" : "")"
+                            style="padding: var(--spacing-sm); @(EditGameType == gt.Value ? "border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(214,159,82,0.12));" : "")"
+                            @onclick="() => SelectGameType(gt.Value)">
+                        <i class="bi @gt.Icon game-type-icon" style="font-size: 1.2rem; @(EditGameType == gt.Value ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
+                        <span class="game-type-label" style="font-size: var(--font-size-xs);">@gt.Label</span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+            <button class="btn btn-primary btn-sm" @onclick="Save" disabled="@(IsSaving || string.IsNullOrWhiteSpace(EditName))">
+                <i class="bi bi-floppy"></i> Enregistrer
+            </button>
+            <button class="btn btn-ghost btn-sm" @onclick="CancelEdit">
+                @L["Common_Cancel"]
+            </button>
+        </div>
+    }
+    else
+    {
+        <AppSectionTitle Title='@L["Worlds_Information"]' Icon="bi-info-circle">
+            <Actions>
+                @if (IsOwner)
+                {
+                    <button class="btn btn-ghost btn-sm" @onclick="BeginEdit">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                }
+            </Actions>
+        </AppSectionTitle>
+        <div class="info-grid">
+            <div>
+                <span class="info-label">@L["Worlds_GameType"]</span>
+                <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
+            </div>
+            <div>
+                <span class="info-label">@L["Worlds_CreatedAt"]</span>
+                <span class="info-value">@World.CreatedAt.ToString("d MMM yyyy")</span>
+            </div>
+            @if (World.UpdatedAt.HasValue)
+            {
+                <div>
+                    <span class="info-label">@L["Worlds_UpdatedAt"]</span>
+                    <span class="info-value">@World.UpdatedAt.Value.ToString("d MMM yyyy")</span>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int WorldId { get; set; }
+    [Parameter] public WorldDto World { get; set; } = default!;
+    [Parameter] public bool IsOwner { get; set; }
+
+    /// <summary>Raised with the updated world after a successful save.</summary>
+    [Parameter] public EventCallback<WorldDto> OnSaved { get; set; }
+
+    /// <summary>
+    /// Game type currently shown by the picker, or <c>null</c> when not editing — lets the
+    /// parent preview the theme while the owner tries out a system.
+    /// </summary>
+    [Parameter] public EventCallback<GameType?> OnPreviewGameTypeChanged { get; set; }
+
+    private bool IsEditing;
+    private string EditName = string.Empty;
+    private GameType EditGameType = GameType.Generic;
+    private bool IsSaving;
+
+    private async Task BeginEdit()
+    {
+        EditName = World.Name;
+        EditGameType = World.GameType;
+        IsEditing = true;
+        await NotifyPreviewAsync();
+    }
+
+    private async Task CancelEdit()
+    {
+        IsEditing = false;
+        await NotifyPreviewAsync();
+    }
+
+    private async Task SelectGameType(GameType type)
+    {
+        EditGameType = type;
+        await NotifyPreviewAsync();
+    }
+
+    private Task NotifyPreviewAsync() =>
+        OnPreviewGameTypeChanged.HasDelegate
+            ? OnPreviewGameTypeChanged.InvokeAsync(IsEditing ? EditGameType : null)
+            : Task.CompletedTask;
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(EditName)) return;
+        IsSaving = true;
+        try
+        {
+            var result = await WorldClient.UpdateWorldAsync(
+                WorldId,
+                new UpdateWorldRequest(EditName, World.Description ?? string.Empty, World.IsActive, EditGameType));
+
+            if (result != null)
+            {
+                IsEditing = false;
+                await NotifyPreviewAsync();
+                if (OnSaved.HasDelegate)
+                {
+                    await OnSaved.InvokeAsync(result);
+                }
+            }
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+}

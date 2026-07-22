@@ -8,7 +8,6 @@ using Cdm.Web.Services.ApiClients;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Localization;
-using Microsoft.JSInterop;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -20,14 +19,12 @@ public partial class WorldDetail : IDisposable
     [Inject] private CampaignApiClient CampaignClient { get; set; } = default!;
     [Inject] private MarketplaceApiClient MarketClient { get; set; } = default!;
     [Inject] private ChapterApiClient ChapterClient { get; set; } = default!;
-    [Inject] private NpcApiClient NpcClient { get; set; } = default!;
     [Inject] private EventApiClient EventClient { get; set; } = default!;
     [Inject] private AchievementApiClient AchievementClient { get; set; } = default!;
     [Inject] private SessionApiClient SessionClient { get; set; } = default!;
     [Inject] private NavigationContextService NavContext { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IStringLocalizer<AppStrings> L { get; set; } = default!;
-    [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     [Parameter] public int WorldId { get; set; }
@@ -47,30 +44,19 @@ public partial class WorldDetail : IDisposable
     private Dictionary<int, List<ChapterDto>> CampaignChapters = new();
     private bool IsLoading = true;
     private bool IsSaving = false;
-    private string? SaveMessage;
-    private bool SaveSuccess = false;
 
     private int CurrentUserId = 0;
     private bool IsOwner => World?.UserId == CurrentUserId;
 
-    // Session launch state
-    private SessionDto? ActiveSession;
-    private bool IsLoadingSession = false;
-    private bool IsStartSessionPanelOpen = false;
-    private bool IsStartingSession = false;
-    private string? SessionStartError;
-    private string? SessionWelcomeMessage;
-    private List<WorldCharacterDto> SessionParticipants = new();
-    private HashSet<int> SelectedWorldCharacterIds = new();
+    // Session launch is delegated to WorldSessionLaunchPanel; the parent keeps only a
+    // lightweight flag to show the "active session" dot on the Session tab.
+    private bool _campaignHasActiveSession;
 
-    // World settings editor (inline in overview)
-    private bool IsWorldEditing = false;
-    private string WorldEditName = string.Empty;
-    private GameType WorldEditGameType = GameType.Generic;
+    // World settings editing is delegated to WorldSettingsCard; the parent keeps the
+    // previewed game type so the page theme follows the picker live.
+    private GameType? _previewGameType;
 
-    // Description editor
-    private string DescriptionDraft = string.Empty;
-    private bool DescriptionDirty = false;
+    // Description editing is delegated to WorldDescriptionEditor.
 
     // Campaign detail
     private CampaignDto? SelectedCampaign;
@@ -101,25 +87,15 @@ public partial class WorldDetail : IDisposable
         }
         IsSharingCampaign = false;
     }
-    private CreateChapterDto NewChapter = new();
     private bool IsCampaignEditing = false;
     private string CampaignEditName = string.Empty;
     private string CampaignEditDescription = string.Empty;
 
-    // Chapter drag-and-drop reorder
-    private ChapterDto? _draggedChapter;
-    private int? _dragOverChapterId;
-    private bool IsReordering = false;
-
-    // New campaign (inline)
-    private CreateCampaignDto NewCampaign = new();
-    private string? CampaignCreateError;
+    // Chapter list + drag-and-drop reorder is delegated to WorldChapterListPanel.
+    // Campaign creation is delegated to WorldNewCampaignForm.
 
     // Chapter detail
     private ChapterDto? SelectedChapter;
-    private string ChapterContentDraft = string.Empty;
-    private bool ChapterContentDirty = false;
-
     // Invite tokens (campaign-level; world-level invite lives in WorldInvitePanel)
     private bool IsGeneratingToken = false;
 
@@ -132,30 +108,11 @@ public partial class WorldDetail : IDisposable
 
     // (Succès du monde : gérés par WorldAchievementsPanel)
 
-    private static readonly List<(GameType Value, string Label, string Icon)> GameTypeOptions = new()
+    /// <summary>Applies the world returned by <c>WorldDescriptionEditor</c> after a save.</summary>
+    private void OnWorldDescriptionSaved(WorldDto updated)
     {
-        (GameType.Generic,       "Générique",          "bi-globe2"),
-        (GameType.DnD5e,         "D&D 5e",             "bi-shield-fill"),
-        (GameType.Pathfinder,    "Pathfinder",         "bi-shield-fill-check"),
-        (GameType.CallOfCthulhu, "L'Appel de Cthulhu", "bi-eye-fill"),
-        (GameType.Warhammer,     "Warhammer",          "bi-hammer"),
-        (GameType.Cyberpunk,     "Cyberpunk",          "bi-cpu-fill"),
-        (GameType.Skyrim,        "Skyrim",             "bi-snow2"),
-        (GameType.Custom,        "Personnalisé",       "bi-stars"),
-    };
-
-    private void OnDescriptionInput(ChangeEventArgs e)
-    {
-        DescriptionDraft = e.Value?.ToString() ?? string.Empty;
-        DescriptionDirty = true;
-        SaveMessage = null;
-    }
-
-    private void OnChapterContentInput(ChangeEventArgs e)
-    {
-        ChapterContentDraft = e.Value?.ToString() ?? string.Empty;
-        ChapterContentDirty = true;
-        SaveMessage = null;
+        World = updated;
+        SetSecondaryNav();
     }
 
     private AppConfirmDialog DeleteWorldDialog { get; set; } = default!;
@@ -166,26 +123,10 @@ public partial class WorldDetail : IDisposable
     private string CampaignTab = "chapitres";
     private int? _lastCampaignIdForTab;
 
-    // Chapter tabs (Contenu | PNJ)
-    private string ChapterTab = "contenu";
-    private int? _lastChapterIdForTab;
-    private bool ChapterPreviewMode = false;
-
-    // NPC list for the selected chapter — chargée ici (badge + @mentions),
-    // l'UI/CRUD est déléguée au composant WorldChapterNpcsPanel.
-    private List<NpcDto> ChapterNpcs = new();
-    private int? _lastNpcChapterId;
-
-    // PNJ à déplier dans le panneau (piloté par un clic sur une @mention).
-    private int? MentionExpandNpcId;
+    // Chapter workspace (tabs, content draft, NPCs, @mention interop) is delegated
+    // to WorldChapterEditorPanel.
 
     private bool IsWorldDnD5e => World?.GameType == GameType.DnD5e;
-
-    // @mention JS interop
-    private DotNetObjectReference<WorldDetail>? _dotNetRef;
-    private IJSObjectReference? _mentionModule;
-    private bool _needsMentionInit = false;
-    private bool _needsPreviewClickInit = false;
 
     private List<BreadcrumbItem> Breadcrumbs => new()
     {
@@ -226,43 +167,21 @@ public partial class WorldDetail : IDisposable
                 ? CampaignChapters[SelectedCampaignId.Value].FirstOrDefault(c => c.Id == SelectedChapterId.Value)
                 : null;
 
-            if (SelectedChapter != null)
-                ChapterContentDraft = SelectedChapter.Content ?? string.Empty;
-
-            // Load NPCs when chapter changes (le badge et les @mentions lisent ChapterNpcs ;
-            // l'affichage/CRUD est délégué à WorldChapterNpcsPanel).
-            if (SelectedChapterId != _lastNpcChapterId)
-            {
-                _lastNpcChapterId = SelectedChapterId;
-                MentionExpandNpcId = null;
-                if (SelectedChapterId.HasValue && SelectedChapter != null)
-                    ChapterNpcs = await NpcClient.GetNpcsByChapterAsync(SelectedChapterId.Value);
-                else
-                    ChapterNpcs.Clear();
-            }
-
-            // Ensure WorldCharacters are loaded for @mention PJ support
+            // The chapter workspace needs the world players to resolve @mentions (PJ).
             if (SelectedChapterId.HasValue && WorldCharacters.Count == 0 && !IsLoadingWorldCharacters)
                 await LoadWorldCharactersAsync();
 
-            // Reset chapter tab when switching chapters
-            if (SelectedChapterId != _lastChapterIdForTab)
+            // The session-launch panel self-loads the active session; the parent only needs to
+            // know whether one exists to show the tab dot.
+            if (IsOwner && Section == null && !SelectedChapterId.HasValue)
             {
-                _lastChapterIdForTab = SelectedChapterId;
-                ChapterTab = "contenu";
-                ChapterPreviewMode = false;
-                _needsMentionInit = true;
+                _campaignHasActiveSession = await SessionClient.GetActiveSessionByCampaignAsync(SelectedCampaignId.Value) != null;
             }
-
-            // Check for active session on this campaign (GM only)
-            if (IsOwner && !IsLoadingSession && Section == null && !SelectedChapterId.HasValue)
-                await LoadActiveSessionAsync(SelectedCampaignId.Value);
         }
         else
         {
             SelectedChapter = null;
-            ActiveSession = null;
-            IsStartSessionPanelOpen = false;
+            _campaignHasActiveSession = false;
         }
 
         // Reset tab when switching campaigns
@@ -270,18 +189,6 @@ public partial class WorldDetail : IDisposable
         {
             _lastCampaignIdForTab = SelectedCampaignId;
             CampaignTab = "chapitres";
-        }
-
-        if (Section == "description")
-            DescriptionDraft = World.Description ?? string.Empty;
-
-        if (Section == "new-chapter" && SelectedCampaignId.HasValue)
-        {
-            var existingChapters = CampaignChapters.TryGetValue(SelectedCampaignId.Value, out var chs) ? chs : new();
-            NewChapter = new CreateChapterDto
-            {
-                ChapterNumber = existingChapters.Count > 0 ? existingChapters.Max(c => c.ChapterNumber) + 1 : 1
-            };
         }
 
         if (Section == "invitations" && !IsLoadingWorldCharacters && WorldCharacters.Count == 0)
@@ -309,7 +216,6 @@ public partial class WorldDetail : IDisposable
             {
                 // Use world-level campaign endpoint (works for both GM and players)
                 Campaigns = await WorldClient.GetWorldCampaignsAsync(WorldId);
-                DescriptionDraft = World.Description ?? string.Empty;
                 SetSecondaryNav();
             }
         }
@@ -443,175 +349,41 @@ public partial class WorldDetail : IDisposable
         );
     }
 
-    private async Task SaveDescription()
+    /// <summary>Applies the world returned by <c>WorldSettingsCard</c> after a save.</summary>
+    private void OnWorldSettingsSaved(WorldDto updated)
     {
-        if (World == null) return;
-        IsSaving = true;
-        SaveMessage = null;
-        try
-        {
-            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(World.Name, DescriptionDraft, World.IsActive, World.GameType));
-            if (result != null)
-            {
-                World = result;
-                DescriptionDirty = false;
-                SaveSuccess = true;
-                SaveMessage = "Description sauvegardée.";
-                SetSecondaryNav();
-            }
-            else
-            {
-                SaveSuccess = false;
-                SaveMessage = "Erreur lors de la sauvegarde.";
-            }
-        }
-        finally
-        {
-            IsSaving = false;
-        }
+        World = updated;
+        SetSecondaryNav();
     }
 
-    private async Task SaveWorldSettings()
-    {
-        if (World == null || string.IsNullOrWhiteSpace(WorldEditName)) return;
-        IsSaving = true;
-        try
-        {
-            var result = await WorldClient.UpdateWorldAsync(WorldId, new UpdateWorldRequest(WorldEditName, World.Description ?? string.Empty, World.IsActive, WorldEditGameType));
-            if (result != null)
-            {
-                World = result;
-                IsWorldEditing = false;
-                SetSecondaryNav();
-            }
-        }
-        finally
-        {
-            IsSaving = false;
-        }
-    }
-
-    private void BeginWorldEdit()
-    {
-        if (World == null) return;
-        WorldEditName = World.Name;
-        WorldEditGameType = World.GameType;
-        IsWorldEditing = true;
-    }
-
-    private async Task SaveChapterContent()
-    {
-        if (SelectedChapter == null || !SelectedCampaignId.HasValue) return;
-        IsSaving = true;
-        SaveMessage = null;
-        try
-        {
-            var dto = new CreateChapterDto
-            {
-                CampaignId = SelectedCampaignId.Value,
-                Title = SelectedChapter.Title,
-                Content = ChapterContentDraft
-            };
-            var result = await ChapterClient.UpdateChapterAsync(SelectedChapter.Id, dto);
-            if (result != null)
-            {
-                var chapters = CampaignChapters[SelectedCampaignId.Value];
-                var idx = chapters.FindIndex(c => c.Id == result.Id);
-                if (idx >= 0) chapters[idx] = result;
-                SelectedChapter = result;
-                ChapterContentDirty = false;
-                SaveSuccess = true;
-                SaveMessage = "Chapitre sauvegardé.";
-            }
-            else
-            {
-                SaveSuccess = false;
-                SaveMessage = "Erreur lors de la sauvegarde.";
-            }
-        }
-        finally
-        {
-            IsSaving = false;
-        }
-    }
-
-    private async Task CreateChapter()
+    /// <summary>Applies the chapter saved by <c>WorldChapterEditorPanel</c>.</summary>
+    private void OnChapterSaved(ChapterDto saved)
     {
         if (!SelectedCampaignId.HasValue) return;
-        IsSaving = true;
-        NewChapter.CampaignId = SelectedCampaignId.Value;
-        var result = await ChapterClient.CreateChapterAsync(NewChapter);
-        if (result != null)
-        {
-            if (!CampaignChapters.ContainsKey(SelectedCampaignId.Value))
-                CampaignChapters[SelectedCampaignId.Value] = new();
-            CampaignChapters[SelectedCampaignId.Value].Add(result);
-            NewChapter = new CreateChapterDto();
-            SetSecondaryNav();
-            Nav.NavigateTo($"/worlds/{WorldId}?campaignId={SelectedCampaignId.Value}&chapterId={result.Id}");
-        }
-        IsSaving = false;
+        var chapters = CampaignChapters[SelectedCampaignId.Value];
+        var idx = chapters.FindIndex(c => c.Id == saved.Id);
+        if (idx >= 0) chapters[idx] = saved;
+        SelectedChapter = saved;
+        SetSecondaryNav();
+    }
+
+    /// <summary>Adds the chapter created by <c>WorldNewChapterForm</c> and opens it.</summary>
+    private void OnChapterCreated(ChapterDto created)
+    {
+        if (!SelectedCampaignId.HasValue) return;
+        if (!CampaignChapters.ContainsKey(SelectedCampaignId.Value))
+            CampaignChapters[SelectedCampaignId.Value] = new();
+        CampaignChapters[SelectedCampaignId.Value].Add(created);
+        SetSecondaryNav();
+        Nav.NavigateTo($"/worlds/{WorldId}?campaignId={SelectedCampaignId.Value}&chapterId={created.Id}");
     }
 
     // ── Drag-and-drop chapter reordering ──────────────────────────────────
-    private void OnChapterDragStart(ChapterDto chapter)
+    /// <summary>Applies the chapter order produced by <c>WorldChapterListPanel</c>.</summary>
+    private void OnChaptersReordered(List<ChapterDto> ordered)
     {
-        _draggedChapter = chapter;
-    }
-
-    private void OnChapterDragOver(ChapterDto target)
-    {
-        _dragOverChapterId = target.Id;
-    }
-
-    private void OnChapterDragLeave()
-    {
-        _dragOverChapterId = null;
-    }
-
-    private async Task OnChapterDrop(ChapterDto target)
-    {
-        if (_draggedChapter == null || _draggedChapter.Id == target.Id || !SelectedCampaignId.HasValue) return;
-        if (!CampaignChapters.TryGetValue(SelectedCampaignId.Value, out var chapters)) return;
-
-        // Reorder list in memory
-        var ordered = chapters.OrderBy(c => c.ChapterNumber).ToList();
-        var from = ordered.IndexOf(_draggedChapter);
-        var to = ordered.IndexOf(target);
-        if (from < 0 || to < 0) return;
-
-        ordered.RemoveAt(from);
-        ordered.Insert(to, _draggedChapter);
-
-        // Renumber starting at 1
-        IsReordering = true;
-        _draggedChapter = null;
-        _dragOverChapterId = null;
-
-        var tasks = new List<Task>();
-        for (int i = 0; i < ordered.Count; i++)
-        {
-            var ch = ordered[i];
-            var newNumber = i + 1;
-            if (ch.ChapterNumber != newNumber)
-            {
-                ch.ChapterNumber = newNumber;
-                var dto = new CreateChapterDto
-                {
-                    CampaignId = ch.CampaignId,
-                    ChapterNumber = newNumber,
-                    Title = ch.Title,
-                    Content = ch.Content
-                };
-                tasks.Add(ChapterClient.UpdateChapterAsync(ch.Id, dto).ContinueWith(_ => { }));
-            }
-        }
-
+        if (!SelectedCampaignId.HasValue) return;
         CampaignChapters[SelectedCampaignId.Value] = ordered;
-        StateHasChanged();
-
-        await Task.WhenAll(tasks);
-        IsReordering = false;
         SetSecondaryNav();
     }
 
@@ -637,25 +409,12 @@ public partial class WorldDetail : IDisposable
         IsSaving = false;
     }
 
-    private async Task CreateCampaignInline()
+    /// <summary>Adds the campaign created by <c>WorldNewCampaignForm</c> and opens it.</summary>
+    private void OnCampaignCreated(CampaignDto created)
     {
-        if (World == null) return;
-        IsSaving = true;
-        CampaignCreateError = null;
-        NewCampaign.WorldId = WorldId;
-        var result = await CampaignClient.CreateCampaignAsync(NewCampaign);
-        if (result != null)
-        {
-            Campaigns.Add(result);
-            NewCampaign = new CreateCampaignDto();
-            SetSecondaryNav();
-            Nav.NavigateTo($"/worlds/{WorldId}?campaignId={result.Id}");
-        }
-        else
-        {
-            CampaignCreateError = "Erreur lors de la création de la campagne.";
-        }
-        IsSaving = false;
+        Campaigns.Add(created);
+        SetSecondaryNav();
+        Nav.NavigateTo($"/worlds/{WorldId}?campaignId={created.Id}");
     }
 
     private async Task LoadWorldCharactersAsync()
@@ -723,176 +482,9 @@ public partial class WorldDetail : IDisposable
         }
     }
 
-    public string GetStatusClass(CampaignStatus status) => status.ToCssClass();
-
-    public string GetStatusLabel(CampaignStatus status) => L[status.ToLabelKey()];
-
-    private async Task LoadActiveSessionAsync(int campaignId)
-    {
-        IsLoadingSession = true;
-        ActiveSession = await SessionClient.GetActiveSessionByCampaignAsync(campaignId);
-        IsLoadingSession = false;
-    }
-
-    private async Task OpenStartSessionPanel()
-    {
-        IsStartSessionPanelOpen = true;
-        SessionStartError = null;
-        SessionWelcomeMessage = string.Empty;
-        SelectedWorldCharacterIds.Clear();
-
-        if (SessionParticipants.Count == 0)
-        {
-            SessionParticipants = await WorldClient.GetWorldCharactersTypedAsync(WorldId);
-        }
-    }
-
-    private void ToggleParticipant(int wcId)
-    {
-        if (SelectedWorldCharacterIds.Contains(wcId))
-            SelectedWorldCharacterIds.Remove(wcId);
-        else
-            SelectedWorldCharacterIds.Add(wcId);
-    }
-
-    private async Task StartSession()
-    {
-        if (SelectedCampaignId == null) return;
-        IsStartingSession = true;
-        SessionStartError = null;
-
-        var dto = new StartSessionDto
-        {
-            CampaignId = SelectedCampaignId.Value,
-            WelcomeMessage = SessionWelcomeMessage,
-            WorldCharacterIds = SelectedWorldCharacterIds.ToList()
-        };
-
-        var session = await SessionClient.StartSessionAsync(dto);
-        if (session != null)
-        {
-            Nav.NavigateTo($"/sessions/{session.Id}/gm");
-        }
-        else
-        {
-            SessionStartError = "Impossible de démarrer la session. Une session est peut-être déjà active.";
-        }
-        IsStartingSession = false;
-    }
-
-
-    // ── @mention JS interop ───────────────────────────────────────────────
-
-    [Microsoft.JSInterop.JSInvokable]
-    public List<MentionItem> GetMentionables()
-    {
-        var items = ChapterNpcs
-            .Select(n => new MentionItem(n.Id, n.DisplayName, n.Description ?? string.Empty, "npc"))
-            .ToList();
-        items.AddRange(WorldCharacters
-            .Select(c => new MentionItem(c.CharacterId, c.CharacterName, string.Empty, "pc")));
-        return items;
-    }
-
-    [Microsoft.JSInterop.JSInvokable]
-    public async Task OpenMentionDetail(string type, int id)
-    {
-        if (type == "npc")
-        {
-            ChapterTab = "pnj";
-            MentionExpandNpcId = id;
-            await InvokeAsync(StateHasChanged);
-        }
-        else if (type == "pc")
-        {
-            await InvokeAsync(() => Nav.NavigateTo($"/characters/{id}"));
-        }
-    }
-
-    private void SwitchToChapterTab(string tab)
-    {
-        ChapterTab = tab;
-        if (tab == "contenu" && !ChapterPreviewMode)
-            _needsMentionInit = true;
-    }
-
-    private void ToggleChapterPreview()
-    {
-        ChapterPreviewMode = !ChapterPreviewMode;
-        if (!ChapterPreviewMode)
-            _needsMentionInit = true;
-        else
-            _needsPreviewClickInit = true;
-    }
-
-    private MarkupString RenderChapterContent(string text)
-    {
-        if (string.IsNullOrEmpty(text)) return new MarkupString(string.Empty);
-        var npcMap = ChapterNpcs.ToDictionary(n => n.Id, n => n);
-        var pcMap = WorldCharacters.ToDictionary(c => c.CharacterId, c => c);
-        var escaped = text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
-
-        // Render NPC mentions: @[Name](npc:id)
-        var rendered = System.Text.RegularExpressions.Regex.Replace(
-            escaped,
-            @"@\[([^\]]+)\]\(npc:(\d+)\)",
-            m =>
-            {
-                var name = m.Groups[1].Value;
-                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
-                var tooltip = id > 0 && npcMap.TryGetValue(id, out var npc)
-                    ? (npc.Description ?? npc.PhysicalDescription ?? string.Empty)
-                    : string.Empty;
-                var tip = string.IsNullOrEmpty(tooltip) ? "" : $" data-tooltip=\"{tooltip.Replace("\"", "&quot;")}\"";
-                return $"<span class=\"npc-mention\" data-mention-type=\"npc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
-            });
-
-        // Render PJ mentions: @[Name](pc:id)
-        rendered = System.Text.RegularExpressions.Regex.Replace(
-            rendered,
-            @"@\[([^\]]+)\]\(pc:(\d+)\)",
-            m =>
-            {
-                var name = m.Groups[1].Value;
-                var id = int.TryParse(m.Groups[2].Value, out var i) ? i : 0;
-                var tooltip = id > 0 && pcMap.TryGetValue(id, out var pc)
-                    ? $"Personnage joueur{(pc.Level.HasValue ? $" — Niveau {pc.Level}" : string.Empty)}"
-                    : "Personnage joueur";
-                var tip = $" data-tooltip=\"{tooltip}\"";
-                return $"<span class=\"npc-mention pc-mention\" data-mention-type=\"pc\" data-mention-id=\"{id}\"{tip}>@{name}</span>";
-            });
-
-        rendered = rendered.Replace("\r\n", "\n").Replace("\n", "<br />");
-        return new MarkupString(rendered);
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-            _dotNetRef = DotNetObjectReference.Create(this);
-
-        if (_needsMentionInit && ChapterTab == "contenu" && !ChapterPreviewMode
-            && SelectedChapter != null && _dotNetRef != null)
-        {
-            _needsMentionInit = false;
-            _mentionModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "/js/mention.js");
-            await _mentionModule.InvokeVoidAsync("init", "chapter-content-editor", _dotNetRef);
-        }
-
-        if (_needsPreviewClickInit && ChapterTab == "contenu" && ChapterPreviewMode
-            && SelectedChapter != null && _dotNetRef != null)
-        {
-            _needsPreviewClickInit = false;
-            _mentionModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "/js/mention.js");
-            await _mentionModule.InvokeVoidAsync("initPreviewClicks", "chapter-preview-content", _dotNetRef);
-        }
-    }
 
     public void Dispose()
     {
         NavContext.ClearContext();
-        _dotNetRef?.Dispose();
     }
-
-    public record MentionItem(int Id, string DisplayName, string Description, string Type);
 }

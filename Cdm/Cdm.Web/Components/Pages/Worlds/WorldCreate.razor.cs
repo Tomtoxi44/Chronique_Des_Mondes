@@ -4,6 +4,7 @@ using Cdm.Web.Components.Shared;
 using Cdm.Web.Resources;
 using Cdm.Web.Services.ApiClients;
 using Cdm.Web.Services.ApiClients.Base;
+using Cdm.Web.Extensions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Localization;
 
@@ -25,17 +26,8 @@ public partial class WorldCreate
         new BreadcrumbItem(L["Worlds_Create"])
     };
 
-    private readonly List<GameTypeOption> GameTypeOptions = new()
-    {
-        new(GameType.Generic,      "Générique",         "bi-globe2"),
-        new(GameType.DnD5e,        "D&D 5e",            "bi-shield-fill"),
-        new(GameType.Pathfinder,   "Pathfinder",        "bi-shield-fill-check"),
-        new(GameType.CallOfCthulhu,"L'Appel de Cthulhu","bi-eye-fill"),
-        new(GameType.Warhammer,    "Warhammer",         "bi-hammer"),
-        new(GameType.Cyberpunk,    "Cyberpunk",         "bi-cpu-fill"),
-        new(GameType.Skyrim,       "Skyrim",            "bi-snow2"),
-        new(GameType.Custom,       "Personnalisé",      "bi-stars"),
-    };
+    private static IReadOnlyList<(GameType Value, string Label, string Icon)> GameTypeOptions
+        => GameTypeExtensions.Picker;
 
     private async Task HandleCreate()
     {
@@ -73,5 +65,4 @@ public partial class WorldCreate
         public GameType GameType { get; set; } = GameType.Generic;
     }
 
-    private record GameTypeOption(GameType Value, string Label, string Icon);
 }

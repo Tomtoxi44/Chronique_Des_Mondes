@@ -1,0 +1,172 @@
+@* Session-launch panel for a campaign (extracted from WorldDetail): shows the active
+   session or lets the GM start one, picking which players to invite. Self-loading. *@
+@namespace Cdm.Web.Components.Pages.Worlds
+@using Cdm.Business.Abstraction.DTOs
+@inject Cdm.Web.Services.ApiClients.SessionApiClient SessionClient
+@inject Cdm.Web.Services.ApiClients.WorldApiClient WorldClient
+@inject NavigationManager Nav
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Cdm.Web.Resources.AppStrings> L
+
+<div class="cdm-card" style="border-top: 2px solid var(--theme-primary, var(--color-primary));">
+    <AppSectionTitle Title="Session de jeu" Icon="bi-play-circle" Rule="false">
+        <Actions>
+            @if (ActiveSession == null && !IsStartSessionPanelOpen)
+            {
+                <button class="btn btn-primary btn-sm" @onclick="OpenStartSessionPanel">
+                    <i class="bi bi-play-fill"></i>
+                    Lancer une session
+                </button>
+            }
+            else if (ActiveSession != null)
+            {
+                <a href="/sessions/@ActiveSession.Id/gm" class="btn btn-primary btn-sm">
+                    <i class="bi bi-play-fill"></i>
+                    Reprendre la session
+                </a>
+            }
+        </Actions>
+    </AppSectionTitle>
+    <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: 0 0 var(--spacing-sm);">
+        Lancez une session pour commencer à jouer cette campagne.
+    </p>
+
+    @if (IsLoadingSession)
+    {
+        <AppLoadingSpinner Label="Vérification..." />
+    }
+    else if (ActiveSession != null)
+    {
+        <div style="background: rgba(var(--color-success-rgb, 16,185,129),0.1); border: 1px solid var(--color-success); border-radius: 6px; padding: var(--spacing-sm) var(--spacing-md);">
+            <span class="status-badge status-active" style="margin-right: var(--spacing-sm);">@L["Sessions_ActiveBadge"]</span>
+            <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Démarrée le @ActiveSession.StartedAt.ToLocalTime().ToString("dd/MM à HH:mm")</span>
+        </div>
+    }
+    else if (IsStartSessionPanelOpen)
+    {
+        <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-md); margin-top: var(--spacing-sm);">
+            @if (!string.IsNullOrEmpty(SessionStartError))
+            {
+                <div class="alert alert-error" style="margin-bottom: var(--spacing-sm);">@SessionStartError</div>
+            }
+
+            <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                <label class="form-label">Message de bienvenue (optionnel)</label>
+                <input type="text" class="form-control" @bind="SessionWelcomeMessage" placeholder="Bienvenue dans cette session..." />
+            </div>
+
+            @if (SessionParticipants.Count > 0)
+            {
+                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                    <label class="form-label">Joueurs à inviter</label>
+                    @foreach (var wc in SessionParticipants)
+                    {
+                        <label style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-xs) 0; cursor: pointer;">
+                            <input type="checkbox"
+                                   checked="@SelectedWorldCharacterIds.Contains(wc.Id)"
+                                   @onchange="() => ToggleParticipant(wc.Id)" />
+                            <span style="font-size: var(--font-size-sm);">@wc.CharacterName</span>
+                        </label>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
+                    <i class="bi bi-info-circle"></i>
+                    Aucun joueur n'a encore rejoint ce monde.
+                </p>
+            }
+
+            <div style="display: flex; gap: var(--spacing-sm);">
+                <button class="btn btn-primary btn-sm" @onclick="StartSession" disabled="@IsStartingSession">
+                    @if (IsStartingSession)
+                    {
+                        <i class="bi bi-hourglass-split"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-play-fill"></i>
+                    }
+                    Démarrer
+                </button>
+                <button class="btn btn-ghost btn-sm" @onclick="() => IsStartSessionPanelOpen = false">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int WorldId { get; set; }
+    [Parameter] public int CampaignId { get; set; }
+
+    private SessionDto? ActiveSession;
+    private bool IsLoadingSession;
+    private bool IsStartSessionPanelOpen;
+    private bool IsStartingSession;
+    private string? SessionStartError;
+    private string? SessionWelcomeMessage;
+    private List<WorldCharacterDto> SessionParticipants = new();
+    private readonly HashSet<int> SelectedWorldCharacterIds = new();
+
+    private int _loadedCampaignId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (CampaignId > 0 && _loadedCampaignId != CampaignId)
+        {
+            _loadedCampaignId = CampaignId;
+            IsStartSessionPanelOpen = false;
+            IsLoadingSession = true;
+            ActiveSession = await SessionClient.GetActiveSessionByCampaignAsync(CampaignId);
+            IsLoadingSession = false;
+        }
+    }
+
+    private async Task OpenStartSessionPanel()
+    {
+        IsStartSessionPanelOpen = true;
+        SessionStartError = null;
+        SessionWelcomeMessage = string.Empty;
+        SelectedWorldCharacterIds.Clear();
+
+        if (SessionParticipants.Count == 0)
+        {
+            SessionParticipants = await WorldClient.GetWorldCharactersTypedAsync(WorldId);
+        }
+    }
+
+    private void ToggleParticipant(int wcId)
+    {
+        if (SelectedWorldCharacterIds.Contains(wcId))
+            SelectedWorldCharacterIds.Remove(wcId);
+        else
+            SelectedWorldCharacterIds.Add(wcId);
+    }
+
+    private async Task StartSession()
+    {
+        if (CampaignId <= 0) return;
+        IsStartingSession = true;
+        SessionStartError = null;
+
+        var dto = new StartSessionDto
+        {
+            CampaignId = CampaignId,
+            WelcomeMessage = SessionWelcomeMessage,
+            WorldCharacterIds = SelectedWorldCharacterIds.ToList()
+        };
+
+        var session = await SessionClient.StartSessionAsync(dto);
+        if (session != null)
+        {
+            Nav.NavigateTo($"/sessions/{session.Id}/gm");
+        }
+        else
+        {
+            SessionStartError = "Impossible de démarrer la session. Une session est peut-être déjà active.";
+        }
+        IsStartingSession = false;
+    }
+}
