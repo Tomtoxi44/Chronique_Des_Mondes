@@ -158,37 +158,28 @@ jobs:
           slot-name: 'Production'
           package: .
 
-      # Wire the external-service app settings so images (Azure Blob) and email (ACS)
-      # don't silently fall back to broken local/logging modes. Idempotent (settings persist).
-      # Requires the repository variable AZURE_RESOURCE_GROUP; skipped if not set.
-      - name: Configure external-service app settings
+      # Les réglages applicatifs (stockage d'images, mail...) vivent dans Azure App
+      # Configuration ; les secrets restent dans Key Vault et sont référencés depuis le
+      # store. Cette étape ne fait que pointer l'API vers ces deux sources — elle ne
+      # duplique plus les valeurs dans les app settings. Idempotente ; nécessite la
+      # variable de dépôt AZURE_RESOURCE_GROUP, ignorée si absente.
+      - name: Point the API at App Configuration and Key Vault
         if: ${{ vars.AZURE_RESOURCE_GROUP != '' }}
         run: |
           set -e
           RG="${{ vars.AZURE_RESOURCE_GROUP }}"
           API="app-chroniquedesmondes-api"
 
-          STORAGE=$(az storage account list -g "$RG" --query "[?starts_with(name,'stcdm')].name | [0]" -o tsv)
-          if [ -n "$STORAGE" ]; then
-            BLOB=$(az storage account show -n "$STORAGE" -g "$RG" --query primaryEndpoints.blob -o tsv)
-            az webapp config appsettings set -n "$API" -g "$RG" --only-show-errors --settings \
-              ImageStorage__Provider=AzureBlob \
-              ImageStorage__ContainerName=images \
-              ImageStorage__BlobServiceUri="$BLOB"
-            echo "Image storage app settings applied (blob: $BLOB)."
-          else
-            echo "::warning::No storage account starting with 'stcdm' found in $RG — image settings skipped."
-          fi
+          STORE=$(az appconfig list -g "$RG" --query "[0].endpoint" -o tsv 2>/dev/null || true)
+          VAULT=$(az keyvault list -g "$RG" --query "[0].properties.vaultUri" -o tsv 2>/dev/null || true)
 
-          ACS=$(az communication list -g "$RG" --query "[0].name" -o tsv 2>/dev/null || true)
-          if [ -n "$ACS" ]; then
-            CS=$(az communication list-key -n "$ACS" -g "$RG" --query primaryConnectionString -o tsv)
-            SETTINGS=(AzureEmail__ConnectionString="$CS")
-            if [ -n "${{ vars.AZURE_EMAIL_FROM }}" ]; then
-              SETTINGS+=(AzureEmail__FromAddress="${{ vars.AZURE_EMAIL_FROM }}")
-            fi
-            az webapp config appsettings set -n "$API" -g "$RG" --only-show-errors --settings "${SETTINGS[@]}"
-            echo "Email (ACS) app settings applied."
+          SETTINGS=()
+          [ -n "$STORE" ] && SETTINGS+=(AppConfig__Endpoint="$STORE")
+          [ -n "$VAULT" ] && SETTINGS+=(KeyVault__Uri="$VAULT")
+
+          if [ ${#SETTINGS[@]} -eq 0 ]; then
+            echo "::warning::Neither App Configuration nor Key Vault found in $RG — API left on its existing app settings."
           else
-            echo "::warning::No Communication Services resource found in $RG — email settings skipped."
+            az webapp config appsettings set -n "$API" -g "$RG" --only-show-errors --settings "${SETTINGS[@]}" --output none
+            echo "API pointed at App Configuration ($STORE) and Key Vault ($VAULT)."
           fi
