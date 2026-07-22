@@ -413,19 +413,42 @@ resource apiStorageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01'
   }
 }
 
-// IMPORTANT — à configurer dans les app settings de l'API (hors Bicep, car les app settings
-// sont gérés par le pipeline pour ne pas écraser les secrets). SANS ces réglages, l'upload
-// d'images retombe sur le stockage disque local qui renvoie des URLs relatives cassées en
-// prod (API et Web sur des domaines différents). Les app settings persistent entre les
-// déploiements : une seule exécution suffit.
-//
-//   az webapp config appsettings set \
-//     --name app-chroniquedesmondes-api --resource-group <RG> \
-//     --settings ImageStorage__Provider=AzureBlob \
-//                ImageStorage__ContainerName=images \
-//                ImageStorage__BlobServiceUri=https://<storageAccountName>.blob.core.windows.net/
-//
-//   (storageAccountName = sortie du compte ci-dessus ; BlobServiceUri = sortie storageBlobEndpoint)
+// =============================================================================
+// App Configuration — source unique des réglages applicatifs
+// =============================================================================
+// Le store porte les réglages en clair (ImageStorage:*, AzureEmail:FromAddress) et des
+// références Key Vault pour les valeurs sensibles (AzureEmail:ConnectionString). L'API
+// s'y connecte via son identité managée : seuls AppConfig__Endpoint et KeyVault__Uri
+// restent dans ses app settings, posés par le pipeline. Sans ça, l'upload d'images
+// retombe sur le disque local (URLs relatives cassées, API et Web sur des domaines
+// différents) et les mails sont seulement journalisés.
+
+@description('Nom du store App Configuration (unique globalement).')
+param appConfigName string = 'appcs-chronique-des-mondes'
+
+var roleAppConfigurationDataReader = '516239f1-63e1-4d78-a4de-a74fb236a071'
+
+resource appConfig 'Microsoft.AppConfiguration/configurationStores@2023-03-01' = {
+  name: appConfigName
+  location: location
+  sku: {
+    name: 'Free'
+  }
+  properties: {
+    disableLocalAuth: false
+  }
+}
+
+// L'API (identité managée système) lit les clés du store.
+resource apiAppConfigRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (assignKeyVaultRoles) {
+  name: guid(appConfig.id, apiApp.id, roleAppConfigurationDataReader)
+  scope: appConfig
+  properties: {
+    principalId: apiApp.identity.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleAppConfigurationDataReader)
+    principalType: 'ServicePrincipal'
+  }
+}
 
 // =============================================================================
 // Sorties
@@ -439,3 +462,4 @@ output sqlServerFqdn string = sqlServer.properties.fullyQualifiedDomainName
 output appInsightsConnectionString string = appInsights.properties.ConnectionString
 output storageBlobEndpoint string = storageAccount.properties.primaryEndpoints.blob
 output blobImagesContainer string = imagesContainerName
+output appConfigEndpoint string = appConfig.properties.endpoint
