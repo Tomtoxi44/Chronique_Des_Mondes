@@ -14,37 +14,51 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Azure Key Vault : source de secrets centralisée.
-// Si "KeyVault:Uri" est renseigné, tous les secrets du coffre sont ajoutés à la
-// configuration (un secret nommé "AzureEmail--ConnectionString" alimente la clé
-// "AzureEmail:ConnectionString", etc.). L'authentification passe par
-// DefaultAzureCredential : identité managée en production, `az login` du
-// développeur en local — aucun secret dans le code ni dans appsettings.
+// Identité utilisée pour toutes les sources de configuration Azure (App Configuration,
+// Key Vault) : identité managée en production, `az login` du développeur en local.
+// On écarte les credentials qui posent problème sur les postes multi-tenants
+// (Visual Studio / PowerShell / azd connectés à d'autres comptes).
+var azureCredentialOptions = new Azure.Identity.DefaultAzureCredentialOptions
+{
+    ExcludeVisualStudioCredential = true,
+    ExcludeAzurePowerShellCredential = true,
+    ExcludeAzureDeveloperCliCredential = true,
+    ExcludeInteractiveBrowserCredential = true,
+};
+
+// Force le tenant : indispensable quand la machine a plusieurs comptes Azure,
+// sinon le mauvais tenant est choisi.
+var azureTenantId = builder.Configuration["KeyVault:TenantId"];
+if (!string.IsNullOrWhiteSpace(azureTenantId))
+{
+    azureCredentialOptions.TenantId = azureTenantId;
+}
+
+var azureCredential = new Azure.Identity.DefaultAzureCredential(azureCredentialOptions);
+
+// Azure Key Vault : source de secrets. Si "KeyVault:Uri" est renseigné, tous les
+// secrets du coffre sont ajoutés à la configuration (un secret nommé
+// "AzureEmail--ConnectionString" alimente la clé "AzureEmail:ConnectionString").
 var keyVaultUri = builder.Configuration["KeyVault:Uri"];
 if (!string.IsNullOrWhiteSpace(keyVaultUri))
 {
-    // On écarte les credentials qui posent problème sur les postes multi-tenants
-    // (Visual Studio / PowerShell / azd connectés à d'autres comptes) et on garde
-    // l'identité managée (production) + l'Azure CLI (développement local).
-    var credentialOptions = new Azure.Identity.DefaultAzureCredentialOptions
-    {
-        ExcludeVisualStudioCredential = true,
-        ExcludeAzurePowerShellCredential = true,
-        ExcludeAzureDeveloperCliCredential = true,
-        ExcludeInteractiveBrowserCredential = true,
-    };
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), azureCredential);
+}
 
-    // Force le tenant du coffre : indispensable quand la machine a plusieurs
-    // comptes Azure, sinon le mauvais tenant est choisi.
-    var keyVaultTenantId = builder.Configuration["KeyVault:TenantId"];
-    if (!string.IsNullOrWhiteSpace(keyVaultTenantId))
-    {
-        credentialOptions.TenantId = keyVaultTenantId;
-    }
-
-    builder.Configuration.AddAzureKeyVault(
-        new Uri(keyVaultUri),
-        new Azure.Identity.DefaultAzureCredential(credentialOptions));
+// Azure App Configuration : source unique des réglages applicatifs (stockage d'images,
+// expéditeur des mails...). Ajoutée en dernier, donc prioritaire sur les app settings
+// App Service — ceux-ci restent en place comme filet de sécurité. Les valeurs sensibles
+// n'y sont pas stockées en clair : le store porte des références Key Vault, résolues
+// avec la même identité. `optional: true` : si le store est injoignable, l'API démarre
+// quand même sur les app settings au lieu de tomber.
+var appConfigEndpoint = builder.Configuration["AppConfig:Endpoint"];
+if (!string.IsNullOrWhiteSpace(appConfigEndpoint))
+{
+    builder.Configuration.AddAzureAppConfiguration(
+        options => options
+            .Connect(new Uri(appConfigEndpoint), azureCredential)
+            .ConfigureKeyVault(kv => kv.SetCredential(azureCredential)),
+        optional: true);
 }
 
 // Add service defaults & Aspire client integrations.
