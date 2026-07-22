@@ -1,5 +1,6 @@
-﻿@page "/worlds/{WorldId:int}"
+@page "/worlds/{WorldId:int}"
 @attribute [Authorize]
+@using Cdm.Web.Extensions
 @implements IDisposable
 
 <PageTitle>@(World?.Name ?? "Monde") — Chronique des Mondes</PageTitle>
@@ -25,191 +26,22 @@ else if (World == null)
 }
 else
 {
-    <AppThemeWrapper GameType="@(IsWorldEditing ? WorldEditGameType : World.GameType)">
+    <AppThemeWrapper GameType="@(_previewGameType ?? World.GameType)">
 
         @* ──────────────────────────────────────────────────────────
            SECTION: VUE D'ENSEMBLE (par défaut)
            ────────────────────────────────────────────────────────── *@
         @if (Section == null && !SelectedCampaignId.HasValue)
         {
-            <nav style="margin-bottom: var(--spacing-md);">
-                <a href="/worlds" class="btn btn-ghost btn-sm">
-                    <i class="bi bi-arrow-left"></i> @L["Nav_Worlds"]
-                </a>
-            </nav>
-
-            <CdmHero GameType="@World.GameType">
-                <div class="cdm-hero-badge">MONDE &middot; @(GameTypeOptions.FirstOrDefault(o => o.Value == World.GameType).Label)</div>
-                <h1 class="cdm-hero-title">@World.Name</h1>
-                <div class="cdm-hero-meta">
-                    <span><i class="bi bi-map"></i> @Campaigns.Count @L["Worlds_Campaigns"]</span>
-                    <span><i class="bi bi-people"></i> @World.CharacterCount @L["Worlds_Characters"]</span>
-                    <span><i class="bi bi-calendar3"></i> @World.CreatedAt.ToString("d MMM yyyy")</span>
-                </div>
-                @if (IsOwner)
-                {
-                    <div class="cdm-hero-actions">
-                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
-                            <i class="bi bi-plus"></i> @L["Campaigns_Create"]
-                        </a>
-                        <button class="btn btn-ghost" @onclick="ConfirmDeleteWorld">
-                            <i class="bi bi-trash3"></i> @L["Common_Delete"]
-                        </button>
-                    </div>
-                }
-            </CdmHero>
-
-            <div style="margin-bottom: var(--spacing-xl);"></div>
-
-            <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                @if (IsOwner && IsWorldEditing)
-                {
-                    <AppSectionTitle Title="Modifier les paramètres" Icon="bi-sliders">
-                        <Actions>
-                            <button class="btn btn-ghost btn-sm" @onclick="() => IsWorldEditing = false">
-                                <i class="bi bi-x"></i>
-                            </button>
-                        </Actions>
-                    </AppSectionTitle>
-
-                    <div class="form-group">
-                        <label class="form-label">Nom du monde *</label>
-                        <input type="text" class="form-control" @bind="WorldEditName" placeholder="Nom du monde..." />
-                    </div>
-
-                    <div class="form-group" style="margin-top: var(--spacing-md);">
-                        <label class="form-label">@L["Worlds_GameType"]</label>
-                        <div class="game-type-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--spacing-sm); margin-top: var(--spacing-xs);">
-                            @foreach (var gt in GameTypeOptions)
-                            {
-                                <button type="button"
-                                        class="game-type-card @(WorldEditGameType == gt.Value ? "selected" : "")"
-                                        style="padding: var(--spacing-sm); @(WorldEditGameType == gt.Value ? "border-color: var(--theme-card-border, var(--color-primary)); background: var(--theme-badge-bg, rgba(214,159,82,0.12));" : "")"
-                                        @onclick="() => WorldEditGameType = gt.Value">
-                                    <i class="bi @gt.Icon game-type-icon" style="font-size: 1.2rem; @(WorldEditGameType == gt.Value ? "color: var(--theme-primary, var(--color-primary));" : "")"></i>
-                                    <span class="game-type-label" style="font-size: var(--font-size-xs);">@gt.Label</span>
-                                </button>
-                            }
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
-                        <button class="btn btn-primary btn-sm" @onclick="SaveWorldSettings" disabled="@(IsSaving || string.IsNullOrWhiteSpace(WorldEditName))">
-                            <i class="bi bi-floppy"></i> Enregistrer
-                        </button>
-                        <button class="btn btn-ghost btn-sm" @onclick="() => IsWorldEditing = false">
-                            @L["Common_Cancel"]
-                        </button>
-                    </div>
-                }
-                else
-                {
-                    <AppSectionTitle Title='@L["Worlds_Information"]' Icon="bi-info-circle">
-                        <Actions>
-                            @if (IsOwner)
-                            {
-                                <button class="btn btn-ghost btn-sm" @onclick="BeginWorldEdit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                            }
-                        </Actions>
-                    </AppSectionTitle>
-                    <div class="info-grid">
-                        <div>
-                            <span class="info-label">@L["Worlds_GameType"]</span>
-                            <div style="margin-top: var(--spacing-xs);"><AppGameBadge GameType="@World.GameType" /></div>
-                        </div>
-                        <div>
-                            <span class="info-label">@L["Worlds_CreatedAt"]</span>
-                            <span class="info-value">@World.CreatedAt.ToString("d MMM yyyy")</span>
-                        </div>
-                        @if (World.UpdatedAt.HasValue)
-                        {
-                            <div>
-                                <span class="info-label">@L["Worlds_UpdatedAt"]</span>
-                                <span class="info-value">@World.UpdatedAt.Value.ToString("d MMM yyyy")</span>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-
-            @if (!string.IsNullOrWhiteSpace(World.Description))
-            {
-                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                    <AppSectionTitle Title="Description" Icon="bi-card-text" />
-                    <p style="color: var(--color-text-secondary); line-height: 1.7; white-space: pre-wrap; margin: 0;">@World.Description</p>
-                    @if (IsOwner)
-                    {
-                        <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm" style="margin-top: var(--spacing-md);">
-                            <i class="bi bi-pencil"></i> Modifier
-                        </a>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="cdm-card" style="margin-bottom: var(--spacing-lg);">
-                    <AppSectionTitle Title="Description" Icon="bi-card-text">
-                        <Actions>
-                            @if (IsOwner)
-                            {
-                                <a href="/worlds/@WorldId?section=description" class="btn btn-ghost btn-sm">
-                                    <i class="bi bi-plus"></i> Ajouter une description
-                                </a>
-                            }
-                        </Actions>
-                    </AppSectionTitle>
-                    <p style="color: var(--color-text-muted); font-style: italic; margin: 0;">@(IsOwner ? "Aucune description. Cliquez pour écrire." : "Aucune description.")</p>
-                </div>
-            }
-
-            @if (Campaigns.Count > 0)
-            {
-                <div class="cdm-card">
-                    <AppSectionTitle Title='@L["Worlds_Campaigns"]' Icon="bi-map">
-                        <Actions>
-                            @if (IsOwner)
-                            {
-                                <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-ghost btn-sm">
-                                    <i class="bi bi-plus"></i>
-                                    @L["Campaigns_Create"]
-                                </a>
-                            }
-                        </Actions>
-                    </AppSectionTitle>
-
-                    @foreach (var campaign in Campaigns)
-                    {
-                        <a href="/worlds/@WorldId?campaignId=@campaign.Id" class="campaign-row">
-                            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                                <i class="bi bi-map" style="color: var(--color-text-muted);"></i>
-                                <span>@campaign.Name</span>
-                            </div>
-                            <span class="status-badge @GetStatusClass(campaign.Status)">@GetStatusLabel(campaign.Status)</span>
-                        </a>
-                    }
-                </div>
-            }
-            else if (IsOwner)
-            {
-                <AppEmptyState Icon="bi-map"
-                               Title="Aucune campagne"
-                               Message="Ce monde n'a pas encore de campagne.">
-                    <ActionContent>
-                        <a href="/worlds/@WorldId?section=new-campaign" class="btn btn-primary">
-                            <i class="bi bi-plus"></i>
-                            @L["Campaigns_Create"]
-                        </a>
-                    </ActionContent>
-                </AppEmptyState>
-            }
-            else
-            {
-                <AppEmptyState Icon="bi-map"
-                               Title="Aucune campagne"
-                               Message="Ce monde n'a pas encore de campagne." />
-            }
+            <WorldOverviewPanel WorldId="WorldId" World="World" Campaigns="Campaigns" IsOwner="IsOwner"
+                                IsSharing="IsSharingWorld" OnToggleShared="ToggleWorldShared"
+                                OnDelete="ConfirmDeleteWorld">
+                <SettingsCard>
+                    <WorldSettingsCard WorldId="WorldId" World="World" IsOwner="IsOwner"
+                                       OnSaved="OnWorldSettingsSaved"
+                                       OnPreviewGameTypeChanged="@(gt => _previewGameType = gt)" />
+                </SettingsCard>
+            </WorldOverviewPanel>
         }
 
         @* ──────────────────────────────────────────────────────────
@@ -217,98 +49,12 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (IsOwner && Section == "description")
         {
-            <div class="editor-section">
-                <div class="world-section-header">
-                    <div>
-                        <h2 class="world-section-title">
-                            <i class="bi bi-pencil" style="color: var(--theme-primary, var(--color-primary)); margin-right: var(--spacing-xs);"></i>
-                            Description — @World.Name
-                        </h2>
-                    </div>
-                    <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
-                        @if (!string.IsNullOrEmpty(SaveMessage))
-                        {
-                            <span style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)");">
-                                @SaveMessage
-                            </span>
-                        }
-                        <button class="btn btn-primary btn-sm" @onclick="SaveDescription" disabled="@IsSaving">
-                            @if (IsSaving)
-                            {
-                                <i class="bi bi-hourglass-split"></i>
-                            }
-                            else
-                            {
-                                <i class="bi bi-floppy"></i>
-                            }
-                            Enregistrer
-                        </button>
-                    </div>
-                </div>
-
-                <div class="description-editor-container" style="flex: 1; min-height: 0;">
-                    <div class="description-editor-toolbar">
-                        <span class="description-editor-hint">
-                            <i class="bi bi-info-circle"></i>
-                            Texte brut — les retours à la ligne sont préservés
-                        </span>
-                        @if (DescriptionDirty)
-                        {
-                            <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Modifications non sauvegardées</span>
-                        }
-                    </div>
-                    <textarea class="description-editor-textarea"
-                              placeholder="Décrivez votre monde : son histoire, sa géographie, ses factions, ses mystères..."
-                              value="@DescriptionDraft"
-                              @oninput="OnDescriptionInput"></textarea>
-                </div>
-            </div>
+            <WorldDescriptionEditor WorldId="WorldId" World="World" OnSaved="OnWorldDescriptionSaved" />
         }
 
-        @* ──────────────────────────────────────────────────────────
-           SECTION: NOUVELLE CAMPAGNE (formulaire dédié)
-           ────────────────────────────────────────────────────────── *@
         @if (IsOwner && Section == "new-campaign" && !SelectedCampaignId.HasValue)
         {
-            <AppPageHeader Title="@L["Campaigns_Create"]"
-                           Icon="bi-map"
-                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(L["Campaigns_Create"]) })" />
-
-            <div style="max-width: 560px;">
-                @if (!string.IsNullOrEmpty(CampaignCreateError))
-                {
-                    <div class="alert alert-error" style="margin-bottom: var(--spacing-md);">@CampaignCreateError</div>
-                }
-                <div class="cdm-card">
-                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                        <label class="form-label">Nom *</label>
-                        <input type="text" class="form-control" @bind="NewCampaign.Name" placeholder="La Quête des Éclats..." />
-                    </div>
-                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="3" @bind="NewCampaign.Description" placeholder="Décrivez cette campagne..."></textarea>
-                    </div>
-                    <div class="form-two-col" style="margin-bottom: var(--spacing-md);">
-                        <div class="form-group">
-                            <label class="form-label">Visibilité</label>
-                            <select class="form-control" @bind="NewCampaign.Visibility">
-                                <option value="@Visibility.Private">Privée</option>
-                                <option value="@Visibility.Public">Publique</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Joueurs max</label>
-                            <input type="number" class="form-control" min="1" max="20" @bind="NewCampaign.MaxPlayers" />
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: var(--spacing-sm);">
-                        <button class="btn btn-primary" @onclick="CreateCampaignInline" disabled="@IsSaving">
-                            <i class="bi bi-check"></i> @L["Common_Create"]
-                        </button>
-                        <a href="/worlds/@WorldId" class="btn btn-ghost">@L["Common_Cancel"]</a>
-                    </div>
-                </div>
-            </div>
+            <WorldNewCampaignForm WorldId="WorldId" World="World" OnCreated="OnCampaignCreated" />
         }
 
         @* ──────────────────────────────────────────────────────────
@@ -328,7 +74,7 @@ else
                                Icon="bi-map"
                                Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(SelectedCampaign.Name) })">
                     <Actions>
-                        <span class="status-badge @GetStatusClass(SelectedCampaign.Status)">@GetStatusLabel(SelectedCampaign.Status)</span>
+                        <span class="status-badge @SelectedCampaign.Status.ToCssClass()">@L[SelectedCampaign.Status.ToLabelKey()]</span>
                         @if (IsOwner)
                         {
                             @if (!IsCampaignEditing)
@@ -338,6 +84,11 @@ else
                                     Modifier
                                 </button>
                             }
+                            <button class="btn @(SelectedCampaign.IsShared ? "btn-primary" : "btn-ghost") btn-sm" @onclick="ToggleCampaignShared" disabled="@IsSharingCampaign"
+                                    title="@(SelectedCampaign.IsShared ? "Retirer de la marketplace" : "Publier sur la marketplace")">
+                                <i class="bi @(SelectedCampaign.IsShared ? "bi-share-fill" : "bi-share")"></i>
+                                @(SelectedCampaign.IsShared ? "Publiée" : "Publier")
+                            </button>
                             <button class="btn btn-ghost btn-sm" @onclick="() => ConfirmDeleteCampaign(SelectedCampaign)">
                                 <i class="bi bi-trash3"></i>
                                 @L["Common_Delete"]
@@ -379,7 +130,7 @@ else
                             </button>
                             <button class="campaign-tab-btn @(CampaignTab == "session" ? "active" : "")" @onclick='() => CampaignTab = "session"'>
                                 <i class="bi bi-play-circle"></i> Session
-                                @if (ActiveSession != null)
+                                @if (_campaignHasActiveSession)
                                 {
                                     <span class="tab-dot-active"></span>
                                 }
@@ -393,155 +144,15 @@ else
                     <!-- Chapitres tab -->
                     @if (IsOwner && CampaignTab == "chapitres")
                     {
-                        <div class="cdm-card">
-                            <AppSectionTitle Title="Chapitres" Icon="bi-journals">
-                                <Actions>
-                                    @if (IsReordering)
-                                    {
-                                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Enregistrement...</span>
-                                    }
-                                    <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&section=new-chapter" class="btn btn-ghost btn-sm">
-                                        <i class="bi bi-plus"></i>
-                                        @L["Chapters_Create"]
-                                    </a>
-                                </Actions>
-                            </AppSectionTitle>
-
-                            @if (CampaignChapters.TryGetValue(SelectedCampaign.Id, out var tabChapters) && tabChapters.Count > 0)
-                            {
-                                <div class="chapter-drag-list">
-                                    @foreach (var ch in tabChapters.OrderBy(c => c.ChapterNumber))
-                                    {
-                                        var chIcon = ch.IsCompleted ? "bi-check-circle-fill" : ch.IsActive ? "bi-circle-fill" : "bi-circle";
-                                        var isDragOver = _dragOverChapterId == ch.Id;
-                                        <div class="chapter-drag-row @(isDragOver ? "drag-over" : "")"
-                                             draggable="true"
-                                             @ondragstart="() => OnChapterDragStart(ch)"
-                                             @ondragover:preventDefault
-                                             @ondragover="() => OnChapterDragOver(ch)"
-                                             @ondragleave="OnChapterDragLeave"
-                                             @ondrop="() => OnChapterDrop(ch)">
-                                            <i class="bi bi-grip-vertical drag-handle"></i>
-                                            <a href="/worlds/@WorldId?campaignId=@SelectedCampaign.Id&chapterId=@ch.Id" class="chapter-drag-link">
-                                                <i class="bi @chIcon" style="color: @(ch.IsCompleted ? "var(--color-success)" : ch.IsActive ? "var(--theme-primary, var(--color-primary))" : "var(--color-text-muted)");"></i>
-                                                <span style="flex: 1;">Ch. @ch.ChapterNumber — @ch.Title</span>
-                                                @if (ch.IsCompleted)
-                                                {
-                                                    <span class="status-badge status-completed">@L["Common_Completed"]</span>
-                                                }
-                                                else if (ch.IsActive)
-                                                {
-                                                    <span class="status-badge status-active">@L["Common_InProgress"]</span>
-                                                }
-                                            </a>
-                                        </div>
-                                    }
-                                </div>
-                                <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin-top: var(--spacing-sm);">
-                                    <i class="bi bi-grip-vertical"></i> Glisser-déposer pour réordonner
-                                </p>
-                            }
-                            else
-                            {
-                                <p style="color: var(--color-text-muted); font-style: italic; font-size: var(--font-size-sm);">
-                                    Aucun chapitre pour le moment.
-                                </p>
-                            }
-                        </div>
+                        <WorldChapterListPanel WorldId="WorldId" CampaignId="SelectedCampaign!.Id"
+                                               Chapters="@(CampaignChapters.TryGetValue(SelectedCampaign!.Id, out var tabChapters) ? tabChapters : new())"
+                                               OnReordered="OnChaptersReordered" />
                     }
 
                     <!-- Session tab -->
                     @if (IsOwner && CampaignTab == "session")
                     {
-                        <div class="cdm-card" style="border-top: 2px solid var(--theme-primary, var(--color-primary));">
-                            <AppSectionTitle Title="Session de jeu" Icon="bi-play-circle" Rule="false">
-                                <Actions>
-                                    @if (ActiveSession == null && !IsStartSessionPanelOpen)
-                                    {
-                                        <button class="btn btn-primary btn-sm" @onclick="OpenStartSessionPanel">
-                                            <i class="bi bi-play-fill"></i>
-                                            Lancer une session
-                                        </button>
-                                    }
-                                    else if (ActiveSession != null)
-                                    {
-                                        <a href="/sessions/@ActiveSession.Id/gm" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-play-fill"></i>
-                                            Reprendre la session
-                                        </a>
-                                    }
-                                </Actions>
-                            </AppSectionTitle>
-                            <p style="color: var(--color-text-muted); font-size: var(--font-size-xs); margin: 0 0 var(--spacing-sm);">
-                                Lancez une session pour commencer à jouer cette campagne.
-                            </p>
-
-                            @if (IsLoadingSession)
-                            {
-                                <AppLoadingSpinner Label="Vérification..." />
-                            }
-                            else if (ActiveSession != null)
-                            {
-                                <div style="background: rgba(var(--color-success-rgb, 16,185,129),0.1); border: 1px solid var(--color-success); border-radius: 6px; padding: var(--spacing-sm) var(--spacing-md);">
-                                    <span class="status-badge status-active" style="margin-right: var(--spacing-sm);">@L["Sessions_ActiveBadge"]</span>
-                                    <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Démarrée le @ActiveSession.StartedAt.ToLocalTime().ToString("dd/MM à HH:mm")</span>
-                                </div>
-                            }
-                            else if (IsStartSessionPanelOpen)
-                            {
-                                <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-md); margin-top: var(--spacing-sm);">
-                                    @if (!string.IsNullOrEmpty(SessionStartError))
-                                    {
-                                        <div class="alert alert-error" style="margin-bottom: var(--spacing-sm);">@SessionStartError</div>
-                                    }
-
-                                    <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                                        <label class="form-label">Message de bienvenue (optionnel)</label>
-                                        <input type="text" class="form-control" @bind="SessionWelcomeMessage" placeholder="Bienvenue dans cette session..." />
-                                    </div>
-
-                                    @if (SessionParticipants.Count > 0)
-                                    {
-                                        <div class="form-group" style="margin-bottom: var(--spacing-md);">
-                                            <label class="form-label">Joueurs à inviter</label>
-                                            @foreach (var wc in SessionParticipants)
-                                            {
-                                                <label style="display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-xs) 0; cursor: pointer;">
-                                                    <input type="checkbox"
-                                                           checked="@SelectedWorldCharacterIds.Contains(wc.Id)"
-                                                           @onchange="() => ToggleParticipant(wc.Id)" />
-                                                    <span style="font-size: var(--font-size-sm);">@wc.CharacterName</span>
-                                                </label>
-                                            }
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <p style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: var(--spacing-md);">
-                                            <i class="bi bi-info-circle"></i>
-                                            Aucun joueur n'a encore rejoint ce monde.
-                                        </p>
-                                    }
-
-                                    <div style="display: flex; gap: var(--spacing-sm);">
-                                        <button class="btn btn-primary btn-sm" @onclick="StartSession" disabled="@IsStartingSession">
-                                            @if (IsStartingSession)
-                                            {
-                                                <i class="bi bi-hourglass-split"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="bi bi-play-fill"></i>
-                                            }
-                                            Démarrer
-                                        </button>
-                                        <button class="btn btn-ghost btn-sm" @onclick="() => IsStartSessionPanelOpen = false">
-                                            Annuler
-                                        </button>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                        <WorldSessionLaunchPanel WorldId="WorldId" CampaignId="SelectedCampaign!.Id" />
                     }
 
                     <!-- Infos tab -->
@@ -574,31 +185,11 @@ else
            ────────────────────────────────────────────────────────── *@
         @if (IsOwner && SelectedCampaignId.HasValue && Section == "new-chapter")
         {
-            var parentCampaign = Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId.Value);
-            <AppPageHeader Title="@L["Chapters_Create"]"
-                           Icon="bi-book"
-                           Breadcrumbs="@(new List<BreadcrumbItem> { new(L["Worlds_Title"], "/worlds"), new(World.Name, $"/worlds/{WorldId}"), new(parentCampaign?.Name ?? "Campagne", $"/worlds/{WorldId}?campaignId={SelectedCampaignId}"), new(L["Chapters_Create"]) })" />
-
-            <div style="max-width: 480px;">
-                <div class="cdm-card">
-                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
-                        <div class="form-group">
-                            <label class="form-label">N°</label>
-                            <input type="number" class="form-control" @bind="NewChapter.ChapterNumber" min="1" style="text-align: center;" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Titre du chapitre *</label>
-                            <input type="text" class="form-control" @bind="NewChapter.Title" placeholder="Titre du chapitre..." />
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: var(--spacing-sm);">
-                        <button class="btn btn-primary" @onclick="CreateChapter" disabled="@IsSaving">
-                            <i class="bi bi-check"></i> @L["Common_Create"]
-                        </button>
-                        <a href="/worlds/@WorldId?campaignId=@SelectedCampaignId" class="btn btn-ghost">@L["Common_Cancel"]</a>
-                    </div>
-                </div>
-            </div>
+            <WorldNewChapterForm WorldId="WorldId" World="World"
+                                 CampaignId="SelectedCampaignId!.Value"
+                                 Campaign="@Campaigns.FirstOrDefault(c => c.Id == SelectedCampaignId!.Value)"
+                                 Chapters="@(CampaignChapters.TryGetValue(SelectedCampaignId!.Value, out var newChapterSiblings) ? newChapterSiblings : new())"
+                                 OnCreated="OnChapterCreated" />
         }
 
 
@@ -615,108 +206,12 @@ else
             }
             else
             {
-                <!-- Chapter header -->
-                <div class="world-section-header">
-                    <div>
-                        <h2 class="world-section-title">
-                            Ch. @SelectedChapter.ChapterNumber — @SelectedChapter.Title
-                        </h2>
-                        <div style="display: flex; gap: var(--spacing-xs); margin-top: 4px; flex-wrap: wrap;">
-                            @if (SelectedChapter.IsCompleted)
-                            {
-                                <span class="status-badge status-completed">@L["Common_Completed"]</span>
-                            }
-                            else if (SelectedChapter.IsActive)
-                            {
-                                <span class="status-badge status-active">@L["Common_InProgress"]</span>
-                            }
-                        </div>
-                    </div>
-                    @if (ChapterTab == "contenu")
-                    {
-                        <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
-                            @if (!string.IsNullOrEmpty(SaveMessage))
-                            {
-                                <span style="font-size: var(--font-size-xs); color: @(SaveSuccess ? "var(--color-success)" : "var(--color-error)");">@SaveMessage</span>
-                            }
-                            @if (ChapterContentDirty && !ChapterPreviewMode)
-                            {
-                                <span style="font-size: var(--font-size-xs); color: var(--color-warning);">Non sauvegardé</span>
-                            }
-                            <button class="btn btn-ghost btn-sm" @onclick="ToggleChapterPreview" title="@(ChapterPreviewMode ? "Éditer" : "Prévisualiser")">
-                                <i class="bi @(ChapterPreviewMode ? "bi-pencil" : "bi-eye")"></i>
-                                @(ChapterPreviewMode ? "Éditer" : "Aperçu")
-                            </button>
-                            @if (!ChapterPreviewMode)
-                            {
-                                <button class="btn btn-primary btn-sm" @onclick="SaveChapterContent" disabled="@IsSaving">
-                                    <i class="bi bi-floppy"></i> Enregistrer
-                                </button>
-                            }
-                        </div>
-                    }
-                </div>
-
-                <!-- Chapter tab bar -->
-                <div class="campaign-tabs" style="margin-bottom: var(--spacing-md);">
-                    <button class="campaign-tab-btn @(ChapterTab == "contenu" ? "active" : "")" @onclick='() => SwitchToChapterTab("contenu")'>
-                        <i class="bi bi-pencil-square"></i> Contenu
-                        @if (ChapterContentDirty)
-                        {
-                            <span class="tab-dot-active" style="background: var(--color-warning);"></span>
-                        }
-                    </button>
-                    <button class="campaign-tab-btn @(ChapterTab == "pnj" ? "active" : "")" @onclick='() => SwitchToChapterTab("pnj")'>
-                        <i class="bi bi-people"></i> PNJ
-                        @if (ChapterNpcs.Count > 0)
-                        {
-                            <span style="background: var(--color-bg-secondary); color: var(--color-text-muted); font-size: 10px; padding: 1px 6px; border-radius: var(--radius-sm); font-weight: 600;">@ChapterNpcs.Count</span>
-                        }
-                    </button>
-                </div>
-
-                <!-- Contenu tab -->
-                @if (ChapterTab == "contenu")
-                {
-                    @if (ChapterPreviewMode)
-                    {
-                        <div id="chapter-preview-content" class="chapter-preview">
-                            @if (string.IsNullOrWhiteSpace(ChapterContentDraft))
-                            {
-                                <span style="color: var(--color-text-muted); font-style: italic;">Aucun contenu rédigé.</span>
-                            }
-                            else
-                            {
-                                @RenderChapterContent(ChapterContentDraft)
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="description-editor-container" style="flex: 1; min-height: 0;">
-                            <div class="description-editor-toolbar">
-                                <span class="description-editor-hint">
-                                    <i class="bi bi-book"></i>
-                                    Contenu du chapitre &middot; Tapez <strong>@@</strong> pour mentionner un PNJ ou un PJ
-                                </span>
-                            </div>
-                            <textarea id="chapter-content-editor"
-                                      class="description-editor-textarea"
-                                      placeholder="Rédigez le contenu de ce chapitre... Tapez @@ pour mentionner un PNJ ou un PJ."
-                                      value="@ChapterContentDraft"
-                                      @oninput="OnChapterContentInput"></textarea>
-                        </div>
-                    }
-                }
-
-                <!-- PNJ tab -->
-                @if (ChapterTab == "pnj")
-                {
-                    <WorldChapterNpcsPanel Npcs="ChapterNpcs" ChapterId="SelectedChapter!.Id" IsDnD="IsWorldDnD5e"
-                                           ExpandNpcId="MentionExpandNpcId" OnChanged="StateHasChanged" />
-                }
+                <WorldChapterEditorPanel Chapter="SelectedChapter" CampaignId="SelectedCampaignId!.Value"
+                                         IsDnD="IsWorldDnD5e" WorldCharacters="WorldCharacters"
+                                         OnSaved="OnChapterSaved" />
             }
         }
+
 
         @* ──────────────────────────────────────────────────────────
            SECTION: ÉVÉNEMENTS

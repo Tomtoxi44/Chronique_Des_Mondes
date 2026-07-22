@@ -73,7 +73,7 @@ public static class ChapterEndpoints
         ILogger<ChapterEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var result = await chapterService.CreateChapterAsync(request, userId.Value);
@@ -89,7 +89,7 @@ public static class ChapterEndpoints
         ILogger<ChapterEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var chapters = await chapterService.GetChaptersByCampaignAsync(campaignId, userId.Value);
@@ -102,7 +102,7 @@ public static class ChapterEndpoints
         ILogger<ChapterEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var chapter = await chapterService.GetChapterByIdAsync(id, userId.Value);
@@ -119,7 +119,7 @@ public static class ChapterEndpoints
         ILogger<ChapterEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var chapter = await chapterService.UpdateChapterAsync(id, request, userId.Value);
@@ -135,7 +135,7 @@ public static class ChapterEndpoints
         ILogger<ChapterEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var success = await chapterService.DeleteChapterAsync(id, userId.Value);
@@ -151,7 +151,7 @@ public static class ChapterEndpoints
         ILogger<ChapterEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var chapter = await chapterService.StartChapterAsync(id, userId.Value);
@@ -167,7 +167,7 @@ public static class ChapterEndpoints
         ILogger<ChapterEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
 
         var chapter = await chapterService.CompleteChapterAsync(id, userId.Value);
@@ -177,11 +177,4 @@ public static class ChapterEndpoints
         return Results.Ok(chapter);
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-            return null;
-        return userId;
-    }
 }

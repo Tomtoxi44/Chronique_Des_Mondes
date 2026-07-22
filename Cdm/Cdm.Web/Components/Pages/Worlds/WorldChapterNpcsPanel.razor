@@ -47,6 +47,11 @@
                 <label class="form-label">Description physique</label>
                 <textarea class="form-control" rows="2" @bind="NewNpc.PhysicalDescription" placeholder="Apparence physique..."></textarea>
             </div>
+            <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                <label class="form-label">Portrait</label>
+                <AppImageUpload Category="misc" CurrentUrl="@NewNpc.ImageUrl"
+                                Label="Ajouter un portrait" OnUploaded="@((string url) => NewNpc.ImageUrl = url)" />
+            </div>
             @if (IsDnD)
             {
                 <div style="border-top: 1px solid var(--color-border); margin: var(--spacing-sm) 0 var(--spacing-md);"></div>
@@ -130,7 +135,16 @@
 
                 <div class="npc-card">
                     <div class="npc-card-header" @onclick="() => ToggleNpcExpand(npc.Id)">
-                        <div class="npc-card-avatar">@npcInitials</div>
+                        @if (!string.IsNullOrEmpty(npc.ImageUrl))
+                        {
+                            <div class="npc-card-avatar" style="padding: 0; overflow: hidden;">
+                                <img src="@npc.ImageUrl" alt="@npc.DisplayName" style="width: 100%; height: 100%; object-fit: cover;" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="npc-card-avatar">@npcInitials</div>
+                        }
                         <div class="npc-card-info">
                             <div class="npc-card-name">@npc.DisplayName</div>
                             @if (npc.Age.HasValue || !string.IsNullOrEmpty(npc.Description))
@@ -181,6 +195,11 @@
                                 <div class="form-group" style="margin-bottom: var(--spacing-md);">
                                     <label class="form-label">Description physique</label>
                                     <textarea class="form-control" rows="2" @bind="EditingNpcDraft.PhysicalDescription"></textarea>
+                                </div>
+                                <div class="form-group" style="margin-bottom: var(--spacing-md);">
+                                    <label class="form-label">Portrait</label>
+                                    <AppImageUpload Category="misc" CurrentUrl="@EditingNpcDraft.ImageUrl"
+                                                    Label="Ajouter un portrait" OnUploaded="@((string url) => EditingNpcDraft.ImageUrl = url)" />
                                 </div>
                                 @if (IsDnD)
                                 {
@@ -434,6 +453,7 @@
             Description = npc.Description,
             PhysicalDescription = npc.PhysicalDescription,
             Age = npc.Age,
+            ImageUrl = npc.ImageUrl,
             GameSpecificData = npc.GameSpecificData
         };
         EditingNpcDndStats = IsDnD && !string.IsNullOrEmpty(npc.GameSpecificData)

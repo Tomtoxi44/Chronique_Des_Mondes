@@ -1,5 +1,6 @@
 using Cdm.Web;
 using Cdm.Web.Components;
+using Cdm.Web.Extensions;
 using Cdm.Web.Services;
 using Cdm.Web.Services.Storage;
 using Cdm.Web.Services.State;
@@ -69,257 +70,28 @@ Action<HttpClient> ConfigureApiClient = client =>
 // HTTP Clients - Using Aspire Service Discovery (Dev) or configured URL (Production)
 builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(ConfigureApiClient);
 
-// Register ProfileApiClient with scoped lifetime
-builder.Services.AddScoped<ProfileApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("ProfileApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<ProfileApiClient>>();
-    return new ProfileApiClient(httpClient, localStorage, logger);
-});
-
-builder.Services.AddHttpClient("ProfileApiClient", ConfigureApiClient);
-
-// Register RoleService with scoped lifetime
-builder.Services.AddScoped<IRoleService, RoleService>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("RoleApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<RoleService>>();
-    return new RoleService(httpClient, localStorage, logger);
-});
-
-builder.Services.AddHttpClient("RoleApiClient", ConfigureApiClient);
-
-// Register CampaignService with scoped lifetime
-builder.Services.AddScoped<ICampaignService, CampaignService>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("CampaignApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<CampaignService>>();
-    return new CampaignService(httpClient, localStorage, logger);
-});
-
-builder.Services.AddHttpClient("CampaignApiClient", ConfigureApiClient);
-
-// Register CharacterApiClient with scoped lifetime
-builder.Services.AddScoped<ICharacterApiClient, CharacterApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("CharacterApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<CharacterApiClient>>();
-    return new CharacterApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("CharacterApiClient", ConfigureApiClient);
-
-// Register WorldApiClient with scoped lifetime
-builder.Services.AddScoped<WorldApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("WorldApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<WorldApiClient>>();
-    return new WorldApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("WorldApiClient", ConfigureApiClient);
-
-// Register CampaignApiClient with scoped lifetime
-builder.Services.AddScoped<CampaignApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("CampaignApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<CampaignApiClient>>();
-    return new CampaignApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("CampaignApiClient", ConfigureApiClient);
-
-// Register ChapterApiClient with scoped lifetime
-builder.Services.AddScoped<ChapterApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("ChapterApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<ChapterApiClient>>();
-    return new ChapterApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("ChapterApiClient", ConfigureApiClient);
-
-// Register EventApiClient with scoped lifetime
-builder.Services.AddScoped<EventApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("EventApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<EventApiClient>>();
-    return new EventApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("EventApiClient", ConfigureApiClient);
-
-// Register AchievementApiClient with scoped lifetime
-builder.Services.AddScoped<AchievementApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("AchievementApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<AchievementApiClient>>();
-    return new AchievementApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("AchievementApiClient", ConfigureApiClient);
-
-// Register StatisticsApiClient with scoped lifetime
-builder.Services.AddScoped<StatisticsApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("StatisticsApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<StatisticsApiClient>>();
-    return new StatisticsApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("StatisticsApiClient", ConfigureApiClient);
-
-// Register ImageApiClient with scoped lifetime
-builder.Services.AddScoped<ImageApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("ImageApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<ImageApiClient>>();
-    return new ImageApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("ImageApiClient", ConfigureApiClient);
-
-// Register CodexApiClient with scoped lifetime
-builder.Services.AddScoped<CodexApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("CodexApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<CodexApiClient>>();
-    return new CodexApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("CodexApiClient", ConfigureApiClient);
-
-// Register MarketplaceApiClient with scoped lifetime
-builder.Services.AddScoped<MarketplaceApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("MarketplaceApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<MarketplaceApiClient>>();
-    return new MarketplaceApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("MarketplaceApiClient", ConfigureApiClient);
-
-// Register LootApiClient with scoped lifetime
-builder.Services.AddScoped<LootApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("LootApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<LootApiClient>>();
-    return new LootApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("LootApiClient", ConfigureApiClient);
-
-// Register InventoryApiClient with scoped lifetime
-builder.Services.AddScoped<InventoryApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("InventoryApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<InventoryApiClient>>();
-    return new InventoryApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("InventoryApiClient", ConfigureApiClient);
-
-// Register ChapterImageApiClient with scoped lifetime
-builder.Services.AddScoped<ChapterImageApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("ChapterImageApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<ChapterImageApiClient>>();
-    return new ChapterImageApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("ChapterImageApiClient", ConfigureApiClient);
-
-// Register NotificationApiClient with scoped lifetime
-builder.Services.AddScoped<NotificationApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("NotificationApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<NotificationApiClient>>();
-    return new NotificationApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("NotificationApiClient", ConfigureApiClient);
-
-// Register SessionApiClient with scoped lifetime
-builder.Services.AddScoped<SessionApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("SessionApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<SessionApiClient>>();
-    return new SessionApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("SessionApiClient", ConfigureApiClient);
-
-// Register NpcApiClient with scoped lifetime
-builder.Services.AddScoped<NpcApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("NpcApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<NpcApiClient>>();
-    return new NpcApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("NpcApiClient", ConfigureApiClient);
-
-// Register DndApiClient with scoped lifetime
-builder.Services.AddScoped<DndApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("DndApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<DndApiClient>>();
-    return new DndApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("DndApiClient", ConfigureApiClient);
-
-// Register CombatApiClient with scoped lifetime
-builder.Services.AddScoped<CombatApiClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("CombatApiClient");
-    var localStorage = sp.GetRequiredService<ILocalStorageService>();
-    var logger = sp.GetRequiredService<ILogger<CombatApiClient>>();
-    return new CombatApiClient(httpClient, logger, localStorage);
-});
-
-builder.Services.AddHttpClient("CombatApiClient", ConfigureApiClient);
+// Register scoped API clients (named HttpClient + instance) via AddApiClient<T> (audit #6).
+builder.Services.AddApiClient<ProfileApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<IRoleService, RoleService>(ConfigureApiClient);
+builder.Services.AddApiClient<ICampaignService, CampaignService>(ConfigureApiClient);
+builder.Services.AddApiClient<ICharacterApiClient, CharacterApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<WorldApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<CampaignApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<ChapterApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<EventApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<AchievementApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<StatisticsApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<ImageApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<CodexApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<MarketplaceApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<LootApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<InventoryApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<ChapterImageApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<NotificationApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<SessionApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<NpcApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<DndApiClient>(ConfigureApiClient);
+builder.Services.AddApiClient<CombatApiClient>(ConfigureApiClient);
 
 var app = builder.Build();
 

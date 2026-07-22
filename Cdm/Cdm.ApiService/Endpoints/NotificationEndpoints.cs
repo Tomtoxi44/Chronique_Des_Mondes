@@ -60,7 +60,7 @@ public static class NotificationEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -85,7 +85,7 @@ public static class NotificationEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -111,7 +111,7 @@ public static class NotificationEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -142,7 +142,7 @@ public static class NotificationEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -168,7 +168,7 @@ public static class NotificationEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -192,13 +192,4 @@ public static class NotificationEndpoints
         }
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return null;
-        }
-        return userId;
-    }
 }

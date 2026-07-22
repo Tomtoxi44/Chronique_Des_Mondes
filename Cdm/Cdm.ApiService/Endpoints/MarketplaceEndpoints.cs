@@ -46,7 +46,7 @@ public static class MarketplaceEndpoints
         [FromQuery] GameType? gameType = null,
         [FromQuery] string? search = null)
     {
-        if (GetUserId(user) is null)
+        if (user.GetUserId() is null)
         {
             return Results.Unauthorized();
         }
@@ -60,7 +60,7 @@ public static class MarketplaceEndpoints
         [FromQuery] GameType? gameType = null,
         [FromQuery] string? search = null)
     {
-        if (GetUserId(user) is null)
+        if (user.GetUserId() is null)
         {
             return Results.Unauthorized();
         }
@@ -73,7 +73,7 @@ public static class MarketplaceEndpoints
         ClaimsPrincipal user,
         [FromQuery] string? search = null)
     {
-        if (GetUserId(user) is null)
+        if (user.GetUserId() is null)
         {
             return Results.Unauthorized();
         }
@@ -83,7 +83,7 @@ public static class MarketplaceEndpoints
 
     private static async Task<IResult> ImportWorldAsync(int id, [FromServices] IMarketplaceService market, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -99,7 +99,7 @@ public static class MarketplaceEndpoints
         ClaimsPrincipal user,
         [FromQuery] int targetWorldId)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -111,7 +111,7 @@ public static class MarketplaceEndpoints
 
     private static async Task<IResult> ImportCharacterAsync(int id, [FromServices] IMarketplaceService market, ClaimsPrincipal user)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -127,7 +127,7 @@ public static class MarketplaceEndpoints
         ClaimsPrincipal user,
         [FromQuery] bool shared = true)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -143,7 +143,7 @@ public static class MarketplaceEndpoints
         ClaimsPrincipal user,
         [FromQuery] bool shared = true)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -159,7 +159,7 @@ public static class MarketplaceEndpoints
         ClaimsPrincipal user,
         [FromQuery] bool shared = true)
     {
-        var userId = GetUserId(user);
+        var userId = user.GetUserId();
         if (userId is null)
         {
             return Results.Unauthorized();
@@ -169,9 +169,4 @@ public static class MarketplaceEndpoints
         return ok ? Results.NoContent() : Results.NotFound();
     }
 
-    private static int? GetUserId(ClaimsPrincipal user)
-    {
-        var claim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(claim, out var id) ? id : null;
-    }
 }

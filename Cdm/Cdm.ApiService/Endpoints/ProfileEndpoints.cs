@@ -121,11 +121,11 @@ public static class ProfileEndpoints
         HttpRequest request,
         ClaimsPrincipal user,
         [FromServices] IImageStorage imageStorage,
-        [FromServices] DbContext dbContext,
-        [FromServices] ILogger<IAvatarService> logger)
+        [FromServices] Cdm.Business.Abstraction.Services.IUserProfileService profileService,
+        [FromServices] ILogger<Cdm.Business.Abstraction.Services.IUserProfileService> logger)
     {
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+        var userId = user.GetUserId();
+        if (userId is null)
         {
             logger.LogWarning("Invalid user ID claim");
             return Results.Unauthorized();
@@ -152,26 +152,19 @@ public static class ProfileEndpoints
             bytes = ms.ToArray();
         }
 
-        var result = await imageStorage.UploadAsync(bytes, "avatars", userId.ToString());
+        var result = await imageStorage.UploadAsync(bytes, "avatars", userId.Value.ToString());
         if (!result.Success || string.IsNullOrEmpty(result.Url))
         {
             logger.LogError("Avatar upload failed for user {UserId}: {Error}", userId, result.Error);
             return Results.BadRequest(new { error = result.Error ?? "Échec de l'envoi de l'avatar." });
         }
 
-        var userEntity = await dbContext.Set<Cdm.Data.Common.Models.User>()
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (userEntity == null)
+        // Persisting the URL is business logic → delegated to the profile service (layering).
+        var (found, oldAvatarUrl) = await profileService.SetAvatarUrlAsync(userId.Value, result.Url);
+        if (!found)
         {
-            logger.LogWarning("User not found after avatar upload for user {UserId}", userId);
             return Results.NotFound(new { error = "User not found" });
         }
-
-        var oldAvatarUrl = userEntity.AvatarUrl;
-        userEntity.AvatarUrl = result.Url;
-        userEntity.UpdatedAt = DateTime.UtcNow;
-        await dbContext.SaveChangesAsync();
 
         // Best-effort cleanup of the previous image.
         if (!string.IsNullOrWhiteSpace(oldAvatarUrl))

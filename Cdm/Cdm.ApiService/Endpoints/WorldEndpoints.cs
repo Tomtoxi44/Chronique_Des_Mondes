@@ -118,7 +118,7 @@ public static class WorldEndpoints
         ILogger<WorldEndpointsLogger> logger,
         HttpContext httpContext)
     {
-        var userId = GetUserId(httpContext);
+        var userId = httpContext.GetUserId();
         if (userId == null) return Results.Unauthorized();
         var wc = await worldService.GetWorldCharacterByIdAsync(wcId, userId.Value);
         return wc is null ? Results.NotFound() : Results.Ok(wc);
@@ -132,7 +132,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -175,7 +175,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -200,7 +200,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -226,7 +226,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -258,7 +258,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -296,7 +296,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -327,7 +327,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -354,7 +354,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -392,7 +392,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -428,7 +428,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -479,7 +479,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null)
             {
                 return Results.Unauthorized();
@@ -500,15 +500,6 @@ public static class WorldEndpoints
         }
     }
 
-    private static int? GetUserId(HttpContext httpContext)
-    {
-        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-        {
-            return null;
-        }
-        return userId;
-    }
 
     private static async Task<IResult> GetMyWorldCharacterAsync(
         int id,
@@ -518,7 +509,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var worldChar = await worldService.GetMyWorldCharacterAsync(id, userId.Value);
@@ -542,7 +533,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var dto = new Cdm.Business.Abstraction.DTOs.UpdateWorldCharacterProfileDto
@@ -573,7 +564,7 @@ public static class WorldEndpoints
     {
         try
         {
-            var userId = GetUserId(httpContext);
+            var userId = httpContext.GetUserId();
             if (userId == null) return Results.Unauthorized();
 
             var campaigns = await worldService.GetWorldCampaignsForMemberAsync(id, userId.Value);
