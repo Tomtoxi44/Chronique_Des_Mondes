@@ -287,7 +287,24 @@ public class CombatServiceTests
 
         Assert.NotNull(result);
         var updated = await context.CombatParticipants.FindAsync(502);
-        // Without crit: base (1+4)=5 doubled = 10 → 90. With a natural 20 crit: dice doubled first.
-        Assert.True(updated!.CurrentHp <= 90, $"Expected doubled damage; HP was {updated.CurrentHp}.");
+
+        // Le jet d'attaque reste aléatoire : un 1 naturel rate quoi qu'il arrive, même avec
+        // un bonus de +50 contre une CA de 1 (5 % des exécutions). On se branche donc sur ce
+        // que le service a effectivement enregistré (DiceResult null = attaque manquée) plutôt
+        // que de supposer un coup au but — sinon le test échoue une fois sur vingt.
+        var action = await context.CombatActions
+            .OrderByDescending(a => a.Id)
+            .FirstAsync(a => a.CombatId == combatId && a.ActionType == "attack");
+
+        if (action.DiceResult is null)
+        {
+            Assert.Equal(100, updated!.CurrentHp);
+        }
+        else
+        {
+            // Sans critique : base (1+4)=5 doublée = 10. Avec un 20 naturel : dés doublés d'abord.
+            Assert.True(action.DiceResult >= 10, $"Expected doubled damage; dealt {action.DiceResult}.");
+            Assert.Equal(100 - action.DiceResult.Value, updated!.CurrentHp);
+        }
     }
 }

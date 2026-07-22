@@ -406,13 +406,31 @@ public class AuthService : IAuthService
                 .Include(t => t.User)
                 .FirstOrDefaultAsync(t => t.Token == token);
 
-            if (confirmation == null || !confirmation.IsValid)
+            if (confirmation == null || confirmation.ExpiresAt <= DateTime.UtcNow)
             {
                 this.logger.LogWarning("Email confirmation token invalid or expired");
                 return ServiceResult<bool>.Failure("Ce lien de confirmation est invalide ou a expiré");
             }
 
             var user = confirmation.User;
+
+            // Idempotence : un jeton déjà consommé mais toujours dans sa fenêtre de validité
+            // renvoie un succès si l'adresse est bien confirmée. Sans ça, tout deuxième appel
+            // sur le même lien affiche « expiré » alors que la confirmation a réussi — ce qui
+            // arrive systématiquement (la page rappelle l'API quand l'état d'authentification
+            // change) et aussi quand un scanner de messagerie ouvre le lien avant le
+            // destinataire, ou sur un simple double-clic.
+            if (confirmation.UsedAt != null)
+            {
+                if (user.EmailConfirmed)
+                {
+                    this.logger.LogInformation("Email confirmation replayed for user {UserId}", user.Id);
+                    return ServiceResult<bool>.Success(true);
+                }
+
+                this.logger.LogWarning("Email confirmation token already used for user {UserId}", user.Id);
+                return ServiceResult<bool>.Failure("Ce lien de confirmation est invalide ou a expiré");
+            }
 
             if (!user.EmailConfirmed)
             {
