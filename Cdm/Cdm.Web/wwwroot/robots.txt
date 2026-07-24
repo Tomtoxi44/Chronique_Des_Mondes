@@ -1,0 +1,25 @@
+# Chronique des Mondes — robots.txt
+# L'application est presque entierement derriere authentification : les pages privees
+# redirigent vers /login pour un visiteur non connecte, il n'y a donc rien a y indexer.
+# On laisse crawler les pages publiques et on exclut explicitement les URL a jeton
+# (jamais dans un index) et l'espace connecte (economie de budget de crawl).
+
+User-agent: *
+Allow: /
+
+# Pages a usage unique / porteuses de jeton — ne doivent jamais etre indexees
+Disallow: /confirm-email
+Disallow: /reset-password
+
+# Espace connecte (contenu prive, inaccessible sans compte)
+Disallow: /worlds
+Disallow: /characters
+Disallow: /campaigns
+Disallow: /sessions
+Disallow: /codex
+Disallow: /marketplace
+Disallow: /profile
+Disallow: /settings
+Disallow: /notifications
+
+Sitemap: https://chroniques-des-mondes.fr/sitemap.xml

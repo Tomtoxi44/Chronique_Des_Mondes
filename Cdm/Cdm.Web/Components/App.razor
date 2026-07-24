@@ -4,9 +4,25 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Chronique des Mondes — Votre outil de gestion de campagnes de jeu de rôle" />
+    <meta name="description" content="Chronique des Mondes : l'outil pour créer et gérer vos campagnes de jeu de rôle — mondes, personnages, chapitres, PNJ, sessions et combats en ligne." />
     <base href="/" />
-    <title>Chronique des Mondes</title>
+    <title>Chronique des Mondes — Gérez vos campagnes de jeu de rôle</title>
+
+    <!-- SEO / réseaux sociaux (Open Graph + Twitter Card). L'image est le logo carré :
+         le grand blason illustré rend bien en carte de partage, contrairement au favicon. -->
+    <meta name="theme-color" content="#0f0f1e" />
+    <link rel="canonical" href="https://chroniques-des-mondes.fr/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Chronique des Mondes" />
+    <meta property="og:title" content="Chronique des Mondes — Gérez vos campagnes de jeu de rôle" />
+    <meta property="og:description" content="Créez et gérez vos campagnes de jeu de rôle : mondes, personnages, chapitres, PNJ, sessions et combats en ligne." />
+    <meta property="og:image" content="https://chroniques-des-mondes.fr/images/logo.png" />
+    <meta property="og:url" content="https://chroniques-des-mondes.fr/" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Chronique des Mondes" />
+    <meta name="twitter:description" content="Créez et gérez vos campagnes de jeu de rôle en ligne." />
+    <meta name="twitter:image" content="https://chroniques-des-mondes.fr/images/logo.png" />
 
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
@@ -25,9 +41,12 @@
     <link rel="stylesheet" href="@Assets["Cdm.Web.styles.css"]" />
 
     <ImportMap />
-    <link rel="icon" type="image/svg+xml" href="/images/LogoCdm.svg" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <!-- Favicon = le logo de l'application. On sert le logo carré (blason) plutôt que
+         LogoCdm.svg (877×500, format large qui se retrouve en « boîte aux lettres »
+         dans l'onglet). favicon.ico reste en repli pour les vieux navigateurs. -->
+    <link rel="icon" type="image/png" href="/images/logo.png" sizes="any" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/images/logo.png" />
     <HeadOutlet />
 </head>
 
