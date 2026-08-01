@@ -57,8 +57,12 @@
 }
 
 .auth-logo {
-  width: 56px;
-  height: 56px;
+  /* Le logo est au format large (~1.75:1) : hauteur fixe + largeur auto pour l'agrandir
+     sans l'ecraser (l'ancien 56x56 carre le deformait et le rendait minuscule). */
+  width: auto;
+  height: 96px;
+  max-width: 240px;
+  object-fit: contain;
   margin-bottom: var(--spacing-md);
 }
 
