@@ -97,6 +97,9 @@ param customDomainRoot string = 'chroniques-des-mondes.fr'
 @description('Sous-domaine www de la Web App.')
 param customDomainWww string = 'www.chroniques-des-mondes.fr'
 
+@description('Émettre les certificats managés App Service (gratuits) pour les domaines personnalisés et les lier en SNI SSL. Sans ça, taper le domaine dans le navigateur échoue en erreur de certificat.')
+param configureManagedCertificates bool = true
+
 // --- Journalisation / observabilité ------------------------------------------
 @description('Resource ID d\'un workspace Log Analytics existant à lier à Application Insights. Laisser vide pour en créer un dédié.')
 param logAnalyticsWorkspaceResourceId string = ''
@@ -342,14 +345,21 @@ resource webApp 'Microsoft.Web/sites@2024-11-01' = {
 }
 
 // --- Domaines personnalisés + certificats managés (optionnels) ---------------
-// Nécessitent que le DNS (A/CNAME + verification) pointe déjà vers la Web App.
+// Nécessitent que le DNS pointe déjà vers la Web App :
+//   - `www`  : CNAME vers <webAppName>.azurewebsites.net + TXT asuid.www
+//   - racine : A vers l'IP entrante de l'app             + TXT asuid
+// La séquence est en trois temps parce qu'ARM ne sait pas la faire en un seul :
+//   1. liaison du nom d'hôte SANS SSL (prérequis à l'émission du certificat) ;
+//   2. certificat managé App Service (gratuit, renouvelé automatiquement) ;
+//   3. re-liaison du même nom d'hôte en SniEnabled avec l'empreinte (module).
+// Sauter l'étape 3 laisse le domaine joignable en HTTP mais cassé en HTTPS —
+// et comme `httpsOnly` redirige tout vers HTTPS, le site devient inaccessible.
 resource webAppWwwBinding 'Microsoft.Web/sites/hostNameBindings@2024-11-01' = if (configureCustomDomains) {
   parent: webApp
   name: customDomainWww
   properties: {
     siteName: webAppName
     hostNameType: 'Verified'
-    sslState: 'SniEnabled'
   }
 }
 
@@ -359,6 +369,56 @@ resource webAppRootBinding 'Microsoft.Web/sites/hostNameBindings@2024-11-01' = i
   properties: {
     siteName: webAppName
     hostNameType: 'Verified'
+  }
+}
+
+resource wwwCertificate 'Microsoft.Web/certificates@2024-11-01' = if (configureCustomDomains && configureManagedCertificates) {
+  name: '${customDomainWww}-${webAppName}'
+  location: location
+  properties: {
+    canonicalName: customDomainWww
+    serverFarmId: appServicePlan.id
+    domainValidationMethod: 'cname-delegation'
+  }
+  dependsOn: [
+    webAppWwwBinding
+  ]
+}
+
+// La racine n'a pas de CNAME (uniquement un A) : la validation passe par le
+// jeton HTTP servi par l'app, pas par délégation CNAME.
+resource rootCertificate 'Microsoft.Web/certificates@2024-11-01' = if (configureCustomDomains && configureManagedCertificates) {
+  name: '${customDomainRoot}-${webAppName}'
+  location: location
+  properties: {
+    canonicalName: customDomainRoot
+    serverFarmId: appServicePlan.id
+    domainValidationMethod: 'http-token'
+  }
+  dependsOn: [
+    webAppRootBinding
+  ]
+}
+
+module wwwSslBinding 'modules/hostname-ssl-binding.bicep' = if (configureCustomDomains && configureManagedCertificates) {
+  name: 'ssl-binding-www'
+  params: {
+    webAppName: webAppName
+    hostName: customDomainWww
+    // Le module porte la même condition que le certificat : il n'est évalué que
+    // lorsque celui-ci existe.
+    #disable-next-line BCP318
+    certificateThumbprint: wwwCertificate.properties.thumbprint
+  }
+}
+
+module rootSslBinding 'modules/hostname-ssl-binding.bicep' = if (configureCustomDomains && configureManagedCertificates) {
+  name: 'ssl-binding-root'
+  params: {
+    webAppName: webAppName
+    hostName: customDomainRoot
+    #disable-next-line BCP318
+    certificateThumbprint: rootCertificate.properties.thumbprint
   }
 }
 
@@ -463,3 +523,4 @@ output appInsightsConnectionString string = appInsights.properties.ConnectionStr
 output storageBlobEndpoint string = storageAccount.properties.primaryEndpoints.blob
 output blobImagesContainer string = imagesContainerName
 output appConfigEndpoint string = appConfig.properties.endpoint
+output publicSiteUrl string = configureCustomDomains ? 'https://${customDomainRoot}' : 'https://${webApp.properties.defaultHostName}'

@@ -20,5 +20,9 @@ param logAnalyticsWorkspaceResourceId = '/subscriptions/065f4efd-7537-4678-9475-
 // Mettre à true pour un déploiement from-zero.
 param assignKeyVaultRoles = false
 
-// Domaines personnalisés : désactivés par défaut (à activer une fois le DNS en place)
-param configureCustomDomains = false
+// Domaines personnalisés : la prod sert bien `chroniques-des-mondes.fr` et `www.…`,
+// certificats managés App Service liés en SNI SSL. Mettre à false sur un environnement
+// neuf tant que le DNS ne pointe pas encore vers la Web App (l'émission du certificat
+// échouerait).
+param configureCustomDomains = true
+param configureManagedCertificates = true
