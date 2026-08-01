@@ -311,9 +311,6 @@ public partial class MainLayout : IAsyncDisposable
             ? "/" + currentUri[baseUri.Length..].TrimStart('/')
             : "/";
 
-        if (href == "/")
-            return path == "/" ? "active" : string.Empty;
-
         return path.StartsWith(href, StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty;
     }
 

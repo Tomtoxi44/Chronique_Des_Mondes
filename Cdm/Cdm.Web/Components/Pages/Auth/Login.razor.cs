@@ -27,7 +27,7 @@ public partial class Login
     {
         var state = await AuthProvider.GetAuthenticationStateAsync();
         if (state.User.Identity?.IsAuthenticated == true)
-            Nav.NavigateTo("/");
+            Nav.NavigateTo("/dashboard");
     }
 
     private async Task HandleLogin()
@@ -46,9 +46,11 @@ public partial class Login
                     response.UserId, response.Email, response.Nickname, response.Token,
                     response.RefreshToken, response.RefreshTokenExpiry, response.EmailConfirmed);
 
+                // `/` est désormais la page d'accueil publique : après connexion on
+                // envoie sur le tableau de bord, pas sur la page de présentation.
                 var target = !string.IsNullOrEmpty(ReturnUrl)
                     ? Uri.UnescapeDataString(ReturnUrl)
-                    : "/";
+                    : "/dashboard";
                 Nav.NavigateTo(target);
             }
             else

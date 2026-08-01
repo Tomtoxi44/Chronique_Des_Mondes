@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Chronique des Mondes — sitemap des pages publiques. L'espace connecte n'y figure
-     pas : son contenu est prive et redirige vers /login. URL canonique = domaine apex. -->
+<!-- Chronique des Mondes — sitemap des pages publiques. URL canonique = domaine apex.
+     Seule `/` (la page de presentation) porte du contenu reellement indexable : c'est
+     la seule page rendue en SSR statique. Les pages de l'app sont en `prerender: false`
+     et n'ont pas de HTML a indexer, il est donc inutile de les pousser ici. /login et
+     /register restent crawlables (robots.txt ne les bloque pas) sans etre promues. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://chroniques-des-mondes.fr/</loc>
+    <lastmod>2026-08-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://chroniques-des-mondes.fr/login</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://chroniques-des-mondes.fr/register</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://chroniques-des-mondes.fr/forgot-password</loc>
+    <lastmod>2026-08-01</lastmod>
     <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.5</priority>
   </url>
 </urlset>
