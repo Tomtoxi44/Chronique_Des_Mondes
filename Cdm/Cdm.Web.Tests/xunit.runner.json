@@ -1,0 +1,7 @@
+{
+  "methodDisplay": "method",
+  "methodDisplayOptions": {
+    "useOperatorMonikers": true
+  },
+  "parallelizeTestCollections": false
+}

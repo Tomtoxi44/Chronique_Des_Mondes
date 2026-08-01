@@ -6,6 +6,16 @@ namespace Cdm.Web.Services.ApiClients.Base;
 
 public abstract class BaseApiClient
 {
+    /// <summary>
+    /// Options de désérialisation des réponses d'erreur. Statiques et partagées : une instance
+    /// neuve annule le cache de métadonnées interne de <see cref="JsonSerializer"/>, ce qui
+    /// relance toute la réflexion — sur un chemin emprunté par les dix-sept clients d'API.
+    /// </summary>
+    private static readonly JsonSerializerOptions ErrorJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
     protected readonly HttpClient httpClient;
     protected readonly ILogger logger;
     protected readonly ILocalStorageService localStorage;
@@ -155,12 +165,7 @@ public abstract class BaseApiClient
         
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            
-            var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, options);
+            var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, ErrorJsonOptions);
             
             throw new ApiException(
                 statusCode,

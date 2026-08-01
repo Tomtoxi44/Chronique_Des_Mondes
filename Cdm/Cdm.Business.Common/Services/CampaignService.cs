@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="CampaignService.cs" company="ANGIBAUD Tommy">
 // Copyright (c) ANGIBAUD Tommy. All rights reserved.
 // </copyright>
@@ -137,6 +137,7 @@ public class CampaignService(
             this.logger.LogInformation("Retrieving campaigns for user {UserId}", userId);
 
             var campaigns = await this.dbContext.Campaigns
+                .AsNoTracking()
                 .Include(c => c.World)
                 .Where(c => c.CreatedBy == userId && !c.IsDeleted)
                 .OrderByDescending(c => c.CreatedAt)

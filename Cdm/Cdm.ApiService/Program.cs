@@ -172,7 +172,11 @@ builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
 // External-service integrations (image storage + email), provider selected by config.
-builder.Services.AddExternalServices(builder.Configuration);
+// Hors développement, un repli sur le stockage disque / le mail journalisé est une panne
+// silencieuse : on préfère un démarrage en échec, visible immédiatement.
+builder.Services.AddExternalServices(
+    builder.Configuration,
+    requireExternalProviders: !builder.Environment.IsDevelopment());
 builder.Services.AddScoped<ICampaignService, CampaignService>();
 builder.Services.AddScoped<ICharacterService, CharacterService>();
 builder.Services.AddScoped<ICodexService, CodexService>();
