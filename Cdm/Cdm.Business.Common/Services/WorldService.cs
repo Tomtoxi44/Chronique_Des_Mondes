@@ -31,6 +31,30 @@ public class WorldService(
     private readonly INotificationService notificationService = notificationService;
     private readonly Cdm.Common.Services.IEmailService emailService = emailService;
 
+    /// <summary>
+    /// Projection SQL d'un monde vers son DTO. Les deux compteurs sont calculés par la base
+    /// plutôt qu'en chargeant les collections : un <c>Include(Campaigns)</c> combiné à un
+    /// <c>Include(WorldCharacters)</c> produit le produit cartésien des deux (N × M lignes
+    /// rapatriées pour n'en tirer que deux entiers). C'est ce qui déclenchait l'avertissement
+    /// EF « QuerySplittingBehavior » observé en production sur /api/worlds, et les temps de
+    /// réponse de l'ordre de la dizaine de secondes.
+    /// </summary>
+    private static readonly System.Linq.Expressions.Expression<Func<World, WorldDto>> ToWorldDto =
+        world => new WorldDto
+        {
+            Id = world.Id,
+            UserId = world.UserId,
+            Name = world.Name,
+            Description = world.Description,
+            GameType = world.GameType,
+            IsActive = world.IsActive,
+            IsShared = world.IsShared,
+            CreatedAt = world.CreatedAt,
+            UpdatedAt = world.UpdatedAt,
+            CampaignCount = world.Campaigns.Count(c => c.IsActive && !c.IsDeleted),
+            CharacterCount = world.WorldCharacters.Count(wc => wc.IsActive),
+        };
+
     /// <inheritdoc/>
     public async Task<WorldDto?> CreateWorldAsync(CreateWorldDto dto, int userId)
     {
@@ -83,10 +107,10 @@ public class WorldService(
             this.logger.LogInformation("Retrieving worlds for user {UserId}", userId);
 
             var worlds = await this.dbContext.Worlds
-                .Include(w => w.Campaigns)
-                .Include(w => w.WorldCharacters)
+                .AsNoTracking()
                 .Where(w => w.UserId == userId && w.IsActive)
                 .OrderByDescending(w => w.CreatedAt)
+                .Select(ToWorldDto)
                 .ToListAsync();
 
             this.logger.LogInformation(
@@ -94,7 +118,7 @@ public class WorldService(
                 worlds.Count,
                 userId);
 
-            return worlds.Select(this.MapToDto);
+            return worlds;
         }
         catch (Exception ex)
         {
@@ -114,9 +138,10 @@ public class WorldService(
                 userId);
 
             var world = await this.dbContext.Worlds
-                .Include(w => w.Campaigns)
-                .Include(w => w.WorldCharacters)
-                .FirstOrDefaultAsync(w => w.Id == worldId && w.IsActive);
+                .AsNoTracking()
+                .Where(w => w.Id == worldId && w.IsActive)
+                .Select(ToWorldDto)
+                .FirstOrDefaultAsync();
 
             if (world == null)
             {
@@ -139,7 +164,7 @@ public class WorldService(
 
             this.logger.LogInformation("Successfully retrieved world {WorldId}", worldId);
 
-            return this.MapToDto(world);
+            return world;
         }
         catch (Exception ex)
         {
@@ -161,9 +186,9 @@ public class WorldService(
 
             // Worlds where user is GM
             var gmWorlds = await this.dbContext.Worlds
-                .Include(w => w.Campaigns)
-                .Include(w => w.WorldCharacters)
+                .AsNoTracking()
                 .Where(w => w.UserId == userId && w.IsActive)
+                .Select(ToWorldDto)
                 .ToListAsync();
 
             // Worlds where user is a player
@@ -174,9 +199,9 @@ public class WorldService(
                 .ToListAsync();
 
             var playerWorlds = await this.dbContext.Worlds
-                .Include(w => w.Campaigns)
-                .Include(w => w.WorldCharacters)
+                .AsNoTracking()
                 .Where(w => playerWorldIds.Contains(w.Id) && w.UserId != userId && w.IsActive)
+                .Select(ToWorldDto)
                 .ToListAsync();
 
             var allWorlds = gmWorlds.Concat(playerWorlds)
@@ -188,7 +213,7 @@ public class WorldService(
                 allWorlds.Count,
                 userId);
 
-            return allWorlds.Select(this.MapToDto);
+            return allWorlds;
         }
         catch (Exception ex)
         {
@@ -558,12 +583,13 @@ public class WorldService(
         try
         {
             var world = await this.dbContext.Worlds
-                .Include(w => w.Campaigns)
-                .Include(w => w.WorldCharacters)
-                .FirstOrDefaultAsync(w =>
+                .AsNoTracking()
+                .Where(w =>
                     w.InviteToken == inviteToken &&
                     w.InviteTokenExpiry > DateTime.UtcNow &&
-                    w.IsActive);
+                    w.IsActive)
+                .Select(ToWorldDto)
+                .FirstOrDefaultAsync();
 
             if (world == null)
             {
@@ -571,7 +597,7 @@ public class WorldService(
                 return null;
             }
 
-            return this.MapToDto(world);
+            return world;
         }
         catch (Exception ex)
         {

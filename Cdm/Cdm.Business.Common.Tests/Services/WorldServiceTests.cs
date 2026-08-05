@@ -332,4 +332,54 @@ public class WorldServiceTests
             e => e.SendWorldInvitationEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()),
             Times.Never);
     }
+
+    /// <summary>
+    /// Les compteurs du DTO sont desormais calcules par une projection SQL (et non plus en
+    /// chargeant les collections via Include, ce qui produisait un produit cartesien). Ce test
+    /// verrouille la regle de comptage : seules les campagnes actives non supprimees et les
+    /// personnages actifs comptent.
+    /// </summary>
+    [Fact]
+    public async Task GetMyWorldsAsync_CountsOnlyActiveCampaignsAndCharacters()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: nameof(GetMyWorldsAsync_CountsOnlyActiveCampaignsAndCharacters))
+            .Options;
+
+        using var context = new AppDbContext(options);
+
+        var world = new World
+        {
+            Name = "Monde de test",
+            UserId = 7,
+            IsActive = true,
+            GameType = GameType.Generic,
+            CreatedAt = DateTime.UtcNow,
+        };
+        context.Worlds.Add(world);
+        await context.SaveChangesAsync();
+
+        context.Campaigns.AddRange(
+            new Campaign { WorldId = world.Id, Name = "Active", IsActive = true, IsDeleted = false },
+            new Campaign { WorldId = world.Id, Name = "Supprimee", IsActive = true, IsDeleted = true },
+            new Campaign { WorldId = world.Id, Name = "Inactive", IsActive = false, IsDeleted = false });
+
+        var character = new Character { Name = "Perso", UserId = 7 };
+        var otherCharacter = new Character { Name = "Ancien", UserId = 8 };
+        context.Characters.AddRange(character, otherCharacter);
+        await context.SaveChangesAsync();
+
+        context.WorldCharacters.AddRange(
+            new WorldCharacter { WorldId = world.Id, CharacterId = character.Id, IsActive = true },
+            new WorldCharacter { WorldId = world.Id, CharacterId = otherCharacter.Id, IsActive = false });
+        await context.SaveChangesAsync();
+
+        var service = this.CreateService(context);
+
+        var result = (await service.GetMyWorldsAsync(7)).ToList();
+
+        var dto = Assert.Single(result);
+        Assert.Equal(1, dto.CampaignCount);
+        Assert.Equal(1, dto.CharacterCount);
+    }
 }

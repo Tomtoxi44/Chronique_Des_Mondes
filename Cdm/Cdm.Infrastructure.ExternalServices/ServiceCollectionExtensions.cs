@@ -22,7 +22,20 @@ public static class ServiceCollectionExtensions
     /// Registers image storage (Azure Blob in prod via managed identity, local disk otherwise)
     /// and email (Azure Communication Services if configured, logging fallback otherwise).
     /// </summary>
-    public static IServiceCollection AddExternalServices(this IServiceCollection services, IConfiguration configuration)
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <param name="requireExternalProviders">
+    /// <c>true</c> hors développement : les repliements local/journal deviennent des erreurs de
+    /// démarrage explicites. Les réglages vivent dans Azure App Configuration, source déclarée
+    /// « optionnelle » pour que l'API démarre même si le store est injoignable ; sans ce garde-fou,
+    /// une panne du store ferait basculer silencieusement le stockage d'images sur le disque
+    /// éphémère de l'App Service et l'envoi de mails sur un simple logger — exactement la panne
+    /// silencieuse qui a coûté des semaines de diagnostic.
+    /// </param>
+    public static IServiceCollection AddExternalServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        bool requireExternalProviders = false)
     {
         // Image storage: Azure Blob in prod, local disk in dev/CI (selected by config).
         if (string.Equals(configuration["ImageStorage:Provider"], "AzureBlob", StringComparison.OrdinalIgnoreCase))
@@ -49,6 +62,14 @@ public static class ServiceCollectionExtensions
                     .GetBlobContainerClient(containerName));
             services.AddScoped<IImageStorage, AzureBlobImageStorage>();
         }
+        else if (requireExternalProviders)
+        {
+            throw new InvalidOperationException(
+                "ImageStorage:Provider doit valoir 'AzureBlob' hors développement. " +
+                "Vérifiez qu'Azure App Configuration est joignable et que la clé y est définie : " +
+                "le repli sur le disque local écrirait dans un stockage éphémère et renverrait " +
+                "des URLs inutilisables depuis le front.");
+        }
         else
         {
             services.AddScoped<IImageStorage, LocalImageStorage>();
@@ -59,6 +80,14 @@ public static class ServiceCollectionExtensions
         if (!string.IsNullOrWhiteSpace(configuration["AzureEmail:ConnectionString"]))
         {
             services.AddScoped<IEmailService, AzureEmailService>();
+        }
+        else if (requireExternalProviders)
+        {
+            throw new InvalidOperationException(
+                "AzureEmail:ConnectionString est requis hors développement. " +
+                "Vérifiez qu'Azure App Configuration est joignable et que la référence Key Vault " +
+                "s'y résout : sans cette valeur, les emails seraient seulement journalisés et " +
+                "aucun message ne partirait réellement.");
         }
         else
         {
