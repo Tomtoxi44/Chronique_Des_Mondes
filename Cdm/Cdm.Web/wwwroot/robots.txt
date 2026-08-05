@@ -1,8 +1,9 @@
 # Chronique des Mondes — robots.txt
-# L'application est presque entierement derriere authentification : les pages privees
-# redirigent vers /login pour un visiteur non connecte, il n'y a donc rien a y indexer.
-# On laisse crawler les pages publiques et on exclut explicitement les URL a jeton
-# (jamais dans un index) et l'espace connecte (economie de budget de crawl).
+# Seule `/` (la page de presentation) est publique et rendue en SSR statique. Tout le
+# reste est derriere authentification : les pages privees redirigent vers /login pour un
+# visiteur non connecte, il n'y a donc rien a y indexer. On laisse crawler les pages
+# publiques et on exclut explicitement les URL a jeton (jamais dans un index) et
+# l'espace connecte (economie de budget de crawl).
 
 User-agent: *
 Allow: /
@@ -12,6 +13,7 @@ Disallow: /confirm-email
 Disallow: /reset-password
 
 # Espace connecte (contenu prive, inaccessible sans compte)
+Disallow: /dashboard
 Disallow: /worlds
 Disallow: /characters
 Disallow: /campaigns

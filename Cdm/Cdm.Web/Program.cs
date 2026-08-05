@@ -1,5 +1,7 @@
 using Cdm.Web;
 using Cdm.Web.Components;
+using Cdm.Web.Components.Public;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Cdm.Web.Extensions;
 using Cdm.Web.Services;
 using Cdm.Web.Services.Storage;
@@ -190,6 +192,15 @@ app.MapGet("/set-culture", (string culture, string? redirectUri, HttpContext con
 
     return Results.LocalRedirect(isSafeRedirect ? redirectUri! : "/settings");
 });
+
+// Page d'accueil publique, rendue en SSR statique HORS du routeur Blazor.
+// Les pages de l'app sont en `prerender: false` (le token d'auth vit dans
+// localStorage, inaccessible au prérendu) : leur HTML est vide tant que SignalR
+// n'a pas répondu, et Googlebot n'ouvre pas de WebSocket. Cet endpoint sert donc
+// le seul contenu réellement indexable du site. Le tableau de bord, lui, est passé
+// sur /dashboard.
+app.MapGet("/", () => new RazorComponentResult<Landing>())
+    .AllowAnonymous();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

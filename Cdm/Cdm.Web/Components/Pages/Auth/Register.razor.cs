@@ -51,7 +51,7 @@ public partial class Register
                         $"Bienvenue, {response.Nickname} ! Votre compte a bien été créé.",
                         "Inscription réussie");
 
-                    Nav.NavigateTo("/");
+                    Nav.NavigateTo("/dashboard");
                     return;
                 }
 
