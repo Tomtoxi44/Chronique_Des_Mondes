@@ -1,0 +1,214 @@
+@*
+    Landing.razor — page d'accueil publique de chroniques-des-mondes.fr
+
+    Volontairement HORS du routeur Blazor. `Routes.razor` impose
+    `InteractiveServerRenderMode(prerender: false)` à tout l'arbre : les pages de
+    l'application ne renvoient qu'un `<body>` vide et ne se remplissent qu'une fois
+    la connexion SignalR ouverte. Googlebot n'ouvre pas de WebSocket — le contenu lui
+    est donc invisible. Ce composant est rendu en SSR statique par un endpoint dédié
+    (`MapGet("/")` dans Program.cs), il porte donc son propre document HTML et n'a
+    besoin d'aucun JavaScript pour s'afficher.
+
+    Corollaire : pas de `@@rendermode`, pas d'injection de service scopé côté client,
+    pas de composant interactif ici. Tout ajout de ce genre casserait silencieusement
+    l'indexation en ramenant la page dans le monde interactif.
+*@
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chronique des Mondes — Gérez vos campagnes de jeu de rôle en ligne</title>
+    <meta name="description" content="Chronique des Mondes réunit vos mondes, personnages, campagnes, PNJ et combats dans un seul outil. Créez votre univers, menez vos sessions, gardez la mémoire de vos parties. Gratuit." />
+
+    <meta name="theme-color" content="#070a0d" />
+    <link rel="canonical" href="https://chroniques-des-mondes.fr/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Chronique des Mondes" />
+    <meta property="og:title" content="Chronique des Mondes — Gérez vos campagnes de jeu de rôle en ligne" />
+    <meta property="og:description" content="Vos mondes, personnages, campagnes, PNJ et combats dans un seul outil. Créez, menez, archivez vos parties de jeu de rôle." />
+    <meta property="og:image" content="https://chroniques-des-mondes.fr/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://chroniques-des-mondes.fr/" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chronique des Mondes" />
+    <meta name="twitter:description" content="Créez et gérez vos campagnes de jeu de rôle en ligne." />
+    <meta name="twitter:image" content="https://chroniques-des-mondes.fr/og-image.png" />
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@@400;600;700&family=Inter:wght@@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="/css/variables.css" />
+    <link rel="stylesheet" href="/css/themes/themes.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/layouts/landing.css" />
+
+    @* Donnée structurée : décrit l'application aux moteurs sans dépendre du rendu. *@
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "WebApplication",
+          "name": "Chronique des Mondes",
+          "url": "https://chroniques-des-mondes.fr/",
+          "applicationCategory": "GameApplication",
+          "operatingSystem": "Web",
+          "inLanguage": "fr-FR",
+          "description": "Outil en ligne de gestion de campagnes de jeu de rôle : mondes, personnages, chapitres, PNJ, sessions et combats.",
+          "offers": { "@@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+        }
+    </script>
+</head>
+
+<body class="landing">
+    <a href="#contenu" class="skip-to-content">Aller au contenu principal</a>
+
+    <header class="landing-topbar">
+        <a href="/" class="landing-brand">
+            <img src="/images/LogoCdm.svg" alt="" width="40" height="40" />
+            <span>Chronique des Mondes</span>
+        </a>
+        <nav class="landing-topbar-actions" aria-label="Accès au compte">
+            <a href="/login" class="btn btn-ghost">Se connecter</a>
+            <a href="/register" class="btn btn-primary">Créer un compte</a>
+        </nav>
+    </header>
+
+    <main id="contenu">
+
+        <section class="landing-hero">
+            <p class="landing-eyebrow">Forgez votre destinée</p>
+            <h1>Toute votre campagne de jeu de rôle, au même endroit</h1>
+            <p class="landing-lead">
+                Mondes, personnages, chapitres, PNJ, sessions et combats : Chronique des Mondes
+                remplace le classeur, les feuilles volantes et les six onglets ouverts pendant
+                une partie. Vous menez, l'outil se souvient.
+            </p>
+            <div class="landing-cta">
+                <a href="/register" class="btn btn-primary btn-lg">
+                    <i class="bi bi-stars" aria-hidden="true"></i>
+                    Créer mon univers — gratuit
+                </a>
+                <a href="/login" class="btn btn-secondary btn-lg">J'ai déjà un compte</a>
+            </div>
+            <p class="landing-hero-note">Aucune carte bancaire. Compatible D&amp;D 5e et systèmes génériques.</p>
+        </section>
+
+        <section class="landing-section" aria-labelledby="fonctionnalites">
+            <h2 id="fonctionnalites" class="section-eyebrow">
+                <i class="bi bi-grid-3x3-gap" aria-hidden="true"></i>
+                Ce que vous pouvez faire
+            </h2>
+
+            <ul class="landing-features">
+                <li class="cdm-card">
+                    <i class="bi bi-globe2" aria-hidden="true"></i>
+                    <h3>Construire un monde</h3>
+                    <p>
+                        Lieux, factions, lore, illustrations. Votre univers vit dans un codex
+                        consultable pendant la partie plutôt que dans un document oublié.
+                    </p>
+                </li>
+                <li class="cdm-card">
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <h3>Gérer les personnages</h3>
+                    <p>
+                        Fiches complètes, caractéristiques, inventaire et progression. Support
+                        dédié pour D&amp;D 5e — classes, sous-classes, montée de niveau — et un
+                        mode générique pour les autres systèmes.
+                    </p>
+                </li>
+                <li class="cdm-card">
+                    <i class="bi bi-map" aria-hidden="true"></i>
+                    <h3>Mener des campagnes</h3>
+                    <p>
+                        Découpez l'aventure en chapitres, préparez vos PNJ et vos rencontres,
+                        invitez vos joueurs et suivez qui a participé à quoi.
+                    </p>
+                </li>
+                <li class="cdm-card">
+                    <i class="bi bi-shield-slash" aria-hidden="true"></i>
+                    <h3>Résoudre les combats</h3>
+                    <p>
+                        Ordre d'initiative, points de vie, attaques et jets de dés intégrés :
+                        le combat se déroule dans l'outil, sans calcul à côté.
+                    </p>
+                </li>
+                <li class="cdm-card">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i>
+                    <h3>Garder la mémoire</h3>
+                    <p>
+                        Chaque session laisse une trace. Statistiques de jets, historique des
+                        événements, hauts faits débloqués : la chronique s'écrit toute seule.
+                    </p>
+                </li>
+                <li class="cdm-card">
+                    <i class="bi bi-shop" aria-hidden="true"></i>
+                    <h3>Échanger objets et butin</h3>
+                    <p>
+                        Inventaires, distribution de butin et place de marché entre joueurs,
+                        pour arrêter d'arbitrer les échanges à l'oral.
+                    </p>
+                </li>
+            </ul>
+        </section>
+
+        <section class="landing-section landing-steps" aria-labelledby="demarrer">
+            <h2 id="demarrer" class="section-eyebrow">
+                <i class="bi bi-signpost-split" aria-hidden="true"></i>
+                Démarrer en trois étapes
+            </h2>
+            <ol class="landing-steps-list">
+                <li>
+                    <span class="landing-step-num">1</span>
+                    <h3>Créez votre compte</h3>
+                    <p>Une adresse e-mail suffit. C'est gratuit et sans engagement.</p>
+                </li>
+                <li>
+                    <span class="landing-step-num">2</span>
+                    <h3>Posez votre monde</h3>
+                    <p>Un nom, un système de jeu, et vous pouvez déjà y placer vos premiers personnages.</p>
+                </li>
+                <li>
+                    <span class="landing-step-num">3</span>
+                    <h3>Invitez votre table</h3>
+                    <p>Vos joueurs rejoignent la campagne et la première session peut commencer.</p>
+                </li>
+            </ol>
+            <div class="landing-cta">
+                <a href="/register" class="btn btn-primary btn-lg">Commencer maintenant</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="landing-footer">
+        <p>Chronique des Mondes — outil de gestion de campagnes de jeu de rôle.</p>
+        <nav aria-label="Liens de pied de page">
+            <a href="/login">Connexion</a>
+            <a href="/register">Inscription</a>
+        </nav>
+    </footer>
+
+    @* Reprend le choix clair/sombre de l'utilisateur, comme App.razor, pour qu'un
+       visiteur qui revient ne bascule pas en sombre en passant par l'accueil. Ne
+       touche qu'un attribut : le contenu reste entierement dans le HTML servi. *@
+    <script>
+        (function () {
+            var theme = localStorage.getItem('cdm-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+</body>
+
+</html>

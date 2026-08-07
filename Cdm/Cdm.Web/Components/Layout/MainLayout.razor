@@ -5,7 +5,7 @@
     <!-- SIDEBAR PRINCIPALE -->
     <aside class="app-sidebar @(IsCollapsed ? "collapsed" : "") @(IsMobileOpen ? "mobile-open" : "") @ContextThemeClass" id="main-sidebar">
         <div class="sidebar-header">
-            <a href="/" class="sidebar-brand d-flex align-items-center gap-sm text-decoration-none">
+            <a href="/dashboard" class="sidebar-brand d-flex align-items-center gap-sm text-decoration-none">
                 <img src="/images/LogoCdm.svg" alt="CDM" class="sidebar-logo" />
                 <span class="sidebar-brand-text">@L["AppName"]</span>
             </a>
@@ -14,8 +14,8 @@
         <nav class="sidebar-nav" aria-label="Navigation principale">
             <span class="nav-section-label">@L["Nav_Navigation"]</span>
 
-            <a href="/" class="nav-item @ActiveClass("/")" title="@L["Nav_Home"]"
-               aria-current="@(ActiveClass("/") == "active" ? "page" : null)">
+            <a href="/dashboard" class="nav-item @ActiveClass("/dashboard")" title="@L["Nav_Home"]"
+               aria-current="@(ActiveClass("/dashboard") == "active" ? "page" : null)">
                 <i class="bi bi-house nav-icon"></i>
                 <span class="nav-label">@L["Nav_Home"]</span>
             </a>

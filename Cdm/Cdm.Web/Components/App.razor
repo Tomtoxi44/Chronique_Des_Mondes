@@ -1,3 +1,5 @@
+@inject NavigationManager Nav
+
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
 
@@ -11,7 +13,7 @@
     <!-- SEO / réseaux sociaux (Open Graph + Twitter Card). L'image est le logo carré :
          le grand blason illustré rend bien en carte de partage, contrairement au favicon. -->
     <meta name="theme-color" content="#0f0f1e" />
-    <link rel="canonical" href="https://chroniques-des-mondes.fr/" />
+    <link rel="canonical" href="@CanonicalUrl" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Chronique des Mondes" />
     <meta property="og:title" content="Chronique des Mondes — Gérez vos campagnes de jeu de rôle" />
@@ -19,7 +21,7 @@
     <meta property="og:image" content="https://chroniques-des-mondes.fr/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:url" content="https://chroniques-des-mondes.fr/" />
+    <meta property="og:url" content="@CanonicalUrl" />
     <meta property="og:locale" content="fr_FR" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Chronique des Mondes" />
@@ -67,3 +69,26 @@
 </body>
 
 </html>
+
+@code {
+    // Domaine canonique du site. Les pages sont servies indifféremment sur l'apex et
+    // sur `www.` : sans URL absolue figée sur un seul hôte, chaque page existerait en
+    // double aux yeux des moteurs.
+    private const string CanonicalOrigin = "https://chroniques-des-mondes.fr";
+
+    // App.razor est rendu en SSR statique (le `prerender: false` ne s'applique qu'à
+    // l'arbre du routeur) : `Nav.Uri` porte donc bien l'URL réellement demandée. Le
+    // canonical était codé en dur sur `/`, ce qui revenait à déclarer /login, /register
+    // et /forgot-password comme des doublons de l'accueil — en contradiction directe
+    // avec le sitemap qui demande leur indexation.
+    private string CanonicalUrl
+    {
+        get
+        {
+            // La query string ne participe pas à l'identité de la page, et elle peut
+            // porter un jeton (confirm-email, reset-password) : jamais dans un canonical.
+            var path = new Uri(Nav.Uri).AbsolutePath;
+            return path == "/" ? $"{CanonicalOrigin}/" : CanonicalOrigin + path.TrimEnd('/');
+        }
+    }
+}

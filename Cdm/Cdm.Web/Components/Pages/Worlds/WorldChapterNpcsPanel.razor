@@ -5,7 +5,6 @@
 @namespace Cdm.Web.Components.Pages.Worlds
 @using Cdm.Business.Abstraction.DTOs
 @using System.Text.Json
-@inject Cdm.Web.Services.ApiClients.NpcApiClient NpcClient
 
 <div class="cdm-card">
     <AppSectionTitle Title="Personnages non-joueurs" Icon="bi-person-badge" Rule="false">
@@ -283,7 +282,7 @@
                                 }
                                 @if (IsDnD && !string.IsNullOrEmpty(npc.GameSpecificData))
                                 {
-                                    var dndStats = JsonSerializer.Deserialize<DndNpcStats>(npc.GameSpecificData!, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                                    var dndStats = DeserializeDndStats(npc.GameSpecificData);
                                     if (dndStats != null)
                                     {
                                         <div class="npc-card-body-label" style="color: var(--color-gold); margin-top: var(--spacing-sm);">Stats D&amp;D 5e</div>
@@ -339,151 +338,3 @@
                   ConfirmLabel="Supprimer"
                   CancelLabel="Annuler"
                   OnConfirm="DeleteNpc" />
-
-@code {
-    [Parameter] public List<NpcDto> Npcs { get; set; } = new();
-    [Parameter] public int ChapterId { get; set; }
-    [Parameter] public bool IsDnD { get; set; }
-    [Parameter] public EventCallback OnChanged { get; set; }
-
-    /// <summary>PNJ à déplier (ex. depuis un clic sur une @mention). Traité une fois par valeur.</summary>
-    [Parameter] public int? ExpandNpcId { get; set; }
-    private int? _handledExpandId;
-
-    private bool ShowNpcForm;
-    private bool IsSavingNpc;
-    private CreateNpcDto NewNpc = new();
-    private DndNpcStats NewNpcDndStats = new();
-    private NpcDto? NpcToDelete;
-    private AppConfirmDialog DeleteNpcDialog { get; set; } = default!;
-
-    private HashSet<int> ExpandedNpcIds = new();
-    private int? EditingNpcId;
-    private CreateNpcDto EditingNpcDraft = new();
-    private DndNpcStats EditingNpcDndStats = new();
-    private bool IsSavingEditNpc;
-
-    private int _lastChapterId;
-
-    protected override void OnParametersSet()
-    {
-        // Réinitialise l'état transitoire quand on change de chapitre.
-        if (ChapterId != _lastChapterId)
-        {
-            _lastChapterId = ChapterId;
-            ShowNpcForm = false;
-            ExpandedNpcIds.Clear();
-            EditingNpcId = null;
-            EditingNpcDraft = new();
-        }
-
-        // Déplie un PNJ demandé par le parent (clic sur une @mention), une seule fois.
-        if (ExpandNpcId.HasValue && ExpandNpcId != _handledExpandId)
-        {
-            _handledExpandId = ExpandNpcId;
-            ExpandedNpcIds.Add(ExpandNpcId.Value);
-        }
-    }
-
-    private void ShowAddNpc()
-    {
-        NewNpc = new CreateNpcDto { ChapterId = ChapterId };
-        NewNpcDndStats = new DndNpcStats();
-        ShowNpcForm = true;
-    }
-
-    private async Task CreateNpc()
-    {
-        IsSavingNpc = true;
-        NewNpc.ChapterId = ChapterId;
-        if (IsDnD)
-            NewNpc.GameSpecificData = JsonSerializer.Serialize(NewNpcDndStats, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        var result = await NpcClient.CreateNpcAsync(NewNpc);
-        if (result != null)
-        {
-            Npcs.Add(result);
-            NewNpc = new CreateNpcDto { ChapterId = ChapterId };
-            NewNpcDndStats = new DndNpcStats();
-            ShowNpcForm = false;
-            await OnChanged.InvokeAsync();
-        }
-        IsSavingNpc = false;
-    }
-
-    private void ConfirmDeleteNpc(NpcDto npc)
-    {
-        NpcToDelete = npc;
-        DeleteNpcDialog.Show();
-    }
-
-    private async Task DeleteNpc()
-    {
-        if (NpcToDelete == null) return;
-        var ok = await NpcClient.DeleteNpcAsync(NpcToDelete.Id);
-        if (ok)
-        {
-            Npcs.Remove(NpcToDelete);
-            await OnChanged.InvokeAsync();
-        }
-        NpcToDelete = null;
-    }
-
-    private void ToggleNpcExpand(int npcId)
-    {
-        if (ExpandedNpcIds.Contains(npcId))
-            ExpandedNpcIds.Remove(npcId);
-        else
-            ExpandedNpcIds.Add(npcId);
-        if (!ExpandedNpcIds.Contains(npcId) && EditingNpcId == npcId)
-        {
-            EditingNpcId = null;
-            EditingNpcDraft = new();
-        }
-    }
-
-    private void StartEditNpc(NpcDto npc)
-    {
-        EditingNpcId = npc.Id;
-        ExpandedNpcIds.Add(npc.Id);
-        EditingNpcDraft = new CreateNpcDto
-        {
-            ChapterId = npc.ChapterId,
-            FirstName = npc.FirstName,
-            Name = npc.Name,
-            Description = npc.Description,
-            PhysicalDescription = npc.PhysicalDescription,
-            Age = npc.Age,
-            ImageUrl = npc.ImageUrl,
-            GameSpecificData = npc.GameSpecificData
-        };
-        EditingNpcDndStats = IsDnD && !string.IsNullOrEmpty(npc.GameSpecificData)
-            ? JsonSerializer.Deserialize<DndNpcStats>(npc.GameSpecificData, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) ?? new DndNpcStats()
-            : new DndNpcStats();
-    }
-
-    private void CancelEditNpc()
-    {
-        EditingNpcId = null;
-        EditingNpcDraft = new();
-        EditingNpcDndStats = new();
-    }
-
-    private async Task SaveEditNpc()
-    {
-        if (EditingNpcId == null) return;
-        IsSavingEditNpc = true;
-        if (IsDnD)
-            EditingNpcDraft.GameSpecificData = JsonSerializer.Serialize(EditingNpcDndStats, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        var result = await NpcClient.UpdateNpcAsync(EditingNpcId.Value, EditingNpcDraft);
-        if (result != null)
-        {
-            var idx = Npcs.FindIndex(n => n.Id == EditingNpcId.Value);
-            if (idx >= 0) Npcs[idx] = result;
-            EditingNpcId = null;
-            EditingNpcDraft = new();
-            EditingNpcDndStats = new();
-            await OnChanged.InvokeAsync();
-        }
-        IsSavingEditNpc = false;
-    }
-}

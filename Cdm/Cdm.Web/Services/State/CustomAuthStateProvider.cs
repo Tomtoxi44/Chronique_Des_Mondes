@@ -12,7 +12,27 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     private readonly ILocalStorageService localStorage;
     private readonly ILogger<CustomAuthStateProvider> logger;
     private readonly IAuthApiClient authClient;
-    
+
+    /// <summary>
+    /// Sérialise le rafraîchissement du jeton. Blazor appelle
+    /// <see cref="GetAuthenticationStateAsync"/> depuis chaque <c>AuthorizeView</c> et chaque
+    /// page : sans ce verrou, un JWT expiré déclenchait autant de rafraîchissements simultanés
+    /// que de composants. Or les refresh tokens sont à usage unique côté serveur (l'appel
+    /// révoque le jeton présenté), donc le premier réussissait et **tous les autres
+    /// échouaient**, ce qui vidait le stockage et déconnectait l'utilisateur — le tout en
+    /// saturant au passage la limite de débit de /api/auth/refresh (10 requêtes/minute).
+    /// Le provider étant Scoped, l'instance vaut pour un circuit, soit un utilisateur.
+    /// </summary>
+    private readonly SemaphoreSlim refreshLock = new(1, 1);
+
+    /// <summary>
+    /// Dernier état d'authentification calculé, indexé par le jeton dont il est issu.
+    /// Reconstruire l'état coûte cinq lectures de localStorage (aller-retour JS + déchiffrement
+    /// Data Protection) : sans ce cache, chaque rendu d'un composant protégé les repayait.
+    /// </summary>
+    private string? cachedToken;
+    private AuthenticationState? cachedState;
+
     private const string AuthTokenKey = "auth_token";
     private const string AuthUserIdKey = "auth_user_id";
     private const string AuthUserEmailKey = "auth_user_email";
@@ -31,34 +51,37 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         this.authClient = authClient;
     }
 
-    public void SetAuthClient(IAuthApiClient client)
-    {
-        // kept for backward compat — constructor injection is preferred
-    }
-    
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         var token = await this.localStorage.GetItemAsync(AuthTokenKey);
-        
+
         if (string.IsNullOrEmpty(token))
         {
+            this.ClearCache();
             this.logger.LogDebug("No authentication token found, user is anonymous");
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
-        
+
         // Check if JWT is expired and attempt refresh
         if (IsJwtExpired(token))
         {
-            this.logger.LogInformation("JWT is expired, attempting refresh");
+            this.logger.LogDebug("JWT is expired, attempting refresh");
             var refreshed = await TryRefreshTokenAsync();
             if (!refreshed)
             {
-                await this.ClearStorageAsync();
+                // La purge de la session est faite par TryRefreshTokenAsync, sous le verrou.
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
             token = await this.localStorage.GetItemAsync(AuthTokenKey) ?? string.Empty;
         }
-        
+
+        // Le jeton est valide : si l'état a déjà été construit pour ce jeton exact, on le
+        // réutilise au lieu de relire (et déchiffrer) quatre entrées supplémentaires.
+        if (this.cachedState is not null && this.cachedToken == token)
+        {
+            return this.cachedState;
+        }
+
         try
         {
             var userId = await this.localStorage.GetItemAsync(AuthUserIdKey);
@@ -83,13 +106,17 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
             
             var identity = new ClaimsIdentity(claims, "jwt");
             var user = new ClaimsPrincipal(identity);
-            
-            this.logger.LogInformation("User authenticated: {Email}", userEmail);
-            
-            return new AuthenticationState(user);
+
+            this.logger.LogDebug("User authenticated: {Email}", userEmail);
+
+            var state = new AuthenticationState(user);
+            this.cachedToken = token;
+            this.cachedState = state;
+            return state;
         }
         catch (Exception ex)
         {
+            this.ClearCache();
             this.logger.LogError(ex, "Error parsing authentication token");
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
@@ -125,7 +152,13 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         var identity = new ClaimsIdentity(claims, "jwt");
         var user = new ClaimsPrincipal(identity);
 
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+        // L'état vient d'être construit ici : on le met en cache pour ce jeton plutôt que de
+        // le laisser être recalculé (et relu depuis le stockage) au prochain rendu.
+        var state = new AuthenticationState(user);
+        this.cachedToken = token;
+        this.cachedState = state;
+
+        NotifyAuthenticationStateChanged(Task.FromResult(state));
 
         this.logger.LogInformation("User marked as authenticated: {Email}", email);
     }
@@ -137,6 +170,10 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     public async Task MarkEmailConfirmedAsync()
     {
         await this.localStorage.SetItemAsync(AuthEmailConfirmedKey, "true");
+        // Le jeton ne change pas ici, seulement une revendication : il faut donc invalider
+        // explicitement le cache, sinon l'état reconstruit porterait encore
+        // email_confirmed=false et le bandeau resterait affiché.
+        this.ClearCache();
         NotifyAuthenticationStateChanged(this.GetAuthenticationStateAsync());
     }
     
@@ -150,15 +187,40 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         this.logger.LogInformation("User logged out");
     }
 
+    /// <summary>
+    /// Rafraîchit le jeton d'accès, au plus une fois à la fois par circuit. Les appelants
+    /// concurrents attendent le rafraîchissement en cours puis réutilisent son résultat au lieu
+    /// de rejouer l'appel avec un refresh token désormais révoqué.
+    /// </summary>
     private async Task<bool> TryRefreshTokenAsync()
     {
+        await this.refreshLock.WaitAsync();
         try
         {
+            // Double vérification : pendant l'attente du verrou, un autre appelant a pu
+            // rafraîchir. C'est ce test qui transforme N rafraîchissements simultanés en un
+            // seul — sans lui, les suivants présenteraient un jeton déjà révoqué et
+            // déconnecteraient l'utilisateur.
+            var current = await this.localStorage.GetItemAsync(AuthTokenKey);
+            if (!string.IsNullOrEmpty(current) && !IsJwtExpired(current))
+            {
+                this.logger.LogDebug("Token already refreshed by a concurrent caller");
+                return true;
+            }
+
             var refreshToken = await this.localStorage.GetItemAsync(AuthRefreshTokenKey);
             if (string.IsNullOrEmpty(refreshToken)) return false;
 
             var response = await this.authClient.RefreshAsync(refreshToken);
-            if (response == null || string.IsNullOrEmpty(response.Token)) return false;
+            if (response == null || string.IsNullOrEmpty(response.Token))
+            {
+                // Le refresh token est mort (expiré, révoqué, session close). On purge la
+                // session ici, sous le verrou : les appelants encore en file d'attente
+                // trouveront un stockage vide et renonceront au lieu de rejouer le même
+                // jeton condamné — un seul aller-retour réseau au lieu d'un par composant.
+                await this.ClearStorageAsync();
+                return false;
+            }
 
             await this.MarkUserAsAuthenticatedAsync(
                 response.UserId, response.Email, response.Nickname, response.Token,
@@ -170,12 +232,24 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         catch (Exception ex)
         {
             this.logger.LogWarning(ex, "Token refresh failed");
+            await this.ClearStorageAsync();
             return false;
         }
+        finally
+        {
+            this.refreshLock.Release();
+        }
+    }
+
+    private void ClearCache()
+    {
+        this.cachedToken = null;
+        this.cachedState = null;
     }
 
     private async Task ClearStorageAsync()
     {
+        this.ClearCache();
         await this.localStorage.RemoveItemAsync(AuthTokenKey);
         await this.localStorage.RemoveItemAsync(AuthUserIdKey);
         await this.localStorage.RemoveItemAsync(AuthUserEmailKey);
