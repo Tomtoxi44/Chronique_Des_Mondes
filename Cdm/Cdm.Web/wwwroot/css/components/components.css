@@ -2499,23 +2499,60 @@ textarea.form-control {
 }
 
 /* GM inline chat (inside participants sidebar) */
+/* La barre laterale defile (overflow-y:auto) et empile quatre sections : avec flex:1 +
+   min-height:0, le fil de discussion etait le seul bloc compressible et finissait a 0 px
+   des que Image/Echanges/Butin remplissaient la hauteur — le chat disparaissait. Chaque
+   section garde desormais sa hauteur naturelle et le fil a une hauteur garantie. */
 .gm-chat-section {
   display: flex;
   flex-direction: column;
   border-top: 1px solid var(--color-border);
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
   overflow: hidden;
 }
 
+.gm-chat-section:first-of-type {
+  border-top: none;
+}
+
+/* Le chat est le canal principal MJ ↔ joueurs : on le met en evidence. */
+.gm-chat-section.gm-chat-main {
+  margin: var(--spacing-sm) calc(-1 * var(--spacing-md)) 0;
+  padding: 0 var(--spacing-md) var(--spacing-xs);
+  background: var(--color-surface-alt);
+  border-top: 2px solid var(--color-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.gm-chat-section.gm-chat-main .session-sidebar-header {
+  color: var(--color-primary);
+}
+
+.gm-chat-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0 var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .gm-chat-feed {
-  flex: 1;
+  flex: 0 0 auto;
+  min-height: 220px;
+  max-height: 38vh;
   overflow-y: auto;
   padding: var(--spacing-xs) var(--spacing-sm);
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: var(--font-size-xs);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
 .gm-dice-row {
